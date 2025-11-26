@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Admin users who manage events and volunteers
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  congregation String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  events Event[]
+
+  @@map("admins")
+}
+
+// Assembly Events (Circuit Assembly or Regional Convention)
+model Event {
+  id        String    @id @default(cuid())
+  name      String
+  type      EventType
+  location  String
+  startDate DateTime  @map("start_date")
+  endDate   DateTime  @map("end_date")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  createdBy   Admin       @relation(fields: [createdById], references: [id])
+  createdById String      @map("created_by_id")
+  volunteers  Volunteer[]
+
+  @@map("events")
+}
+
+// Volunteers assigned to events (generated ID/token auth)
+model Volunteer {
+  id           String               @id @default(cuid())
+  name         String
+  phone        String?
+  email        String?
+  congregation String
+  appointment  VolunteerAppointment @default(PUBLISHER)
+  role         VolunteerRole        @default(ATTENDANT)
+
+  // Authentication (generated credentials - not email || password)
+  generatedId String @unique @map("generated_id")
+  loginToken  String @map("login_token")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String @map("event_id")
+
+  @@map("volunteers")
+}
+
+enum EventType {
+  CIRCUIT_ASSEMBLY
+  REGIONAL_CONVENTION
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum VolunteerRole {
+  ATTENDANT
+  CAPTAIN
+  COORDINATOR
+}
+
+enum VolunteerAppointment {
+  PUBLISHER
+  MINISTERIAL_SERVANT
+  ELDER
+}
