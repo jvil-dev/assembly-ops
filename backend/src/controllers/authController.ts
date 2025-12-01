@@ -90,3 +90,10 @@ export async function handleAdminLogin(
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
+export async function handleGetMe(req: Request, res: Response): Promise<void> {
+  res.status(200).json({
+    message: "Authenticated",
+    admin: req.admin,
+  });
+}
