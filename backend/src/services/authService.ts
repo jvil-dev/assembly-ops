@@ -1,5 +1,5 @@
 import { prisma } from "../config/database.js";
-import { hashPassword } from "../utils/passwordUtils.js";
+import { comparePassword, hashPassword } from "../utils/passwordUtils.js";
 import { generateToken, TokenPayload } from "../utils/tokenUtils.js";
 
 interface RegisterAdminInput {
@@ -7,6 +7,11 @@ interface RegisterAdminInput {
   password: string;
   name: string;
   congregation: string;
+}
+
+interface LoginAdminInput {
+  email: string;
+  password: string;
 }
 
 interface AdminData {
@@ -59,6 +64,43 @@ export async function registerAdmin(
   const token = generateToken(tokenPayload);
 
   // Return admin without password hash
+  const { passwordHash: _, ...adminWithoutPassword } = admin;
+  return {
+    admin: adminWithoutPassword,
+    token,
+  };
+}
+
+export async function loginAdmin(
+  input: LoginAdminInput
+): Promise<AuthResponse> {
+  const { email, password } = input;
+
+  // Find admin by email
+  const admin = await prisma.admin.findUnique({
+    where: { email: email.toLowerCase() },
+  });
+
+  if (!admin) {
+    throw new Error("INVALID_CREDENTIALS");
+  }
+
+  // Compare password
+  const isValidPassword = await comparePassword(password, admin.passwordHash);
+
+  if (!isValidPassword) {
+    throw new Error("INVALID_CREDENTIALS");
+  }
+
+  // Generate token
+  const tokenPayload: TokenPayload = {
+    id: admin.id,
+    email: admin.email,
+    type: "admin",
+  };
+  const token = generateToken(tokenPayload);
+
+  // Return admin without password hash + token
   const { passwordHash: _, ...adminWithoutPassword } = admin;
   return {
     admin: adminWithoutPassword,

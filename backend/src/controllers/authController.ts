@@ -1,7 +1,7 @@
 // Handles HTTP request/response
 
 import { Request, Response } from "express";
-import { registerAdmin } from "../services/authService.js";
+import { loginAdmin, registerAdmin } from "../services/authService.js";
 
 export async function handleAdminRegister(
   req: Request,
@@ -52,6 +52,41 @@ export async function handleAdminRegister(
     }
 
     console.error("Registration error: ", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleAdminLogin(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { email, password } = req.body;
+
+    // Basic validation
+    if (!email || !password) {
+      res.status(400).json({
+        error: "Missing required fields: email, password",
+      });
+      return;
+    }
+
+    const { admin, token } = await loginAdmin({ email, password });
+
+    res.status(200).json({
+      message: "Login successful",
+      admin,
+      token,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "INVALID_CREDENTIALS") {
+      res.status(401).json({
+        error: "Invalid credentials",
+      });
+      return;
+    }
+
+    console.error("Login error: ", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
