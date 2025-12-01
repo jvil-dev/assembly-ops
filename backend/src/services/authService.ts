@@ -1,5 +1,6 @@
 import { prisma } from "../config/database.js";
 import { hashPassword } from "../utils/passwordUtils.js";
+import { generateToken, TokenPayload } from "../utils/tokenUtils.js";
 
 interface RegisterAdminInput {
   email: string;
@@ -8,7 +9,7 @@ interface RegisterAdminInput {
   congregation: string;
 }
 
-interface AdminResponse {
+interface AdminData {
   id: string;
   email: string;
   name: string;
@@ -17,9 +18,13 @@ interface AdminResponse {
   updatedAt: Date;
 }
 
+interface AuthResponse {
+  admin: AdminData;
+  token: string;
+}
 export async function registerAdmin(
   input: RegisterAdminInput
-): Promise<AdminResponse> {
+): Promise<AuthResponse> {
   const { email, password, name, congregation } = input;
 
   // Check if admin already exists
@@ -44,7 +49,19 @@ export async function registerAdmin(
     },
   });
 
+  // Generate token (auto-login)
+  const tokenPayload: TokenPayload = {
+    id: admin.id,
+    email: admin.email,
+    type: "admin",
+  };
+
+  const token = generateToken(tokenPayload);
+
   // Return admin without password hash
   const { passwordHash: _, ...adminWithoutPassword } = admin;
-  return adminWithoutPassword;
+  return {
+    admin: adminWithoutPassword,
+    token,
+  };
 }

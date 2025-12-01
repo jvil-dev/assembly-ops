@@ -33,11 +33,17 @@ export async function handleAdminRegister(
       return;
     }
 
-    const admin = await registerAdmin({ email, password, name, congregation });
+    const { admin, token } = await registerAdmin({
+      email,
+      password,
+      name,
+      congregation,
+    });
 
     res.status(201).json({
       message: "Admin registered successfully",
       admin,
+      token,
     });
   } catch (error) {
     if (error instanceof Error && error.message === "EMAIL_EXISTS") {
