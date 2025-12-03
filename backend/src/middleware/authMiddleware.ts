@@ -14,7 +14,7 @@ export function requireAdmin(
       return;
     }
 
-    // Expected format: "Bearer<token>"
+    // Expected format: "Bearer <token>"
     const parts = authHeader.split(" ");
 
     if (parts.length !== 2 || parts[0] !== "Bearer") {

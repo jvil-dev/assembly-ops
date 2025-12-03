@@ -118,6 +118,7 @@ export async function handleUpdateEvent(
     const { id } = req.params;
     const adminId = req.admin!.id;
     const { name, type, location, startDate, endDate } = req.body;
+    const existing = await getEventById(id!, adminId);
 
     // Build update object with only provided fields
     const updateData: Record<string, unknown> = {};
@@ -153,6 +154,31 @@ export async function handleUpdateEvent(
         return;
       }
       updateData.endDate = parsedEndDate;
+    }
+
+    // If both dates are being updated, validate them against each other
+    if (updateData.startDate && updateData.endDate) {
+      if (updateData.endDate < updateData.startDate) {
+        res.status(400).json({ error: "End date must be after start date" });
+        return;
+      }
+    }
+
+    // If only one date is being updated, validate against the existing date
+    else if (updateData.startDate && existing.endDate) {
+      if (existing.endDate < updateData.startDate) {
+        res
+          .status(400)
+          .json({ error: "Start date must be before existing end date" });
+        return;
+      }
+    } else if (updateData.endDate && existing.startDate) {
+      if (updateData.endDate < existing.startDate) {
+        res
+          .status(400)
+          .json({ error: "End date must be after existing start date" });
+        return;
+      }
     }
 
     if (Object.keys(updateData).length === 0) {

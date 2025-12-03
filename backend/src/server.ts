@@ -1,5 +1,5 @@
 import app from "./app";
-import authRoutes from "./routes/authRoutes";
+import authRoutes from "./routes/authRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 
 const PORT = process.env.PORT || 3000;

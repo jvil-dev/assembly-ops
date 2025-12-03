@@ -1,7 +1,12 @@
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "";
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
+
+const SECRET: string = JWT_SECRET;
 
 export interface TokenPayload {
   id: string;
@@ -10,11 +15,11 @@ export interface TokenPayload {
 }
 
 export function generateToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
-  });
+  return jwt.sign(payload, SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  } as any);
 }
 
 export function verifyToken(token: string): TokenPayload {
-  return jwt.verify(token, JWT_SECRET) as TokenPayload;
+  return jwt.verify(token, SECRET) as TokenPayload;
 }
