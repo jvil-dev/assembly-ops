@@ -26,9 +26,15 @@ export async function handleCreateRole(
       return;
     }
 
-    if (displayOrder !== undefined && typeof displayOrder !== "number") {
-      res.status(400).json({ error: "Display order must be a number" });
-      return;
+    if (displayOrder !== undefined) {
+      if (typeof displayOrder !== "number") {
+        res.status(400).json({ error: "Display order must be a number" });
+        return;
+      }
+      if (!Number.isInteger(displayOrder) || displayOrder < 0) {
+        res.status(400).json({ error: "Display order must be a non-negative integer" });
+        return;
+      }
     }
 
     const role = await createRole(
@@ -106,6 +112,10 @@ export async function handleUpdateRole(
     if (displayOrder !== undefined) {
       if (typeof displayOrder !== "number") {
         res.status(400).json({ error: "Display order must be a number" });
+        return;
+      }
+      if (!Number.isInteger(displayOrder) || displayOrder < 0) {
+        res.status(400).json({ error: "Display order must be a non-negative integer" });
         return;
       }
       updateData.displayOrder = displayOrder;

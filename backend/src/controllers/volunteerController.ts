@@ -218,9 +218,71 @@ export async function handleGetVolunteers(
     const { eventId } = req.params;
     const adminId = req.admin!.id;
 
-    const volunteers = await getVolunteersByEvent(eventId!, adminId);
+    // Extract query parameters
+    const { name, roleId, congregation, appointment, sort, limit, offset } =
+      req.query;
 
-    res.status(200).json({ volunteers });
+    // Validate appointment if provided
+    if (
+      appointment &&
+      !VALID_APPOINTMENTS.includes(appointment as VolunteerAppointment)
+    ) {
+      res.status(400).json({
+        error: `Invalid appointment filter. Must be one of: ${VALID_APPOINTMENTS.join(
+          ", "
+        )}`,
+      });
+      return;
+    }
+
+    // Validate sort if provided
+    const validSorts = ["name_asc", "name_desc", "role_asc"];
+    if (sort && !validSorts.includes(sort as string)) {
+      res.status(400).json({
+        error: `Invalid sort option. Must be one of: ${validSorts.join(", ")}`,
+      });
+      return;
+    }
+
+    // Validate limit
+    const parsedLimit = limit ? parseInt(limit as string, 10) : undefined;
+    if (parsedLimit !== undefined && (isNaN(parsedLimit) || parsedLimit < 1)) {
+      res.status(400).json({ error: "Limit must be a positive number" });
+      return;
+    }
+
+    // Validate offset
+    const parsedOffset = offset ? parseInt(offset as string, 10) : undefined;
+    if (
+      parsedOffset !== undefined &&
+      (isNaN(parsedOffset) || parsedOffset < 0)
+    ) {
+      res.status(400).json({ error: "Offset must be a non-negative number" });
+      return;
+    }
+
+    // Build filter object, only including defined properties
+    const filter: {
+      name?: string;
+      roleId?: string;
+      congregation?: string;
+      appointment?: string;
+      sort?: string;
+      limit?: number;
+      offset?: number;
+    } = {};
+
+    if (name !== undefined) filter.name = name as string;
+    if (roleId !== undefined) filter.roleId = roleId as string;
+    if (congregation !== undefined) filter.congregation = congregation as string;
+    if (appointment !== undefined) filter.appointment = appointment as string;
+    if (sort !== undefined) filter.sort = sort as string;
+    if (parsedLimit !== undefined) filter.limit = parsedLimit;
+    if (parsedOffset !== undefined) filter.offset = parsedOffset;
+
+    const result = await getVolunteersByEvent(eventId!, adminId, filter);
+
+    res.status(200).json(result);
   } catch (error) {
     if (error instanceof Error && error.message === "EVENT_NOT_FOUND") {
       res.status(404).json({ error: "Event not found" });
@@ -280,18 +342,59 @@ export async function handleUpdateVolunteer(
       updateData.name = name.trim();
     }
 
-    if (phone !== undefined) updateData.phone = phone;
-    if (email !== undefined) updateData.email = email;
-    if (congregation !== undefined) updateData.congregation = congregation;
+    if (phone !== undefined) {
+      if (phone !== null && typeof phone !== "string") {
+        res.status(400).json({ error: "Phone must be a string or null" });
+        return;
+      }
+      updateData.phone = phone;
+    }
+
+    if (email !== undefined) {
+      if (email !== null) {
+        if (typeof email !== "string") {
+          res.status(400).json({ error: "Email must be a string or null" });
+          return;
+        }
+        const trimmedEmail = email.trim();
+        if (trimmedEmail.length === 0) {
+          res.status(400).json({ error: "Email cannot be empty" });
+          return;
+        }
+        // Basic email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedEmail)) {
+          res.status(400).json({ error: "Invalid email format" });
+          return;
+        }
+        updateData.email = trimmedEmail;
+      } else {
+        updateData.email = null;
+      }
+    }
+
+    if (congregation !== undefined) {
+      if (typeof congregation !== "string" || congregation.trim().length === 0) {
+        res.status(400).json({ error: "Congregation must be a non-empty string" });
+        return;
+      }
+      updateData.congregation = congregation.trim();
+    }
 
     if (appointment !== undefined) {
-      if (appointment !== null && !VALID_APPOINTMENTS.includes(appointment)) {
-        res.status(400).json({
-          error: `Invalid appointment. Must be one of: ${VALID_APPOINTMENTS.join(
-            ", "
-          )}`,
-        });
-        return;
+      if (appointment !== null) {
+        if (typeof appointment !== "string") {
+          res.status(400).json({ error: "Appointment must be a string or null" });
+          return;
+        }
+        if (!VALID_APPOINTMENTS.includes(appointment as VolunteerAppointment)) {
+          res.status(400).json({
+            error: `Invalid appointment. Must be one of: ${VALID_APPOINTMENTS.join(
+              ", "
+            )}`,
+          });
+          return;
+        }
       }
       updateData.appointment = appointment;
     }

@@ -158,7 +158,9 @@ export async function handleUpdateEvent(
 
     // If both dates are being updated, validate them against each other
     if (updateData.startDate && updateData.endDate) {
-      if (updateData.endDate < updateData.startDate) {
+      const startDate = updateData.startDate as Date;
+      const endDate = updateData.endDate as Date;
+      if (endDate < startDate) {
         res.status(400).json({ error: "End date must be after start date" });
         return;
       }
@@ -166,14 +168,16 @@ export async function handleUpdateEvent(
 
     // If only one date is being updated, validate against the existing date
     else if (updateData.startDate && existing.endDate) {
-      if (existing.endDate < updateData.startDate) {
+      const startDate = updateData.startDate as Date;
+      if (existing.endDate < startDate) {
         res
           .status(400)
           .json({ error: "Start date must be before existing end date" });
         return;
       }
     } else if (updateData.endDate && existing.startDate) {
-      if (updateData.endDate < existing.startDate) {
+      const endDate = updateData.endDate as Date;
+      if (endDate < existing.startDate) {
         res
           .status(400)
           .json({ error: "End date must be after existing start date" });

@@ -9,6 +9,7 @@ import {
 import { requireAdmin } from "../middleware/authMiddleware.js";
 import roleRoutes from "./roleRoutes.js";
 import volunteerRoutes from "./volunteerRoutes.js";
+import sessionRoutes from "./sessionRoutes.js";
 
 const router = Router();
 
@@ -23,5 +24,6 @@ router.delete("/:id", handleDeleteEvent);
 
 router.use("/:eventId/roles", roleRoutes);
 router.use("/:eventId/volunteers", volunteerRoutes);
+router.use("/:eventId/sessions", sessionRoutes);
 
 export default router;
