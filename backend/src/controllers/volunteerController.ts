@@ -218,9 +218,60 @@ export async function handleGetVolunteers(
     const { eventId } = req.params;
     const adminId = req.admin!.id;
 
-    const volunteers = await getVolunteersByEvent(eventId!, adminId);
+    // Extract query parameters
+    const { name, roleId, congregation, appointment, sort, limit, offset } =
+      req.query;
 
-    res.status(200).json({ volunteers });
+    // Validate appointment if provided
+    if (
+      appointment &&
+      !VALID_APPOINTMENTS.includes(appointment as VolunteerAppointment)
+    ) {
+      res.status(400).json({
+        error: `Invalid appointment filter. Must be one of: ${VALID_APPOINTMENTS.join(
+          ", "
+        )}`,
+      });
+      return;
+    }
+
+    // Validate sort if provided
+    const validSorts = ["name_asc", "name_desc", "role_asc"];
+    if (sort && !validSorts.includes(sort as string)) {
+      res.status(400).json({
+        error: `Invalid sort option. Must be one of: ${validSorts.join(", ")}`,
+      });
+      return;
+    }
+
+    // Validate limit
+    const parsedLimit = limit ? parseInt(limit as string, 10) : undefined;
+    if (parsedLimit !== undefined && (isNaN(parsedLimit) || parsedLimit < 1)) {
+      res.status(400).json({ error: "Limit must be a positive number" });
+      return;
+    }
+
+    // Validate offset
+    const parsedOffset = offset ? parseInt(offset as string, 10) : undefined;
+    if (
+      parsedOffset !== undefined &&
+      (isNaN(parsedOffset) || parsedOffset < 0)
+    ) {
+      res.status(400).json({ error: "Offset must be a non-negative number" });
+      return;
+    }
+
+    const result = await getVolunteersByEvent(eventId!, adminId, {
+      name: name as string | undefined,
+      roleId: roleId as string | undefined,
+      congregation: congregation as string | undefined,
+      appointment: appointment as string | undefined,
+      sort: sort as string | undefined,
+      limit: parsedLimit,
+      offset: parsedOffset,
+    });
+
+    res.status(200).json(result);
   } catch (error) {
     if (error instanceof Error && error.message === "EVENT_NOT_FOUND") {
       res.status(404).json({ error: "Event not found" });

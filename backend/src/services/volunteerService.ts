@@ -35,6 +35,16 @@ interface BulkCreateInput {
   eventId: string;
 }
 
+interface GetVolunteersFilter {
+  name?: string | undefined;
+  roleId?: string | undefined;
+  congregation?: string | undefined;
+  appointment?: string | undefined;
+  sort?: string | undefined;
+  limit?: number | undefined;
+  offset?: number | undefined;
+}
+
 export async function createVolunteer(
   input: CreateVolunteerInput,
   adminId: string
@@ -199,7 +209,11 @@ export async function bulkCreateVolunteers(
   return createdVolunteers;
 }
 
-export async function getVolunteersByEvent(eventId: string, adminId: string) {
+export async function getVolunteersByEvent(
+  eventId: string,
+  adminId: string,
+  filters: GetVolunteersFilter = {}
+) {
   // Verify admin owns the event
   const event = await prisma.event.findFirst({
     where: {
@@ -212,15 +226,85 @@ export async function getVolunteersByEvent(eventId: string, adminId: string) {
     throw new Error("EVENT_NOT_FOUND");
   }
 
+  // Build where clause
+  const where: Record<string, unknown> = { eventId };
+
+  // Name search (partial, case-insensitive)
+  if (filters.name) {
+    where.name = {
+      contains: filters.name,
+      mode: "insensitive",
+    };
+  }
+
+  // Role filter (exact match)
+  if (filters.roleId) {
+    where.roleId = filters.roleId;
+  }
+
+  // Congregation filter (partial, case-insensitive)
+  if (filters.congregation) {
+    where.congregation = {
+      contains: filters.congregation,
+      mode: "insensitive",
+    };
+  }
+
+  // Appointment filter
+  if (filters.appointment) {
+    where.appointment = filters.appointment;
+  }
+
+  // Build orderBy clause
+  let orderBy: Record<string, unknown>[] = [
+    { role: { displayOrder: "asc" } },
+    { name: "asc" },
+  ];
+
+  if (filters.sort) {
+    switch (filters.sort) {
+      case "name_asc":
+        orderBy = [{ name: "asc" }];
+        break;
+      case "name_desc":
+        orderBy = [{ name: "desc" }];
+        break;
+      case "role_asc":
+        orderBy = [{ role: { displayOrder: "asc" } }, { name: "asc" }];
+        break;
+      default:
+        // Keep default
+        break;
+    }
+  }
+
+  // Pagination
+  const limit = Math.min(filters.limit || 50, 100);
+  const offset = filters.offset || 0;
+
+  // Get total count for pagination
+  const total = await prisma.volunteer.count({ where });
+
+  // Get volunteers
   const volunteers = await prisma.volunteer.findMany({
-    where: { eventId },
+    where,
     include: {
       role: true,
     },
-    orderBy: [{ role: { displayOrder: "asc" } }, { name: "asc" }],
+    orderBy,
+    take: limit,
+    skip: offset,
   });
 
-  return volunteers;
+  return {
+    volunteers,
+    pagination: {
+      total,
+      limit,
+      offset,
+      hasMore: offset + volunteers.length < total,
+    },
+  };
 }
 
 export async function getVolunteerById(
@@ -306,8 +390,10 @@ export async function updateVolunteer(
   if (input.name !== undefined) updateData.name = input.name;
   if (input.phone !== undefined) updateData.phone = input.phone ?? null;
   if (input.email !== undefined) updateData.email = input.email ?? null;
-  if (input.congregation !== undefined) updateData.congregation = input.congregation;
-  if (input.appointment !== undefined) updateData.appointment = input.appointment ?? DEFAULT_APPOINTMENT;
+  if (input.congregation !== undefined)
+    updateData.congregation = input.congregation;
+  if (input.appointment !== undefined)
+    updateData.appointment = input.appointment ?? DEFAULT_APPOINTMENT;
   if (input.roleId !== undefined) updateData.roleId = input.roleId ?? null;
 
   const volunteer = await prisma.volunteer.update({
