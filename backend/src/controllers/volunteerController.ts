@@ -261,15 +261,26 @@ export async function handleGetVolunteers(
       return;
     }
 
-    const result = await getVolunteersByEvent(eventId!, adminId, {
-      name: name as string | undefined,
-      roleId: roleId as string | undefined,
-      congregation: congregation as string | undefined,
-      appointment: appointment as string | undefined,
-      sort: sort as string | undefined,
-      limit: parsedLimit,
-      offset: parsedOffset,
-    });
+    // Build filter object, only including defined properties
+    const filter: {
+      name?: string;
+      roleId?: string;
+      congregation?: string;
+      appointment?: string;
+      sort?: string;
+      limit?: number;
+      offset?: number;
+    } = {};
+
+    if (name !== undefined) filter.name = name as string;
+    if (roleId !== undefined) filter.roleId = roleId as string;
+    if (congregation !== undefined) filter.congregation = congregation as string;
+    if (appointment !== undefined) filter.appointment = appointment as string;
+    if (sort !== undefined) filter.sort = sort as string;
+    if (parsedLimit !== undefined) filter.limit = parsedLimit;
+    if (parsedOffset !== undefined) filter.offset = parsedOffset;
+
+    const result = await getVolunteersByEvent(eventId!, adminId, filter);
 
     res.status(200).json(result);
   } catch (error) {
@@ -331,18 +342,59 @@ export async function handleUpdateVolunteer(
       updateData.name = name.trim();
     }
 
-    if (phone !== undefined) updateData.phone = phone;
-    if (email !== undefined) updateData.email = email;
-    if (congregation !== undefined) updateData.congregation = congregation;
+    if (phone !== undefined) {
+      if (phone !== null && typeof phone !== "string") {
+        res.status(400).json({ error: "Phone must be a string or null" });
+        return;
+      }
+      updateData.phone = phone;
+    }
+
+    if (email !== undefined) {
+      if (email !== null) {
+        if (typeof email !== "string") {
+          res.status(400).json({ error: "Email must be a string or null" });
+          return;
+        }
+        const trimmedEmail = email.trim();
+        if (trimmedEmail.length === 0) {
+          res.status(400).json({ error: "Email cannot be empty" });
+          return;
+        }
+        // Basic email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedEmail)) {
+          res.status(400).json({ error: "Invalid email format" });
+          return;
+        }
+        updateData.email = trimmedEmail;
+      } else {
+        updateData.email = null;
+      }
+    }
+
+    if (congregation !== undefined) {
+      if (typeof congregation !== "string" || congregation.trim().length === 0) {
+        res.status(400).json({ error: "Congregation must be a non-empty string" });
+        return;
+      }
+      updateData.congregation = congregation.trim();
+    }
 
     if (appointment !== undefined) {
-      if (appointment !== null && !VALID_APPOINTMENTS.includes(appointment)) {
-        res.status(400).json({
-          error: `Invalid appointment. Must be one of: ${VALID_APPOINTMENTS.join(
-            ", "
-          )}`,
-        });
-        return;
+      if (appointment !== null) {
+        if (typeof appointment !== "string") {
+          res.status(400).json({ error: "Appointment must be a string or null" });
+          return;
+        }
+        if (!VALID_APPOINTMENTS.includes(appointment as VolunteerAppointment)) {
+          res.status(400).json({
+            error: `Invalid appointment. Must be one of: ${VALID_APPOINTMENTS.join(
+              ", "
+            )}`,
+          });
+          return;
+        }
       }
       updateData.appointment = appointment;
     }

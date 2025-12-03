@@ -37,7 +37,23 @@ export function requireAdmin(
     req.admin = payload;
     next();
   } catch (error) {
-    // Token verification failed (invalid, expired, etc)
-    res.status(401).json({ error: "Invalid or expired token" });
+    // Log error for debugging
+    if (error instanceof Error) {
+      // JWT-specific errors are expected and don't need stack traces
+      if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+        console.log("Auth failed:", error.message);
+        res.status(401).json({ error: "Invalid or expired token" });
+        return;
+      }
+
+      // Unexpected errors should be logged with stack trace
+      console.error("Unexpected auth error:", error);
+      res.status(500).json({ error: "Internal server error" });
+      return;
+    }
+
+    // Unknown error type
+    console.error("Unknown auth error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 }

@@ -78,45 +78,46 @@ export async function createVolunteer(
     }
   }
 
-  // Generate unique credentials
-  let credentials = generateCredentials();
+  // Generate credentials and create volunteer with retry on unique constraint violation
   let attempts = 0;
   const maxAttempts = 10;
 
-  // Ensure generatedId is unique
   while (attempts < maxAttempts) {
-    const existing = await prisma.volunteer.findUnique({
-      where: { generatedId: credentials.generatedId },
-    });
+    const credentials = generateCredentials();
 
-    if (!existing) break;
+    try {
+      const volunteer = await prisma.volunteer.create({
+        data: {
+          name,
+          phone: phone ?? null,
+          email: email ?? null,
+          congregation,
+          appointment: appointment ?? DEFAULT_APPOINTMENT,
+          roleId: roleId ?? null,
+          eventId,
+          generatedId: credentials.generatedId,
+          loginToken: credentials.loginToken,
+        },
+        include: {
+          role: true,
+        },
+      });
 
-    credentials = generateCredentials();
-    attempts++;
+      return volunteer;
+    } catch (error: any) {
+      // Check if error is unique constraint violation on generatedId
+      if (error.code === "P2002" && error.meta?.target?.includes("generatedId")) {
+        attempts++;
+        // Retry with new credentials
+        continue;
+      }
+      // Re-throw other errors
+      throw error;
+    }
   }
 
-  if (attempts >= maxAttempts) {
-    throw new Error("CREDENTIAL_GENERATION_FAILED");
-  }
-
-  const volunteer = await prisma.volunteer.create({
-    data: {
-      name,
-      phone: phone ?? null,
-      email: email ?? null,
-      congregation,
-      appointment: appointment ?? DEFAULT_APPOINTMENT,
-      roleId: roleId ?? null,
-      eventId,
-      generatedId: credentials.generatedId,
-      loginToken: credentials.loginToken,
-    },
-    include: {
-      role: true,
-    },
-  });
-
-  return volunteer;
+  // If we exhausted all attempts, throw error
+  throw new Error("CREDENTIAL_GENERATION_FAILED");
 }
 
 export async function bulkCreateVolunteers(
@@ -153,60 +154,60 @@ export async function bulkCreateVolunteers(
     }
   }
 
-  // Generate credentials for all volunteers
-  const volunteersWithCredentials = [];
+  // Generate credentials and bulk create with retry on unique constraint violation
+  let attempts = 0;
+  const maxAttempts = 10;
 
-  for (const vol of volunteers) {
-    let credentials = generateCredentials();
-    let attempts = 0;
-    const maxAttempts = 10;
+  while (attempts < maxAttempts) {
+    // Generate credentials for all volunteers
+    const volunteersWithCredentials = volunteers.map((vol) => {
+      const credentials = generateCredentials();
+      return {
+        name: vol.name,
+        phone: vol.phone ?? null,
+        email: vol.email ?? null,
+        congregation: vol.congregation,
+        appointment: vol.appointment ?? DEFAULT_APPOINTMENT,
+        roleId: vol.roleId ?? null,
+        eventId,
+        generatedId: credentials.generatedId,
+        loginToken: credentials.loginToken,
+      };
+    });
 
-    while (attempts < maxAttempts) {
-      const existing = await prisma.volunteer.findUnique({
-        where: { generatedId: credentials.generatedId },
+    try {
+      // Bulk create
+      await prisma.volunteer.createMany({
+        data: volunteersWithCredentials,
       });
 
-      if (!existing) break;
+      // Fetch created volunteers with roles
+      const createdVolunteers = await prisma.volunteer.findMany({
+        where: {
+          generatedId: {
+            in: volunteersWithCredentials.map((v) => v.generatedId),
+          },
+        },
+        include: {
+          role: true,
+        },
+      });
 
-      credentials = generateCredentials();
-      attempts++;
+      return createdVolunteers;
+    } catch (error: any) {
+      // Check if error is unique constraint violation on generatedId
+      if (error.code === "P2002" && error.meta?.target?.includes("generatedId")) {
+        attempts++;
+        // Retry with new credentials for all volunteers
+        continue;
+      }
+      // Re-throw other errors
+      throw error;
     }
-
-    if (attempts >= maxAttempts) {
-      throw new Error("CREDENTIAL_GENERATION_FAILED");
-    }
-
-    volunteersWithCredentials.push({
-      name: vol.name,
-      phone: vol.phone ?? null,
-      email: vol.email ?? null,
-      congregation: vol.congregation,
-      appointment: vol.appointment ?? DEFAULT_APPOINTMENT,
-      roleId: vol.roleId ?? null,
-      eventId,
-      generatedId: credentials.generatedId,
-      loginToken: credentials.loginToken,
-    });
   }
 
-  // Bulk create
-  await prisma.volunteer.createMany({
-    data: volunteersWithCredentials,
-  });
-
-  // Fetch created volunteers with roles
-  const createdVolunteers = await prisma.volunteer.findMany({
-    where: {
-      generatedId: {
-        in: volunteersWithCredentials.map((v) => v.generatedId),
-      },
-    },
-    include: {
-      role: true,
-    },
-  });
-
-  return createdVolunteers;
+  // If we exhausted all attempts, throw error
+  throw new Error("CREDENTIAL_GENERATION_FAILED");
 }
 
 export async function getVolunteersByEvent(
@@ -472,36 +473,38 @@ export async function regenerateCredentials(
     throw new Error("VOLUNTEER_NOT_FOUND");
   }
 
-  // Generate new credentials
-  let credentials = generateCredentials();
+  // Generate new credentials and update with retry on unique constraint violation
   let attempts = 0;
   const maxAttempts = 10;
 
   while (attempts < maxAttempts) {
-    const existing = await prisma.volunteer.findUnique({
-      where: { generatedId: credentials.generatedId },
-    });
+    const credentials = generateCredentials();
 
-    if (!existing) break;
+    try {
+      const volunteer = await prisma.volunteer.update({
+        where: { id: volunteerId },
+        data: {
+          generatedId: credentials.generatedId,
+          loginToken: credentials.loginToken,
+        },
+        include: {
+          role: true,
+        },
+      });
 
-    credentials = generateCredentials();
-    attempts++;
+      return volunteer;
+    } catch (error: any) {
+      // Check if error is unique constraint violation on generatedId
+      if (error.code === "P2002" && error.meta?.target?.includes("generatedId")) {
+        attempts++;
+        // Retry with new credentials
+        continue;
+      }
+      // Re-throw other errors
+      throw error;
+    }
   }
 
-  if (attempts >= maxAttempts) {
-    throw new Error("CREDENTIAL_GENERATION_FAILED");
-  }
-
-  const volunteer = await prisma.volunteer.update({
-    where: { id: volunteerId },
-    data: {
-      generatedId: credentials.generatedId,
-      loginToken: credentials.loginToken,
-    },
-    include: {
-      role: true,
-    },
-  });
-
-  return volunteer;
+  // If we exhausted all attempts, throw error
+  throw new Error("CREDENTIAL_GENERATION_FAILED");
 }
