@@ -12,7 +12,7 @@ import {
 const router = Router({ mergeParams: true });
 
 router.post("/", handleCreateVolunteer);
-router.post("/", handleBulkCreateVolunteers);
+router.post("/bulk", handleBulkCreateVolunteers);
 router.get("/", handleGetVolunteers);
 router.get("/:volunteerId", handleGetVolunteer);
 router.put("/:volunteerId", handleUpdateVolunteer);

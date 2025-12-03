@@ -10,8 +10,9 @@ const SECRET: string = JWT_SECRET;
 
 export interface TokenPayload {
   id: string;
-  email: string;
+  email?: string;
   type: "admin" | "volunteer";
+  eventId?: string;
 }
 
 export function generateToken(payload: TokenPayload): string {

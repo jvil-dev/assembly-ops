@@ -5,6 +5,7 @@ import {
   handleAdminRegister,
   handleAdminLogin,
   handleGetMe,
+  handleVolunteerLogin,
 } from "../controllers/authController.js";
 import { requireAdmin } from "../middleware/authMiddleware.js";
 
@@ -14,5 +15,8 @@ const router = Router();
 router.post("/admin/register", handleAdminRegister);
 router.post("/admin/login", handleAdminLogin);
 router.get("/admin/me", requireAdmin, handleGetMe);
+
+// Volunteer routes
+router.post("/volunteer/login", handleVolunteerLogin);
 
 export default router;

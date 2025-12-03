@@ -2,6 +2,10 @@ import { prisma } from "../config/database.js";
 import { comparePassword, hashPassword } from "../utils/passwordUtils.js";
 import { generateToken, TokenPayload } from "../utils/tokenUtils.js";
 
+// ============================================
+// ADMIN AUTHENTICATION
+// ============================================
+
 interface RegisterAdminInput {
   email: string;
   password: string;
@@ -23,13 +27,59 @@ interface AdminData {
   updatedAt: Date;
 }
 
-interface AuthResponse {
+interface AdminAuthResponse {
   admin: AdminData;
   token: string;
 }
+
+// ============================================
+// VOLUNTEER AUTHENTICATION
+// ============================================
+
+interface LoginVolunteerInput {
+  generatedId: string;
+  loginToken: string;
+}
+
+interface VolunteerData {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  congregation: string;
+  appointment: string;
+  generatedId: string;
+  roleId: string | null;
+  eventId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  role: {
+    id: string;
+    name: string;
+    displayOrder: number;
+  } | null;
+  event: {
+    id: string;
+    name: string;
+    type: string;
+    location: string;
+    startDate: Date;
+    endDate: Date;
+  };
+}
+
+interface VolunteerAuthResponse {
+  volunteer: VolunteerData;
+  token: string;
+}
+
+// ============================================
+// ADMIN AUTHENTICATION
+// ============================================
+
 export async function registerAdmin(
   input: RegisterAdminInput
-): Promise<AuthResponse> {
+): Promise<AdminAuthResponse> {
   const { email, password, name, congregation } = input;
 
   // Check if admin already exists
@@ -73,7 +123,7 @@ export async function registerAdmin(
 
 export async function loginAdmin(
   input: LoginAdminInput
-): Promise<AuthResponse> {
+): Promise<AdminAuthResponse> {
   const { email, password } = input;
 
   // Find admin by email
@@ -104,6 +154,62 @@ export async function loginAdmin(
   const { passwordHash: _, ...adminWithoutPassword } = admin;
   return {
     admin: adminWithoutPassword,
+    token,
+  };
+}
+
+// ============================================
+// VOLUNTEER AUTHENTICATION
+// ============================================
+
+export async function loginVolunteer(
+  input: LoginVolunteerInput
+): Promise<VolunteerAuthResponse> {
+  const { generatedId, loginToken } = input;
+
+  const volunteer = await prisma.volunteer.findUnique({
+    where: { generatedId: generatedId.toUpperCase() },
+    include: {
+      role: {
+        select: {
+          id: true,
+          name: true,
+          displayOrder: true,
+        },
+      },
+      event: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          location: true,
+          startDate: true,
+          endDate: true,
+        },
+      },
+    },
+  });
+
+  if (!volunteer) {
+    throw new Error("INVALID_CREDENTIALS");
+  }
+
+  if (volunteer.loginToken !== loginToken) {
+    throw new Error("INVALID_CREDENTIALS");
+  }
+
+  const tokenPayload: TokenPayload = {
+    id: volunteer.id,
+    type: "volunteer",
+    eventId: volunteer.eventId,
+    ...(volunteer.email && { email: volunteer.email }),
+  };
+  const token = generateToken(tokenPayload);
+
+  const { loginToken: _, ...volunteerWithoutToken } = volunteer;
+
+  return {
+    volunteer: volunteerWithoutToken,
     token,
   };
 }

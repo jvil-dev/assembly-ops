@@ -1,7 +1,11 @@
 // Handles HTTP request/response
 
 import { Request, Response } from "express";
-import { loginAdmin, registerAdmin } from "../services/authService.js";
+import {
+  loginAdmin,
+  registerAdmin,
+  loginVolunteer,
+} from "../services/authService.js";
 
 export async function handleAdminRegister(
   req: Request,
@@ -96,4 +100,39 @@ export async function handleGetMe(req: Request, res: Response): Promise<void> {
     message: "Authenticated",
     admin: req.admin,
   });
+}
+
+export async function handleVolunteerLogin(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { generatedId, loginToken } = req.body;
+
+    if (!generatedId || !loginToken) {
+      res.status(400).json({
+        error: "Missing required fields: generatedId, loginToken",
+      });
+      return;
+    }
+
+    const { volunteer, token } = await loginVolunteer({
+      generatedId,
+      loginToken,
+    });
+
+    res.status(200).json({
+      message: "Login successful",
+      volunteer,
+      token,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "INVALID_CREDENTIALS") {
+      res.status(401).json({ error: "Invalid credentials" });
+      return;
+    }
+
+    console.error("Volunteer login error: ", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 }
