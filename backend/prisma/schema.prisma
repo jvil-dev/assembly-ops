@@ -67,12 +67,29 @@ model Volunteer {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  event   Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId String  @map("event_id")
-  role    Role?   @relation(fields: [roleId], references: [id])
-  roleId  String?
+  event        Event                   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId      String                  @map("event_id")
+  role         Role?                   @relation(fields: [roleId], references: [id])
+  roleId       String?
+  availability VolunteerAvailability[]
 
   @@map("volunteers")
+}
+
+// Volunteer availability per session
+model VolunteerAvailability {
+  id          String  @id @default(cuid())
+  isAvailable Boolean @default(true) @map("is_available")
+
+  // Relations
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  volunteerId String    @map("volunteer_id")
+
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String  @map("session_id")
+
+  @@unique([volunteerId, sessionId])
+  @@map("volunteer_availability")
 }
 
 // Roles are event-specific, defined by each overseer
@@ -102,8 +119,9 @@ model Session {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId String @map("event_id")
+  event        Event                   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId      String                  @map("event_id")
+  availability VolunteerAvailability[]
 
   @@map("sessions")
 }
