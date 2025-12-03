@@ -8,6 +8,7 @@ import {
 } from "../controllers/eventController.js";
 import { requireAdmin } from "../middleware/authMiddleware.js";
 import roleRoutes from "./roleRoutes.js";
+import volunteerRoutes from "./volunteerRoutes.js";
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.put("/:id", handleUpdateEvent);
 router.delete("/:id", handleDeleteEvent);
 
 router.use("/:eventId/roles", roleRoutes);
+router.use("/:eventId/volunteers", volunteerRoutes);
 
 export default router;
