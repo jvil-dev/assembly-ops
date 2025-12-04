@@ -41,12 +41,13 @@ model Event {
   updatedAt DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  createdBy   Admin       @relation(fields: [createdById], references: [id])
-  createdById String      @map("created_by_id")
-  volunteers  Volunteer[]
-  roles       Role[]
-  sessions    Session[]
-  zones       Zone[]
+  createdBy   Admin  @relation(fields: [createdById], references: [id])
+  createdById String @map("created_by_id")
+
+  volunteers Volunteer[]
+  roles      Role[]
+  sessions   Session[]
+  zones      Zone[]
 
   @@map("events")
 }
@@ -68,11 +69,14 @@ model Volunteer {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  event        Event                   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId      String                  @map("event_id")
-  role         Role?                   @relation(fields: [roleId], references: [id])
-  roleId       String?
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String @map("event_id")
+
+  role   Role?   @relation(fields: [roleId], references: [id])
+  roleId String?
+
   availability VolunteerAvailability[]
+  assignments  Assignment[]
 
   @@map("volunteers")
 }
@@ -102,8 +106,9 @@ model Role {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
-  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId    String      @map("event_id")
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String @map("event_id")
+
   volunteers Volunteer[]
 
   @@map("roles")
@@ -120,9 +125,11 @@ model Session {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  event        Event                   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId      String                  @map("event_id")
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String @map("event_id")
+
   availability VolunteerAvailability[]
+  assignments  Assignment[]
 
   @@map("sessions")
 }
@@ -141,7 +148,30 @@ model Zone {
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId String @map("event_id")
 
+  assignments Assignment[]
+
   @@map("zone")
+}
+
+// Volunteer assignments to zones for specific sessions
+model Assignment {
+  id        String   @id @default(cuid())
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  volunteerId String    @map("volunteer_id")
+
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String  @map("session_id")
+
+  zone   Zone   @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  zoneId String @map("zone_id")
+
+  @@unique([volunteerId, sessionId])
+  @@map("assignments")
 }
 
 enum EventType {
