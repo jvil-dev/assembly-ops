@@ -12,6 +12,7 @@ import volunteerRoutes from "./volunteerRoutes.js";
 import sessionRoutes from "./sessionRoutes.js";
 import zoneRoutes from "./zoneRoutes.js";
 import assignmentRoutes from "./assignmentRoutes.js";
+import swapRequestRoutes from "./swapRequestRoutes.js";
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.use("/:eventId/volunteers", volunteerRoutes);
 router.use("/:eventId/sessions", sessionRoutes);
 router.use("/:eventId/zones", zoneRoutes);
 router.use("/:eventId/assignments", assignmentRoutes);
+router.use("/:eventId/swap-requests", swapRequestRoutes);
 
 export default router;
