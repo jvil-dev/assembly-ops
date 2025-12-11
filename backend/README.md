@@ -104,7 +104,42 @@ POST /auth/volunteer/login
 
 ```
 GET /auth/admin/me
-Authorization: Bearer <token>
+Authorization: Bearer <admin-token>
+```
+
+#### Get Volunteer's Assignments
+
+```
+GET /auth/volunteer/my-assignments
+Authorization: Bearer <volunteer-token>
+```
+
+Response:
+
+```json
+{
+  "volunteer": {
+    "id": "clx...",
+    "name": "Manuel Smith",
+    "generatedId": "VOL-A3B7K9",
+    "role": { "id": "clx...", "name": "Attendant" }
+  },
+  "event": {
+    "id": "clx...",
+    "name": "Spring Circuit Assembly 2026",
+    "type": "CIRCUIT_ASSEMBLY",
+    "location": "Natick Assembly Hall"
+  },
+  "assignments": [
+    {
+      "id": "clx...",
+      "session": { "name": "Morning Session", "...": "..." },
+      "zone": { "name": "East Lobby", "...": "..." },
+      "hasPendingSwapRequest": false
+    }
+  ],
+  "totalAssignments": 2
+}
 ```
 
 ---
@@ -350,7 +385,7 @@ Response:
 ```json
 {
   "volunteerId": "clx...",
-  "volunteerName": "John Smith",
+  "volunteerName": "Manuel Smith",
   "availability": [
     {
       "sessionId": "clx...",
@@ -381,6 +416,261 @@ PUT /events/:eventId/volunteers/:volunteerId/availability
 
 ---
 
+### Zones
+
+Physical areas requiring attendant coverage (e.g., East Lobby, Auditorium).
+
+#### Create Zone
+
+```
+POST /events/:eventId/zones
+```
+
+```json
+{
+  "name": "East Lobby",
+  "description": "Main entrance on east side",
+  "requiredCount": 2,
+  "displayOrder": 0
+}
+```
+
+| Field         | Type   | Description                                  |
+| ------------- | ------ | -------------------------------------------- |
+| requiredCount | number | Volunteers needed (default: 1, min: 1)       |
+| displayOrder  | number | Sort order (auto-increments if not provided) |
+
+#### List Zones
+
+```
+GET /events/:eventId/zones
+```
+
+#### Get Zone
+
+```
+GET /events/:eventId/zones/:zoneId
+```
+
+#### Update Zone
+
+```
+PUT /events/:eventId/zones/:zoneId
+```
+
+#### Delete Zone
+
+```
+DELETE /events/:eventId/zones/:zoneId
+```
+
+---
+
+### Assignments
+
+Assign volunteers to zone + session combinations.
+
+#### Create Assignment
+
+```
+POST /events/:eventId/assignments
+```
+
+```json
+{
+  "volunteerId": "clx...",
+  "sessionId": "clx...",
+  "zoneId": "clx...",
+  "notes": "Please arrive 10 minutes early"
+}
+```
+
+**Conflict Detection:**
+
+- Returns `409` if volunteer is unavailable for the session
+- Returns `409` if volunteer is already assigned to another zone in the same session
+
+#### Bulk Create Assignments
+
+```
+POST /events/:eventId/assignments/bulk
+```
+
+```json
+{
+  "assignments": [
+    { "volunteerId": "clx...", "sessionId": "clx...", "zoneId": "clx..." },
+    { "volunteerId": "clx...", "sessionId": "clx...", "zoneId": "clx..." }
+  ]
+}
+```
+
+_Maximum 100 assignments per request. Validates all before creating any._
+
+#### List All Assignments
+
+```
+GET /events/:eventId/assignments
+```
+
+#### Get Assignments by Session
+
+```
+GET /events/:eventId/assignments/by-session/:sessionId
+```
+
+#### Get Assignments by Zone
+
+```
+GET /events/:eventId/assignments/by-zone/:zoneId
+```
+
+#### Delete Assignment
+
+```
+DELETE /events/:eventId/assignments/:assignmentId
+```
+
+---
+
+### Swap Requests
+
+Volunteers request assignment changes, admin approves or denies.
+
+#### Create Swap Request
+
+```
+POST /events/:eventId/swap-requests
+```
+
+```json
+{
+  "assignmentId": "clx...",
+  "reason": "Family emergency - need to leave early",
+  "suggestedVolunteerId": "clx..."
+}
+```
+
+| Field                | Required | Description                    |
+| -------------------- | -------- | ------------------------------ |
+| assignmentId         | Yes      | The assignment to swap         |
+| reason               | Yes      | Reason for the request         |
+| suggestedVolunteerId | No       | Optional replacement volunteer |
+
+**Validation:**
+
+- Only one pending request per assignment
+- Suggested volunteer must be available and not already assigned
+
+#### List Swap Requests
+
+```
+GET /events/:eventId/swap-requests
+GET /events/:eventId/swap-requests?status=PENDING
+```
+
+| Query Param | Options                         |
+| ----------- | ------------------------------- |
+| `status`    | `PENDING`, `APPROVED`, `DENIED` |
+
+#### Get Swap Request
+
+```
+GET /events/:eventId/swap-requests/:requestId
+```
+
+#### Approve Swap Request
+
+```
+PUT /events/:eventId/swap-requests/:requestId/approve
+```
+
+_Approving deletes the original assignment. Admin must manually reassign if needed._
+
+#### Deny Swap Request
+
+```
+PUT /events/:eventId/swap-requests/:requestId/deny
+```
+
+_Assignment remains unchanged._
+
+---
+
+### Schedule Views
+
+Admin views for schedule overview.
+
+#### Full Schedule Grid
+
+```
+GET /events/:eventId/schedule
+```
+
+Returns a sessions × zones matrix with all volunteer assignments:
+
+```json
+{
+  "eventId": "clx...",
+  "eventName": "Spring Circuit Assembly 2026",
+  "sessions": [
+    {
+      "session": { "id": "clx...", "name": "Morning Session", "...": "..." },
+      "zones": [
+        {
+          "zone": { "id": "clx...", "name": "East Lobby", "requiredCount": 2 },
+          "assignedCount": 2,
+          "isFilled": true,
+          "volunteers": [
+            {
+              "id": "clx...",
+              "name": "Manuel Smith",
+              "assignmentId": "clx..."
+            },
+            { "id": "clx...", "name": "Saul Loyal", "assignmentId": "clx..." }
+          ]
+        }
+      ],
+      "totalRequired": 11,
+      "totalAssigned": 8
+    }
+  ],
+  "overallSummary": {
+    "totalRequired": 22,
+    "totalAssigned": 14,
+    "fillPercentage": 64
+  }
+}
+```
+
+#### Schedule Summary
+
+```
+GET /events/:eventId/schedule/summary
+```
+
+Quick overview showing which sessions need coverage:
+
+```json
+{
+  "sessions": [
+    {
+      "session": { "id": "clx...", "name": "Morning Session", "...": "..." },
+      "totalRequired": 11,
+      "totalAssigned": 8,
+      "fillPercentage": 73,
+      "isFilled": false,
+      "zonesNeedingCoverage": [
+        { "zoneName": "West Lobby", "required": 2, "assigned": 1, "needed": 1 },
+        { "zoneName": "Auditorium", "required": 5, "assigned": 3, "needed": 2 }
+      ]
+    }
+  ]
+}
+```
+
+---
+
 ## Database Schema
 
 ```
@@ -403,6 +693,17 @@ sessions
 
 volunteer_availability
 ├── id, volunteerId, sessionId, isAvailable
+
+zones
+├── id, name, description, requiredCount, displayOrder, eventId
+
+assignments
+├── id, volunteerId, sessionId, zoneId, notes
+├── UNIQUE(volunteerId, sessionId)
+
+swap_requests
+├── id, assignmentId, reason, status, suggestedVolunteerId
+├── resolvedById, resolvedAt
 ```
 
 ---
@@ -429,11 +730,22 @@ volunteer_availability
 
 ### Protected Routes
 
-Include the token in the Authorization header:
+**Admin routes** - Include admin token:
 
 ```
-Authorization: Bearer <token>
+Authorization: Bearer <admin-token>
 ```
+
+**Volunteer routes** - Include volunteer token:
+
+```
+Authorization: Bearer <volunteer-token>
+```
+
+| Middleware         | Checks                             | Used For                         |
+| ------------------ | ---------------------------------- | -------------------------------- |
+| `requireAdmin`     | `type === "admin"`                 | All `/events/*` endpoints        |
+| `requireVolunteer` | `type === "volunteer"` + `eventId` | `/auth/volunteer/my-assignments` |
 
 ---
 
@@ -455,7 +767,7 @@ Authorization: Bearer <token>
 - [x] Phase 0: Project Setup
 - [x] Phase 1: Authentication & Event Foundation
 - [x] Phase 2: Volunteer Management & Sessions
-- [ ] Phase 3: Scheduling & Assignments
+- [x] Phase 3: Scheduling & Assignments
 - [ ] Phase 4: Check-In/Check-Out
 - [ ] Phase 5: Communication
 - [ ] Phase 6: Offline Sync
