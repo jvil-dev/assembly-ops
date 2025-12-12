@@ -130,6 +130,7 @@ model Assignment {
   volunteer    Volunteer     @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
   zone         Zone          @relation(fields: [zoneId], references: [id], onDelete: Cascade)
   swapRequests SwapRequest[]
+  checkIn      CheckIn?
 
   @@unique([volunteerId, sessionId])
   @@map("assignments")
@@ -150,6 +151,30 @@ model SwapRequest {
   suggestedVolunteer   Volunteer?        @relation("SuggestedSwap", fields: [suggestedVolunteerId], references: [id])
 
   @@map("swap_requests")
+}
+
+// Check-in records for assignment attendance tracking
+model CheckIn {
+  id           String        @id @default(cuid())
+  checkInTime  DateTime      @map("check_in_time")
+  checkOutTime DateTime?     @map("check_out_time")
+  status       CheckInStatus @default(CHECKED_IN)
+  isLate       Boolean       @default(false) @map("is_late")
+  notes        String?
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignmentId String     @unique @map("assignment_id")
+
+  @@map("check_ins")
+}
+
+enum CheckInStatus {
+  CHECKED_IN
+  CHECKED_OUT
+  MISSED
 }
 
 enum SwapRequestStatus {
