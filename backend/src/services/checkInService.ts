@@ -1,4 +1,4 @@
-import { prisma } from "../config/database";
+import { prisma } from "../config/database.js";
 import { CheckInStatus } from "../generated/prisma/client.js";
 
 // Grace period in minutes before marking as late

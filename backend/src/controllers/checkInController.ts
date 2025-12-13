@@ -10,8 +10,8 @@ import {
   getCheckInsByZone,
   getCheckInsBySession,
   getCheckInSummary,
-} from "../services/checkInService";
-import { CheckInStatus } from "../generated/prisma/enums";
+} from "../services/checkInService.js";
+import { CheckInStatus } from "../generated/prisma/enums.js";
 
 export async function handleVolunteerCheckIn(
   req: Request,

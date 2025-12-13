@@ -1,4 +1,4 @@
-import app from "./app";
+import app from "./app.js";
 import authRoutes from "./routes/authRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 
