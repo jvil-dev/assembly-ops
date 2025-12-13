@@ -2,7 +2,12 @@ import { Request, Response } from "express";
 import {
   volunteerCheckIn,
   getVolunteerStatus,
+  volunteerCheckOut,
+  adminCheckIn,
+  adminUpdateCheckIn,
+  adminDeleteCheckIn,
 } from "../services/checkInService";
+import { CheckInStatus } from "../generated/prisma/enums";
 
 export async function handleVolunteerCheckIn(
   req: Request,
@@ -60,6 +65,232 @@ export async function handleGetVolunteerStatus(
     res.status(200).json(status);
   } catch (error) {
     console.error("Get volunteer status error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleVolunteerCheckOut(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const volunteerId = req.volunteer!.id;
+
+    const result = await volunteerCheckOut(volunteerId);
+
+    res.status(200).json({
+      message: "Checked out successfully",
+      checkIn: result.checkIn,
+      assignment: result.assignment,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "NOT_CHECKED_IN") {
+        res.status(400).json({
+          error: "You are not currently checked in to any shift",
+        });
+        return;
+      }
+    }
+    console.error("Volunteer check-out error: ", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+const VALID_CHECK_IN_STATUSES: CheckInStatus[] = [
+  CheckInStatus.CHECKED_IN,
+  CheckInStatus.CHECKED_OUT,
+  CheckInStatus.MISSED,
+];
+
+export async function handleAdminCheckIn(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { eventId, assignmentId } = req.params;
+    const { checkInTime, isLate, notes } = req.body;
+    const adminId = req.admin!.id;
+
+    let parsedCheckInTime: Date | undefined;
+    if (checkInTime !== undefined) {
+      parsedCheckInTime = new Date(checkInTime);
+      if (isNaN(parsedCheckInTime.getTime())) {
+        res.status(400).json({
+          error: "Invalid checkInTime format",
+        });
+        return;
+      }
+    }
+
+    // Validate isLate if provided
+    if (isLate !== undefined && typeof isLate !== "boolean") {
+      res.status(400).json({
+        error: "isLate must be a boolean",
+      });
+      return;
+    }
+
+    const result = await adminCheckIn({
+      assignmentId: assignmentId!,
+      eventId: eventId!,
+      adminId,
+      ...(parsedCheckInTime !== undefined && {
+        checkInTime: parsedCheckInTime,
+      }),
+      ...(isLate !== undefined && { isLate }),
+      ...(notes !== undefined && { notes }),
+    });
+
+    res.status(201).json({
+      message: "Volunteer checked in successfully",
+      checkIn: result.checkIn,
+      assignment: result.assignment,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "EVENT_NOT_FOUND") {
+        res.status(404).json({
+          error: "Event not found",
+        });
+        return;
+      }
+      if (error.message === "ASSIGNMENT_NOT_FOUND") {
+        res.status(404).json({
+          error: "Assignment not found",
+        });
+        return;
+      }
+      if (error.message === "ALREADY_CHECKED_IN") {
+        res.status(409).json({
+          error: "Volunteer is already checked in for this assignment",
+        });
+        return;
+      }
+    }
+
+    console.error("Admin check-in error: ", error);
+    res.status(500).json({
+      error: "Internal server error",
+    });
+  }
+}
+
+export async function handleAdminUpdateCheckIn(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { eventId, assignmentId } = req.params;
+    const { status, checkOutTime, isLate, notes } = req.body;
+    const adminId = req.admin!.id;
+
+    // Validate status if provided
+    if (status !== undefined && !VALID_CHECK_IN_STATUSES.includes(status)) {
+      res.status(400).json({
+        error: `Invalid status. Must be one of: ${VALID_CHECK_IN_STATUSES.join(", ")}`,
+      });
+      return;
+    }
+
+    // Validate checkOutTime if provided
+    let parsedCheckOutTime: Date | undefined;
+    if (checkOutTime !== undefined) {
+      parsedCheckOutTime = new Date(checkOutTime);
+      if (isNaN(parsedCheckOutTime.getTime())) {
+        res.status(400).json({
+          error: "Invalid checkOutTime format",
+        });
+        return;
+      }
+    }
+
+    // Validate isLate if provided
+    if (isLate !== undefined && typeof isLate !== "boolean") {
+      res.status(400).json({ error: "isLate must be a boolean" });
+      return;
+    }
+
+    const result = await adminUpdateCheckIn({
+      assignmentId: assignmentId!,
+      eventId: eventId!,
+      adminId,
+      ...(status !== undefined && { status }),
+      ...(parsedCheckOutTime !== undefined && {
+        checkOutTime: parsedCheckOutTime,
+      }),
+      ...(isLate !== undefined && { isLate }),
+      ...(notes !== undefined && { notes }),
+    });
+
+    res.status(200).json({
+      message: "Check-in updated successfully",
+      checkIn: result.checkIn,
+      assignment: result.assignment,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "EVENT_NOT_FOUND") {
+        res.status(404).json({
+          error: "Event not found",
+        });
+        return;
+      }
+      if (error.message === "ASSIGNMENT_NOT_FOUND") {
+        res.status(404).json({ error: "Assignment not found" });
+        return;
+      }
+      if (error.message === "NO_CHECK_IN") {
+        res
+          .status(404)
+          .json({ error: "No check-in record exists for this assignment" });
+        return;
+      }
+      if (error.message === "NO_UPDATES") {
+        res.status(400).json({ error: "No fields to update" });
+        return;
+      }
+    }
+
+    console.error("Admin update check-in error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleAdminDeleteCheckIn(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { eventId, assignmentId } = req.params;
+    const adminId = req.admin!.id;
+
+    await adminDeleteCheckIn({
+      assignmentId: assignmentId!,
+      eventId: eventId!,
+      adminId,
+    });
+
+    res.status(200).json({ message: "Check-in record deleted successfully" });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "EVENT_NOT_FOUND") {
+        res.status(404).json({ error: "Event not found" });
+        return;
+      }
+      if (error.message === "ASSIGNMENT_NOT_FOUND") {
+        res.status(404).json({ error: "Assignment not found" });
+        return;
+      }
+      if (error.message === "NO_CHECK_IN") {
+        res
+          .status(404)
+          .json({ error: "No check-in record exists for this assignment" });
+        return;
+      }
+    }
+
+    console.error("Admin delete check-in error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
