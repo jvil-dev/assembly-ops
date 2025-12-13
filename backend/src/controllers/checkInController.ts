@@ -6,6 +6,10 @@ import {
   adminCheckIn,
   adminUpdateCheckIn,
   adminDeleteCheckIn,
+  getActiveCheckIns,
+  getCheckInsByZone,
+  getCheckInsBySession,
+  getCheckInSummary,
 } from "../services/checkInService";
 import { CheckInStatus } from "../generated/prisma/enums";
 
@@ -291,6 +295,120 @@ export async function handleAdminDeleteCheckIn(
     }
 
     console.error("Admin delete check-in error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleGetActiveCheckIns(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { eventId } = req.params;
+    const adminId = req.admin!.id;
+
+    const result = await getActiveCheckIns(eventId!, adminId);
+
+    res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof Error && error.message === "EVENT_NOT_FOUND") {
+      res.status(404).json({ error: "Event not found" });
+      return;
+    }
+
+    console.error("Get active check-ins error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleGetCheckInsByZone(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { eventId, zoneId } = req.params;
+    const adminId = req.admin!.id;
+
+    const result = await getCheckInsByZone(zoneId!, eventId!, adminId);
+
+    res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "EVENT_NOT_FOUND") {
+        res.status(404).json({ error: "Event not found" });
+        return;
+      }
+      if (error.message === "ZONE_NOT_FOUND") {
+        res.status(404).json({ error: "Zone not found" });
+        return;
+      }
+    }
+
+    console.error("Get check-ins by zone error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleGetCheckInsBySession(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { eventId, sessionId } = req.params;
+    const adminId = req.admin!.id;
+
+    const result = await getCheckInsBySession(sessionId!, eventId!, adminId);
+
+    res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "EVENT_NOT_FOUND") {
+        res.status(404).json({ error: "Event not found" });
+        return;
+      }
+      if (error.message === "SESSION_NOT_FOUND") {
+        res.status(404).json({ error: "Session not found" });
+        return;
+      }
+    }
+
+    console.error("Get check-ins by session error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleGetCheckInSummary(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { eventId } = req.params;
+    const { sessionId, date } = req.query;
+    const adminId = req.admin!.id;
+
+    // Parse date if provided
+    let parsedDate: Date | undefined;
+    if (date) {
+      parsedDate = new Date(date as string);
+      if (isNaN(parsedDate.getTime())) {
+        res.status(400).json({ error: "Invalid date format" });
+        return;
+      }
+    }
+
+    const result = await getCheckInSummary(eventId!, adminId, {
+      ...(sessionId && { sessionId: sessionId as string }),
+      ...(parsedDate && { date: parsedDate }),
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof Error && error.message === "EVENT_NOT_FOUND") {
+      res.status(404).json({ error: "Event not found" });
+      return;
+    }
+
+    console.error("Get check-in summary error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }

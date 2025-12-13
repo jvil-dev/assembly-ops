@@ -547,3 +547,453 @@ export async function adminDeleteCheckIn(input: AdminDeleteCheckInInput) {
 
   return { deleted: true };
 }
+
+export async function getActiveCheckIns(eventId: string, adminId: string) {
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      createdById: adminId,
+    },
+  });
+
+  if (!event) {
+    throw new Error("EVENT_NOT_FOUND");
+  }
+
+  const activeCheckIns = await prisma.checkIn.findMany({
+    where: {
+      status: CheckInStatus.CHECKED_IN,
+      assignment: {
+        session: { eventId },
+      },
+    },
+    include: {
+      assignment: {
+        include: {
+          volunteer: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              generatedId: true,
+            },
+          },
+          zone: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          session: {
+            select: {
+              id: true,
+              name: true,
+              startTime: true,
+              endTime: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      checkInTime: "desc",
+    },
+  });
+
+  return {
+    activeCount: activeCheckIns.length,
+    checkIns: activeCheckIns.map((checkIn) => ({
+      id: checkIn.id,
+      checkInTime: checkIn.checkInTime,
+      isLate: checkIn.isLate,
+      volunteer: checkIn.assignment.volunteer,
+      zone: checkIn.assignment.zone,
+      session: checkIn.assignment.session,
+    })),
+  };
+}
+
+export async function getCheckInsByZone(
+  zoneId: string,
+  eventId: string,
+  adminId: string
+) {
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      createdById: adminId,
+    },
+  });
+
+  if (!event) {
+    throw new Error("EVENT_NOT_FOUND");
+  }
+
+  const zone = await prisma.zone.findFirst({
+    where: {
+      id: zoneId,
+      eventId,
+    },
+  });
+
+  if (!zone) {
+    throw new Error("ZONE_NOT_FOUND");
+  }
+
+  const activeCheckIns = await prisma.checkIn.findMany({
+    where: {
+      status: CheckInStatus.CHECKED_IN,
+      assignment: {
+        zoneId,
+      },
+    },
+    include: {
+      assignment: {
+        include: {
+          volunteer: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              generatedId: true,
+            },
+          },
+          session: {
+            select: {
+              id: true,
+              name: true,
+              startTime: true,
+              endTime: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      checkInTime: "asc",
+    },
+  });
+
+  return {
+    zone: {
+      id: zone.id,
+      name: zone.name,
+      requiredCount: zone.requiredCount,
+    },
+    activeCount: activeCheckIns.length,
+    isFilled: activeCheckIns.length >= zone.requiredCount,
+    checkIns: activeCheckIns.map((checkIn) => ({
+      id: checkIn.id,
+      checkInTime: checkIn.checkInTime,
+      isLate: checkIn.isLate,
+      volunteer: checkIn.assignment.volunteer,
+      session: checkIn.assignment.session,
+    })),
+  };
+}
+
+export async function getCheckInsBySession(
+  sessionId: string,
+  eventId: string,
+  adminId: string
+) {
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      createdById: adminId,
+    },
+  });
+
+  if (!event) {
+    throw new Error("EVENT_NOT_FOUND");
+  }
+
+  const session = await prisma.session.findFirst({
+    where: {
+      id: sessionId,
+      eventId,
+    },
+  });
+
+  if (!session) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  const assignments = await prisma.assignment.findMany({
+    where: {
+      sessionId,
+    },
+    include: {
+      volunteer: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          generatedId: true,
+        },
+      },
+      zone: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      checkIn: true,
+    },
+    orderBy: [
+      { zone: { displayOrder: "asc" } },
+      { volunteer: { name: "asc" } },
+    ],
+  });
+
+  // Calculate stats
+  const stats = {
+    total: assignments.length,
+    checkedIn: 0,
+    checkedOut: 0,
+    missed: 0,
+    pending: 0,
+    late: 0,
+  };
+
+  const assignmentDetails = assignments.map((assignment) => {
+    const checkIn = assignment.checkIn;
+    let status: string;
+
+    if (!checkIn) {
+      status = "PENDING";
+      stats.pending++;
+    } else {
+      status = checkIn.status;
+      if (checkIn.status === CheckInStatus.CHECKED_IN) stats.checkedIn++;
+      else if (checkIn.status === CheckInStatus.CHECKED_OUT) stats.checkedOut++;
+      else if (checkIn.status === CheckInStatus.MISSED) stats.missed++;
+
+      if (checkIn.isLate) stats.late++;
+    }
+
+    return {
+      assignmentId: assignment.id,
+      volunteer: assignment.volunteer,
+      zone: assignment.zone,
+      status,
+      checkIn: checkIn
+        ? {
+            id: checkIn.id,
+            checkInTime: checkIn.checkInTime,
+            checkOutTime: checkIn.checkOutTime,
+            isLate: checkIn.isLate,
+          }
+        : null,
+    };
+  });
+
+  return {
+    session: {
+      id: session.id,
+      name: session.name,
+      date: session.date,
+      startTime: session.startTime,
+      endTime: session.endTime,
+    },
+    stats,
+    assignments: assignmentDetails,
+  };
+}
+
+interface SummaryFilters {
+  sessionId?: string;
+  date?: Date;
+}
+
+export async function getCheckInSummary(
+  eventId: string,
+  adminId: string,
+  filters: SummaryFilters = {}
+) {
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      createdById: adminId,
+    },
+  });
+
+  if (!event) {
+    throw new Error("EVENT_NOT_FOUND");
+  }
+
+  const assignmentFilter: Record<string, unknown> = {
+    session: { eventId },
+  };
+
+  if (filters.sessionId) {
+    assignmentFilter.sessionId = filters.sessionId;
+  }
+
+  if (filters.sessionId) {
+    assignmentFilter.sessionId = filters.sessionId;
+  }
+
+  if (filters.date) {
+    const startOfDay = new Date(filters.date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(filters.date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    assignmentFilter.session = {
+      ...(assignmentFilter.session as object),
+      date: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
+    };
+  }
+
+  const assignments = await prisma.assignment.findMany({
+    where: assignmentFilter,
+    include: {
+      checkIn: true,
+      session: {
+        select: {
+          id: true,
+          name: true,
+          date: true,
+          endTime: true,
+        },
+      },
+      zone: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      volunteer: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  const now = new Date();
+
+  const summary = {
+    totalAssignments: assignments.length,
+    completed: 0,
+    checkedIn: 0,
+    missed: 0,
+    pending: 0,
+    lateArrivals: 0,
+  };
+
+  const zoneStats: Record<
+    string,
+    {
+      zoneName: string;
+      total: number;
+      completed: number;
+      checkedIn: number;
+      missed: number;
+      pending: number;
+    }
+  > = {};
+
+  const lateArrivals: Array<{
+    volunteer: { id: string; name: string };
+    zone: { id: string; name: string };
+    session: { id: string; name: string };
+    checkInTime: Date;
+  }> = [];
+
+  const missedShifts: Array<{
+    volunteer: { id: string; name: string };
+    zone: { id: string; name: string };
+    session: { id: string; name: string };
+  }> = [];
+
+  for (const assignment of assignments) {
+    const zoneId = assignment.zone.id;
+
+    if (!zoneStats[zoneId]) {
+      zoneStats[zoneId] = {
+        zoneName: assignment.zone.name,
+        total: 0,
+        completed: 0,
+        checkedIn: 0,
+        missed: 0,
+        pending: 0,
+      };
+    }
+    zoneStats[zoneId].total++;
+
+    const checkIn = assignment.checkIn;
+    const sessionEnded = assignment.session.endTime < now;
+
+    if (!checkIn) {
+      if (sessionEnded) {
+        summary.missed++;
+        zoneStats[zoneId].missed++;
+        missedShifts.push({
+          volunteer: assignment.volunteer,
+          zone: assignment.zone,
+          session: { id: assignment.session.id, name: assignment.session.name },
+        });
+      } else {
+        summary.pending++;
+        zoneStats[zoneId].pending++;
+      }
+    } else if (checkIn.status === CheckInStatus.CHECKED_OUT) {
+      summary.completed++;
+      zoneStats[zoneId].completed++;
+      if (checkIn.isLate) {
+        summary.lateArrivals++;
+        lateArrivals.push({
+          volunteer: assignment.volunteer,
+          zone: assignment.zone,
+          session: { id: assignment.zone.id, name: assignment.session.name },
+          checkInTime: checkIn.checkInTime,
+        });
+      }
+    } else if (checkIn.status === CheckInStatus.CHECKED_IN) {
+      summary.checkedIn++;
+      zoneStats[zoneId].checkedIn++;
+      if (checkIn.isLate) {
+        summary.lateArrivals++;
+        lateArrivals.push({
+          volunteer: assignment.volunteer,
+          zone: assignment.zone,
+          session: { id: assignment.session.id, name: assignment.session.name },
+          checkInTime: checkIn.checkInTime,
+        });
+      }
+    } else if (checkIn.status === CheckInStatus.MISSED) {
+      summary.missed++;
+      zoneStats[zoneId].missed++;
+      missedShifts.push({
+        volunteer: assignment.volunteer,
+        zone: assignment.zone,
+        session: { id: assignment.session.id, name: assignment.session.name },
+      });
+    }
+  }
+
+  const completedOrCheckedIn = summary.completed + summary.checkedIn;
+  const completionRate =
+    summary.totalAssignments > 0
+      ? Math.round((completedOrCheckedIn / summary.totalAssignments) * 100)
+      : 0;
+
+  return {
+    summary: {
+      ...summary,
+      completionRate,
+    },
+    byZone: Object.entries(zoneStats).map(([zoneId, stats]) => ({
+      zoneId,
+      ...stats,
+    })),
+    lateArrivals,
+    missedShifts,
+  };
+}
