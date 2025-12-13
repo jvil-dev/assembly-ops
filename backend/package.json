@@ -17,7 +17,10 @@
     "docker:build": "docker build -t assemblyops-backend .",
     "docker:prod": "docker compose -f ../docker-compose.yml up --build -d",
     "docker:prod:down": "docker compose -f ../docker-compose.yml down",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "dotenv -e .env.test -- node --experimental-vm-modules node_modules/.bin/jest",
+    "test:watch": "dotenv -e .env.test -- node --experimental-vm-modules node_modules/.bin/jest --watch",
+    "test:coverage": "dotenv -e .env.test -- node --experimental-vm-modules node_modules/.bin/jest --coverage",
+    "test:ci": "dotenv -e .env.test -- node --experimental-vm-modules node_modules/.bin/jest --ci --coverage --reporters=default"
   },
   "keywords": [
     "AssemblyOps",
@@ -43,16 +46,21 @@
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.10.1",
+    "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.47.0",
     "@typescript-eslint/parser": "^8.47.0",
     "dotenv-cli": "^11.0.0",
     "eslint": "^9.39.1",
+    "jest": "^30.2.0",
     "nodemon": "^3.1.11",
     "prettier": "3.7.4",
     "prettier-plugin-prisma": "^5.0.0",
     "prisma": "^7.1.0",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.6",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
