@@ -27,3 +27,4 @@ app.use("/auth", authRoutes);
 app.use("/events", eventRoutes);
 
 export default app;
+//CI test
