@@ -20,7 +20,11 @@
     "test": "dotenv -e .env.test -- node --experimental-vm-modules node_modules/.bin/jest",
     "test:watch": "dotenv -e .env.test -- node --experimental-vm-modules node_modules/.bin/jest --watch",
     "test:coverage": "dotenv -e .env.test -- node --experimental-vm-modules node_modules/.bin/jest --coverage",
-    "test:ci": "dotenv -e .env.test -- node --experimental-vm-modules node_modules/.bin/jest --ci --coverage --reporters=default"
+    "test:ci": "dotenv -e .env.test -- node --experimental-vm-modules node_modules/.bin/jest --ci --coverage --reporters=default",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "type-check": "tsc --noEmit",
+    "ci": "npm run lint && npm run type-check && npm run test:ci"
   },
   "keywords": [
     "AssemblyOps",
@@ -50,10 +54,10 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.10.1",
     "@types/supertest": "^6.0.3",
-    "@typescript-eslint/eslint-plugin": "^8.47.0",
-    "@typescript-eslint/parser": "^8.47.0",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
     "dotenv-cli": "^11.0.0",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "jest": "^30.2.0",
     "nodemon": "^3.1.11",
     "prettier": "3.7.4",

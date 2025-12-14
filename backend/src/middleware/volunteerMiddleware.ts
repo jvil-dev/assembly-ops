@@ -60,7 +60,7 @@ export async function requireVolunteer(
     };
 
     next();
-  } catch (error) {
+  } catch (_error) {
     res.status(401).json({ error: "Invalid or required token" });
   }
 }
