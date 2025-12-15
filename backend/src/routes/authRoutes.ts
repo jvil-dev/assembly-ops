@@ -15,7 +15,11 @@ import {
 import { requireAdmin } from "../middleware/authMiddleware.js";
 import { requireVolunteer } from "../middleware/volunteerMiddleware.js";
 import { handleGetMyAssignments } from "../controllers/scheduleController.js";
-
+import {
+  handleGetVolunteerInbox,
+  handleGetUnreadCount,
+  handleMarkAsRead,
+} from "../controllers/messageController.js";
 const router = Router();
 
 // Admin routes
@@ -33,5 +37,18 @@ router.get(
 router.get("/volunteer/my-status", requireVolunteer, handleGetVolunteerStatus);
 router.post("/volunteer/check-in", requireVolunteer, handleVolunteerCheckIn);
 router.post("/volunteer/check-out", requireVolunteer, handleVolunteerCheckOut);
+
+// Volunteer message routes
+router.get("/volunteer/messages", requireVolunteer, handleGetVolunteerInbox);
+router.get(
+  "/volunteer/messages/unread-count",
+  requireVolunteer,
+  handleGetUnreadCount
+);
+router.put(
+  "/volunteer/messages/:messageId/read",
+  requireVolunteer,
+  handleMarkAsRead
+);
 
 export default router;

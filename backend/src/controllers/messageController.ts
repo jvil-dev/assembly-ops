@@ -3,6 +3,10 @@ import {
   sendMessage,
   getMessagesByEvent,
   getMessageById,
+  getVolunteerInbox,
+  getUnreadCount,
+  markMessageAsRead,
+  getMessageReceipts,
 } from "../services/messageService.js";
 import { MessagePriority, RecipientType } from "../generated/prisma/client.js";
 
@@ -184,6 +188,115 @@ export async function handleGetMessage(
     }
 
     console.error("Get message error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleGetVolunteerInbox(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const volunteerId = req.volunteer!.id;
+    const eventId = req.volunteer!.eventId;
+
+    if (!eventId) {
+      res.status(400).json({ error: "Volunteer token missing eventId" });
+      return;
+    }
+
+    const unreadOnly = req.query.unreadOnly === "true";
+
+    const messages = await getVolunteerInbox(volunteerId, eventId, {
+      unreadOnly,
+    });
+
+    res.status(200).json({ messages });
+  } catch (error) {
+    console.error("Get volunteer inbox error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleGetUnreadCount(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const volunteerId = req.volunteer!.id;
+    const eventId = req.volunteer!.eventId;
+
+    if (!eventId) {
+      res.status(400).json({ error: "Volunteer token missing eventId" });
+      return;
+    }
+
+    const result = await getUnreadCount(volunteerId, eventId);
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Get unread count error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleMarkAsRead(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { messageId } = req.params;
+    const volunteerId = req.volunteer!.id;
+    const eventId = req.volunteer!.eventId;
+
+    if (!eventId) {
+      res.status(400).json({ error: "Volunteer token missing eventId" });
+      return;
+    }
+
+    const result = await markMessageAsRead(messageId!, volunteerId, eventId);
+
+    res.status(200).json({
+      message: result.alreadyRead
+        ? "Message was already read"
+        : "Message marked as read",
+      readAt: result.readAt,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "MESSAGE_NOT_FOUND") {
+      res.status(404).json({ error: "Message not found" });
+      return;
+    }
+
+    console.error("Mark as read error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleGetReceipts(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { eventId, messageId } = req.params;
+    const adminId = req.admin!.id;
+
+    const receipts = await getMessageReceipts(messageId!, eventId!, adminId);
+
+    res.status(200).json(receipts);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "EVENT_NOT_FOUND") {
+        res.status(404).json({ error: "Event not found" });
+        return;
+      }
+      if (error.message === "MESSAGE_NOT_FOUND") {
+        res.status(404).json({ error: "Message not found" });
+        return;
+      }
+    }
+
+    console.error("Get receipts error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }

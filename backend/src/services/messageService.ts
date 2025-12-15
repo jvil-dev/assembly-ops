@@ -130,9 +130,9 @@ export async function sendMessage(input: SendMessageInput, adminId: string) {
       eventId,
       senderAdminId: adminId,
       targetVolunteerId:
-        recipientType === "INDIVIDUAL" ? targetVolunteerId ?? null : null,
-      targetZoneId: recipientType === "ZONE" ? targetZoneId ?? null : null,
-      targetRoleId: recipientType === "ROLE" ? targetRoleId ?? null : null,
+        recipientType === "INDIVIDUAL" ? (targetVolunteerId ?? null) : null,
+      targetZoneId: recipientType === "ZONE" ? (targetZoneId ?? null) : null,
+      targetRoleId: recipientType === "ROLE" ? (targetRoleId ?? null) : null,
       recipients: {
         create: recipientVolunteerIds.map((volunteerId) => ({
           volunteerId,
@@ -305,5 +305,205 @@ export async function getMessageById(
     ...message,
     recipientCount: message.recipients.length,
     readCount,
+  };
+}
+
+export async function getVolunteerInbox(
+  volunteerId: string,
+  eventId: string,
+  options: { unreadOnly?: boolean } = {}
+) {
+  const { unreadOnly = false } = options;
+
+  // Build where clause for recipient records
+  const whereClause: Record<string, unknown> = {
+    volunteerId,
+    message: {
+      eventId,
+    },
+  };
+
+  if (unreadOnly) {
+    whereClause.readAt = null;
+  }
+
+  const recipients = await prisma.messageRecipient.findMany({
+    where: whereClause,
+    include: {
+      message: {
+        include: {
+          senderAdmin: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          senderVolunteer: {
+            select: {
+              id: true,
+              name: true,
+              generatedId: true,
+            },
+          },
+          targetZone: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          targetRole: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Transform to inbox format
+  const messages = recipients.map((r) => ({
+    id: r.message.id,
+    content: r.message.content,
+    priority: r.message.priority,
+    recipientType: r.message.recipientType,
+    createdAt: r.message.createdAt,
+    readAt: r.readAt,
+    isRead: r.readAt !== null,
+    sender: r.message.senderAdmin
+      ? { type: "admin" as const, name: r.message.senderAdmin.name }
+      : r.message.senderVolunteer
+        ? { type: "volunteer" as const, name: r.message.senderVolunteer.name }
+        : null,
+    targetZone: r.message.targetZone,
+    targetRole: r.message.targetRole,
+  }));
+
+  return messages;
+}
+
+export async function getUnreadCount(volunteerId: string, eventId: string) {
+  const count = await prisma.messageRecipient.count({
+    where: {
+      volunteerId,
+      readAt: null,
+      message: {
+        eventId,
+      },
+    },
+  });
+
+  return { unreadCount: count };
+}
+
+export async function markMessageAsRead(
+  messageId: string,
+  volunteerId: string,
+  eventId: string
+) {
+  // Find the recipient record
+  const recipient = await prisma.messageRecipient.findFirst({
+    where: {
+      messageId,
+      volunteerId,
+      message: {
+        eventId,
+      },
+    },
+  });
+
+  if (!recipient) {
+    throw new Error("MESSAGE_NOT_FOUND");
+  }
+
+  // Already read - return success without updating
+  if (recipient.readAt !== null) {
+    return { alreadyRead: true, readAt: recipient.readAt };
+  }
+
+  // Mark as read
+  const updated = await prisma.messageRecipient.update({
+    where: { id: recipient.id },
+    data: { readAt: new Date() },
+  });
+
+  return { alreadyRead: false, readAt: updated.readAt };
+}
+
+export async function getMessageReceipts(
+  messageId: string,
+  eventId: string,
+  adminId: string
+) {
+  // Verify admin owns the event
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      createdById: adminId,
+    },
+  });
+
+  if (!event) {
+    throw new Error("EVENT_NOT_FOUND");
+  }
+
+  // Verify message exists in this event
+  const message = await prisma.message.findFirst({
+    where: {
+      id: messageId,
+      eventId,
+    },
+    select: {
+      id: true,
+      content: true,
+      priority: true,
+      recipientType: true,
+      createdAt: true,
+    },
+  });
+
+  if (!message) {
+    throw new Error("MESSAGE_NOT_FOUND");
+  }
+
+  // Get all recipients with read status
+  const recipients = await prisma.messageRecipient.findMany({
+    where: { messageId },
+    include: {
+      volunteer: {
+        select: {
+          id: true,
+          name: true,
+          generatedId: true,
+          role: {
+            select: { id: true, name: true },
+          },
+        },
+      },
+    },
+    orderBy: [
+      { readAt: { sort: "asc", nulls: "last" } },
+      { volunteer: { name: "asc" } },
+    ],
+  });
+
+  const readRecipients = recipients.filter((r) => r.readAt !== null);
+  const unreadRecipients = recipients.filter((r) => r.readAt === null);
+
+  return {
+    message,
+    totalRecipients: recipients.length,
+    readCount: readRecipients.length,
+    unreadCount: unreadRecipients.length,
+    recipients: recipients.map((r) => ({
+      volunteerId: r.volunteer.id,
+      volunteerName: r.volunteer.name,
+      generatedId: r.volunteer.generatedId,
+      role: r.volunteer.role,
+      readAt: r.readAt,
+      isRead: r.readAt !== null,
+    })),
   };
 }
