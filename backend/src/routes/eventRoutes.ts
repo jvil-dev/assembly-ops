@@ -15,6 +15,7 @@ import assignmentRoutes from "./assignmentRoutes.js";
 import swapRequestRoutes from "./swapRequestRoutes.js";
 import scheduleRoutes from "./scheduleRoutes.js";
 import checkInRoutes from "./checkInRoutes.js";
+import messageRoutes from "./messageRoutes.js";
 
 const router = Router();
 
@@ -35,5 +36,6 @@ router.use("/:eventId/assignments", assignmentRoutes);
 router.use("/:eventId/swap-requests", swapRequestRoutes);
 router.use("/:eventId/schedule", scheduleRoutes);
 router.use("/:eventId/check-ins", checkInRoutes);
+router.use("/:eventId/messages", messageRoutes);
 
 export default router;

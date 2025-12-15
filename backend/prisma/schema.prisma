@@ -7,6 +7,10 @@ datasource db {
   provider = "postgresql"
 }
 
+// ============================================================================
+// ADMIN
+// ============================================================================
+
 model Admin {
   id                   String        @id @default(cuid())
   email                String        @unique
@@ -17,9 +21,14 @@ model Admin {
   updatedAt            DateTime      @updatedAt @map("updated_at")
   events               Event[]
   resolvedSwapRequests SwapRequest[]
+  sentMessages         Message[]     @relation("AdminSentMessages")
 
   @@map("admins")
 }
+
+// ============================================================================
+// EVENT
+// ============================================================================
 
 model Event {
   id          String      @id @default(cuid())
@@ -36,55 +45,22 @@ model Event {
   sessions    Session[]
   volunteers  Volunteer[]
   zones       Zone[]
+  messages    Message[]
 
   @@map("events")
 }
 
-model Volunteer {
-  id             String                  @id @default(cuid())
-  name           String
-  phone          String?
-  email          String?
-  congregation   String
-  appointment    VolunteerAppointment    @default(PUBLISHER)
-  generatedId    String                  @unique @map("generated_id")
-  loginToken     String                  @map("login_token")
-  createdAt      DateTime                @default(now()) @map("created_at")
-  updatedAt      DateTime                @updatedAt @map("updated_at")
-  eventId        String                  @map("event_id")
-  roleId         String?
-  assignments    Assignment[]
-  suggestedSwaps SwapRequest[]           @relation("SuggestedSwap")
-  availability   VolunteerAvailability[]
-  event          Event                   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  role           Role?                   @relation(fields: [roleId], references: [id])
-
-  @@map("volunteers")
+enum EventType {
+  CIRCUIT_ASSEMBLY
+  REGIONAL_CONVENTION
 }
 
-model VolunteerAvailability {
-  id          String    @id @default(cuid())
-  isAvailable Boolean   @default(true) @map("is_available")
-  volunteerId String    @map("volunteer_id")
-  sessionId   String    @map("session_id")
-  session     Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
-
-  @@unique([volunteerId, sessionId])
-  @@map("volunteer_availability")
-}
-
-model Role {
-  id           String      @id @default(cuid())
-  name         String
-  displayOrder Int         @default(0) @map("display_order")
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @updatedAt @map("updated_at")
-  eventId      String      @map("event_id")
-  event        Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  volunteers   Volunteer[]
-
-  @@map("roles")
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ACTIVE
+  COMPLETED
+  CANCELLED
 }
 
 model Session {
@@ -103,20 +79,69 @@ model Session {
   @@map("sessions")
 }
 
-model Zone {
-  id            String       @id @default(cuid())
-  name          String
-  description   String?
-  requiredCount Int          @default(1) @map("required_count")
-  displayOrder  Int          @default(0) @map("display_order")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
-  eventId       String       @map("event_id")
-  assignments   Assignment[]
-  event         Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+// ============================================================================
+// VOLUNTEERS
+// ============================================================================
+model Volunteer {
+  id                String                  @id @default(cuid())
+  name              String
+  phone             String?
+  email             String?
+  congregation      String
+  appointment       VolunteerAppointment    @default(PUBLISHER)
+  generatedId       String                  @unique @map("generated_id")
+  loginToken        String                  @map("login_token")
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @updatedAt @map("updated_at")
+  eventId           String                  @map("event_id")
+  roleId            String?
+  assignments       Assignment[]
+  suggestedSwaps    SwapRequest[]           @relation("SuggestedSwap")
+  availability      VolunteerAvailability[]
+  event             Event                   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  role              Role?                   @relation(fields: [roleId], references: [id])
+  sentMessages      Message[]               @relation("VolunteerSentMessages")
+  receivedMessages  Message[]               @relation("ReceivedDirectMessages")
+  messageRecipients MessageRecipient[]
 
-  @@map("zone")
+  @@map("volunteers")
 }
+
+model VolunteerAvailability {
+  id          String    @id @default(cuid())
+  isAvailable Boolean   @default(true) @map("is_available")
+  volunteerId String    @map("volunteer_id")
+  sessionId   String    @map("session_id")
+  session     Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@unique([volunteerId, sessionId])
+  @@map("volunteer_availability")
+}
+
+model Role {
+  id               String      @id @default(cuid())
+  name             String
+  displayOrder     Int         @default(0) @map("display_order")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  eventId          String      @map("event_id")
+  event            Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  volunteers       Volunteer[]
+  targetedMessages Message[]
+
+  @@map("roles")
+}
+
+enum VolunteerAppointment {
+  PUBLISHER
+  MINISTERIAL_SERVANT
+  ELDER
+}
+
+// ============================================================================
+// ASSIGNMENTS
+// ============================================================================
 
 model Assignment {
   id           String        @id @default(cuid())
@@ -136,6 +161,22 @@ model Assignment {
   @@map("assignments")
 }
 
+model Zone {
+  id               String       @id @default(cuid())
+  name             String
+  description      String?
+  requiredCount    Int          @default(1) @map("required_count")
+  displayOrder     Int          @default(0) @map("display_order")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+  eventId          String       @map("event_id")
+  assignments      Assignment[]
+  event            Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  targetedMessages Message[]
+
+  @@map("zone")
+}
+
 model SwapRequest {
   id                   String            @id @default(cuid())
   reason               String
@@ -151,6 +192,12 @@ model SwapRequest {
   suggestedVolunteer   Volunteer?        @relation("SuggestedSwap", fields: [suggestedVolunteerId], references: [id])
 
   @@map("swap_requests")
+}
+
+enum SwapRequestStatus {
+  PENDING
+  APPROVED
+  DENIED
 }
 
 // Check-in records for assignment attendance tracking
@@ -177,27 +224,70 @@ enum CheckInStatus {
   MISSED
 }
 
-enum SwapRequestStatus {
-  PENDING
-  APPROVED
-  DENIED
+// ============================================================================
+// MESSAGING
+// ============================================================================
+
+// Messages sent withing an event
+model Message {
+  id            String          @id @default(cuid())
+  content       String
+  priority      MessagePriority @default(NORMAL)
+  recipientType RecipientType
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String @map("event_id")
+
+  // Sender can be admin or volunteer
+  senderAdmin   Admin?  @relation("AdminSentMessages", fields: [senderAdminId], references: [id])
+  senderAdminId String? @map("sender_admin_id")
+
+  senderVolunteer   Volunteer? @relation("VolunteerSentMessages", fields: [senderVolunteerId], references: [id])
+  senderVolunteerId String?    @map("sender_volunteer_id")
+
+  // Target for non-broadcast messages
+  targetVolunteer   Volunteer? @relation("ReceivedDirectMessages", fields: [targetVolunteerId], references: [id])
+  targetVolunteerId String?    @map("target_volunteer_id")
+
+  targetZone   Zone?   @relation(fields: [targetZoneId], references: [id])
+  targetZoneId String? @map("target_zone_id")
+
+  targetRole   Role?   @relation(fields: [targetRoleId], references: [id])
+  targetRoleId String? @map("target_role_id")
+
+  // Recipients (one per volunteer who recieves this message)
+  recipients MessageRecipient[]
+
+  @@map("messages")
 }
 
-enum EventType {
-  CIRCUIT_ASSEMBLY
-  REGIONAL_CONVENTION
+// Tracks message delivery and read status per recipient
+model MessageRecipient {
+  id        String    @id @default(cuid())
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String  @map("message_id")
+
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  volunteerId String    @map("volunteer_id")
+
+  @@unique([messageId, volunteerId])
+  @@map("message_recepientes")
 }
 
-enum EventStatus {
-  DRAFT
-  PUBLISHED
-  ACTIVE
-  COMPLETED
-  CANCELLED
+enum MessagePriority {
+  NORMAL
+  URGENT
 }
 
-enum VolunteerAppointment {
-  PUBLISHER
-  MINISTERIAL_SERVANT
-  ELDER
+enum RecipientType {
+  INDIVIDUAL
+  ZONE
+  ROLE
+  BROADCAST
 }
