@@ -4,54 +4,89 @@ Node.js/Express API for the AssemblyOps volunteer management system.
 
 ## Tech Stack
 
-- **Runtime:** Node.js 18+
+- **Runtime:** Node.js 20 (Alpine)
 - **Framework:** Express.js
 - **Language:** TypeScript (ESM)
-- **Database:** PostgreSQL (Supabase)
+- **Database:** PostgreSQL 16 (Supabase or Docker)
 - **ORM:** Prisma 7
 - **Auth:** JWT with bcrypt password hashing
+- **Testing:** Jest, Supertest
+- **CI/CD:** GitHub Actions
+- **Container:** Docker with multi-stage builds
 
-## Setup
+## Quick Start
 
-### Prerequisites
-
-- Node.js 18+
-- npm
-- Supabase account (free tier)
-
-### Installation
+### Option 1: Docker (Recommended)
 
 ```bash
-cd backend
+# Start development environment (backend + PostgreSQL)
+npm run docker:dev
+
+# Stop environment
+npm run docker:dev:down
+```
+
+### Option 2: Local Development
+
+```bash
+# Install dependencies
 npm install
-```
 
-### Environment Variables
+# Configure environment
+cp .env.example .env
+# Edit .env with your database URL
 
-Create a `.env` file:
+# Run database migrations
+npm run prisma:migrate
 
-```env
-NODE_ENV=development
-PORT=3000
-DATABASE_URL="postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres"
-JWT_SECRET="your-secret-key"
-JWT_EXPIRES_IN="7d"
-```
-
-### Database Setup
-
-```bash
-npx prisma generate
-npx prisma migrate dev
-```
-
-### Run Development Server
-
-```bash
+# Start development server
 npm run dev
 ```
 
 Server runs at `http://localhost:3000`
+
+---
+
+## Environment Variables
+
+```env
+# Server
+NODE_ENV=development
+PORT=3000
+
+# Database (Docker)
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/assemblyops"
+
+# Database (Supabase)
+# DATABASE_URL="postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres"
+
+# JWT
+JWT_SECRET="your-secret-key-change-in-production"
+JWT_EXPIRES_IN="7d"
+```
+
+---
+
+## Scripts
+
+| Script            | Command                   | Description                        |
+| ----------------- | ------------------------- | ---------------------------------- |
+| `dev`             | `npm run dev`             | Development server with hot reload |
+| `build`           | `npm run build`           | Compile TypeScript                 |
+| `start`           | `npm start`               | Run production server              |
+| `test`            | `npm test`                | Run all tests                      |
+| `test:watch`      | `npm run test:watch`      | Tests in watch mode                |
+| `test:coverage`   | `npm run test:coverage`   | Tests with coverage report         |
+| `lint`            | `npm run lint`            | Run ESLint                         |
+| `lint:fix`        | `npm run lint:fix`        | Fix ESLint issues                  |
+| `type-check`      | `npm run type-check`      | TypeScript validation              |
+| `docker:dev`      | `npm run docker:dev`      | Start Docker dev environment       |
+| `docker:dev:down` | `npm run docker:dev:down` | Stop Docker dev environment        |
+| `docker:build`    | `npm run docker:build`    | Build production Docker image      |
+| `docker:prod`     | `npm run docker:prod`     | Start production environment       |
+| `prisma:generate` | `npm run prisma:generate` | Generate Prisma client             |
+| `prisma:migrate`  | `npm run prisma:migrate`  | Run migrations (dev)               |
+| `prisma:studio`   | `npm run prisma:studio`   | Visual database browser            |
 
 ---
 
@@ -114,33 +149,46 @@ GET /auth/volunteer/my-assignments
 Authorization: Bearer <volunteer-token>
 ```
 
-Response:
+#### Volunteer Check-In
+
+```
+POST /auth/volunteer/check-in
+Authorization: Bearer <volunteer-token>
+```
+
+Automatically checks in to current active assignment based on session time.
+
+**Response:**
 
 ```json
 {
-  "volunteer": {
+  "message": "Checked in successfully",
+  "checkIn": {
     "id": "clx...",
-    "name": "Manuel Smith",
-    "generatedId": "VOL-A3B7K9",
-    "role": { "id": "clx...", "name": "Attendant" }
-  },
-  "event": {
-    "id": "clx...",
-    "name": "Spring Circuit Assembly 2026",
-    "type": "CIRCUIT_ASSEMBLY",
-    "location": "Natick Assembly Hall"
-  },
-  "assignments": [
-    {
-      "id": "clx...",
-      "session": { "name": "Morning Session", "...": "..." },
-      "zone": { "name": "East Lobby", "...": "..." },
-      "hasPendingSwapRequest": false
-    }
-  ],
-  "totalAssignments": 2
+    "status": "CHECKED_IN",
+    "isLate": false,
+    "checkInTime": "2026-03-22T09:18:00.000Z",
+    "assignment": { "...": "..." },
+    "volunteer": { "...": "..." }
+  }
 }
 ```
+
+#### Volunteer Check-Out
+
+```
+POST /auth/volunteer/check-out
+Authorization: Bearer <volunteer-token>
+```
+
+#### Volunteer Status
+
+```
+GET /auth/volunteer/my-status
+Authorization: Bearer <volunteer-token>
+```
+
+Returns current check-in status and upcoming assignments.
 
 ---
 
@@ -380,25 +428,6 @@ Track which sessions each volunteer can work.
 GET /events/:eventId/volunteers/:volunteerId/availability
 ```
 
-Response:
-
-```json
-{
-  "volunteerId": "clx...",
-  "volunteerName": "Manuel Smith",
-  "availability": [
-    {
-      "sessionId": "clx...",
-      "sessionName": "Morning Session",
-      "date": "2026-03-22T00:00:00.000Z",
-      "startTime": "2026-03-22T09:20:00.000Z",
-      "endTime": "2026-03-22T12:00:00.000Z",
-      "isAvailable": true
-    }
-  ]
-}
-```
-
 #### Set Volunteer Availability
 
 ```
@@ -434,11 +463,6 @@ POST /events/:eventId/zones
   "displayOrder": 0
 }
 ```
-
-| Field         | Type   | Description                                  |
-| ------------- | ------ | -------------------------------------------- |
-| requiredCount | number | Volunteers needed (default: 1, min: 1)       |
-| displayOrder  | number | Sort order (auto-increments if not provided) |
 
 #### List Zones
 
@@ -505,7 +529,7 @@ POST /events/:eventId/assignments/bulk
 }
 ```
 
-_Maximum 100 assignments per request. Validates all before creating any._
+_Maximum 100 assignments per request._
 
 #### List All Assignments
 
@@ -551,17 +575,6 @@ POST /events/:eventId/swap-requests
 }
 ```
 
-| Field                | Required | Description                    |
-| -------------------- | -------- | ------------------------------ |
-| assignmentId         | Yes      | The assignment to swap         |
-| reason               | Yes      | Reason for the request         |
-| suggestedVolunteerId | No       | Optional replacement volunteer |
-
-**Validation:**
-
-- Only one pending request per assignment
-- Suggested volunteer must be available and not already assigned
-
 #### List Swap Requests
 
 ```
@@ -585,21 +598,15 @@ GET /events/:eventId/swap-requests/:requestId
 PUT /events/:eventId/swap-requests/:requestId/approve
 ```
 
-_Approving deletes the original assignment. Admin must manually reassign if needed._
-
 #### Deny Swap Request
 
 ```
 PUT /events/:eventId/swap-requests/:requestId/deny
 ```
 
-_Assignment remains unchanged._
-
 ---
 
 ### Schedule Views
-
-Admin views for schedule overview.
 
 #### Full Schedule Grid
 
@@ -607,41 +614,7 @@ Admin views for schedule overview.
 GET /events/:eventId/schedule
 ```
 
-Returns a sessions × zones matrix with all volunteer assignments:
-
-```json
-{
-  "eventId": "clx...",
-  "eventName": "Spring Circuit Assembly 2026",
-  "sessions": [
-    {
-      "session": { "id": "clx...", "name": "Morning Session", "...": "..." },
-      "zones": [
-        {
-          "zone": { "id": "clx...", "name": "East Lobby", "requiredCount": 2 },
-          "assignedCount": 2,
-          "isFilled": true,
-          "volunteers": [
-            {
-              "id": "clx...",
-              "name": "Manuel Smith",
-              "assignmentId": "clx..."
-            },
-            { "id": "clx...", "name": "Saul Loyal", "assignmentId": "clx..." }
-          ]
-        }
-      ],
-      "totalRequired": 11,
-      "totalAssigned": 8
-    }
-  ],
-  "overallSummary": {
-    "totalRequired": 22,
-    "totalAssigned": 14,
-    "fillPercentage": 64
-  }
-}
-```
+Returns sessions × zones matrix with all assignments.
 
 #### Schedule Summary
 
@@ -649,23 +622,102 @@ Returns a sessions × zones matrix with all volunteer assignments:
 GET /events/:eventId/schedule/summary
 ```
 
-Quick overview showing which sessions need coverage:
+Quick overview showing which sessions need coverage.
+
+---
+
+### Check-In System
+
+Real-time attendance tracking for volunteer shifts.
+
+#### Volunteer Self-Service
+
+```
+POST /auth/volunteer/check-in     # Check in to current assignment
+POST /auth/volunteer/check-out    # Check out from current assignment
+GET  /auth/volunteer/my-status    # Current status and upcoming shifts
+```
+
+#### Admin Check-In Management
+
+```
+POST   /events/:eventId/check-ins/:assignmentId  # Manual check-in
+PUT    /events/:eventId/check-ins/:assignmentId  # Update (mark late, missed, etc.)
+DELETE /events/:eventId/check-ins/:assignmentId  # Remove check-in record
+```
+
+**Admin Update Request:**
 
 ```json
 {
-  "sessions": [
+  "status": "CHECKED_OUT",
+  "isLate": true,
+  "notes": "Arrived 15 minutes late due to traffic"
+}
+```
+
+| Status        | Description       |
+| ------------- | ----------------- |
+| `CHECKED_IN`  | Currently on duty |
+| `CHECKED_OUT` | Completed shift   |
+| `MISSED`      | Did not show up   |
+
+#### Status Views
+
+```
+GET /events/:eventId/check-ins/active                    # Currently checked-in volunteers
+GET /events/:eventId/check-ins/by-zone/:zoneId          # Zone coverage status
+GET /events/:eventId/check-ins/by-session/:sessionId    # Session attendance
+GET /events/:eventId/check-ins/summary                  # Completion stats
+GET /events/:eventId/check-ins/summary?sessionId=clx... # Filter by session
+GET /events/:eventId/check-ins/summary?date=2026-03-22  # Filter by date
+```
+
+**Active Check-Ins Response:**
+
+```json
+{
+  "activeCount": 8,
+  "checkIns": [
     {
-      "session": { "id": "clx...", "name": "Morning Session", "...": "..." },
-      "totalRequired": 11,
-      "totalAssigned": 8,
-      "fillPercentage": 73,
-      "isFilled": false,
-      "zonesNeedingCoverage": [
-        { "zoneName": "West Lobby", "required": 2, "assigned": 1, "needed": 1 },
-        { "zoneName": "Auditorium", "required": 5, "assigned": 3, "needed": 2 }
-      ]
+      "volunteer": { "name": "Manuel Smith", "...": "..." },
+      "zone": { "name": "East Lobby", "...": "..." },
+      "session": { "name": "Morning Session", "...": "..." },
+      "checkInTime": "2026-03-22T09:18:00.000Z"
     }
   ]
+}
+```
+
+**Zone Status Response:**
+
+```json
+{
+  "zone": { "name": "East Lobby", "requiredCount": 2 },
+  "activeCount": 2,
+  "isFilled": true,
+  "checkIns": ["..."]
+}
+```
+
+**Summary Response:**
+
+```json
+{
+  "summary": {
+    "totalAssignments": 22,
+    "checkedIn": 8,
+    "checkedOut": 10,
+    "missed": 1,
+    "pending": 3,
+    "lateArrivals": 2,
+    "completionRate": 82
+  },
+  "byZone": [
+    { "zone": "East Lobby", "required": 2, "active": 2, "isFilled": true }
+  ],
+  "lateArrivals": ["..."],
+  "missedShifts": ["..."]
 }
 ```
 
@@ -704,6 +756,11 @@ assignments
 swap_requests
 ├── id, assignmentId, reason, status, suggestedVolunteerId
 ├── resolvedById, resolvedAt
+
+check_ins
+├── id, assignmentId, status, isLate
+├── checkInTime, checkOutTime, notes
+├── UNIQUE(assignmentId)
 ```
 
 ---
@@ -730,45 +787,50 @@ swap_requests
 
 ### Protected Routes
 
-**Admin routes** - Include admin token:
+Include token in Authorization header:
 
 ```
-Authorization: Bearer <admin-token>
+Authorization: Bearer <token>
 ```
-
-**Volunteer routes** - Include volunteer token:
-
-```
-Authorization: Bearer <volunteer-token>
-```
-
-| Middleware         | Checks                             | Used For                         |
-| ------------------ | ---------------------------------- | -------------------------------- |
-| `requireAdmin`     | `type === "admin"`                 | All `/events/*` endpoints        |
-| `requireVolunteer` | `type === "volunteer"` + `eventId` | `/auth/volunteer/my-assignments` |
 
 ---
 
-## Scripts
+## Docker
 
-| Script            | Command                   | Description                        |
-| ----------------- | ------------------------- | ---------------------------------- |
-| `dev`             | `npm run dev`             | Development server with hot reload |
-| `build`           | `npm run build`           | Compile TypeScript                 |
-| `start`           | `npm start`               | Run production server              |
-| `prisma:generate` | `npm run prisma:generate` | Generate Prisma client             |
-| `prisma:migrate`  | `npm run prisma:migrate`  | Run migrations                     |
-| `prisma:studio`   | `npm run prisma:studio`   | Visual database browser            |
+### Development
+
+```bash
+npm run docker:dev      # Start with hot reload
+npm run docker:dev:down # Stop
+```
+
+### Production
+
+```bash
+npm run docker:build    # Build image (~150MB)
+npm run docker:prod     # Start production
+npm run docker:prod:down
+```
+
+### Pull from Registry
+
+```bash
+docker pull ghcr.io/jvil-dev/assembly-ops:latest
+```
 
 ---
 
-## Development Status
+## Testing
 
-- [x] Phase 0: Project Setup
-- [x] Phase 1: Authentication & Event Foundation
-- [x] Phase 2: Volunteer Management & Sessions
-- [x] Phase 3: Scheduling & Assignments
-- [ ] Phase 4: Check-In/Check-Out
-- [ ] Phase 5: Communication
-- [ ] Phase 6: Offline Sync
-- [ ] Phase 7: Reports & Polish
+```bash
+npm test              # Run all tests
+npm run test:watch    # Watch mode
+npm run test:coverage # Coverage report
+```
+
+Tests include:
+
+- **Unit tests:** Utility functions (credentials, passwords, tokens)
+- **Integration tests:** API endpoints with database
+
+---
