@@ -20,6 +20,11 @@ import {
   handleGetUnreadCount,
   handleMarkAsRead,
 } from "../controllers/messageController.js";
+import {
+  handleGetAvailableAlerts,
+  handleSendQuickAlert,
+} from "../controllers/quickAlertController.js";
+
 const router = Router();
 
 // Admin routes
@@ -49,6 +54,18 @@ router.put(
   "/volunteer/messages/:messageId/read",
   requireVolunteer,
   handleMarkAsRead
+);
+
+// Volunteer quick alert routes
+router.get(
+  "/volunteer/quick-alerts",
+  requireVolunteer,
+  handleGetAvailableAlerts
+);
+router.post(
+  "/volunteer/quick-alerts/:alertId/send",
+  requireVolunteer,
+  handleSendQuickAlert
 );
 
 export default router;

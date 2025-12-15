@@ -31,21 +31,22 @@ model Admin {
 // ============================================================================
 
 model Event {
-  id          String      @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
   type        EventType
   location    String
-  startDate   DateTime    @map("start_date")
-  endDate     DateTime    @map("end_date")
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-  createdById String      @map("created_by_id")
-  createdBy   Admin       @relation(fields: [createdById], references: [id])
+  startDate   DateTime     @map("start_date")
+  endDate     DateTime     @map("end_date")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  createdById String       @map("created_by_id")
+  createdBy   Admin        @relation(fields: [createdById], references: [id])
   roles       Role[]
   sessions    Session[]
   volunteers  Volunteer[]
   zones       Zone[]
   messages    Message[]
+  quickAlerts QuickAlert[]
 
   @@map("events")
 }
@@ -278,6 +279,24 @@ model MessageRecipient {
 
   @@unique([messageId, volunteerId])
   @@map("message_recepientes")
+}
+
+// Quick alert templates for one-tap volunteer communication
+model QuickAlert {
+  id           String          @id @default(cuid())
+  name         String // "Assistance Needed", "Lost Item Found"
+  message      String // Pre-defined message content
+  priority     MessagePriority @default(NORMAL)
+  isActive     Boolean         @default(true) @map("is_active")
+  displayOrder Int             @default(0) @map("display_order")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String @map("event_id")
+
+  @@map("quick_alerts")
 }
 
 enum MessagePriority {
