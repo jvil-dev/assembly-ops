@@ -7,6 +7,11 @@ import {
   handleGetMe,
   handleVolunteerLogin,
 } from "../controllers/authController.js";
+import {
+  handleVolunteerCheckIn,
+  handleGetVolunteerStatus,
+  handleVolunteerCheckOut,
+} from "../controllers/checkInController.js";
 import { requireAdmin } from "../middleware/authMiddleware.js";
 import { requireVolunteer } from "../middleware/volunteerMiddleware.js";
 import { handleGetMyAssignments } from "../controllers/scheduleController.js";
@@ -25,5 +30,8 @@ router.get(
   requireVolunteer,
   handleGetMyAssignments
 );
+router.get("/volunteer/my-status", requireVolunteer, handleGetVolunteerStatus);
+router.post("/volunteer/check-in", requireVolunteer, handleVolunteerCheckIn);
+router.post("/volunteer/check-out", requireVolunteer, handleVolunteerCheckOut);
 
 export default router;

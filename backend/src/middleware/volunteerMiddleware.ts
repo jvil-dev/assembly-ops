@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyToken } from "../utils/tokenUtils";
+import { verifyToken } from "../utils/tokenUtils.js";
 
 declare global {
   namespace Express {
@@ -60,7 +60,7 @@ export async function requireVolunteer(
     };
 
     next();
-  } catch (error) {
+  } catch (_error) {
     res.status(401).json({ error: "Invalid or required token" });
   }
 }
