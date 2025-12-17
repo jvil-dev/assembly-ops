@@ -145,16 +145,20 @@ enum VolunteerAppointment {
 // ============================================================================
 
 model Assignment {
-  id           String        @id @default(cuid())
-  notes        String?
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
-  volunteerId  String        @map("volunteer_id")
-  sessionId    String        @map("session_id")
-  zoneId       String        @map("zone_id")
-  session      Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  volunteer    Volunteer     @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
-  zone         Zone          @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  notes     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relations
+  volunteerId String    @map("volunteer_id")
+  sessionId   String    @map("session_id")
+  zoneId      String    @map("zone_id")
+  session     Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  zone        Zone      @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
   swapRequests SwapRequest[]
   checkIn      CheckIn?
 
@@ -211,6 +215,7 @@ model CheckIn {
   notes        String?
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
+  deletedAt    DateTime?     @map("deleted_at")
 
   // Relations
   assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
@@ -236,6 +241,8 @@ model Message {
   priority      MessagePriority @default(NORMAL)
   recipientType RecipientType
   createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  deletedAt     DateTime?       @map("deleted_at")
 
   // Relations
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)

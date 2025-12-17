@@ -17,6 +17,7 @@ import scheduleRoutes from "./scheduleRoutes.js";
 import checkInRoutes from "./checkInRoutes.js";
 import messageRoutes from "./messageRoutes.js";
 import quickAlertRoutes from "./quickAlertRoutes.js";
+import syncRoutes from "./syncRoutes.js";
 
 const router = Router();
 
@@ -39,5 +40,6 @@ router.use("/:eventId/schedule", scheduleRoutes);
 router.use("/:eventId/check-ins", checkInRoutes);
 router.use("/:eventId/messages", messageRoutes);
 router.use("/:eventId/quick-alerts", quickAlertRoutes);
+router.use("/:eventId/sync", syncRoutes);
 
 export default router;
