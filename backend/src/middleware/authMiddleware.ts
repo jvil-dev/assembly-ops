@@ -44,7 +44,10 @@ export function requireAdmin(
         error.name === "JsonWebTokenError" ||
         error.name === "TokenExpiredError"
       ) {
-        console.log("Auth failed:", error.message);
+        // Only log in non-test environment to reduce CI noise
+        if (process.env.NODE_ENV !== "test") {
+          console.log("Auth failed:", error.message);
+        }
         res.status(401).json({ error: "Invalid or expired token" });
         return;
       }
