@@ -4,6 +4,8 @@ import {
   getFullSync,
   getDeltaSync,
   processActionQueue,
+  getVolunteerDeltaSync,
+  getVolunteerFullSync,
 } from "../services/syncService.js";
 
 export async function handleGetSyncStatus(
@@ -196,6 +198,103 @@ export async function handleProcessQueue(
     }
 
     console.error("Process queue error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleVolunteerFullSync(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const volunteerId = req.volunteer!.id;
+    const eventId = req.volunteer!.eventId;
+
+    if (!eventId) {
+      res
+        .status(400)
+        .json({ error: "Invalid volunteer token - missing eventId" });
+      return;
+    }
+
+    const data = await getVolunteerFullSync(volunteerId, eventId);
+
+    res.status(200).json(data);
+  } catch (error) {
+    if (error instanceof Error && error.message === "VOLUNTEER_NOT_FOUND") {
+      res.status(404).json({ error: "Volunteer not found" });
+      return;
+    }
+
+    console.error("Volunteer full sync error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function handleVolunteerDeltaSync(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const volunteerId = req.volunteer!.id;
+    const eventId = req.volunteer!.eventId;
+    const { since } = req.query;
+
+    if (!eventId) {
+      res
+        .status(400)
+        .json({ error: "Invalid volunteer token - missing eventId" });
+      return;
+    }
+
+    // Validate 'since' parameter
+    if (!since) {
+      res
+        .status(400)
+        .json({ error: "Missing required query parameter: since" });
+      return;
+    }
+
+    const sinceDate = new Date(since as string);
+
+    if (isNaN(sinceDate.getTime())) {
+      res
+        .status(400)
+        .json({ error: "Invalid date format for 'since' parameter" });
+      return;
+    }
+
+    // Cap 'since' to reasonable window (7 days)
+    const maxAge = 7 * 24 * 60 * 60 * 1000;
+    const now = new Date();
+    const minSince = new Date(now.getTime() - maxAge);
+
+    if (sinceDate < minSince) {
+      res.status(400).json({
+        error:
+          "The 'since' parameter is too old. Maximum age is 7 days. Use full sync instead.",
+        suggestFullSync: true,
+      });
+      return;
+    }
+
+    if (sinceDate > now) {
+      res
+        .status(400)
+        .json({ error: "The 'since' parameter cannot be in the future" });
+      return;
+    }
+
+    const data = await getVolunteerDeltaSync(volunteerId, eventId, sinceDate);
+
+    res.status(200).json(data);
+  } catch (error) {
+    if (error instanceof Error && error.message === "VOLUNTEER_NOT_FOUND") {
+      res.status(404).json({ error: "Volunteer not found" });
+      return;
+    }
+
+    console.error("Volunteer delta sync error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
