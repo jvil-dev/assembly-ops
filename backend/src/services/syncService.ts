@@ -88,6 +88,73 @@ interface FullSyncData {
   }>;
 }
 
+interface DeltaChanges<T> {
+  created: T[];
+  updated: T[];
+  deleted: string[];
+}
+
+interface DeltaSyncData {
+  syncedAt: string;
+  since: string;
+  changes: {
+    sessions: DeltaChanges<{
+      id: string;
+      name: string;
+      date: Date;
+      startTime: Date;
+      endTime: Date;
+    }>;
+    zones: DeltaChanges<{
+      id: string;
+      name: string;
+      description: string | null;
+      requiredCount: number;
+      displayOrder: number;
+    }>;
+    roles: DeltaChanges<{
+      id: string;
+      name: string;
+      displayOrder: number;
+    }>;
+    volunteers: DeltaChanges<{
+      id: string;
+      name: string;
+      congregation: string;
+      appointment: string | null;
+      roleId: string | null;
+      roleName: string | null;
+    }>;
+    assignments: DeltaChanges<{
+      id: string;
+      volunteerId: string;
+      sessionId: string;
+      zoneId: string;
+      notes: string | null;
+      updatedAt: Date;
+    }>;
+    messages: DeltaChanges<{
+      id: string;
+      content: string;
+      priority: string;
+      recipientType: string;
+      senderAdminId: string | null;
+      senderVolunteerId: string | null;
+      senderName: string | null;
+      targetZoneId: string | null;
+      targetRoleId: string | null;
+      createdAt: Date;
+    }>;
+    checkIns: DeltaChanges<{
+      id: string;
+      assignmentId: string;
+      checkInTime: Date;
+      checkOutTime: Date | null;
+      status: string;
+    }>;
+  };
+}
+
 export async function getSyncStatus(
   eventId: string,
   adminId: string
@@ -342,5 +409,314 @@ export async function getFullSync(
     messages: transformedMessages,
     quickAlerts,
     checkIns,
+  };
+}
+
+export async function getDeltaSync(
+  eventId: string,
+  adminId: string,
+  since: Date
+): Promise<DeltaSyncData> {
+  // Verify admin owns the event
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      createdById: adminId,
+    },
+  });
+
+  if (!event) {
+    throw new Error("EVENT_NOT_FOUND");
+  }
+
+  // Helper to categorize records
+  const categorize = <
+    T extends { id: string; createdAt: Date; updatedAt: Date },
+  >(
+    records: T[],
+    since: Date
+  ): { created: T[]; updated: T[] } => {
+    const created: T[] = [];
+    const updated: T[] = [];
+
+    for (const record of records) {
+      if (record.createdAt > since) {
+        created.push(record);
+      } else if (record.updatedAt > since) {
+        updated.push(record);
+      }
+    }
+
+    return { created, updated };
+  };
+
+  // Fetch all changed data in parallel
+  const [
+    changedSessions,
+    changedZones,
+    changedRoles,
+    changedVolunteers,
+    changedAssignments,
+    deletedAssignments,
+    changedMessages,
+    deletedMessages,
+    changedCheckIns,
+    deletedCheckIns,
+  ] = await Promise.all([
+    // Sessions (no soft delete, just created/updated)
+    prisma.session.findMany({
+      where: {
+        eventId,
+        OR: [{ createdAt: { gt: since } }, { updatedAt: { gt: since } }],
+      },
+      select: {
+        id: true,
+        name: true,
+        date: true,
+        startTime: true,
+        endTime: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+
+    // Zones (no soft delete)
+    prisma.zone.findMany({
+      where: {
+        eventId,
+        OR: [{ createdAt: { gt: since } }, { updatedAt: { gt: since } }],
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        requiredCount: true,
+        displayOrder: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+
+    // Roles (no soft delete)
+    prisma.role.findMany({
+      where: {
+        eventId,
+        OR: [{ createdAt: { gt: since } }, { updatedAt: { gt: since } }],
+      },
+      select: {
+        id: true,
+        name: true,
+        displayOrder: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+
+    // Volunteers (no soft delete, sanitized)
+    prisma.volunteer.findMany({
+      where: {
+        eventId,
+        OR: [{ createdAt: { gt: since } }, { updatedAt: { gt: since } }],
+      },
+      select: {
+        id: true,
+        name: true,
+        congregation: true,
+        appointment: true,
+        roleId: true,
+        role: { select: { name: true } },
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+
+    // Assignments (created or updated, not deleted)
+    prisma.assignment.findMany({
+      where: {
+        volunteer: { eventId },
+        deletedAt: null,
+        OR: [{ createdAt: { gt: since } }, { updatedAt: { gt: since } }],
+      },
+      select: {
+        id: true,
+        volunteerId: true,
+        sessionId: true,
+        zoneId: true,
+        notes: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+
+    // Deleted assignments
+    prisma.assignment.findMany({
+      where: {
+        volunteer: { eventId },
+        deletedAt: { gt: since },
+      },
+      select: { id: true },
+    }),
+
+    // Messages (created or updated, not deleted)
+    prisma.message.findMany({
+      where: {
+        eventId,
+        deletedAt: null,
+        OR: [{ createdAt: { gt: since } }, { updatedAt: { gt: since } }],
+      },
+      select: {
+        id: true,
+        content: true,
+        priority: true,
+        recipientType: true,
+        senderAdminId: true,
+        senderVolunteerId: true,
+        senderAdmin: { select: { name: true } },
+        senderVolunteer: { select: { name: true } },
+        targetZoneId: true,
+        targetRoleId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+
+    // Deleted messages
+    prisma.message.findMany({
+      where: {
+        eventId,
+        deletedAt: { gt: since },
+      },
+      select: { id: true },
+    }),
+
+    // CheckIns (created or updated, not deleted)
+    prisma.checkIn.findMany({
+      where: {
+        assignment: { volunteer: { eventId } },
+        deletedAt: null,
+        OR: [{ createdAt: { gt: since } }, { updatedAt: { gt: since } }],
+      },
+      select: {
+        id: true,
+        assignmentId: true,
+        checkInTime: true,
+        checkOutTime: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+
+    // Deleted checkIns
+    prisma.checkIn.findMany({
+      where: {
+        assignment: { volunteer: { eventId } },
+        deletedAt: { gt: since },
+      },
+      select: { id: true },
+    }),
+  ]);
+
+  // Categorize sessions
+  const sessionChanges = categorize(changedSessions, since);
+
+  // Categorize zones
+  const zoneChanges = categorize(changedZones, since);
+
+  // Categorize roles
+  const roleChanges = categorize(changedRoles, since);
+
+  // Categorize and transform volunteers
+  const volunteerChanges = categorize(changedVolunteers, since);
+  const transformVolunteer = (v: (typeof changedVolunteers)[0]) => ({
+    id: v.id,
+    name: v.name,
+    congregation: v.congregation,
+    appointment: v.appointment,
+    roleId: v.roleId,
+    roleName: v.role?.name || null,
+  });
+
+  // Categorize assignments
+  const assignmentChanges = categorize(changedAssignments, since);
+
+  // Categorize and transform messages
+  const messageChanges = categorize(changedMessages, since);
+  const transformMessage = (m: (typeof changedMessages)[0]) => ({
+    id: m.id,
+    content: m.content,
+    priority: m.priority,
+    recipientType: m.recipientType,
+    senderAdminId: m.senderAdminId,
+    senderVolunteerId: m.senderVolunteerId,
+    senderName: m.senderAdmin?.name || m.senderVolunteer?.name || null,
+    targetZoneId: m.targetZoneId,
+    targetRoleId: m.targetRoleId,
+    createdAt: m.createdAt,
+  });
+
+  // Categorize checkIns
+  const checkInChanges = categorize(changedCheckIns, since);
+
+  return {
+    syncedAt: new Date().toISOString(),
+    since: since.toISOString(),
+    changes: {
+      sessions: {
+        created: sessionChanges.created.map(
+          ({ createdAt: _createdAt, updatedAt: _updatedAt, ...rest }) => rest
+        ),
+        updated: sessionChanges.updated.map(
+          ({ createdAt: _createdAt, updatedAt: _updatedAt, ...rest }) => rest
+        ),
+        deleted: [],
+      },
+      zones: {
+        created: zoneChanges.created.map(
+          ({ createdAt: _createdAt, updatedAt: _updatedAt, ...rest }) => rest
+        ),
+        updated: zoneChanges.updated.map(
+          ({ createdAt: _createdAt, updatedAt: _updatedAt, ...rest }) => rest
+        ),
+        deleted: [],
+      },
+      roles: {
+        created: roleChanges.created.map(
+          ({ createdAt: _createdAt, updatedAt: _updatedAt, ...rest }) => rest
+        ),
+        updated: roleChanges.updated.map(
+          ({ createdAt: _createdAt, updatedAt: _updatedAt, ...rest }) => rest
+        ),
+        deleted: [],
+      },
+      volunteers: {
+        created: volunteerChanges.created.map(transformVolunteer),
+        updated: volunteerChanges.updated.map(transformVolunteer),
+        deleted: [],
+      },
+      assignments: {
+        created: assignmentChanges.created.map(
+          ({ createdAt: _createdAt, ...rest }) => rest
+        ),
+        updated: assignmentChanges.updated.map(
+          ({ createdAt: _createdAt, ...rest }) => rest
+        ),
+        deleted: deletedAssignments.map((a) => a.id),
+      },
+      messages: {
+        created: messageChanges.created.map(transformMessage),
+        updated: messageChanges.updated.map(transformMessage),
+        deleted: deletedMessages.map((m) => m.id),
+      },
+      checkIns: {
+        created: checkInChanges.created.map(
+          ({ createdAt: _createdAt, updatedAt: _updatedAt, ...rest }) => rest
+        ),
+        updated: checkInChanges.updated.map(
+          ({ createdAt: _createdAt, updatedAt: _updatedAt, ...rest }) => rest
+        ),
+        deleted: deletedCheckIns.map((c) => c.id),
+      },
+    },
   };
 }
