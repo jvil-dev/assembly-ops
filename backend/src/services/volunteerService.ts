@@ -4,6 +4,21 @@ import { VolunteerAppointment } from "../generated/prisma/client.js";
 
 const DEFAULT_APPOINTMENT = VolunteerAppointment.PUBLISHER;
 
+// Type guard for Prisma unique constraint errors
+interface PrismaUniqueError {
+  code: string;
+  meta?: { target?: string[] };
+}
+
+function isPrismaUniqueError(error: unknown): error is PrismaUniqueError {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as PrismaUniqueError).code === "string"
+  );
+}
+
 interface CreateVolunteerInput {
   name: string;
   phone?: string;
@@ -104,9 +119,13 @@ export async function createVolunteer(
       });
 
       return volunteer;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check if error is unique constraint violation on generatedId
-      if (error.code === "P2002" && error.meta?.target?.includes("generatedId")) {
+      if (
+        isPrismaUniqueError(error) &&
+        error.code === "P2002" &&
+        error.meta?.target?.includes("generatedId")
+      ) {
         attempts++;
         // Retry with new credentials
         continue;
@@ -194,9 +213,13 @@ export async function bulkCreateVolunteers(
       });
 
       return createdVolunteers;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check if error is unique constraint violation on generatedId
-      if (error.code === "P2002" && error.meta?.target?.includes("generatedId")) {
+      if (
+        isPrismaUniqueError(error) &&
+        error.code === "P2002" &&
+        error.meta?.target?.includes("generatedId")
+      ) {
         attempts++;
         // Retry with new credentials for all volunteers
         continue;
@@ -387,7 +410,14 @@ export async function updateVolunteer(
   }
 
   // Convert undefined to null for Prisma compatibility
-  const updateData: any = {};
+  const updateData: {
+    name?: string;
+    phone?: string | null;
+    email?: string | null;
+    congregation?: string;
+    appointment?: VolunteerAppointment;
+    roleId?: string | null;
+  } = {};
   if (input.name !== undefined) updateData.name = input.name;
   if (input.phone !== undefined) updateData.phone = input.phone ?? null;
   if (input.email !== undefined) updateData.email = input.email ?? null;
@@ -493,9 +523,13 @@ export async function regenerateCredentials(
       });
 
       return volunteer;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check if error is unique constraint violation on generatedId
-      if (error.code === "P2002" && error.meta?.target?.includes("generatedId")) {
+      if (
+        isPrismaUniqueError(error) &&
+        error.code === "P2002" &&
+        error.meta?.target?.includes("generatedId")
+      ) {
         attempts++;
         // Retry with new credentials
         continue;

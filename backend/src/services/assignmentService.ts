@@ -515,8 +515,10 @@ export async function deleteAssignment(
     throw new Error("ASSIGNMENT_NOT_FOUND");
   }
 
-  await prisma.assignment.delete({
+  // Soft delete instead of hard delete
+  await prisma.assignment.update({
     where: { id: assignmentId },
+    data: { deletedAt: new Date() },
   });
 
   return { deleted: true };

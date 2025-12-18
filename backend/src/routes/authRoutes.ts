@@ -25,6 +25,11 @@ import {
   handleSendQuickAlert,
 } from "../controllers/quickAlertController.js";
 
+import {
+  handleVolunteerFullSync,
+  handleVolunteerDeltaSync,
+} from "../controllers/syncController.js";
+
 const router = Router();
 
 // Admin routes
@@ -67,5 +72,9 @@ router.post(
   requireVolunteer,
   handleSendQuickAlert
 );
+
+// Volunteer sync routes
+router.get("/volunteer/sync/full", requireVolunteer, handleVolunteerFullSync);
+router.get("/volunteer/sync/delta", requireVolunteer, handleVolunteerDeltaSync);
 
 export default router;
