@@ -154,6 +154,28 @@ interface DeltaSyncData {
     }>;
   };
 }
+type ActionType = "CHECK_IN" | "CHECK_OUT" | "QUICK_ALERT" | "MESSAGE_READ";
+
+interface QueuedAction {
+  id: string;
+  type: ActionType;
+  timestamp: string;
+  data: Record<string, unknown>;
+}
+
+interface ActionResult {
+  clientId: string;
+  status: "success" | "error";
+  serverId?: string;
+  error?: string;
+}
+
+interface QueueProcessingResult {
+  processed: number;
+  succeeded: number;
+  failed: number;
+  results: ActionResult[];
+}
 
 export async function getSyncStatus(
   eventId: string,
@@ -719,4 +741,361 @@ export async function getDeltaSync(
       },
     },
   };
+}
+
+export async function processActionQueue(
+  eventId: string,
+  adminId: string | null,
+  volunteerId: string | null,
+  actions: QueuedAction[]
+): Promise<QueueProcessingResult> {
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      ...(adminId ? { createdById: adminId } : {}),
+    },
+  });
+
+  if (!event) {
+    throw new Error("EVENT_NOT_FOUND");
+  }
+
+  if (volunteerId) {
+    const volunteer = await prisma.volunteer.findFirst({
+      where: {
+        id: volunteerId,
+        eventId,
+      },
+    });
+
+    if (!volunteer) {
+      throw new Error("VOLUNTEER_NOT_FOUND");
+    }
+  }
+
+  const results: ActionResult[] = [];
+
+  for (const action of actions) {
+    try {
+      const actionResult = await processAction(eventId, volunteerId, action);
+
+      results.push({
+        clientId: action.id,
+        status: "success",
+        serverId: actionResult.serverId,
+      });
+    } catch (error) {
+      results.push({
+        clientId: action.id,
+        status: "error",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  const succeeded = results.filter(
+    (r: ActionResult) => r.status === "success"
+  ).length;
+  const failed = results.filter(
+    (r: ActionResult) => r.status === "error"
+  ).length;
+
+  return {
+    processed: actions.length,
+    succeeded,
+    failed,
+    results,
+  };
+}
+
+async function processAction(
+  eventId: string,
+  volunteerId: string | null,
+  action: QueuedAction
+): Promise<{ serverId: string }> {
+  switch (action.type) {
+    case "CHECK_IN":
+      return processCheckIn(eventId, volunteerId, action);
+    case "CHECK_OUT":
+      return processCheckOut(eventId, volunteerId, action);
+    case "QUICK_ALERT":
+      return processQuickAlert(eventId, volunteerId, action);
+    case "MESSAGE_READ":
+      return processMessageRead(eventId, volunteerId, action);
+    default:
+      throw new Error(`Unknown action type: ${action.type}`);
+  }
+}
+
+async function processCheckIn(
+  eventId: string,
+  volunteerId: string | null,
+  action: QueuedAction
+): Promise<{ serverId: string }> {
+  const { assignmentId } = action.data as { assignmentId: string };
+
+  if (!assignmentId) {
+    throw new Error("Missing assignmentId for CHECK_IN");
+  }
+
+  const assignment = await prisma.assignment.findFirst({
+    where: {
+      id: assignmentId,
+      volunteer: { eventId },
+      deletedAt: null,
+    },
+    include: {
+      volunteer: true,
+    },
+  });
+
+  if (!assignment) {
+    throw new Error("Assignment not found");
+  }
+
+  // If volunteer token, verify they own this assignment
+  if (volunteerId && assignment.volunteerId !== volunteerId) {
+    throw new Error("Not authorized for this assignment");
+  }
+
+  // Check for existing active check-in (idempotency)
+  const existingCheckIn = await prisma.checkIn.findFirst({
+    where: {
+      assignmentId,
+      status: "CHECKED_IN",
+      deletedAt: null,
+    },
+  });
+
+  if (existingCheckIn) {
+    // Already checked in - return existing (idempotent)
+    return { serverId: existingCheckIn.id };
+  }
+
+  // Create check-in with the offline timestamp
+  const checkInTime = new Date(action.timestamp);
+
+  const checkIn = await prisma.checkIn.create({
+    data: {
+      assignmentId,
+      checkInTime: isNaN(checkInTime.getTime()) ? new Date() : checkInTime,
+      status: "CHECKED_IN",
+    },
+  });
+
+  return { serverId: checkIn.id };
+}
+
+async function processCheckOut(
+  eventId: string,
+  volunteerId: string | null,
+  action: QueuedAction
+): Promise<{ serverId: string }> {
+  const { checkInId } = action.data as { checkInId: string };
+
+  if (!checkInId) {
+    throw new Error("Missing checkInId for CHECK_OUT");
+  }
+
+  // Verify check-in exists and belongs to this event
+  const checkIn = await prisma.checkIn.findFirst({
+    where: {
+      id: checkInId,
+      assignment: {
+        volunteer: { eventId },
+      },
+      deletedAt: null,
+    },
+    include: {
+      assignment: {
+        include: { volunteer: true },
+      },
+    },
+  });
+
+  if (!checkIn) {
+    throw new Error("Check-in not found");
+  }
+
+  // If volunteer token, verify they own this check-in
+  if (volunteerId && checkIn.assignment.volunteerId !== volunteerId) {
+    throw new Error("Not authorized for this check-in");
+  }
+
+  // Already checked out (idempotency)
+  if (checkIn.checkOutTime) {
+    return { serverId: checkIn.id };
+  }
+
+  // Update with checkout time
+  const checkOutTime = new Date(action.timestamp);
+
+  await prisma.checkIn.update({
+    where: { id: checkInId },
+    data: {
+      checkOutTime: isNaN(checkOutTime.getTime()) ? new Date() : checkOutTime,
+      status: "CHECKED_OUT",
+    },
+  });
+
+  return { serverId: checkIn.id };
+}
+
+async function processQuickAlert(
+  eventId: string,
+  volunteerId: string | null,
+  action: QueuedAction
+): Promise<{ serverId: string }> {
+  const { alertId, additionalNote } = action.data as {
+    alertId: string;
+    additionalNote?: string;
+  };
+
+  if (!alertId) {
+    throw new Error("Missing alertId for QUICK_ALERT");
+  }
+
+  if (!volunteerId) {
+    throw new Error("Volunteer ID required for QUICK_ALERT");
+  }
+
+  // Get the quick alert template
+  const alert = await prisma.quickAlert.findFirst({
+    where: {
+      id: alertId,
+      eventId,
+      isActive: true,
+    },
+  });
+
+  if (!alert) {
+    throw new Error("Quick alert not found or inactive");
+  }
+
+  // Get volunteer info for context
+  const volunteer = await prisma.volunteer.findFirst({
+    where: {
+      id: volunteerId,
+      eventId,
+    },
+    include: {
+      role: true,
+      assignments: {
+        where: { deletedAt: null },
+        include: {
+          zone: true,
+          session: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
+  });
+
+  if (!volunteer) {
+    throw new Error("Volunteer not found");
+  }
+
+  // Build message content with context
+  let content = `🚨 ${alert.name}\n\n${alert.message}`;
+  content += `\n\n— ${volunteer.name}`;
+
+  if (volunteer.role) {
+    content += ` (${volunteer.role.name})`;
+  }
+
+  // Add current assignment location if available
+  const currentAssignment = volunteer.assignments[0];
+  if (currentAssignment?.zone) {
+    content += `\n📍 ${currentAssignment.zone.name}`;
+  }
+
+  if (additionalNote) {
+    const sanitizedNote = additionalNote.slice(0, 200);
+    content += `\n\n💬 "${sanitizedNote}"`;
+  }
+
+  // Get event admin to be the "sender" for system messages
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+  });
+
+  if (!event) {
+    throw new Error("Event not found");
+  }
+
+  // Create the message as a broadcast (all volunteers will see it)
+  const message = await prisma.message.create({
+    data: {
+      content,
+      priority: alert.priority,
+      recipientType: "BROADCAST",
+      eventId,
+      senderAdminId: event.createdById, // System message from admin
+    },
+  });
+
+  // Create recipient records for all volunteers
+  const volunteers = await prisma.volunteer.findMany({
+    where: { eventId },
+    select: { id: true },
+  });
+
+  await prisma.messageRecipient.createMany({
+    data: volunteers.map((v) => ({
+      messageId: message.id,
+      volunteerId: v.id,
+    })),
+  });
+
+  return { serverId: message.id };
+}
+
+async function processMessageRead(
+  eventId: string,
+  volunteerId: string | null,
+  action: QueuedAction
+): Promise<{ serverId: string }> {
+  const { messageId } = action.data as { messageId: string };
+
+  if (!messageId) {
+    throw new Error("Missing messageId for MESSAGE_READ");
+  }
+
+  if (!volunteerId) {
+    throw new Error("Volunteer ID required for MESSAGE_READ");
+  }
+
+  // Find the recipient record
+  const recipient = await prisma.messageRecipient.findFirst({
+    where: {
+      messageId,
+      volunteerId: volunteerId,
+      message: {
+        eventId,
+        deletedAt: null,
+      },
+    },
+  });
+
+  if (!recipient) {
+    throw new Error("Message not found or not a recipient");
+  }
+
+  // Already read (idempotency)
+  if (recipient.readAt) {
+    return { serverId: recipient.id };
+  }
+
+  // Mark as read
+  const readTime = new Date(action.timestamp);
+
+  await prisma.messageRecipient.update({
+    where: { id: recipient.id },
+    data: {
+      readAt: isNaN(readTime.getTime()) ? new Date() : readTime,
+    },
+  });
+
+  return { serverId: recipient.id };
 }

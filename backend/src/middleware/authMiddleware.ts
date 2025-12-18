@@ -111,3 +111,49 @@ export function requireVolunteer(
     });
   }
 }
+
+export function requireAuth(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      res.status(401).json({ error: "Authorization header required" });
+      return;
+    }
+
+    const parts = authHeader.split(" ");
+
+    if (parts.length !== 2 || parts[0] !== "Bearer") {
+      res
+        .status(401)
+        .json({ error: "Invalid authorization format. Use: Bearer <token>" });
+      return;
+    }
+
+    const token = parts[1]!;
+    const payload = verifyToken(token);
+
+    // Attach appropriate user data based on token type
+    if (payload.type === "admin") {
+      req.admin = payload;
+    } else if (payload.type === "volunteer") {
+      req.volunteer = {
+        id: payload.id,
+        email: payload.email,
+        type: "volunteer",
+        eventId: payload.eventId!,
+      };
+    } else {
+      res.status(401).json({ error: "Invalid token type" });
+      return;
+    }
+
+    next();
+  } catch (_error) {
+    res.status(401).json({ error: "Invalid or expired token" });
+  }
+}

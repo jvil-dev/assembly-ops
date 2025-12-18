@@ -3,6 +3,7 @@ import {
   getSyncStatus,
   getFullSync,
   getDeltaSync,
+  processActionQueue,
 } from "../services/syncService.js";
 
 export async function handleGetSyncStatus(
@@ -110,5 +111,91 @@ export async function handleGetDeltaSync(
     res.status(500).json({
       error: "Internal server error",
     });
+  }
+}
+
+export async function handleProcessQueue(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { eventId } = req.params;
+    const { actions } = req.body;
+
+    // Get user context (admin or volunteer)
+    const adminId = req.admin?.id || null;
+    const volunteerId = req.volunteer?.id || null;
+
+    // Validate actions array
+    if (!actions || !Array.isArray(actions)) {
+      res.status(400).json({ error: "Missing or invalid 'actions' array" });
+      return;
+    }
+
+    if (actions.length === 0) {
+      res.status(400).json({ error: "Actions array cannot be empty" });
+      return;
+    }
+
+    if (actions.length > 100) {
+      res.status(400).json({ error: "Maximum 100 actions per request" });
+      return;
+    }
+
+    // Validate each action
+    const validTypes = ["CHECK_IN", "CHECK_OUT", "QUICK_ALERT", "MESSAGE_READ"];
+
+    for (let i = 0; i < actions.length; i++) {
+      const action = actions[i];
+
+      if (!action.id) {
+        res.status(400).json({ error: `Action at index ${i} missing 'id'` });
+        return;
+      }
+
+      if (!action.type || !validTypes.includes(action.type)) {
+        res.status(400).json({
+          error: `Action at index ${i} has invalid type. Must be one of: ${validTypes.join(", ")}`,
+        });
+        return;
+      }
+
+      if (!action.timestamp) {
+        res
+          .status(400)
+          .json({ error: `Action at index ${i} missing 'timestamp'` });
+        return;
+      }
+
+      if (!action.data || typeof action.data !== "object") {
+        res
+          .status(400)
+          .json({ error: `Action at index ${i} missing or invalid 'data'` });
+        return;
+      }
+    }
+
+    const result = await processActionQueue(
+      eventId!,
+      adminId,
+      volunteerId,
+      actions
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "EVENT_NOT_FOUND") {
+        res.status(404).json({ error: "Event not found" });
+        return;
+      }
+      if (error.message === "VOLUNTEER_NOT_FOUND") {
+        res.status(404).json({ error: "Volunteer not found" });
+        return;
+      }
+    }
+
+    console.error("Process queue error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 }

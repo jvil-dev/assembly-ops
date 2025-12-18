@@ -13,7 +13,6 @@ import sessionRoutes from "./sessionRoutes.js";
 import zoneRoutes from "./zoneRoutes.js";
 import assignmentRoutes from "./assignmentRoutes.js";
 import swapRequestRoutes from "./swapRequestRoutes.js";
-import scheduleRoutes from "./scheduleRoutes.js";
 import checkInRoutes from "./checkInRoutes.js";
 import messageRoutes from "./messageRoutes.js";
 import quickAlertRoutes from "./quickAlertRoutes.js";
@@ -21,7 +20,10 @@ import syncRoutes from "./syncRoutes.js";
 
 const router = Router();
 
-// All event routes require admin authentication
+// Sync routes handle their own auth (supports both admin and volunteer)
+router.use("/:eventId/sync", syncRoutes);
+
+// All other event routes require admin authentication
 router.use(requireAdmin);
 
 router.post("/", handleCreateEvent);
@@ -30,16 +32,15 @@ router.get("/:id", handleGetEvent);
 router.put("/:id", handleUpdateEvent);
 router.delete("/:id", handleDeleteEvent);
 
+// Nested routes (all require admin)
 router.use("/:eventId/roles", roleRoutes);
 router.use("/:eventId/volunteers", volunteerRoutes);
 router.use("/:eventId/sessions", sessionRoutes);
 router.use("/:eventId/zones", zoneRoutes);
 router.use("/:eventId/assignments", assignmentRoutes);
 router.use("/:eventId/swap-requests", swapRequestRoutes);
-router.use("/:eventId/schedule", scheduleRoutes);
 router.use("/:eventId/check-ins", checkInRoutes);
 router.use("/:eventId/messages", messageRoutes);
 router.use("/:eventId/quick-alerts", quickAlertRoutes);
-router.use("/:eventId/sync", syncRoutes);
 
 export default router;
