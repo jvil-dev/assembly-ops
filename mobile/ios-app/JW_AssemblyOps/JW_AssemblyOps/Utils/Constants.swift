@@ -32,10 +32,10 @@ enum Constants {
     enum Keychain {
         static let serviceName = "com.jorgevilleda.JWAssemblyOps"
         
-        // Admin tokens
-        static let adminAccessToken = "admin_access_token"
-        static let adminRefreshToken = "admin_refresh_token"
-        static let adminId = "admin_id"
+        // Overseer tokens
+        static let overseerAccessToken = "overseer_access_token"
+        static let overseerRefreshToken = "overseer_refresh_token"
+        static let overseerId = "overseer_id"
         
         // Volunteer tokens
         static let volunteerToken = "volunteer_token"
@@ -43,7 +43,7 @@ enum Constants {
         
         // Session info
         static let currentEventId = "current_event_id"
-        static let userType = "user_type"  // "admin" or "volunteer"
+        static let userType = "user_type"  // "overseer" or "volunteer"
     }
     
     // MARK: - UserDefaults Keys
