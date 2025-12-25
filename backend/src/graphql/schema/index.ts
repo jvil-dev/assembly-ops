@@ -1,5 +1,7 @@
 import types from './types.js';
 import authTypeDefs from './auth.js';
+import eventTypeDefs from './event.js';
+import volunteerTypeDefs from './volunteer.js';
 
 const baseTypeDefs = `#graphql
   scalar DateTime
@@ -19,6 +21,6 @@ const baseTypeDefs = `#graphql
   }
 `;
 
-const typeDefs = [baseTypeDefs, types, authTypeDefs];
+const typeDefs = [baseTypeDefs, types, authTypeDefs, eventTypeDefs, volunteerTypeDefs];
 
 export default typeDefs;

@@ -1,6 +1,8 @@
 import { DateTimeResolver } from 'graphql-scalars';
 import { Context } from '../context.js';
 import authResolvers from './auth.js';
+import eventResolvers from './event.js';
+import volunteerResolvers from './volunteer.js';
 
 const baseResolvers = {
   DateTime: DateTimeResolver,
@@ -35,14 +37,22 @@ const resolvers = {
   Query: {
     ...baseResolvers.Query,
     ...authResolvers.Query,
+    ...eventResolvers.Query,
+    ...volunteerResolvers.Query,
   },
 
   Mutation: {
     ...baseResolvers.Mutation,
     ...authResolvers.Mutation,
+    ...eventResolvers.Mutation,
+    ...volunteerResolvers.Mutation,
   },
 
   Admin: authResolvers.Admin,
+  Event: eventResolvers.Event,
+  EventTemplate: eventResolvers.EventTemplate,
+  Department: eventResolvers.Department,
+  Volunteer: volunteerResolvers.Volunteer,
 };
 
 export default resolvers;
