@@ -47,11 +47,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          until nc -z localhost 5432; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready"
+        working-directory: .
+
       - name: Generate Prisma client
         run: npx prisma generate
 
       - name: Push schema to test database
-        run: npx prisma db push --skip-generate
+        run: npx prisma db push
 
       - name: Run linter
         run: npm run lint
