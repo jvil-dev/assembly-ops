@@ -4,7 +4,7 @@ export const registerAdminSchema = z.object({
   email: z
     .string()
     .email('Invalid email address')
-    .transform((v) => v.toLowerCase().trim()),
+    .transform((v: string) => v.toLowerCase().trim()),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -15,28 +15,28 @@ export const registerAdminSchema = z.object({
     .string()
     .min(1, 'First name is required')
     .max(50, 'First name too long')
-    .transform((v) => v.trim()),
+    .transform((v: string) => v.trim()),
   lastName: z
     .string()
     .min(1, 'Last name is required')
     .max(50, 'Last name too long')
-    .transform((v) => v.trim()),
+    .transform((v: string) => v.trim()),
   phone: z
     .string()
     .nullish()
-    .transform((v) => v?.trim() || null),
+    .transform((v: string | null | undefined) => v?.trim() || null),
   congregation: z
     .string()
     .min(1, 'Congregation is required')
     .max(100, 'Congregation name too long')
-    .transform((v) => v.trim()),
+    .transform((v: string) => v.trim()),
 });
 
 export const loginAdminSchema = z.object({
   email: z
     .string()
     .email('Invalid email address')
-    .transform((v) => v.toLowerCase().trim()),
+    .transform((v: string) => v.toLowerCase().trim()),
   password: z.string().min(1, 'Password is required'),
 });
 
