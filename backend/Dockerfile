@@ -25,6 +25,8 @@ COPY . .
 COPY --from=deps /app/src/generated ./src/generated
 
 RUN npm run build
+# Copy Prisma client to dist (pre-compiled, must not go through tsc)
+RUN cp -r src/generated dist/
 
 # ============================================
 # Stage 3: Production
@@ -51,4 +53,4 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:4000/health || exit 1
 
-CMD ["node", "dist/server.js"]
+CMD ["npx", "tsx", "dist/server.js"]
