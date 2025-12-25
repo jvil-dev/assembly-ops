@@ -9,7 +9,7 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
