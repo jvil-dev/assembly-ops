@@ -1,11 +1,12 @@
 import { DateTimeResolver } from 'graphql-scalars';
 import { Context } from '../context.js';
+import authResolvers from './auth.js';
 
-const resolvers = {
+const baseResolvers = {
   DateTime: DateTimeResolver,
 
   Query: {
-    health: async (_: unknown, __: unknown, { prisma }: Context) => {
+    health: async (_parent: unknown, _args: unknown, { prisma }: Context) => {
       try {
         await prisma.$queryRaw`SELECT 1`;
         return {
@@ -24,8 +25,24 @@ const resolvers = {
   },
 
   Mutation: {
-    _empty: () => null,
+    _empty: (): null => null,
   },
+};
+
+const resolvers = {
+  DateTime: baseResolvers.DateTime,
+
+  Query: {
+    ...baseResolvers.Query,
+    ...authResolvers.Query,
+  },
+
+  Mutation: {
+    ...baseResolvers.Mutation,
+    ...authResolvers.Mutation,
+  },
+
+  Admin: authResolvers.Admin,
 };
 
 export default resolvers;
