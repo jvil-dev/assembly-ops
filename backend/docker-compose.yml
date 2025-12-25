@@ -1,0 +1,48 @@
+services:
+  api:
+    build:
+      context: .
+      target: deps
+    container_name: assemblyops-api
+    ports:
+      - '4000:4000'
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@database:5432/assemblyops
+    volumes:
+      - ./src:/app/src:ro
+      - ./prisma:/app/prisma:ro
+    command: npm run dev
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - assemblyops-network
+
+  database:
+    image: postgres:16-alpine
+    container_name: assemblyops-database
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=assemblyops
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - assemblyops-network
+
+networks:
+  assemblyops-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
