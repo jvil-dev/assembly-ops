@@ -30,6 +30,7 @@ import eventResolvers from './event.js';
 import volunteerResolvers from './volunteer.js';
 import postResolvers from './post.js';
 import sessionResolvers from './session.js';
+import assignmentResolvers from './assignment.js';
 
 const baseResolvers = {
   DateTime: DateTimeResolver,
@@ -68,6 +69,7 @@ const resolvers = {
     ...volunteerResolvers.Query,
     ...postResolvers.Query,
     ...sessionResolvers.Query,
+    ...assignmentResolvers.Query,
   },
 
   Mutation: {
@@ -77,6 +79,7 @@ const resolvers = {
     ...volunteerResolvers.Mutation,
     ...postResolvers.Mutation,
     ...sessionResolvers.Mutation,
+    ...assignmentResolvers.Mutation,
   },
 
   Admin: authResolvers.Admin,
@@ -86,6 +89,7 @@ const resolvers = {
   Volunteer: volunteerResolvers.Volunteer,
   Post: postResolvers.Post,
   Session: sessionResolvers.Session,
+  ScheduleAssignment: assignmentResolvers.ScheduleAssignment,
 };
 
 export default resolvers;

@@ -25,6 +25,7 @@ import eventTypeDefs from './event.js';
 import volunteerTypeDefs from './volunteer.js';
 import postTypeDefs from './post.js';
 import sessionTypeDefs from './session.js';
+import assignmentTypeDefs from './assignment.js';
 
 const baseTypeDefs = `#graphql
   scalar DateTime
@@ -52,6 +53,7 @@ const typeDefs = [
   volunteerTypeDefs,
   postTypeDefs,
   sessionTypeDefs,
+  assignmentTypeDefs,
 ];
 
 export default typeDefs;

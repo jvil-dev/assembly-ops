@@ -24,6 +24,8 @@ out/
 .settings/
 JW_AssemblyOps.code-workspace
 CLAUDE.md
+operations.graphql
+schema.graphql
 
 # OS files
 .DS_Store
