@@ -4,7 +4,6 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
-import { json } from 'express';
 import typeDefs from './schema/index.js';
 import resolvers from './resolvers/index.js';
 import { createContext, Context } from './context.js';
@@ -24,7 +23,7 @@ export async function createApolloServer(app: express.Application) {
   app.use(
     '/graphql',
     cors<cors.CorsRequest>(),
-    json(),
+    express.json(),
     expressMiddleware(server, {
       context: createContext,
     })
