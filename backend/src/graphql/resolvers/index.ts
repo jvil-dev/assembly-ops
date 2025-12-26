@@ -28,6 +28,8 @@ import { Context } from '../context.js';
 import authResolvers from './auth.js';
 import eventResolvers from './event.js';
 import volunteerResolvers from './volunteer.js';
+import postResolvers from './post.js';
+import sessionResolvers from './session.js';
 
 const baseResolvers = {
   DateTime: DateTimeResolver,
@@ -64,6 +66,8 @@ const resolvers = {
     ...authResolvers.Query,
     ...eventResolvers.Query,
     ...volunteerResolvers.Query,
+    ...postResolvers.Query,
+    ...sessionResolvers.Query,
   },
 
   Mutation: {
@@ -71,6 +75,8 @@ const resolvers = {
     ...authResolvers.Mutation,
     ...eventResolvers.Mutation,
     ...volunteerResolvers.Mutation,
+    ...postResolvers.Mutation,
+    ...sessionResolvers.Mutation,
   },
 
   Admin: authResolvers.Admin,
@@ -78,6 +84,8 @@ const resolvers = {
   EventTemplate: eventResolvers.EventTemplate,
   Department: eventResolvers.Department,
   Volunteer: volunteerResolvers.Volunteer,
+  Post: postResolvers.Post,
+  Session: sessionResolvers.Session,
 };
 
 export default resolvers;

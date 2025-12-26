@@ -228,11 +228,15 @@ export class EventService {
     });
 
     // Update eventAdmin with department
+    // Preserve EVENT_OVERSEER role if already set (they can manage sessions AND a department)
     await this.prisma.eventAdmin.update({
       where: { id: eventAdmin.id },
       data: {
         departmentId: department.id,
-        role: EventRole.DEPARTMENT_OVERSEER,
+        role:
+          eventAdmin.role === EventRole.EVENT_OVERSEER
+            ? EventRole.EVENT_OVERSEER
+            : EventRole.DEPARTMENT_OVERSEER,
       },
     });
 

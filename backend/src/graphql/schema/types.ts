@@ -175,6 +175,7 @@ const types = `#graphql
     capacity: Int!
     department: Department!
     assignments: [ScheduleAssignment!]!
+    assignmentCount: Int!
     createdAt: DateTime!
   }
 
@@ -186,6 +187,7 @@ const types = `#graphql
     endTime: DateTime!
     event: Event!
     assignments: [ScheduleAssignment!]!
+    assignmentCount: Int!
     createdAt: DateTime!
   }
 
