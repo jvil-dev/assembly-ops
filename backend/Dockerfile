@@ -1,3 +1,34 @@
+# =============================================================================
+# AssemblyOps Backend Dockerfile
+# =============================================================================
+#
+# Multi-stage Docker build for optimal image size and security.
+# Final image is ~150MB (node:20-alpine base).
+#
+# Stages:
+#   1. deps: Install npm dependencies and generate Prisma client
+#   2. builder: Compile TypeScript to JavaScript
+#   3. runner: Production image with only compiled code + node_modules
+#
+# Build: docker build -t assemblyops-api .
+# Run:   docker run -p 4000:4000 --env-file .env assemblyops-api
+#
+# Environment Variables Required:
+#   - DATABASE_URL: PostgreSQL connection string
+#   - JWT_SECRET: Access token signing key
+#   - JWT_REFRESH_SECRET: Refresh token signing key
+#
+# Health Check:
+#   - GET http://localhost:4000/health
+#   - Used by AWS ALB and Docker health checks
+#
+# Security:
+#   - Runs as non-root user (expressjs:nodejs)
+#   - Only production dependencies included
+#   - No source code in final image (only compiled JS)
+#
+# =============================================================================
+
 # ============================================
 # Stage 1: Dependencies
 # ============================================

@@ -1,3 +1,35 @@
+# =============================================================================
+# Docker Compose - Local Development
+# =============================================================================
+#
+# Runs the API and PostgreSQL database locally for development.
+# NOT for production - use AWS ECS + Supabase instead.
+#
+# Services:
+#   - api: Node.js backend with hot reload (port 4000)
+#   - database: PostgreSQL 16 (port 5432)
+#
+# Usage:
+#   docker compose up        # Start all services
+#   docker compose up -d     # Start in background
+#   docker compose down      # Stop all services
+#   docker compose down -v   # Stop and remove volumes (reset DB)
+#
+# Volumes:
+#   - postgres_data: Persists database data between restarts
+#   - ./src:/app/src:ro: Mounts source code (read-only) for hot reload
+#
+# Network:
+#   - assemblyops-network: Internal network for service communication
+#   - API connects to database via hostname "database" (not localhost)
+#
+# Database Credentials (local dev only):
+#   - User: postgres
+#   - Password: postgres
+#   - Database: assemblyops
+#
+# =============================================================================
+
 services:
   api:
     build:

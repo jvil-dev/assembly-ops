@@ -1,3 +1,33 @@
+/**
+ * Token Service
+ *
+ * Manages refresh token lifecycle: creation, validation, rotation, and revocation.
+ * Refresh tokens are stored in the database to enable server-side invalidation.
+ *
+ * Methods:
+ *   - createRefreshToken(token, userId, userType): Store a new refresh token
+ *   - revokeRefreshToken(token): Mark a token as revoked
+ *   - revokeAllUserTokens(userId, userType): Revoke ALL tokens for a user (logout everywhere)
+ *   - rotateRefreshToken(oldToken, ...): Issue new tokens, revoke old one
+ *   - validateRefreshToken(token): Check if token is valid (not revoked, not expired)
+ *   - cleanupExpiredTokens(): Delete old/revoked tokens (housekeeping)
+ *
+ * Token Rotation:
+ *   Each time a refresh token is used, it's revoked and a new one is issued.
+ *   If a revoked token is used again (token reuse), ALL user tokens are revoked.
+ *   This detects token theft and limits damage.
+ *
+ * Token Lifetime:
+ *   - Access token: 15 minutes (stored only on client)
+ *   - Refresh token: 7 days (stored in database)
+ *
+ * Security:
+ *   - Tokens are stored hashed in the database
+ *   - Revoked tokens are kept until cleanup (to detect reuse)
+ *   - Token reuse triggers full session invalidation
+ *
+ * Called by: AuthService, VolunteerService
+ */
 import { PrismaClient } from '@prisma/client';
 import { generateTokens, verifyRefreshToken, TokenPair } from '../utils/jwt.js';
 

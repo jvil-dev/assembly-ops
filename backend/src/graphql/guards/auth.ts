@@ -1,3 +1,29 @@
+/**
+ * Authorization Guards
+ *
+ * Guards are functions that check if a user has permission to perform an action.
+ * They're called at the start of resolvers to protect sensitive operations.
+ *
+ * Available guards:
+ *   - requireAdmin(): User must be logged in as an admin (overseer)
+ *   - requireVolunteer(): User must be logged in as a volunteer
+ *   - requireAuth(): User must be logged in as either admin or volunteer
+ *   - requireEventAccess(): Admin must have access to a specific event
+ *
+ * How to use in a resolver:
+ *   ```
+ *   myResolver: async (_, args, context) => {
+ *     requireAdmin(context);  // Throws if not admin
+ *     // ... rest of resolver logic
+ *   }
+ *   ```
+ *
+ * Authentication vs Authorization:
+ *   - Authentication: "Who are you?" (handled by context.ts via JWT)
+ *   - Authorization: "Are you allowed to do this?" (handled by these guards)
+ *
+ * Used by: ./resolvers/* to protect queries and mutations
+ */
 import { Context } from '../context.js';
 import { AuthenticationError, AuthorizationError } from '../../utils/errors.js';
 import { EventRole } from '@prisma/client';

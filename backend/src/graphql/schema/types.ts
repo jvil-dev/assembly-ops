@@ -1,3 +1,33 @@
+/**
+ * GraphQL Core Types
+ *
+ * This file defines all the data types that can be queried or returned by the API.
+ * These map to your Prisma models but are specifically for GraphQL.
+ *
+ * Why separate from Prisma?
+ *   - GraphQL types define what the CLIENT sees
+ *   - Prisma models define what the DATABASE stores
+ *   - You might hide fields (like passwordHash) or add computed fields (like fullName)
+ *
+ * Enums:
+ *   - EventType: CIRCUIT_ASSEMBLY, REGIONAL_CONVENTION, SPECIAL_CONVENTION
+ *   - EventRole: EVENT_OVERSEER, DEPARTMENT_OVERSEER
+ *   - DepartmentType: The 12 convention departments (ATTENDANT, PARKING, etc.)
+ *   - AppointmentStatus: PUBLISHER, MINISTERIAL_SERVANT, ELDER
+ *   - RecipientType: For messages - VOLUNTEER, DEPARTMENT, or EVENT
+ *
+ * Core Types:
+ *   - Admin: Overseers who manage events
+ *   - Event: The assembly/convention being managed
+ *   - Department: One of 12 work areas (Attendant, Parking, etc.)
+ *   - Volunteer: People assigned to work at posts
+ *   - Post: Physical locations/positions within a department
+ *   - Session: Time blocks during the event
+ *   - ScheduleAssignment: Links a Volunteer to a Post for a Session
+ *   - CheckIn: Records when a volunteer checked in/out
+ *
+ * Used by: ./index.ts (combined into full schema)
+ */
 const types = `#graphql
   enum EventType {
     CIRCUIT_ASSEMBLY

@@ -1,3 +1,30 @@
+/**
+ * Volunteer Credentials Generator
+ *
+ * Generates unique login credentials for volunteers. Unlike admins who use
+ * email/password, volunteers get a generated ID + token that can be printed
+ * on cards or sent via SMS.
+ *
+ * Credential Format:
+ *   - volunteerId: "VOL-XXXXXX" (6 alphanumeric chars after prefix)
+ *   - token: 8 hex characters (e.g., "A1B2C3D4")
+ *
+ * Character Set:
+ *   Uses ABCDEFGHJKLMNPQRSTUVWXYZ23456789 (removes ambiguous: 0, O, I, 1)
+ *   This makes it easier to read/type from printed cards.
+ *
+ * Functions:
+ *   - generateVolunteerId(): Creates "VOL-XXXXXX" ID
+ *   - generateLoginToken(): Creates 8-char hex token
+ *   - generateVolunteerCredentials(): Returns { volunteerId, token, tokenHash }
+ *
+ * Security:
+ *   - Plain token is ONLY returned once (at creation)
+ *   - Only the bcrypt hash (tokenHash) is stored in database
+ *   - If volunteer loses credentials, use regenerateCredentials()
+ *
+ * Used by: VolunteerService.createVolunteer(), regenerateCredentials()
+ */
 import crypto from 'crypto';
 import { hashPassword } from './password.js';
 

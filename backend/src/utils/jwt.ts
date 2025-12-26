@@ -1,3 +1,35 @@
+/**
+ * JWT Token Utilities
+ *
+ * Handles JSON Web Token generation and verification for authentication.
+ * Uses two separate secrets for access and refresh tokens.
+ *
+ * Token Types:
+ *   - Access Token (15 min): Short-lived, used for API authorization
+ *   - Refresh Token (7 days): Long-lived, used to get new access tokens
+ *
+ * Functions:
+ *   - generateTokens(payload): Create access + refresh token pair
+ *   - verifyAccessToken(token): Verify and decode access token
+ *   - verifyRefreshToken(token): Verify and decode refresh token
+ *   - extractTokenFromHeader(header): Extract token from "Bearer <token>"
+ *
+ * Payload Structure:
+ *   - sub: User ID (admin or volunteer)
+ *   - type: 'admin' or 'volunteer'
+ *   - email: Only for admins (used in token refresh)
+ *
+ * Environment Variables:
+ *   - JWT_SECRET: Secret for access tokens
+ *   - JWT_REFRESH_SECRET: Secret for refresh tokens
+ *
+ * Security:
+ *   - Never log or expose tokens
+ *   - Use HTTPS in production
+ *   - Refresh tokens are also stored in DB for revocation
+ *
+ * Used by: AuthService, VolunteerService, context.ts
+ */
 import jwt, { SignOptions, JwtPayload } from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET!;

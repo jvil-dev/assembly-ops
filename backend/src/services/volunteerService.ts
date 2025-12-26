@@ -1,3 +1,36 @@
+/**
+ * Volunteer Service
+ *
+ * Business logic for volunteer management: create, update, delete, login, credentials.
+ *
+ * Methods:
+ *   - createVolunteer(eventId, input, departmentId?): Create single volunteer
+ *   - createVolunteers(input, defaultDepartmentId?): Bulk create volunteers
+ *   - loginVolunteer(input): Authenticate volunteer with volunteerId + token
+ *   - getVolunteer(id): Get volunteer with all related data
+ *   - getEventVolunteers(eventId, departmentId?): List volunteers for event/department
+ *   - updateVolunteer(id, input): Update volunteer details
+ *   - deleteVolunteer(id): Remove volunteer
+ *   - regenerateCredentials(id): Generate new login credentials (invalidates old ones)
+ *
+ * Volunteer Credentials:
+ *   - volunteerId: 8-character alphanumeric ID (e.g., "ABC12345")
+ *   - token: 6-character alphanumeric token (e.g., "XY7890")
+ *   - tokenHash: bcrypt hash of the token stored in database
+ *   - Plain token is ONLY returned when creating/regenerating (never stored)
+ *
+ * Login Flow:
+ *   1. Volunteer receives printed card with volunteerId + token
+ *   2. Volunteer enters credentials in mobile app
+ *   3. loginVolunteer() verifies against tokenHash
+ *   4. JWT tokens issued (same as admin flow)
+ *
+ * CreatedVolunteer Interface:
+ *   When creating a volunteer, we return the plain token (for printing/sending).
+ *   This is the ONLY time the plain token is available.
+ *
+ * Called by: ../graphql/resolvers/volunteer.ts
+ */
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError, ValidationError, AuthenticationError } from '../utils/errors.js';
 import { generateVolunteerCredentials } from '../utils/credentials.js';

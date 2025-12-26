@@ -1,3 +1,25 @@
+/**
+ * Volunteer Validators (Zod Schemas)
+ *
+ * Runtime validation for volunteer-related inputs.
+ *
+ * Schemas:
+ *   - createVolunteerSchema: Single volunteer creation
+ *   - createVolunteersSchema: Bulk volunteer creation (array of volunteers)
+ *   - loginVolunteerSchema: Volunteer login (volunteerId + token)
+ *
+ * Transformations:
+ *   - Names: trimmed
+ *   - Email: lowercase + trimmed
+ *   - volunteerId/token: UPPERCASE + trimmed (for case-insensitive matching)
+ *
+ * Optional fields:
+ *   - email, phone, notes: Can be null or omitted (.nullish())
+ *   - appointmentStatus: PUBLISHER, MINISTERIAL_SERVANT, or ELDER
+ *   - departmentId, roleId: Can assign during creation or later
+ *
+ * Used by: ../../services/volunteerService.ts
+ */
 import { z } from 'zod';
 import { AppointmentStatus } from '@prisma/client';
 
