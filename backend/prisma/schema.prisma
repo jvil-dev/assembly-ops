@@ -5,16 +5,411 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-// Init Table
-model HealthCheck {
+// ============================================
+// ENUMS
+// ============================================
+
+enum EventType {
+  CIRCUIT_ASSEMBLY
+  REGIONAL_CONVENTION
+  SPECIAL_CONVENTION
+}
+
+enum EventRole {
+  EVENT_OVERSEER
+  DEPARTMENT_OVERSEER
+}
+
+enum DepartmentType {
+  ACCOUNTS
+  ATTENDANT
+  AUDIO_VIDEO
+  BAPTISM
+  CLEANING
+  FIRST_AID
+  INFORMATION_VOLUNTEER_SERVICE
+  INSTALLATION
+  LOST_FOUND_CHECKROOM
+  PARKING
+  ROOMING
+  TRUCKING_EQUIPMENT
+}
+
+enum AppointmentStatus {
+  PUBLISHER
+  MINISTERIAL_SERVANT
+  ELDER
+}
+
+enum RecipientType {
+  INFORMATION_VOLUNTEER_SERVICE
+  DEPARTMENT
+  EVENT
+}
+
+// ============================================
+// EVENT TEMPLATE
+// ============================================
+
+model EventTemplate {
+  id             String    @id @default(cuid())
+  eventType      EventType
+  circuit        String?
+  region         String
+  serviceYear    Int
+  name           String
+  theme          String?
+  themeScripture String?
+  venue          String
+  address        String
+  startDate      DateTime
+  endDate        DateTime
+  language       String    @default("en")
+
+  events Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventType, circuit, startDate])
+  @@index([serviceYear])
+  @@index([region])
+}
+
+// ============================================
+// ADMIN
+// ============================================
+
+model Admin {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  congregation String
+
+  // Relations
+  eventRoles    EventAdmin[]
+  messageSent   Message[]
+  refreshTokens RefreshToken[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+// ============================================
+// EVENTS (Activated from Template)
+// ============================================
+
+model Event {
+  id         String        @id @default(cuid())
+  template   EventTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  templateId String
+  joinCode   String        @unique @default(cuid())
+
+  admins           EventAdmin[]
+  departments      Department[]
+  sessions         Session[]
+  roles            Role[]
+  volunteers       Volunteer[]
+  notes            EventNote[]
+  messages         Message[]
+  attendanceCounts AttendanceCount[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([joinCode])
+  @@index([templateId])
+}
+
+// ============================================
+// EVENT ADMIN
+// ============================================
+
+model EventAdmin {
+  id           String      @id @default(cuid())
+  admin        Admin       @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  adminId      String
+  event        Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId      String
+  role         EventRole
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  departmentId String?     @unique
+  claimedAt    DateTime    @default(now())
+
+  @@unique([adminId, eventId])
+  @@index([adminId])
+  @@index([eventId])
+}
+
+// ============================================
+// DEPARTMENT
+// ============================================
+
+model Department {
+  id             String         @id @default(cuid())
+  name           String
+  departmentType DepartmentType
+  description    String?
+
+  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId    String
+  overseer   EventAdmin?
+  posts      Post[]
+  volunteers Volunteer[]
+  notes      EventNote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, departmentType])
+  @@index([eventId])
+}
+
+// ============================================
+// ROLE (Custome volunteer roles)
+// ============================================
+
+model Role {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  sortOrder   Int     @default(0)
+
+  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId    String
+  volunteers Volunteer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, name])
+  @@index([eventId])
+}
+
+// ============================================
+// VOLUNTEER
+// ============================================
+
+model Volunteer {
+  id                String             @id @default(cuid())
+  volunteerId       String             @unique
+  tokenHash         String
+  firstName         String
+  lastName          String
+  email             String?
+  phone             String?
+  congregation      String
+  appointmentStatus AppointmentStatus? @default(PUBLISHER)
+  notes             String?
+
+  event            Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId          String
+  department       Department?          @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  departmentId     String?
+  role             Role?                @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  roleId           String?
+  assignments      ScheduleAssignment[]
+  messagesReceived Message[]            @relation("MessageRecipient")
+  refreshTokens    RefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([volunteerId])
+  @@index([departmentId])
+}
+
+// ============================================
+// POST
+// ============================================
+
+model Post {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  location    String?
+  capacity    Int     @default(1)
+
+  department   Department           @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  departmentId String
+  assignments  ScheduleAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([departmentId])
+}
+
+// ============================================
+// SESSION
+// ============================================
+
+model Session {
   id        String   @id @default(cuid())
-  timestamp DateTime @default(now())
+  name      String
+  date      DateTime @db.Date
+  startTime DateTime @db.Time(6)
+  endTime   DateTime @db.Time(6)
+
+  event            Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId          String
+  assignments      ScheduleAssignment[]
+  checkIns         CheckIn[]
+  attendanceCounts AttendanceCount[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([date])
+}
+
+// ============================================
+// SCHEDULE ASSIGNMENT
+// ============================================
+
+model ScheduleAssignment {
+  id          String    @id @default(cuid())
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  volunteerId String
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId      String
+  session     Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId   String
+  checkIn     CheckIn?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([volunteerId, sessionId])
+  @@index([volunteerId])
+  @@index([sessionId])
+  @@index([postId])
+}
+
+// ============================================
+// CHECK IN
+// ============================================
+
+model CheckIn {
+  id           String    @id @default(cuid())
+  checkInTime  DateTime  @default(now())
+  checkOutTime DateTime?
+
+  assignment   ScheduleAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignmentId String             @unique
+  session      Session            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sessionId])
+  @@index([checkInTime])
+}
+
+// ============================================
+// MESSAGE
+// ============================================
+
+model Message {
+  id            String        @id @default(cuid())
+  subject       String?
+  body          String
+  recipientType RecipientType
+  recipientId   String
+  isRead        Boolean       @default(false)
+  readAt        DateTime?
+
+  event       Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId     String
+  sender      Admin?     @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  senderId    String?
+  volunteer   Volunteer? @relation("MessageRecipient", fields: [volunteerId], references: [id], onDelete: Cascade)
+  volunteerId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([recipientType, recipientId])
+  @@index([volunteerId])
+}
+
+// ============================================
+// ATTENDANCE COUNT
+// ============================================
+
+model AttendanceCount {
+  id    String  @id @default(cuid())
+  count Int
+  notes String?
+
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, sessionId])
+  @@index([eventId])
+}
+
+// ============================================
+// EVENT NOTE
+// ============================================
+
+model EventNote {
+  id      String @id @default(cuid())
+  content String
+
+  event        Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId      String
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  departmentId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([departmentId])
+}
+
+// ============================================
+// REFRESH TOKEN
+// ============================================
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+
+  admin       Admin?     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  adminId     String?
+  volunteer   Volunteer? @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  volunteerId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([adminId])
+  @@index([volunteerId])
+  @@index([expiresAt])
 }

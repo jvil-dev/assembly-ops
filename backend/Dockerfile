@@ -21,12 +21,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/prisma ./prisma
 COPY . .
-# Copy generated Prisma client from deps stage (overwrites empty dir from COPY . .)
-COPY --from=deps /app/src/generated ./src/generated
 
 RUN npm run build
-# Copy Prisma client to dist (pre-compiled, must not go through tsc)
-RUN cp -r src/generated dist/
 
 # ============================================
 # Stage 3: Production

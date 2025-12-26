@@ -1,5 +1,10 @@
 import request from 'supertest';
-import app from '../../server.js';
+import app from '../../app.js';
+import prisma from '../../config/database.js';
+
+afterAll(async () => {
+  await prisma.$disconnect();
+});
 
 describe('GET /health', () => {
   it('should return healthy status', async () => {
