@@ -1,3 +1,28 @@
+/**
+ * Auth Resolvers
+ *
+ * Handles admin authentication: register, login, logout, token refresh.
+ *
+ * Queries:
+ *   - me: Returns the currently logged-in admin, or null if not authenticated
+ *
+ * Mutations:
+ *   - registerAdmin: Creates a new admin account, returns tokens
+ *   - loginAdmin: Authenticates with email/password, returns tokens
+ *   - refreshToken: Exchanges refresh token for new access token
+ *   - logoutAdmin: Invalidates a specific refresh token
+ *   - logoutAllSessions: Invalidates ALL refresh tokens for this admin
+ *
+ * Type Resolvers (Admin):
+ *   - fullName: Computed field (firstName + lastName)
+ *   - eventRoles: Fetches all EventAdmin records for this admin
+ *
+ * Dependencies:
+ *   - AuthService (../../services/authService.ts): Business logic for auth
+ *   - Guards (../guards/auth.ts): Authorization checks
+ *
+ * Schema: ../schema/auth.ts
+ */
 import { Context } from '../context.js';
 import { AuthService } from '../../services/authService.js';
 import { AuthenticationError } from '../../utils/errors.js';

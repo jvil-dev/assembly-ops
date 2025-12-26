@@ -1,3 +1,34 @@
+/**
+ * Event Service
+ *
+ * Business logic for event management: templates, activation, joining, departments.
+ *
+ * Methods:
+ *   - getEventTemplates(serviceYear?): Get available event templates
+ *   - activateEvent(input, adminId): Create event from template, admin becomes EVENT_OVERSEER
+ *   - joinEvent(input, adminId): Join event using join code as DEPARTMENT_OVERSEER
+ *   - claimDepartment(input, adminId): Claim a department in an event
+ *   - getMyEvents(adminId): Get all events this admin is part of
+ *   - getEvent(eventId): Get single event with all related data
+ *   - getEventDepartments(eventId): Get departments for an event
+ *
+ * Event Lifecycle:
+ *   1. HQ seeds event templates (Circuit Assembly 2025, etc.)
+ *   2. Event Overseer calls activateEvent() → creates Event with unique joinCode
+ *   3. Department Overseers call joinEvent() with the joinCode
+ *   4. Department Overseers call claimDepartment() to claim their department
+ *   5. Overseers manage volunteers, posts, sessions within their scope
+ *
+ * Department Names:
+ *   DEPARTMENT_NAMES constant maps enum values (ATTENDANT) to display names (Attendant).
+ *   Based on CO-1 convention guidelines for standard department names.
+ *
+ * Authorization:
+ *   - Resolvers handle auth checks before calling these methods
+ *   - This service assumes the caller has verified permissions
+ *
+ * Called by: ../graphql/resolvers/event.ts
+ */
 import { PrismaClient, EventRole, DepartmentType } from '@prisma/client';
 import { NotFoundError, ConflictError, ValidationError } from '../utils/errors.js';
 import {
@@ -197,11 +228,15 @@ export class EventService {
     });
 
     // Update eventAdmin with department
+    // Preserve EVENT_OVERSEER role if already set (they can manage sessions AND a department)
     await this.prisma.eventAdmin.update({
       where: { id: eventAdmin.id },
       data: {
         departmentId: department.id,
-        role: EventRole.DEPARTMENT_OVERSEER,
+        role:
+          eventAdmin.role === EventRole.EVENT_OVERSEER
+            ? EventRole.EVENT_OVERSEER
+            : EventRole.DEPARTMENT_OVERSEER,
       },
     });
 

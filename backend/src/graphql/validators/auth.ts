@@ -1,3 +1,27 @@
+/**
+ * Auth Validators (Zod Schemas)
+ *
+ * Runtime validation for authentication inputs. These schemas validate and
+ * transform data BEFORE it reaches the service layer.
+ *
+ * Schemas:
+ *   - registerAdminSchema: Validates registration (email, password rules, name, congregation)
+ *   - loginAdminSchema: Validates login (email, password)
+ *   - refreshTokenSchema: Validates token refresh
+ *
+ * What Zod does:
+ *   1. Validates: Checks required fields, formats (email), lengths, patterns
+ *   2. Transforms: Normalizes data (lowercase email, trim whitespace)
+ *   3. Types: Exports TypeScript types via z.infer<>
+ *
+ * Password requirements:
+ *   - Minimum 8 characters
+ *   - At least one uppercase letter
+ *   - At least one lowercase letter
+ *   - At least one number
+ *
+ * Used by: ../../services/authService.ts (validates input before processing)
+ */
 import { z } from 'zod';
 
 export const registerAdminSchema = z.object({

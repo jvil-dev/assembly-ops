@@ -1,3 +1,35 @@
+/**
+ * Volunteer Resolvers
+ *
+ * Handles volunteer management: create, update, delete, login, credentials.
+ *
+ * Queries:
+ *   - volunteer: Get a single volunteer by ID
+ *   - volunteers: Get all volunteers for an event (optionally filtered by department)
+ *   - myVolunteerProfile: Get the logged-in volunteer's own profile
+ *
+ * Mutations:
+ *   - createVolunteer: Add one volunteer, returns login credentials (volunteerId + token)
+ *   - createVolunteers: Bulk add volunteers, returns all credentials
+ *   - updateVolunteer: Update volunteer details
+ *   - deleteVolunteer: Remove a volunteer
+ *   - regenerateVolunteerCredentials: Generate new login credentials
+ *   - loginVolunteer: Volunteer logs in with volunteerId + token
+ *
+ * Type Resolvers (Volunteer):
+ *   - fullName: Computed field (firstName + lastName)
+ *
+ * Authorization:
+ *   - Most operations require admin + event access
+ *   - myVolunteerProfile requires volunteer login
+ *   - loginVolunteer is public (no auth required)
+ *
+ * Dependencies:
+ *   - VolunteerService (../../services/volunteerService.ts): Business logic
+ *   - Guards (../guards/auth.ts): requireAdmin, requireVolunteer, requireEventAccess
+ *
+ * Schema: ../schema/volunteer.ts
+ */
 import { Context } from '../context.js';
 import { VolunteerService, CreatedVolunteer } from '../../services/volunteerService.js';
 import { requireAdmin, requireVolunteer, requireEventAccess } from '../guards/auth.js';

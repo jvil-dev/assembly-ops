@@ -1,3 +1,26 @@
+/**
+ * Express Application Setup
+ *
+ * Configures the Express app with middleware and health check endpoint.
+ * This file sets up the base Express app without starting the server.
+ *
+ * Middleware:
+ *   - helmet: Security headers (CSP, HSTS, X-Frame-Options, etc.)
+ *   - cors: Cross-Origin Resource Sharing (allows requests from any origin)
+ *   - express.json: Parses JSON request bodies
+ *
+ * Endpoints:
+ *   - GET /health: Health check for AWS ALB (returns 200 if DB connected)
+ *
+ * Graceful Shutdown:
+ *   - Listens for SIGTERM/SIGINT signals
+ *   - Disconnects Prisma client before exiting
+ *   - Prevents orphaned database connections
+ *
+ * Note: This file may be redundant with server.ts - consider consolidating.
+ *
+ * Used by: server.ts (imports and extends this app)
+ */
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';

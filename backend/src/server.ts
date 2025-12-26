@@ -1,3 +1,27 @@
+/**
+ * Server Entry Point
+ *
+ * Main entry point for the application. Sets up Express, Apollo Server,
+ * and starts listening for requests.
+ *
+ * Startup Flow:
+ *   1. Configure Express middleware (helmet, cors, json)
+ *   2. Set up /health endpoint for AWS ALB health checks
+ *   3. Create Apollo Server and attach to /graphql endpoint
+ *   4. Start HTTP server on PORT (default 4000)
+ *
+ * Endpoints:
+ *   - GET /health: REST health check (for load balancer)
+ *   - POST /graphql: GraphQL API endpoint
+ *
+ * Environment Variables:
+ *   - PORT: Server port (default 4000)
+ *   - DATABASE_URL: PostgreSQL connection string
+ *   - JWT_SECRET: Access token signing key
+ *   - JWT_REFRESH_SECRET: Refresh token signing key
+ *
+ * Run with: npm run dev (development) or npm start (production)
+ */
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';

@@ -23,6 +23,7 @@ out/
 .classpath
 .settings/
 JW_AssemblyOps.code-workspace
+CLAUDE.md
 
 # OS files
 .DS_Store

@@ -1,3 +1,37 @@
+/**
+ * Auth Service
+ *
+ * Business logic for admin authentication. Handles registration, login, logout,
+ * and token refresh operations.
+ *
+ * Methods:
+ *   - registerAdmin(input): Create new admin account, returns admin + tokens
+ *   - loginAdmin(input): Authenticate with email/password, returns admin + tokens
+ *   - refreshToken(token): Exchange refresh token for new access token
+ *   - logout(token): Invalidate a specific refresh token
+ *   - logoutAll(userId, userType): Invalidate ALL refresh tokens for a user
+ *
+ * Flow:
+ *   1. Resolver receives GraphQL request
+ *   2. Resolver calls AuthService method
+ *   3. AuthService validates input with Zod schemas
+ *   4. AuthService performs database operations
+ *   5. AuthService calls TokenService for token management
+ *   6. Result returned to resolver → client
+ *
+ * Security:
+ *   - Passwords hashed with bcrypt before storage
+ *   - Refresh tokens stored in database for validation/revocation
+ *   - Generic error messages for auth failures (prevent user enumeration)
+ *
+ * Dependencies:
+ *   - TokenService: Manages refresh token storage/validation
+ *   - utils/password.ts: Password hashing and verification
+ *   - utils/jwt.ts: Token generation
+ *   - validators/auth.ts: Input validation schemas
+ *
+ * Called by: ../graphql/resolvers/auth.ts
+ */
 import { PrismaClient } from '@prisma/client';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { generateTokens, TokenPair } from '../utils/jwt.js';
