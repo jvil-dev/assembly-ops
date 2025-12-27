@@ -69,3 +69,9 @@ temp/
 *.gz
 *.tgz
 .cache/
+
+# Xcode
+  *.xcuserstate
+  xcuserdata/
+  *.xcscmblueprint
+  EOF

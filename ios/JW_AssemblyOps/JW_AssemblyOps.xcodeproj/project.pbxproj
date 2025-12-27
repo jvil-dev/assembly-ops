@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B025A5D62F00268000862900 /* JW-AssemblyOps-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B025A5B32F00268000862900 /* JW-AssemblyOps-Info.plist */; };
 		B025A5DF2F002AD300862900 /* Apollo in Frameworks */ = {isa = PBXBuildFile; productRef = B025A5DE2F002AD300862900 /* Apollo */; };
 		B025A5E12F002AD300862900 /* ApolloAPI in Frameworks */ = {isa = PBXBuildFile; productRef = B025A5E02F002AD300862900 /* ApolloAPI */; };
 /* End PBXBuildFile section */
@@ -235,7 +234,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B025A5D62F00268000862900 /* JW-AssemblyOps-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -18,11 +18,7 @@ final class LoginViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     
-    private let appState: AppState
-    
-    init(appState: AppState = .shared) {
-        self.appState = appState
-    }
+    private let appState = AppState.shared
     
     var isFormValid: Bool {
         !volunteerId.trimmingCharacters(in: .whitespaces).isEmpty &&
