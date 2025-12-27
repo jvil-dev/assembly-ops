@@ -65,7 +65,7 @@ struct LoginView: View {
                                 .focused($focusedField, equals: .token)
                                 .submitLabel(.go)
                                 .onSubmit {
-                                    Task { await viewModel.login() }
+                                    Task { viewModel.login() }
                                 }
                         }
                     }
@@ -82,7 +82,7 @@ struct LoginView: View {
                     
                     // Login Button
                     Button {
-                        Task { await viewModel.login() }
+                        Task { viewModel.login() }
                     } label: {
                         if viewModel.isLoading {
                             ProgressView()
