@@ -1,0 +1,26 @@
+query MyAssignments {
+  myAssignments {
+    id
+    post {
+      id
+      name
+      location
+      department {
+        id
+        name
+      }
+    }
+    session {
+      id
+      name
+      date
+      startTime
+      endTime
+    }
+    isCheckedIn
+    checkIn {
+      id
+      checkInTime
+    }
+  }
+}

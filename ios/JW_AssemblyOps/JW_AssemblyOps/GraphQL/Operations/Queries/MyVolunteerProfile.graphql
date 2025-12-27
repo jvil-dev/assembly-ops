@@ -1,0 +1,25 @@
+query MyVolunteerProfile {
+  myVolunteerProfile {
+    id
+    volunteerId
+    firstName
+    lastName
+    fullName
+    email
+    phone
+    congregation
+    appointmentStatus
+    event {
+      id
+      name
+      venue
+      address
+      startDate
+      endDate
+    }
+    department {
+      id
+      name
+    }
+  }
+}

@@ -1,0 +1,26 @@
+mutation LoginVolunteer($input: LoginVolunteerInput!) {
+  loginVolunteer(input: $input) {
+    volunteer {
+      id
+      volunteerId
+      firstName
+      lastName
+      fullName
+      congregation
+      event {
+        id
+        name
+        venue
+        startDate
+        endDate
+      }
+      department {
+        id
+        name
+      }
+    }
+    accessToken
+    refreshToken
+    expiresIn
+  }
+}

@@ -1,0 +1,639 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B025A5D62F00268000862900 /* JW-AssemblyOps-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B025A5B32F00268000862900 /* JW-AssemblyOps-Info.plist */; };
+		B025A5DF2F002AD300862900 /* Apollo in Frameworks */ = {isa = PBXBuildFile; productRef = B025A5DE2F002AD300862900 /* Apollo */; };
+		B025A5E12F002AD300862900 /* ApolloAPI in Frameworks */ = {isa = PBXBuildFile; productRef = B025A5E02F002AD300862900 /* ApolloAPI */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B0469BE92EFF2853005E523D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B0469BD32EFF2852005E523D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B0469BDA2EFF2852005E523D;
+			remoteInfo = JW_AssemblyOps;
+		};
+		B0469BF32EFF2853005E523D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B0469BD32EFF2852005E523D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B0469BDA2EFF2852005E523D;
+			remoteInfo = JW_AssemblyOps;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		B025A5B32F00268000862900 /* JW-AssemblyOps-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "JW-AssemblyOps-Info.plist"; sourceTree = "<group>"; };
+		B0469BDB2EFF2852005E523D /* JW_AssemblyOps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JW_AssemblyOps.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B0469BE82EFF2853005E523D /* JW_AssemblyOpsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JW_AssemblyOpsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B0469BF22EFF2853005E523D /* JW_AssemblyOpsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JW_AssemblyOpsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		B0469BDD2EFF2852005E523D /* JW_AssemblyOps */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = JW_AssemblyOps;
+			sourceTree = "<group>";
+		};
+		B0469BEB2EFF2853005E523D /* JW_AssemblyOpsTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = JW_AssemblyOpsTests;
+			sourceTree = "<group>";
+		};
+		B0469BF52EFF2853005E523D /* JW_AssemblyOpsUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = JW_AssemblyOpsUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B0469BD82EFF2852005E523D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B025A5E12F002AD300862900 /* ApolloAPI in Frameworks */,
+				B025A5DF2F002AD300862900 /* Apollo in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B0469BE52EFF2853005E523D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B0469BEF2EFF2853005E523D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B0469BD22EFF2852005E523D = {
+			isa = PBXGroup;
+			children = (
+				B0469BDD2EFF2852005E523D /* JW_AssemblyOps */,
+				B0469BEB2EFF2853005E523D /* JW_AssemblyOpsTests */,
+				B0469BF52EFF2853005E523D /* JW_AssemblyOpsUITests */,
+				B0469C7C2EFF485D005E523D /* Frameworks */,
+				B0469BDC2EFF2852005E523D /* Products */,
+				B025A5B32F00268000862900 /* JW-AssemblyOps-Info.plist */,
+			);
+			sourceTree = "<group>";
+		};
+		B0469BDC2EFF2852005E523D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B0469BDB2EFF2852005E523D /* JW_AssemblyOps.app */,
+				B0469BE82EFF2853005E523D /* JW_AssemblyOpsTests.xctest */,
+				B0469BF22EFF2853005E523D /* JW_AssemblyOpsUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B0469C7C2EFF485D005E523D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B0469BDA2EFF2852005E523D /* JW_AssemblyOps */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B0469BFC2EFF2853005E523D /* Build configuration list for PBXNativeTarget "JW_AssemblyOps" */;
+			buildPhases = (
+				B0469BD72EFF2852005E523D /* Sources */,
+				B0469BD82EFF2852005E523D /* Frameworks */,
+				B0469BD92EFF2852005E523D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B0469BDD2EFF2852005E523D /* JW_AssemblyOps */,
+			);
+			name = JW_AssemblyOps;
+			packageProductDependencies = (
+				B025A5DE2F002AD300862900 /* Apollo */,
+				B025A5E02F002AD300862900 /* ApolloAPI */,
+			);
+			productName = JW_AssemblyOps;
+			productReference = B0469BDB2EFF2852005E523D /* JW_AssemblyOps.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B0469BE72EFF2853005E523D /* JW_AssemblyOpsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B0469BFF2EFF2853005E523D /* Build configuration list for PBXNativeTarget "JW_AssemblyOpsTests" */;
+			buildPhases = (
+				B0469BE42EFF2853005E523D /* Sources */,
+				B0469BE52EFF2853005E523D /* Frameworks */,
+				B0469BE62EFF2853005E523D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B0469BEA2EFF2853005E523D /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B0469BEB2EFF2853005E523D /* JW_AssemblyOpsTests */,
+			);
+			name = JW_AssemblyOpsTests;
+			packageProductDependencies = (
+			);
+			productName = JW_AssemblyOpsTests;
+			productReference = B0469BE82EFF2853005E523D /* JW_AssemblyOpsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B0469BF12EFF2853005E523D /* JW_AssemblyOpsUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B0469C022EFF2853005E523D /* Build configuration list for PBXNativeTarget "JW_AssemblyOpsUITests" */;
+			buildPhases = (
+				B0469BEE2EFF2853005E523D /* Sources */,
+				B0469BEF2EFF2853005E523D /* Frameworks */,
+				B0469BF02EFF2853005E523D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B0469BF42EFF2853005E523D /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B0469BF52EFF2853005E523D /* JW_AssemblyOpsUITests */,
+			);
+			name = JW_AssemblyOpsUITests;
+			packageProductDependencies = (
+			);
+			productName = JW_AssemblyOpsUITests;
+			productReference = B0469BF22EFF2853005E523D /* JW_AssemblyOpsUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B0469BD32EFF2852005E523D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					B0469BDA2EFF2852005E523D = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					B0469BE72EFF2853005E523D = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = B0469BDA2EFF2852005E523D;
+					};
+					B0469BF12EFF2853005E523D = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = B0469BDA2EFF2852005E523D;
+					};
+				};
+			};
+			buildConfigurationList = B0469BD62EFF2852005E523D /* Build configuration list for PBXProject "JW_AssemblyOps" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B0469BD22EFF2852005E523D;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B025A5DD2F002AD300862900 /* XCRemoteSwiftPackageReference "apollo-ios" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = B0469BDC2EFF2852005E523D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B0469BDA2EFF2852005E523D /* JW_AssemblyOps */,
+				B0469BE72EFF2853005E523D /* JW_AssemblyOpsTests */,
+				B0469BF12EFF2853005E523D /* JW_AssemblyOpsUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B0469BD92EFF2852005E523D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B025A5D62F00268000862900 /* JW-AssemblyOps-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B0469BE62EFF2853005E523D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B0469BF02EFF2853005E523D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B0469BD72EFF2852005E523D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B0469BE42EFF2853005E523D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B0469BEE2EFF2853005E523D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B0469BEA2EFF2853005E523D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B0469BDA2EFF2852005E523D /* JW_AssemblyOps */;
+			targetProxy = B0469BE92EFF2853005E523D /* PBXContainerItemProxy */;
+		};
+		B0469BF42EFF2853005E523D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B0469BDA2EFF2852005E523D /* JW_AssemblyOps */;
+			targetProxy = B0469BF32EFF2853005E523D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		B0469BFA2EFF2853005E523D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 72KK7R8JUS;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		B0469BFB2EFF2853005E523D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 72KK7R8JUS;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B0469BFD2EFF2853005E523D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 72KK7R8JUS;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "JW-AssemblyOps-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "JW AssemblyOps";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.jvilapps.JW-AssemblyOps";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B0469BFE2EFF2853005E523D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 72KK7R8JUS;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "JW-AssemblyOps-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "JW AssemblyOps";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.jvilapps.JW-AssemblyOps";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B0469C002EFF2853005E523D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 72KK7R8JUS;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.jvilapps.JW-AssemblyOpsTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/JW_AssemblyOps.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/JW_AssemblyOps";
+			};
+			name = Debug;
+		};
+		B0469C012EFF2853005E523D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 72KK7R8JUS;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.jvilapps.JW-AssemblyOpsTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/JW_AssemblyOps.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/JW_AssemblyOps";
+			};
+			name = Release;
+		};
+		B0469C032EFF2853005E523D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 72KK7R8JUS;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.jvilapps.JW-AssemblyOpsUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = JW_AssemblyOps;
+			};
+			name = Debug;
+		};
+		B0469C042EFF2853005E523D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 72KK7R8JUS;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.jvilapps.JW-AssemblyOpsUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = JW_AssemblyOps;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B0469BD62EFF2852005E523D /* Build configuration list for PBXProject "JW_AssemblyOps" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B0469BFA2EFF2853005E523D /* Debug */,
+				B0469BFB2EFF2853005E523D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B0469BFC2EFF2853005E523D /* Build configuration list for PBXNativeTarget "JW_AssemblyOps" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B0469BFD2EFF2853005E523D /* Debug */,
+				B0469BFE2EFF2853005E523D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B0469BFF2EFF2853005E523D /* Build configuration list for PBXNativeTarget "JW_AssemblyOpsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B0469C002EFF2853005E523D /* Debug */,
+				B0469C012EFF2853005E523D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B0469C022EFF2853005E523D /* Build configuration list for PBXNativeTarget "JW_AssemblyOpsUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B0469C032EFF2853005E523D /* Debug */,
+				B0469C042EFF2853005E523D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B025A5DD2F002AD300862900 /* XCRemoteSwiftPackageReference "apollo-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apollographql/apollo-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.15.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B025A5DE2F002AD300862900 /* Apollo */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B025A5DD2F002AD300862900 /* XCRemoteSwiftPackageReference "apollo-ios" */;
+			productName = Apollo;
+		};
+		B025A5E02F002AD300862900 /* ApolloAPI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B025A5DD2F002AD300862900 /* XCRemoteSwiftPackageReference "apollo-ios" */;
+			productName = ApolloAPI;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = B0469BD32EFF2852005E523D /* Project object */;
+}
