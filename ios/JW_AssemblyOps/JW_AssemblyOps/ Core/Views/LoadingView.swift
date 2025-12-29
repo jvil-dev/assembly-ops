@@ -5,6 +5,15 @@
 //  Created by Jorge Villeda on 12/27/25.
 //
 
+// MARK: - Loading View
+//
+// Reusable loading indicator with customizable message.
+// Displays centered spinner with optional description text.
+//
+// Properties:
+//   - message: Text displayed below spinner (default: "Loading...")
+//
+// Used by: AssignmentsListView.swift (while fetching data)
 
 import SwiftUI
 

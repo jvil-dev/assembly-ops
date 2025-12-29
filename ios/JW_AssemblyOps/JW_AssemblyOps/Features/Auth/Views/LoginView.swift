@@ -5,6 +5,28 @@
 //  Created by Jorge Villeda on 12/27/25.
 //
 
+// MARK: - Login View
+//
+// Volunteer login screen with credential entry form.
+// Volunteers receive their ID and token from their overseer.
+//
+// Components:
+//   - Header: App logo and branding
+//   - Form: Volunteer ID and Token fields with auto-capitalization
+//   - Error display: Shows authentication errors
+//   - Login button: Disabled until form is valid
+//   - Help text: Instructions for obtaining credentials
+//
+// Behavior:
+//   - Fields auto-capitalize and trim whitespace
+//   - Keyboard navigation: ID → Token → Submit
+//   - Button shows loading spinner during login
+//   - On success: AppState.isLoggedIn triggers navigation to MainTabView
+//
+// Dependencies:
+//   - LoginViewModel: Handles form state and API calls
+//
+// Used by: JW_AssemblyOpsApp.swift (when not logged in)
 
 import SwiftUI
 

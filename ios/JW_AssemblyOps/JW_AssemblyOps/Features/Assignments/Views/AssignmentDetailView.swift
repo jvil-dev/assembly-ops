@@ -5,6 +5,26 @@
 //  Created by Jorge Villeda on 12/27/25.
 //
 
+// MARK: - Assignment Detail View
+//
+// Full-screen view showing complete details for a single assignment.
+// Displays post info, time, location, and check-in status.
+//
+// Components:
+//   - Header card: Post name and session
+//   - Detail sections: Time, date, department, location
+//   - Check-in status: Shows checked-in state with timestamp
+//   - Check-in button: Placeholder for future check-in functionality
+//
+// Behavior:
+//   - Read-only display of assignment details
+//   - Check-in button shown only for today's unchecked assignments
+//   - Check-in functionality to be implemented in Sprint 3.3
+//
+// Dependencies:
+//   - Assignment: Data model passed from list view
+//
+// Used by: AssignmentsListView.swift (via NavigationLink)
 
 import SwiftUI
 

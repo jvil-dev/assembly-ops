@@ -5,6 +5,34 @@
 //  Created by Jorge Villeda on 12/27/25.
 //
 
+// MARK: - Login View Model
+//
+// Handles volunteer authentication via GraphQL loginVolunteer mutation.
+// Manages form state, validation, loading states, and error handling.
+//
+// Published Properties:
+//   - volunteerId: User-entered volunteer ID (e.g., "VOL-ABC123")
+//   - token: User-entered auth token
+//   - isLoading: True while login request is in flight
+//   - errorMessage: Error text to display (nil on success)
+//
+// Computed Properties:
+//   - isFormValid: True if both fields have non-empty values
+//
+// Methods:
+//   - login(): Execute loginVolunteer mutation, store tokens on success
+//
+// Flow:
+//   1. User enters volunteerId and token
+//   2. login() validates form, calls GraphQL mutation
+//   3. On success: AppState.didLogin() stores tokens, triggers navigation
+//   4. On failure: errorMessage displayed to user
+//
+// Dependencies:
+//   - NetworkClient: Apollo GraphQL client
+//   - AppState: Stores tokens and triggers auth state change
+//
+// Used by: LoginView.swift
 
 import Foundation
 import SwiftUI

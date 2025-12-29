@@ -5,6 +5,33 @@
 //  Created by Jorge Villeda on 12/26/25.
 //
 
+// MARK: - Keychain Manager
+//
+// Secure storage for authentication tokens using iOS Keychain Services.
+// All sensitive auth data persists encrypted across app launches.
+//
+// Stored Keys:
+//   - accessToken: JWT for API authorization (15 min expiry)
+//   - refreshToken: Long-lived token for obtaining new access tokens (7 day expiry)
+//   - expiresAt: Timestamp when access token expires
+//   - volunteerId: Current volunteer's ID
+//
+// Properties:
+//   - isLoggedIn: True if both tokens are present
+//   - isTokenExpired: True if access token expires in <60 seconds
+//
+// Methods:
+//   - saveTokens(accessToken:refreshToken:expiresIn:): Store all auth tokens
+//   - clearAll(): Remove all stored tokens (logout)
+//
+// Security:
+//   - Uses kSecAttrAccessibleAfterFirstUnlock for background refresh support
+//   - Data encrypted by iOS Keychain at rest
+//   - Tokens never stored in UserDefaults or plain files
+//
+// Dependencies: None (uses Security framework directly)
+//
+// Used by: AppState, NetworkClient, LoginViewModel
 
 import Foundation
 import Security

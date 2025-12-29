@@ -5,6 +5,32 @@
 //  Created by Jorge Villeda on 12/27/25.
 //
 
+// MARK: - Assignments View Model
+//
+// Fetches and manages the volunteer's schedule assignments from the API.
+// Provides computed properties for grouping and filtering assignments.
+//
+// Published Properties:
+//   - assignments: Array of all fetched Assignment objects
+//   - isLoading: True while API request is in flight
+//   - errorMessage: Error text to display (nil on success)
+//   - hasLoaded: True after first successful/failed fetch (prevents reload on tab switch)
+//
+// Computed Properties:
+//   - groupedAssignments: Assignments grouped by date, sorted chronologically
+//   - todayAssignments: Only assignments scheduled for today
+//   - upcomingAssignments: Today and future assignments
+//   - isEmpty: True if no assignments exist
+//
+// Methods:
+//   - fetchAssignments(): Execute myAssignments GraphQL query
+//   - refresh(): Alias for fetchAssignments (pull-to-refresh)
+//
+// Dependencies:
+//   - NetworkClient: Apollo GraphQL client
+//   - Assignment: Local model parsed from GraphQL response
+//
+// Used by: AssignmentsListView.swift
 
 import Foundation
 import SwiftUI

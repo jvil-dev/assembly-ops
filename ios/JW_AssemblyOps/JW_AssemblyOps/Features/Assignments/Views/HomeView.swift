@@ -5,6 +5,21 @@
 //  Created by Jorge Villeda on 12/27/25.
 //
 
+// MARK: - Home View
+//
+// Dashboard screen showing event overview and quick access to key info.
+// First tab in the main navigation.
+//
+// Components:
+//   - Event header: Current event name
+//   - Today card: Current date display
+//   - (Placeholder for upcoming assignments and stats)
+//
+// Dependencies:
+//   - AppState: Access to current volunteer and event info
+//
+// Used by: MainTabView.swift (Home tab)
+
 import SwiftUI
 
 struct HomeView: View {

@@ -5,6 +5,34 @@
 //  Created by Jorge Villeda on 12/26/25.
 //
 
+// MARK: - App State
+//
+// Global singleton managing authentication state and current user session.
+// Observed by the root view to control navigation between auth and main flows.
+//
+// Properties:
+//   - isLoggedIn: Whether user has valid auth tokens
+//   - isLoading: True during initial auth check on app launch
+//   - currentVolunteer: Cached volunteer info after login
+//
+// Methods:
+//   - checkAuthState(): Verify stored tokens on app launch
+//   - refreshTokenIfNeeded(): Exchange expired access token for new one
+//   - didLogin(volunteer:accessToken:refreshToken:expiresIn:): Store tokens after successful login
+//   - logout(): Clear all tokens and reset state
+//
+// Flow:
+//   1. App launches → checkAuthState() runs
+//   2. If tokens exist and valid → isLoggedIn = true
+//   3. If tokens expired → refreshTokenIfNeeded() attempts refresh
+//   4. On refresh failure → logout() clears state
+//
+// Dependencies:
+//   - KeychainManager: Secure token storage
+//   - NetworkClient: GraphQL API calls for token refresh
+//
+// Used by: JW_AssemblyOpsApp.swift (root view switching)
+
 import Foundation
 import SwiftUI
 import Combine

@@ -5,6 +5,29 @@
 //  Created by Jorge Villeda on 12/27/25.
 //
 
+// MARK: - Assignment Card View
+//
+// Compact card displaying assignment summary in the schedule list.
+// Used as the row view in AssignmentsListView.
+//
+// Components:
+//   - Time column: Start and end times
+//   - Color bar: Green if checked in, blue otherwise
+//   - Details: Post name, department, optional location
+//   - Status indicator: Checkmark if checked in, chevron otherwise
+//
+// Behavior:
+//   - Tappable (wrapped in NavigationLink by parent)
+//   - Visual distinction between checked-in and pending assignments
+//
+// Preview Data:
+//   - Assignment.preview: Sample unchecked assignment
+//   - Assignment.previewCheckedIn: Sample checked-in assignment
+//
+// Dependencies:
+//   - Assignment: Data model
+//
+// Used by: AssignmentsListView.swift
 
 import SwiftUI
 

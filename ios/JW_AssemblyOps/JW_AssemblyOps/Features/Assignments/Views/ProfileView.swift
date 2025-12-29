@@ -5,6 +5,25 @@
 //  Created by Jorge Villeda on 12/27/25.
 //
 
+// MARK: - Profile View
+//
+// Displays volunteer information and provides logout functionality.
+// Shows current event and department assignment.
+//
+// Components:
+//   - Volunteer info: Name, congregation, avatar
+//   - Event section: Current event name
+//   - Department section: Assigned department (if any)
+//   - Logout button: Clears tokens and returns to login
+//
+// Behavior:
+//   - Logout calls AppState.logout() which clears Keychain
+//   - Navigation automatically returns to LoginView
+//
+// Dependencies:
+//   - AppState: Access to volunteer info and logout method
+//
+// Used by: MainTabView.swift (Profile tab)
 
 import SwiftUI
 

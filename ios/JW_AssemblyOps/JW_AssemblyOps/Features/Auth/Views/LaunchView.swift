@@ -5,6 +5,20 @@
 //  Created by Jorge Villeda on 12/27/25.
 //
 
+// MARK: - Launch View
+//
+// Splash screen displayed during app initialization.
+// Shown while AppState checks for existing auth tokens.
+//
+// Components:
+//   - App icon and branding
+//   - Loading indicator
+//
+// Behavior:
+//   - Displayed when AppState.isLoading is true
+//   - Automatically transitions once auth check completes
+//
+// Used by: JW_AssemblyOpsApp.swift (during initial load)
 
 import SwiftUI
 

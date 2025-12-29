@@ -5,6 +5,31 @@
 //  Created by Jorge Villeda on 12/27/25.
 //
 
+// MARK: - Assignment Model
+//
+// Local model representing a volunteer's schedule assignment.
+// Parsed from GraphQL MyAssignmentsQuery response.
+//
+// Properties:
+//   - id: Unique assignment ID
+//   - postName: Name of the assigned post (e.g., "East Lobby")
+//   - postLocation: Optional location details (e.g., "Building A, Floor 1")
+//   - departmentName: Department name (e.g., "Attendant")
+//   - sessionName: Session name (e.g., "Saturday Morning")
+//   - date: Date of the assignment
+//   - startTime/endTime: Session time range
+//   - isCheckedIn: Whether volunteer has checked in
+//   - checkInTime: When volunteer checked in (nil if not checked in)
+//
+// Computed Properties:
+//   - dateFormatted: Human-readable date string
+//   - timeRangeFormatted: "9:00 AM - 12:00 PM" format
+//   - isToday/isUpcoming/isPast: Date classification helpers
+//
+// GraphQL Mapping:
+//   - init?(from:) failable initializer parses ISO8601 dates from API response
+//
+// Used by: AssignmentsViewModel, AssignmentCardView, AssignmentDetailView
 
 import Foundation
 

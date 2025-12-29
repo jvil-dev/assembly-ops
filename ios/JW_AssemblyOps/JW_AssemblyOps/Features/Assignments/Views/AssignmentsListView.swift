@@ -5,6 +5,29 @@
 //  Created by Jorge Villeda on 12/27/25.
 //
 
+// MARK: - Assignments List View
+//
+// Main schedule screen displaying all volunteer assignments grouped by date.
+// Handles loading, error, and empty states with pull-to-refresh support.
+//
+// Components:
+//   - Loading state: LoadingView while fetching
+//   - Error state: ErrorView with retry button
+//   - Empty state: EmptyAssignmentsView when no assignments
+//   - List: Assignments grouped by date with sticky headers
+//
+// Behavior:
+//   - Fetches assignments on first appear (via .task)
+//   - Pull-to-refresh triggers refetch
+//   - Tapping a card navigates to AssignmentDetailView
+//   - Date headers show "Today", "Tomorrow", or full date
+//
+// Dependencies:
+//   - AssignmentsViewModel: Fetches and manages assignment data
+//   - AssignmentCardView: Individual assignment display
+//   - Assignment: Data model (extended with Hashable for navigation)
+//
+// Used by: MainTabView.swift (Schedule tab)
 
 import SwiftUI
 
