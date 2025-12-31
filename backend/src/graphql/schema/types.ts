@@ -67,6 +67,12 @@ const types = `#graphql
     EVENT
   }
 
+  enum CheckInStatus {
+    CHECKED_IN
+    CHECKED_OUT
+    NO_SHOW
+  }
+
   type EventTemplate {
     id: ID!
     eventType: EventType!
@@ -203,10 +209,12 @@ const types = `#graphql
 
   type CheckIn {
     id: ID!
+    status: CheckInStatus!
     checkInTime: DateTime!
     checkOutTime: DateTime
+    notes: String
     assignment: ScheduleAssignment!
-    session: Session!
+    checkedInBy: Admin
     createdAt: DateTime!
   }
 
@@ -228,6 +236,7 @@ const types = `#graphql
     notes: String
     session: Session!
     createdAt: DateTime!
+    submittedBy: Admin!
   }
 
   type EventNote {
