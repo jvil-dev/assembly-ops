@@ -1,5 +1,8 @@
 import request from 'supertest';
-import app from '../../app.js';
+import { createTestApp, closeTestApp } from '../setup.js';
+import type { Application } from 'express';
+
+let app: Application;
 
 describe('Volunteer Operations', () => {
   let accessToken: string;
@@ -7,6 +10,7 @@ describe('Volunteer Operations', () => {
   let volunteerCredentials: { volunteerId: string; token: string };
 
   beforeAll(async () => {
+    app = await createTestApp();
     const email = `vol-test-${Date.now()}@example.com`;
 
     // Register admin
@@ -23,7 +27,7 @@ describe('Volunteer Operations', () => {
         variables: {
           input: {
             email,
-            password: 'TestPassword123',
+            password: 'TestPassword123!',
             firstName: 'Vol',
             lastName: 'Tester',
             congregation: 'Test Congregation',
@@ -31,6 +35,10 @@ describe('Volunteer Operations', () => {
         },
       });
 
+    if (registerRes.body.errors) {
+      console.error('Register failed:', registerRes.body.errors);
+      return;
+    }
     accessToken = registerRes.body.data.registerAdmin.accessToken;
 
     // Get a template and activate event
@@ -57,6 +65,10 @@ describe('Volunteer Operations', () => {
 
       eventId = activateRes.body.data.activateEvent.id;
     }
+  });
+
+  afterAll(async () => {
+    await closeTestApp();
   });
 
   describe('createVolunteer', () => {

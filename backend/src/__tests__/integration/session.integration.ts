@@ -20,13 +20,17 @@
  * TODO: Add updateSession and deleteSession tests
  */
 import request from 'supertest';
-import app from '../../app.js';
+import { createTestApp, closeTestApp } from '../setup.js';
+import type { Application } from 'express';
+
+let app: Application;
 
 describe('Session Operations', () => {
   let accessToken: string;
   let eventId: string;
 
   beforeAll(async () => {
+    app = await createTestApp();
     const email = `session-test-${Date.now()}@example.com`;
 
     // Register admin
@@ -43,7 +47,7 @@ describe('Session Operations', () => {
         variables: {
           input: {
             email,
-            password: 'TestPassword123',
+            password: 'TestPassword123!',
             firstName: 'Session',
             lastName: 'Tester',
             congregation: 'Test Congregation',
@@ -51,6 +55,10 @@ describe('Session Operations', () => {
         },
       });
 
+    if (registerRes.body.errors) {
+      console.error('Register failed:', registerRes.body.errors);
+      return;
+    }
     accessToken = registerRes.body.data.registerAdmin.accessToken;
 
     // Get template and activate event
@@ -79,6 +87,10 @@ describe('Session Operations', () => {
     }
   });
 
+  afterAll(async () => {
+    await closeTestApp();
+  });
+
   describe('createSession', () => {
     it('should create a session', async () => {
       if (!eventId) {
@@ -105,7 +117,7 @@ describe('Session Operations', () => {
             eventId,
             input: {
               name: 'Saturday Morning',
-              date: '2026-03-07',
+              date: '2026-03-07T00:00:00Z',
               startTime: '09:00',
               endTime: '12:00',
             },
@@ -144,7 +156,7 @@ describe('Session Operations', () => {
               sessions: [
                 {
                   name: 'Saturday Afternoon',
-                  date: '2026-03-07',
+                  date: '2026-03-07T00:00:00Z',
                   startTime: '13:30',
                   endTime: '16:30',
                 },

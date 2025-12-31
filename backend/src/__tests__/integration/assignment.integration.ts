@@ -23,7 +23,10 @@
  * Currently not run in CI pipeline (tracked as tech debt).
  */
 import request from 'supertest';
-import app from '../../app.js';
+import { createTestApp, closeTestApp } from '../setup.js';
+import type { Application } from 'express';
+
+let app: Application;
 
 describe('Assignment Operations', () => {
   let accessToken: string;
@@ -35,6 +38,7 @@ describe('Assignment Operations', () => {
   let assignmentId: string;
 
   beforeAll(async () => {
+    app = await createTestApp();
     const email = `assignment-test-${Date.now()}@example.com`;
 
     // Register admin
@@ -51,7 +55,7 @@ describe('Assignment Operations', () => {
         variables: {
           input: {
             email,
-            password: 'TestPassword123',
+            password: 'TestPassword123!',
             firstName: 'Assignment',
             lastName: 'Tester',
             congregation: 'Test Congregation',
@@ -59,6 +63,10 @@ describe('Assignment Operations', () => {
         },
       });
 
+    if (registerRes.body.errors) {
+      console.error('Register failed:', registerRes.body.errors);
+      return;
+    }
     accessToken = registerRes.body.data.registerAdmin.accessToken;
 
     // Get template and activate event
@@ -161,6 +169,10 @@ describe('Assignment Operations', () => {
 
       volunteerId = volunteerRes.body.data.createVolunteer.id;
     }
+  });
+
+  afterAll(async () => {
+    await closeTestApp();
   });
 
   describe('createAssignment', () => {

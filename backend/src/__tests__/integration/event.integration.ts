@@ -1,5 +1,8 @@
 import request from 'supertest';
-import app from '../../app.js';
+import { createTestApp, closeTestApp } from '../setup.js';
+import type { Application } from 'express';
+
+let app: Application;
 
 describe('Event Operations', () => {
   let accessToken: string;
@@ -8,6 +11,7 @@ describe('Event Operations', () => {
 
   // Register and login first
   beforeAll(async () => {
+    app = await createTestApp();
     const email = `event-test-${Date.now()}@example.com`;
 
     const registerRes = await request(app)
@@ -23,7 +27,7 @@ describe('Event Operations', () => {
         variables: {
           input: {
             email,
-            password: 'TestPassword123',
+            password: 'TestPassword123!',
             firstName: 'Event',
             lastName: 'Tester',
             congregation: 'Test Congregation',
@@ -31,7 +35,15 @@ describe('Event Operations', () => {
         },
       });
 
+    if (registerRes.body.errors) {
+      console.error('Register failed:', registerRes.body.errors);
+      return;
+    }
     accessToken = registerRes.body.data.registerAdmin.accessToken;
+  });
+
+  afterAll(async () => {
+    await closeTestApp();
   });
 
   describe('eventTemplates', () => {

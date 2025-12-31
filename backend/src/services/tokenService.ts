@@ -73,6 +73,12 @@ export class TokenService {
     });
   }
 
+  async deleteAllUserTokens(userId: string, userType: 'admin' | 'volunteer'): Promise<void> {
+    const where = userType === 'admin' ? { adminId: userId } : { volunteerId: userId };
+
+    await this.prisma.refreshToken.deleteMany({ where });
+  }
+
   async rotateRefreshToken(
     oldToken: string,
     userId: string,
@@ -97,8 +103,8 @@ export class TokenService {
       return null;
     }
 
-    // Revoke old token
-    await this.revokeRefreshToken(oldToken);
+    // Delete all user tokens to prevent collision on rapid refresh
+    await this.deleteAllUserTokens(userId, userType);
 
     // Generate new tokens
     const tokens = generateTokens({

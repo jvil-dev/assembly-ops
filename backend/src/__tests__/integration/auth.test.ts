@@ -96,6 +96,16 @@ describe('Auth GraphQL', () => {
     if (testEventId) {
       await prisma.event.delete({ where: { id: testEventId } }).catch(() => {});
     }
+    // Delete attendance counts submitted by test admins (FK constraint)
+    const testAdmins = await prisma.admin.findMany({
+      where: { email: { contains: 'test-' } },
+      select: { id: true },
+    });
+    if (testAdmins.length > 0) {
+      await prisma.attendanceCount.deleteMany({
+        where: { submittedById: { in: testAdmins.map((a) => a.id) } },
+      });
+    }
     await prisma.admin.deleteMany({ where: { email: { contains: 'test-' } } });
     await closeTestApp();
     await prisma.$disconnect();

@@ -133,6 +133,9 @@ export class AuthService {
       throw new AuthenticationError('Invalid email or password');
     }
 
+    // Delete any existing tokens for this admin (prevents collision on quick re-login)
+    await this.tokenService.deleteAllUserTokens(admin.id, 'admin');
+
     // Generate tokens
     const tokens = generateTokens({
       sub: admin.id,

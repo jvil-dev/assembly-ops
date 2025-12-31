@@ -18,7 +18,10 @@
  * TODO: Add updatePost and deletePost tests
  */
 import request from 'supertest';
-import app from '../../app.js';
+import { createTestApp, closeTestApp } from '../setup.js';
+import type { Application } from 'express';
+
+let app: Application;
 
 describe('Post Operations', () => {
   let accessToken: string;
@@ -26,6 +29,7 @@ describe('Post Operations', () => {
   let departmentId: string;
 
   beforeAll(async () => {
+    app = await createTestApp();
     const email = `post-test-${Date.now()}@example.com`;
 
     // Register admin
@@ -42,7 +46,7 @@ describe('Post Operations', () => {
         variables: {
           input: {
             email,
-            password: 'TestPassword123',
+            password: 'TestPassword123!',
             firstName: 'Post',
             lastName: 'Tester',
             congregation: 'Test Congregation',
@@ -50,6 +54,10 @@ describe('Post Operations', () => {
         },
       });
 
+    if (registerRes.body.errors) {
+      console.error('Register failed:', registerRes.body.errors);
+      return;
+    }
     accessToken = registerRes.body.data.registerAdmin.accessToken;
 
     // Get template and activate event
@@ -98,6 +106,10 @@ describe('Post Operations', () => {
 
       departmentId = claimRes.body.data.claimDepartment.id;
     }
+  });
+
+  afterAll(async () => {
+    await closeTestApp();
   });
 
   describe('createPost', () => {
