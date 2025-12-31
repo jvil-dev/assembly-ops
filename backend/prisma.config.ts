@@ -19,7 +19,7 @@
  * Note: Uses dotenv/config to load .env file for DATABASE_URL
  */
 import 'dotenv/config';
-import { defineConfig, env } from 'prisma/config';
+import { defineConfig } from 'prisma/config';
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',
@@ -28,6 +28,7 @@ export default defineConfig({
     seed: 'npx tsx prisma/seed.ts',
   },
   datasource: {
-    url: env('DATABASE_URL'),
+    // Use DIRECT_URL for migrations, fallback to DATABASE_URL for generate/other commands
+    url: process.env.DIRECT_URL || process.env.DATABASE_URL || '',
   },
 });

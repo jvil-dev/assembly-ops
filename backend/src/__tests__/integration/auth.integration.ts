@@ -1,10 +1,13 @@
 import request from 'supertest';
-import app from '../../server.js';
+import { createTestApp, closeTestApp } from '../setup.js';
+import type { Application } from 'express';
+
+let app: Application;
 
 describe('Auth', () => {
   const testUser = {
     email: `test-${Date.now()}@example.com`,
-    password: 'TestPassword123',
+    password: 'TestPassword123!',
     firstName: 'Test',
     lastName: 'User',
     congregation: 'Test Congregation',
@@ -12,6 +15,14 @@ describe('Auth', () => {
 
   let accessToken: string;
   let refreshToken: string;
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(async () => {
+    await closeTestApp();
+  });
 
   describe('registerAdmin', () => {
     it('should register a new admin', async () => {
@@ -92,6 +103,10 @@ describe('Auth', () => {
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
       expect(response.body.data.loginAdmin.admin.email).toBe(testUser.email);
+
+      // Update tokens - login deletes old tokens and creates new ones
+      accessToken = response.body.data.loginAdmin.accessToken;
+      refreshToken = response.body.data.loginAdmin.refreshToken;
     });
 
     it('should reject invalid password', async () => {
