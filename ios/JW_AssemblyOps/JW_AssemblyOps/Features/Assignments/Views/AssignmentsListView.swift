@@ -15,17 +15,21 @@
 //   - Error state: ErrorView with retry button
 //   - Empty state: EmptyAssignmentsView when no assignments
 //   - List: Assignments grouped by date with sticky headers
+//   - Filter button: Toggle between all assignments and today only
+//   - No today view: Shown when filtering to today with no assignments
 //
 // Behavior:
 //   - Fetches assignments on first appear (via .task)
 //   - Pull-to-refresh triggers refetch
 //   - Tapping a card navigates to AssignmentDetailView
-//   - Date headers show "Today", "Tomorrow", or full date
+//   - Date headers show "Today" (with orange dot), "Tomorrow", or full date
+//   - Today filter with haptic feedback on toggle
 //
 // Dependencies:
 //   - AssignmentsViewModel: Fetches and manages assignment data
 //   - AssignmentCardView: Individual assignment display
 //   - Assignment: Data model (extended with Hashable for navigation)
+//   - HapticManager: Haptic feedback on filter toggle
 //
 // Used by: MainTabView.swift (Schedule tab)
 
@@ -33,6 +37,7 @@ import SwiftUI
 
 struct AssignmentsListView: View {
     @StateObject private var viewModel = AssignmentsViewModel()
+    @State private var showTodayOnly = false
     
     var body: some View {
         NavigationStack {
@@ -50,9 +55,13 @@ struct AssignmentsListView: View {
                 }
             }
             .navigationTitle("My Schedule")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    filterButton
+                }
+            }
             .refreshable {
                 viewModel.refresh()
-                try? await Task.sleep(for: .seconds(0.5))
             }
             .task {
                 if !viewModel.hasLoaded {
@@ -62,19 +71,45 @@ struct AssignmentsListView: View {
         }
     }
     
+    private var filterButton: some View {
+        Button {
+            showTodayOnly.toggle()
+            HapticManager.shared.lightTap()
+        } label: {
+            Label(
+                showTodayOnly ? "All" : "Today",
+                systemImage: showTodayOnly ? "calendar" : "sun.max"
+            )
+        }
+    }
+    
+    private var filteredGroupedAssignments: [(date: Date, assignments: [Assignment])] {
+        if showTodayOnly {
+            let today = viewModel.groupedAssignments.filter { group in
+                Calendar.current.isDateInToday(group.date)
+            }
+            return today
+        }
+        return viewModel.groupedAssignments
+    }
+    
     private var assignmentsList: some View {
         ScrollView {
             LazyVStack(spacing: 16, pinnedViews: .sectionHeaders) {
-                ForEach(viewModel.groupedAssignments, id: \.date) { group in
-                    Section {
-                        ForEach(group.assignments) { assignment in
-                            NavigationLink(value: assignment) {
-                                AssignmentCardView(assignment: assignment)
+                if showTodayOnly && filteredGroupedAssignments.isEmpty {
+                    noTodayAssignmentsView
+                } else {
+                    ForEach(filteredGroupedAssignments, id: \.date) { group in
+                        Section {
+                            ForEach(group.assignments) { assignment in
+                                NavigationLink(value: assignment) {
+                                    AssignmentCardView(assignment: assignment)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
+                        } header: {
+                            dateHeader(for: group.date)
                         }
-                    } header: {
-                        dateHeader(for: group.date)
                     }
                 }
             }
@@ -86,20 +121,47 @@ struct AssignmentsListView: View {
         }
     }
     
+    private var noTodayAssignmentsView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "sun.max")
+                .font(.system(size: 50))
+                .foregroundStyle(.secondary)
+            
+            Text("No Assignments Today")
+                .font(.headline)
+            
+            Text("You don't have any assignments scheduled for today.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Button("Show All Assignments") {
+                showTodayOnly = false
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(.top, 60)
+    }
+    
     private func dateHeader(for date: Date) -> some View {
         HStack {
             if Calendar.current.isDateInToday(date) {
-                Text("Today")
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                Text("- \(date.formatted(date: .abbreviated, time: .omitted))")
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color.orange)
+                        .frame(width: 8, height: 8)
+                    Text("Today")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                }
+                Text("• \(date.formatted(date: .abbreviated, time: .omitted))")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else if Calendar.current.isDateInTomorrow(date) {
                 Text("Tomorrow")
                     .font(.headline)
                     .foregroundStyle(.primary)
-                Text("- \(date.formatted(date: .abbreviated, time: .omitted))")
+                Text("• \(date.formatted(date: .abbreviated, time: .omitted))")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
@@ -111,17 +173,6 @@ struct AssignmentsListView: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 4)
         .background(Color(.systemGroupedBackground))
-    }
-}
-
-// MARK: - Hashable Conformance for Navigation
-extension Assignment: Hashable {
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-    
-    static func == (lhs: Assignment, rhs: Assignment) -> Bool {
-        lhs.id == rhs.id
     }
 }
 

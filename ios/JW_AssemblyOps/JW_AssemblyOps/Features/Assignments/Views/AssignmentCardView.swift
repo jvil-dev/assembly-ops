@@ -12,20 +12,28 @@
 //
 // Components:
 //   - Time column: Start and end times
-//   - Color bar: Green if checked in, blue otherwise
+//   - Color bar: Varies by status (green=checked in, blue=checked out, red=no show, gray/orange=pending)
 //   - Details: Post name, department, optional location
-//   - Status indicator: Checkmark if checked in, chevron otherwise
+//   - Status indicator: Badge/icon based on check-in status
+//
+// Status States:
+//   - pending: Chevron (orange if today, gray otherwise)
+//   - checkedIn: Green "In" badge
+//   - checkedOut: Blue "Out" badge
+//   - noShow: Red X icon
 //
 // Behavior:
 //   - Tappable (wrapped in NavigationLink by parent)
-//   - Visual distinction between checked-in and pending assignments
+//   - Visual distinction between all status states
 //
 // Preview Data:
-//   - Assignment.preview: Sample unchecked assignment
-//   - Assignment.previewCheckedIn: Sample checked-in assignment
+//   - Assignment.preview: Pending assignment (today)
+//   - Assignment.previewCheckedIn: Checked-in assignment
+//   - Assignment.previewCheckedOut: Checked-out assignment
+//   - Assignment.previewNoShow: No-show assignment
 //
 // Dependencies:
-//   - Assignment: Data model
+//   - Assignment: Data model with CheckInStatus
 //
 // Used by: AssignmentsListView.swift
 
@@ -36,6 +44,12 @@ struct AssignmentCardView: View {
     
     var body: some View {
         HStack(spacing: 12) {
+            // Status indicator bar
+            Rectangle()
+                .fill(statusColor)
+                .frame(width: 4)
+                .clipShape(RoundedRectangle(cornerRadius: 2))
+            
             // Time column
             VStack(alignment: .center, spacing: 2) {
                 Text(assignment.startTime, style: .time)
@@ -46,12 +60,6 @@ struct AssignmentCardView: View {
                     .foregroundStyle(.secondary)
             }
             .frame(width: 60)
-            
-            // Divider
-            Rectangle()
-                .fill(assignment.isCheckedIn ? Color.green : Color.blue)
-                .frame(width: 3)
-                .clipShape(RoundedRectangle(cornerRadius: 2))
             
             // Details
             VStack(alignment: .leading, spacing: 4) {
@@ -75,20 +83,62 @@ struct AssignmentCardView: View {
             
             Spacer()
             
-            // Status indicator
-            if assignment.isCheckedIn {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .font(.title2)
+            // Status badge
+            statusBadge
+        }
+        .padding()
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+    
+    @ViewBuilder
+    private var statusBadge: some View {
+        switch assignment.checkInStatus {
+        case .checkedIn:
+            Label("In", systemImage: "checkmark.circle.fill")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.green)
+                .clipShape(Capsule())
+            
+        case .checkedOut:
+            Label("Out", systemImage: "checkmark.circle.fill")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.blue)
+                .clipShape(Capsule())
+            
+        case .noShow:
+            Image(systemName: "xmark.circle.fill")
+                .foregroundStyle(.red)
+                .font(.title2)
+            
+        case .pending:
+            if assignment.isToday {
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.tertiary)
+                    .font(.caption)
             } else {
                 Image(systemName: "chevron.right")
                     .foregroundStyle(.tertiary)
                     .font(.caption)
             }
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+    
+    private var statusColor: Color {
+        switch assignment.checkInStatus {
+        case .checkedIn: return .green
+        case .checkedOut: return .blue
+        case .noShow: return .red
+        case .pending: return assignment.isToday ? .orange : .gray
+        }
     }
 }
 
@@ -99,37 +149,4 @@ struct AssignmentCardView: View {
     }
     .padding()
     .background(Color(.systemGroupedBackground))
-}
-
-// MARK: - Preview Data
-extension Assignment {
-    static var preview: Assignment {
-        Assignment(
-            id: "1",
-            postName: "East Lobby",
-            postLocation: "Building A, Floor 1",
-            departmentName: "Attendant",
-            sessionName: "Saturday Morning",
-            date: Date(),
-            startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date())!,
-            endTime: Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: Date())!,
-            isCheckedIn: false,
-            checkInTime: nil
-        )
-    }
-    
-    static var previewCheckedIn: Assignment {
-        Assignment(
-            id: "2",
-            postName: "Auditorium",
-            postLocation: "Main Hall",
-            departmentName: "Attendant",
-            sessionName: "Saturday Afternoon",
-            date: Date(),
-            startTime: Calendar.current.date(bySettingHour: 13, minute: 30, second: 0, of: Date())!,
-            endTime: Calendar.current.date(bySettingHour: 16, minute: 30, second: 0, of: Date())!,
-            isCheckedIn: true,
-            checkInTime: Date()
-        )
-    }
 }

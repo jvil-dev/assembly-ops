@@ -18,20 +18,36 @@
 //   - sessionName: Session name (e.g., "Saturday Morning")
 //   - date: Date of the assignment
 //   - startTime/endTime: Session time range
-//   - isCheckedIn: Whether volunteer has checked in
+//   - checkInStatus: Current status (pending, checkedIn, checkedOut, noShow)
 //   - checkInTime: When volunteer checked in (nil if not checked in)
+//   - checkOutTime: When volunteer checked out (nil if not checked out)
 //
 // Computed Properties:
+//   - isCheckedIn/isCheckedOut: Boolean status helpers
+//   - canCheckIn: True if pending and today
+//   - canCheckOut: True if checked in
 //   - dateFormatted: Human-readable date string
 //   - timeRangeFormatted: "9:00 AM - 12:00 PM" format
 //   - isToday/isUpcoming/isPast: Date classification helpers
+//   - statusText/statusColor: Display helpers for UI
 //
 // GraphQL Mapping:
-//   - init?(from:) failable initializer parses ISO8601 dates from API response
+//   - init?(from:) failable initializer parses ISO8601 dates and status from API response
 //
-// Used by: AssignmentsViewModel, AssignmentCardView, AssignmentDetailView
+// Preview Data:
+//   - .preview, .previewCheckedIn, .previewCheckedOut, .previewNoShow
+//
+// Used by: AssignmentsViewModel, AssignmentCardView, AssignmentDetailView, CheckInButton
 
 import Foundation
+
+/// Check-in status matching backend enum
+enum CheckInStatus: String {
+    case checkedIn = "CHECKED_IN"
+    case checkedOut = "CHECKED_OUT"
+    case noShow = "NO_SHOW"
+    case pending
+}
 
 /// Local model for assignment data
 struct Assignment: Identifiable {
@@ -43,8 +59,25 @@ struct Assignment: Identifiable {
     let date: Date
     let startTime: Date
     let endTime: Date
-    let isCheckedIn: Bool
+    let checkInStatus: CheckInStatus
     let checkInTime: Date?
+    let checkOutTime: Date?
+    
+    var isCheckedIn: Bool {
+        checkInStatus == .checkedIn
+    }
+    
+    var isCheckedOut: Bool {
+        checkInStatus == .checkedOut
+    }
+    
+    var canCheckIn: Bool {
+        checkInStatus == .pending && isToday
+    }
+    
+    var canCheckOut: Bool {
+        checkInStatus == .checkedIn
+    }
     
     var dateFormatted: String {
         date.formatted(date: .abbreviated, time: .omitted)
@@ -67,6 +100,34 @@ struct Assignment: Identifiable {
     var isPast: Bool {
         date < Calendar.current.startOfDay(for: Date())
     }
+    
+    /// Status display text
+    var statusText: String {
+        switch checkInStatus {
+        case .checkedIn:
+            return "Checked In"
+        case .checkedOut:
+            return "Checked Out"
+        case .noShow:
+            return "No Show"
+        case .pending:
+            return isToday ? "Not Checked In" : ""
+        }
+    }
+    
+    /// Status color
+    var statusColor: String {
+        switch checkInStatus {
+        case .checkedIn:
+            return "green"
+        case .checkedOut:
+            return "blue"
+        case .noShow:
+            return "red"
+        case .pending:
+            return "gray"
+        }
+    }
 }
 
 // MARK: - GraphQL Mapping
@@ -77,7 +138,6 @@ extension Assignment {
           self.postLocation = graphQL.post.location
           self.departmentName = graphQL.post.department.name
           self.sessionName = graphQL.session.name
-          self.isCheckedIn = graphQL.isCheckedIn
 
           // Parse dates from ISO8601 strings
           let isoFormatter = ISO8601DateFormatter()
@@ -93,11 +153,92 @@ extension Assignment {
           self.startTime = startTime
           self.endTime = endTime
 
-          // Parse optional checkIn time
-          if let checkInTimeStr = graphQL.checkIn?.checkInTime {
-              self.checkInTime = isoFormatter.date(from: checkInTimeStr)
+          if let checkIn = graphQL.checkIn {
+              self.checkInStatus = CheckInStatus(rawValue: checkIn.status.rawValue) ?? .pending
+              self.checkInTime = isoFormatter.date(from: checkIn.checkInTime)
+              self.checkOutTime = checkIn.checkOutTime.flatMap { isoFormatter.date(from: $0) }
           } else {
+              self.checkInStatus = .pending
               self.checkInTime = nil
+              self.checkOutTime = nil
           }
+      }
+  }
+
+// MARK: - Preview Data
+extension Assignment {
+    static var preview: Assignment {
+        Assignment(
+            id: "1",
+            postName: "East Lobby",
+            postLocation: "Building A, Floor 1",
+            departmentName: "Attendant",
+            sessionName: "Saturday Morning",
+            date: Date(),
+            startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date())!,
+            endTime: Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: Date())!,
+            checkInStatus: .pending,
+            checkInTime: nil,
+            checkOutTime: nil
+        )
+    }
+    
+    static var previewCheckedIn: Assignment {
+        Assignment(
+            id: "2",
+            postName: "Auditorium",
+            postLocation: "Main Hall",
+            departmentName: "Attendant",
+            sessionName: "Saturday Afternoon",
+            date: Date(),
+            startTime: Calendar.current.date(bySettingHour: 13, minute: 30, second: 0, of: Date())!,
+            endTime: Calendar.current.date(bySettingHour: 16, minute: 30, second: 0, of: Date())!,
+            checkInStatus: .checkedIn,
+            checkInTime: Date(),
+            checkOutTime: nil
+        )
+    }
+    
+    static var previewCheckedOut: Assignment {
+        Assignment(
+            id: "3",
+            postName: "West Lobby",
+            postLocation: "Building B",
+            departmentName: "Attendant",
+            sessionName: "Saturday Morning",
+            date: Date(),
+            startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date())!,
+            endTime: Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: Date())!,
+            checkInStatus: .checkedOut,
+            checkInTime: Calendar.current.date(bySettingHour: 8, minute: 55, second: 0, of: Date()),
+            checkOutTime: Calendar.current.date(bySettingHour: 12, minute: 5, second: 0, of: Date())
+        )
+    }
+    
+    static var previewNoShow: Assignment {
+        Assignment(
+            id: "4",
+            postName: "Parking Lot A",
+            postLocation: "North Entrance",
+            departmentName: "Parking",
+            sessionName: "Sunday Morning",
+            date: Calendar.current.date(byAdding: .day, value: -1, to: Date())!,
+            startTime: Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date())!,
+            endTime: Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: Date())!,
+            checkInStatus: .noShow,
+            checkInTime: nil,
+            checkOutTime: nil
+        )
+    }
+}
+
+// MARK: - Hashable Conformance for Navigation
+  extension Assignment: Hashable {
+      func hash(into hasher: inout Hasher) {
+          hasher.combine(id)
+      }
+
+      static func == (lhs: Assignment, rhs: Assignment) -> Bool {
+          lhs.id == rhs.id
       }
   }
