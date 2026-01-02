@@ -20,7 +20,9 @@ query MyAssignments {
     isCheckedIn
     checkIn {
       id
+      status
       checkInTime
+      checkOutTime
     }
   }
 }

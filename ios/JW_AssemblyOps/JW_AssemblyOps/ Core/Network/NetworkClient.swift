@@ -42,7 +42,7 @@ final class NetworkClient {
 
     // Configure for your environment
     #if DEBUG
-    private let baseURL = URL(string: "http://localhost:4000/graphql")!
+    private let baseURL = URL(string: "http://192.168.1.2:4000/graphql")!
     #else
     private let baseURL = URL(string: "https://api.assemblyops.io/graphql")!
     #endif

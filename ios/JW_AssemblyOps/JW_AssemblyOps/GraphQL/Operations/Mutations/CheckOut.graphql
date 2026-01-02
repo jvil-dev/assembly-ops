@@ -1,0 +1,12 @@
+mutation CheckOut($input: CheckOutInput!) {
+  checkOut(input: $input) {
+    id
+    status
+    checkInTime
+    checkOutTime
+    assignment {
+      id
+      isCheckedIn
+    }
+  }
+}

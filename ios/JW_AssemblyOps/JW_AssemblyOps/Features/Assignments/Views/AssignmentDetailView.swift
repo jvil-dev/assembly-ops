@@ -8,28 +8,36 @@
 // MARK: - Assignment Detail View
 //
 // Full-screen view showing complete details for a single assignment.
-// Displays post info, time, location, and check-in status.
+// Displays post info, time, location, and check-in/out functionality.
 //
 // Components:
 //   - Header card: Post name and session
 //   - Detail sections: Time, date, department, location
-//   - Check-in status: Shows checked-in state with timestamp
-//   - Check-in button: Placeholder for future check-in functionality
+//   - Check-in status card: Shows current status with timestamps
+//   - CheckInButton: Check-in/out actions for today's assignments
 //
 // Behavior:
-//   - Read-only display of assignment details
-//   - Check-in button shown only for today's unchecked assignments
-//   - Check-in functionality to be implemented in Sprint 3.3
+//   - Check-in button shown for today's pending assignments
+//   - Check-out button shown after checking in
+//   - Haptic feedback on success/error
+//   - Error alerts for failed operations
+//   - Local state updates after successful check-in/out
 //
 // Dependencies:
-//   - Assignment: Data model passed from list view
+//   - Assignment: Data model (mutable via @State)
+//   - CheckInButton: Reusable check-in/out button component
+//   - CheckInService: API calls for check-in operations
+//   - HapticManager: Haptic feedback
 //
 // Used by: AssignmentsListView.swift (via NavigationLink)
 
 import SwiftUI
 
 struct AssignmentDetailView: View {
-    let assignment: Assignment
+    @State var assignment: Assignment
+    
+    @State private var showingError = false
+    @State private var errorMessage = ""
     
     var body: some View {
         ScrollView {
@@ -69,11 +77,9 @@ struct AssignmentDetailView: View {
                 // Check-in status
                 checkInStatusCard
                 
-                // Check-in button (placeholder for Sprint 3.3)
-                if !assignment.isCheckedIn && assignment.isToday {
-                    checkInButton
-                }
-                
+                // Check-in/out button
+                CheckInButton(assignment: assignment, onCheckIn: performCheckIn, onCheckOut: performCheckOut)
+                    .padding(.top, 8)
                 Spacer()
             }
             .padding()
@@ -81,6 +87,53 @@ struct AssignmentDetailView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Assignment")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Error", isPresented: $showingError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage)
+        }
+    }
+    
+    // MARK: - Actions
+    
+    private func performCheckIn() async {
+        do {
+            let result = try await CheckInService.shared.checkIn(assignmentId: assignment.id)
+            
+            // Update local state
+            await MainActor.run {
+                assignment = Assignment(id: assignment.id, postName: assignment.postName, postLocation: assignment.postName, departmentName: assignment.departmentName, sessionName: assignment.sessionName, date: assignment.date, startTime: assignment.startTime, endTime: assignment.endTime, checkInStatus: result.status, checkInTime: result.checkInTime, checkOutTime: nil)
+                
+                // Haptic feedback
+                HapticManager.shared.success()
+            }
+        } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    showingError = true
+                    HapticManager.shared.error()
+                }
+            }
+        }
+    
+    private func performCheckOut() async {
+        do {
+            let result = try await CheckInService.shared.checkOut(assignmentId: assignment.id)
+            
+            // Update local state
+            await MainActor.run {
+                assignment = Assignment(id: assignment.id, postName: assignment.postName, postLocation: assignment.postLocation, departmentName: assignment.departmentName, sessionName: assignment.sessionName, date: assignment.date, startTime: assignment.startTime, endTime: assignment.endTime, checkInStatus: result.status, checkInTime: result.checkInTime, checkOutTime: result.checkOutTime)
+                
+                // Haptic feedback
+                HapticManager.shared.success()
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = error.localizedDescription
+                showingError = true
+                HapticManager.shared.error()
+            }
+        }
     }
     
     // MARK: - Subviews
@@ -125,16 +178,22 @@ struct AssignmentDetailView: View {
     
     private var checkInStatusCard: some View {
         HStack(spacing: 12) {
-            Image(systemName: assignment.isCheckedIn ? "checkmark.circle.fill" : "circle")
+            Image(systemName: statusIcon)
                 .font(.title2)
-                .foregroundStyle(assignment.isCheckedIn ? .green : .secondary)
+                .foregroundStyle(statusIconColor)
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(assignment.isCheckedIn ? "Checked In" : "Not Checked In")
+                Text(assignment.statusText.isEmpty ? "Pending" : assignment.statusText)
                     .font(.headline)
                 
                 if let checkInTime = assignment.checkInTime {
-                    Text("at \(checkInTime.formatted(date: .omitted, time: .shortened))")
+                    Text("Checked in at \(checkInTime.formatted(date: .omitted, time: .shortened))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                if let checkOutTime = assignment.checkOutTime {
+                    Text("Checked out at \(checkOutTime.formatted(date: .omitted, time: .shortened))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -147,17 +206,22 @@ struct AssignmentDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
-    private var checkInButton: some View {
-        Button {
-            // TODO: Implement in Sprint 3.3
-        } label: {
-            Label("Check In", systemImage: "checkmark.circle")
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
+    private var statusIcon: String {
+        switch assignment.checkInStatus {
+        case .checkedIn: return "checkmark.circle.fill"
+        case .checkedOut: return "arrow.right.circle.fill"
+        case .noShow: return "xmark.circle.fill"
+        case .pending: return "circle"
         }
-        .buttonStyle(.borderedProminent)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+    
+    private var statusIconColor: Color {
+        switch assignment.checkInStatus {
+        case .checkedIn: return .green
+        case .checkedOut: return .blue
+        case .noShow: return .red
+        case .pending: return .secondary
+        }
     }
 }
 

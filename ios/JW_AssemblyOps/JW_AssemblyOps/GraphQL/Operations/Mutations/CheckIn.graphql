@@ -1,0 +1,11 @@
+mutation CheckIn($input: CheckInInput!) {
+  checkIn(input: $input) {
+    id
+    status
+    checkInTime
+    assignment {
+      id
+      isCheckedIn
+    }
+  }
+}
