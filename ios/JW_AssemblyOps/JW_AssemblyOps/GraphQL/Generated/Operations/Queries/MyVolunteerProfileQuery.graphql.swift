@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MyVolunteerProfile"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query MyVolunteerProfile { myVolunteerProfile { __typename id volunteerId firstName lastName fullName email phone congregation appointmentStatus event { __typename id name venue address startDate endDate } department { __typename id name } } }"#
+        #"query MyVolunteerProfile { myVolunteerProfile { __typename id volunteerId firstName lastName fullName email phone congregation appointmentStatus event { __typename id name venue address startDate endDate } department { __typename id name departmentType } } }"#
       ))
 
     public init() {}
@@ -106,6 +106,7 @@ extension AssemblyOpsAPI {
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
             .field("name", String.self),
+            .field("departmentType", GraphQLEnum<AssemblyOpsAPI.DepartmentType>.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             MyVolunteerProfileQuery.Data.MyVolunteerProfile.Department.self
@@ -113,6 +114,7 @@ extension AssemblyOpsAPI {
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var name: String { __data["name"] }
+          var departmentType: GraphQLEnum<AssemblyOpsAPI.DepartmentType> { __data["departmentType"] }
         }
       }
     }

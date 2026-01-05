@@ -8,6 +8,7 @@ query MyAssignments {
       department {
         id
         name
+        departmentType
       }
     }
     session {

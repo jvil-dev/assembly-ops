@@ -44,9 +44,9 @@ struct AssignmentCardView: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Status indicator bar
+            // Department color bar
             Rectangle()
-                .fill(statusColor)
+                .fill(assignment.departmentColor)
                 .frame(width: 4)
                 .clipShape(RoundedRectangle(cornerRadius: 2))
             
@@ -66,9 +66,16 @@ struct AssignmentCardView: View {
                 Text(assignment.postName)
                     .font(.headline)
                 
-                Text(assignment.departmentName)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                // Departent with color dot
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(assignment.departmentColor)
+                        .frame(width: 8, height: 8)
+                    
+                    Text(assignment.departmentName)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
                 
                 if let location = assignment.postLocation {
                     HStack(spacing: 4) {
