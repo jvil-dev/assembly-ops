@@ -25,7 +25,7 @@ import SwiftUI
 enum DepartmentColor {
     
     static func color(for departmentType: String) -> Color {
-        switch departmentType {
+        switch departmentType.uppercased() {
         case "PARKING":
             return Color("Department: Parking")
         case "ATTENDANT":
@@ -48,7 +48,7 @@ enum DepartmentColor {
             return Color("Department: Accounts")
         case "INSTALLATION":
             return Color("Department: Installation")
-        case "LOST_FOUND", "LOST_AND_FOUND":
+        case "LOST_FOUND", "LOST_AND_FOUND", "LOST_FOUND_CHECKROOM":
             return Color("Department: LostFound")
         case "ROOMING":
             return Color("Department: Rooming")

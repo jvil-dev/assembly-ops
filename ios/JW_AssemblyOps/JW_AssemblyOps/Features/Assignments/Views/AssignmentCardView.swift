@@ -12,7 +12,7 @@
 //
 // Components:
 //   - Time column: Start and end times
-//   - Color bar: Varies by status (green=checked in, blue=checked out, red=no show, gray/orange=pending)
+//   - Color bar: Represents department (uses assignment.departmentColor, was statusColor)
 //   - Details: Post name, department, optional location
 //   - Status indicator: Badge/icon based on check-in status
 //
@@ -66,7 +66,7 @@ struct AssignmentCardView: View {
                 Text(assignment.postName)
                     .font(.headline)
                 
-                // Departent with color dot
+                // Department with color dot
                 HStack(spacing: 6) {
                     Circle()
                         .fill(assignment.departmentColor)
