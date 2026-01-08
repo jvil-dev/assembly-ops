@@ -40,6 +40,7 @@
 // Used by: AssignmentsViewModel, AssignmentCardView, AssignmentDetailView, CheckInButton
 
 import Foundation
+import SwiftUI
 
 /// Check-in status matching backend enum
 enum CheckInStatus: String {
@@ -55,6 +56,7 @@ struct Assignment: Identifiable {
     let postName: String
     let postLocation: String?
     let departmentName: String
+    let departmentType: String
     let sessionName: String
     let date: Date
     let startTime: Date
@@ -128,6 +130,16 @@ struct Assignment: Identifiable {
             return "gray"
         }
     }
+    
+    /// Department color based on lanyard
+    var departmentColor: Color {
+        DepartmentColor.color(for: departmentType)
+    }
+    
+    /// Department background color
+    var departmentBackgroundColor: Color {
+        DepartmentColor.backgroundColor(for: departmentType)
+    }
 }
 
 // MARK: - GraphQL Mapping
@@ -137,6 +149,7 @@ extension Assignment {
           self.postName = graphQL.post.name
           self.postLocation = graphQL.post.location
           self.departmentName = graphQL.post.department.name
+          self.departmentType = graphQL.post.department.departmentType.rawValue
           self.sessionName = graphQL.session.name
 
           // Parse dates from ISO8601 strings
@@ -173,6 +186,7 @@ extension Assignment {
             postName: "East Lobby",
             postLocation: "Building A, Floor 1",
             departmentName: "Attendant",
+            departmentType: "ATTENDANT",
             sessionName: "Saturday Morning",
             date: Date(),
             startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date())!,
@@ -189,6 +203,7 @@ extension Assignment {
             postName: "Auditorium",
             postLocation: "Main Hall",
             departmentName: "Attendant",
+            departmentType: "ATTENDANT",
             sessionName: "Saturday Afternoon",
             date: Date(),
             startTime: Calendar.current.date(bySettingHour: 13, minute: 30, second: 0, of: Date())!,
@@ -205,6 +220,7 @@ extension Assignment {
             postName: "West Lobby",
             postLocation: "Building B",
             departmentName: "Attendant",
+            departmentType: "ATTENDANT",
             sessionName: "Saturday Morning",
             date: Date(),
             startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date())!,
@@ -221,6 +237,7 @@ extension Assignment {
             postName: "Parking Lot A",
             postLocation: "North Entrance",
             departmentName: "Parking",
+            departmentType: "PARKING",
             sessionName: "Sunday Morning",
             date: Calendar.current.date(byAdding: .day, value: -1, to: Date())!,
             startTime: Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date())!,
@@ -229,6 +246,10 @@ extension Assignment {
             checkInTime: nil,
             checkOutTime: nil
         )
+    }
+    
+    static var previewParking: Assignment {
+        Assignment(id: "5", postName: "Lot A", postLocation: "North Gate", departmentName: "Parking", departmentType: "PARKING", sessionName: "Friday Afternoon", date: Date(), startTime: Calendar.current.date(bySettingHour: 7, minute: 30, second: 0, of: Date())!, endTime: Calendar.current.date(bySettingHour: 9, minute: 30, second: 0, of: Date())!, checkInStatus: .pending, checkInTime: nil, checkOutTime: nil)
     }
 }
 

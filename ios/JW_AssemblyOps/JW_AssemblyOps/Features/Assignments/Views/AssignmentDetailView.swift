@@ -102,7 +102,7 @@ struct AssignmentDetailView: View {
             
             // Update local state
             await MainActor.run {
-                assignment = Assignment(id: assignment.id, postName: assignment.postName, postLocation: assignment.postName, departmentName: assignment.departmentName, sessionName: assignment.sessionName, date: assignment.date, startTime: assignment.startTime, endTime: assignment.endTime, checkInStatus: result.status, checkInTime: result.checkInTime, checkOutTime: nil)
+                assignment = Assignment(id: assignment.id, postName: assignment.postName, postLocation: assignment.postLocation, departmentName: assignment.departmentName, departmentType: assignment.departmentType, sessionName: assignment.sessionName, date: assignment.date, startTime: assignment.startTime, endTime: assignment.endTime, checkInStatus: result.status, checkInTime: result.checkInTime, checkOutTime: nil)
                 
                 // Haptic feedback
                 HapticManager.shared.success()
@@ -122,7 +122,7 @@ struct AssignmentDetailView: View {
             
             // Update local state
             await MainActor.run {
-                assignment = Assignment(id: assignment.id, postName: assignment.postName, postLocation: assignment.postLocation, departmentName: assignment.departmentName, sessionName: assignment.sessionName, date: assignment.date, startTime: assignment.startTime, endTime: assignment.endTime, checkInStatus: result.status, checkInTime: result.checkInTime, checkOutTime: result.checkOutTime)
+                assignment = Assignment(id: assignment.id, postName: assignment.postName, postLocation: assignment.postLocation, departmentName: assignment.departmentName, departmentType: assignment.departmentType, sessionName: assignment.sessionName, date: assignment.date, startTime: assignment.startTime, endTime: assignment.endTime, checkInStatus: result.status, checkInTime: result.checkInTime, checkOutTime: result.checkOutTime)
                 
                 // Haptic feedback
                 HapticManager.shared.success()
@@ -139,7 +139,21 @@ struct AssignmentDetailView: View {
     // MARK: - Subviews
     
     private var headerCard: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 12) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(assignment.departmentColor)
+                    .frame(width: 12, height: 12)
+                Text(assignment.departmentName)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(assignment.departmentBackgroundColor)
+            .clipShape(Capsule())
+            
             Text(assignment.postName)
                 .font(.title)
                 .fontWeight(.bold)
