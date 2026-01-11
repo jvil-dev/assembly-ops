@@ -44,6 +44,9 @@ SET "createdById" = (
 )
 WHERE en."createdById" IS NULL;
 
+-- Final safeguard: remove any notes that still lack an associated admin
+DELETE FROM "EventNote"
+WHERE "createdById" IS NULL;
 -- Make columns NOT NULL after data migration
 ALTER TABLE "EventNote" ALTER COLUMN "body" SET NOT NULL;
 ALTER TABLE "EventNote" ALTER COLUMN "createdById" SET NOT NULL;
