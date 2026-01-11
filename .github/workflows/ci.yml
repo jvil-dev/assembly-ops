@@ -65,6 +65,9 @@ jobs:
       - name: Push schema to test database
         run: npx prisma db push
 
+      - name: Seed test database
+        run: npm run prisma:seed
+
       - name: Run linter
         run: npm run lint
 

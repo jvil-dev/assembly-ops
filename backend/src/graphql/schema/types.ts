@@ -227,6 +227,7 @@ const types = `#graphql
     readAt: DateTime
     event: Event!
     sender: Admin
+    volunteer: Volunteer
     createdAt: DateTime!
   }
 
@@ -241,10 +242,12 @@ const types = `#graphql
 
   type EventNote {
     id: ID!
-    content: String!
-    event: Event!
-    department: Department
+    title: String
+    body: String!
+    department: Department!
+    createdBy: Admin!
     createdAt: DateTime!
+    updatedAt: DateTime!
   }
 `;
 

@@ -1,3 +1,24 @@
+/**
+ * Check-In Resolvers
+ *
+ * GraphQL resolvers for volunteer check-in/check-out and attendance tracking.
+ *
+ * Queries:
+ *   - checkIn: Get check-in record by ID
+ *   - sessionCheckIns: Get all check-ins for a session
+ *   - checkInStats: Get check-in statistics for a session
+ *   - attendanceCount: Get attendance count for a session
+ *   - eventAttendanceCounts: Get all attendance counts for an event
+ *
+ * Mutations:
+ *   - checkIn: Volunteer checks in to their assignment
+ *   - checkOut: Volunteer checks out of their assignment
+ *   - adminCheckIn: Admin checks in a volunteer on their behalf
+ *   - markNoShow: Admin marks a volunteer as no-show
+ *   - recordAttendance: Admin records attendance count for a session
+ *   - updateAttendance: Admin updates an existing attendance record
+ *   - deleteAttendance: Admin deletes an attendance record
+ */
 import { Context } from '../context.js';
 import { CheckInService } from '../../services/checkInService.js';
 import { AttendanceService } from '../../services/attendanceService.js';
