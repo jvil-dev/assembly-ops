@@ -21,6 +21,7 @@ model Admin {
   events           EventAdmin[]
   messages         Message[]
   refreshTokens    RefreshToken[]
+  eventNotes       EventNote[]
 
   @@index([email])
 }
@@ -74,19 +75,19 @@ model Department {
 }
 
 model Event {
-  id            String        @id @default(cuid())
-  templateId    String
-  joinCode      String        @unique @default(cuid())
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  departments   Department[]
-  template      EventTemplate @relation(fields: [templateId], references: [id])
-  admins        EventAdmin[]
-  notes         EventNote[]
-  messages      Message[]
-  roles         Role[]
-  sessions      Session[]
-  volunteers    Volunteer[]
+  id          String        @id @default(cuid())
+  templateId  String
+  joinCode    String        @unique @default(cuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  departments Department[]
+  template    EventTemplate @relation(fields: [templateId], references: [id])
+  admins      EventAdmin[]
+  notes       EventNote[]
+  messages    Message[]
+  roles       Role[]
+  sessions    Session[]
+  volunteers  Volunteer[]
 
   @@index([joinCode])
   @@index([templateId])
@@ -110,13 +111,16 @@ model EventAdmin {
 
 model EventNote {
   id           String      @id @default(cuid())
-  content      String
+  title        String?
+  body         String
   eventId      String
   departmentId String?
+  createdById  String
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   event        Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdBy    Admin       @relation(fields: [createdById], references: [id])
 
   @@index([departmentId])
   @@index([eventId])
@@ -316,7 +320,7 @@ enum EventType {
 }
 
 enum RecipientType {
-  INFORMATION_VOLUNTEER_SERVICE
+  VOLUNTEER
   DEPARTMENT
   EVENT
 }

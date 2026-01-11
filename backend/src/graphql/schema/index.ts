@@ -27,6 +27,8 @@ import postTypeDefs from './post.js';
 import sessionTypeDefs from './session.js';
 import assignmentTypeDefs from './assignment.js';
 import checkInTypeDefs from './checkIn.js';
+import messageTypeDefs from './message.js';
+import eventNoteTypeDefs from './eventNotes.js';
 
 const baseTypeDefs = `#graphql
   scalar DateTime
@@ -56,6 +58,8 @@ const typeDefs = [
   sessionTypeDefs,
   assignmentTypeDefs,
   checkInTypeDefs,
+  messageTypeDefs,
+  eventNoteTypeDefs,
 ];
 
 export default typeDefs;
