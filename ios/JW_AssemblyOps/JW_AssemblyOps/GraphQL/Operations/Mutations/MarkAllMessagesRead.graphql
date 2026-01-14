@@ -1,0 +1,5 @@
+mutation MarkAllMessagesRead {
+  markAllMessagesRead {
+    markedCount
+  }
+}

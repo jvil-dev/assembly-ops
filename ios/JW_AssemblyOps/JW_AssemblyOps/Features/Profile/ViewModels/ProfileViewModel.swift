@@ -64,8 +64,7 @@ final class ProfileViewModel: ObservableObject {
     }
     
     private func mapVolunteer(from data: AssemblyOpsAPI.MyVolunteerProfileQuery.Data.MyVolunteerProfile) -> Volunteer {
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let isoFormatter = DateUtils.isoFormatter
         
         return Volunteer(
             id: data.id,

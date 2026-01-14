@@ -29,9 +29,12 @@ extension AssemblyOpsAPI {
 
     static func objectType(forTypename typename: String) -> ApolloAPI.Object? {
       switch typename {
+      case "Admin": return AssemblyOpsAPI.Objects.Admin
       case "CheckIn": return AssemblyOpsAPI.Objects.CheckIn
       case "Department": return AssemblyOpsAPI.Objects.Department
       case "Event": return AssemblyOpsAPI.Objects.Event
+      case "MarkAllReadResult": return AssemblyOpsAPI.Objects.MarkAllReadResult
+      case "Message": return AssemblyOpsAPI.Objects.Message
       case "Mutation": return AssemblyOpsAPI.Objects.Mutation
       case "Post": return AssemblyOpsAPI.Objects.Post
       case "Query": return AssemblyOpsAPI.Objects.Query

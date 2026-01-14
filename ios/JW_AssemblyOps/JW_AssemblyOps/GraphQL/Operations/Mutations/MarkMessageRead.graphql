@@ -1,0 +1,7 @@
+mutation MarkMessageRead($id: ID!) {
+  markMessageRead(id: $id) {
+    id
+    isRead
+    readAt
+  }
+}

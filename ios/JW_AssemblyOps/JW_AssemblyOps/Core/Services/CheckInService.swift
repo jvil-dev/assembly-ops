@@ -43,8 +43,7 @@ final class CheckInService {
                 switch result {
                 case .success(let graphQLResult):
                     if let data = graphQLResult.data?.checkIn {
-                        let isoFormatter = ISO8601DateFormatter()
-                        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                        let isoFormatter = DateUtils.isoFormatter
 
                         let checkInResult = CheckInResult(
                             id: data.id,
@@ -77,8 +76,7 @@ final class CheckInService {
                 switch result {
                 case .success(let graphQLResult):
                     if let data = graphQLResult.data?.checkOut {
-                        let isoFormatter = ISO8601DateFormatter()
-                        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                        let isoFormatter = DateUtils.isoFormatter
 
                         let checkInResult = CheckInResult(
                             id: data.id,
