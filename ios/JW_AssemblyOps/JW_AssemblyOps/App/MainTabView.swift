@@ -26,6 +26,7 @@ import SwiftUI
 
   struct MainTabView: View {
       @EnvironmentObject private var appState: AppState
+      @StateObject private var badgeManager = UnreadBadgeManager.shared
 
       var body: some View {
           TabView {
@@ -43,11 +44,18 @@ import SwiftUI
                   .tabItem {
                       Label("Messages", systemImage: "envelope")
                   }
+                  .badge(badgeManager.unreadCount > 0 ? badgeManager.unreadCount : 0)
 
               ProfileView()
                   .tabItem {
                       Label("Profile", systemImage: "person")
                   }
+          }
+          .task {
+              badgeManager.startRefreshing()
+          }
+          .onDisappear {
+              badgeManager.stopRefreshing()
           }
       }
   }

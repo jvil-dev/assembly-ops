@@ -42,7 +42,7 @@ final class NetworkClient {
 
     // Configure for your environment
     #if DEBUG
-    private let baseURL = URL(string: "http://localhost:4000/graphql")!
+    private let baseURL = URL(string: "http://192.168.1.3:4000/graphql")!
     #else
     private let baseURL = URL(string: "https://api.assemblyops.io/graphql")!
     #endif
@@ -72,5 +72,25 @@ final class NetworkClient {
             return ["Authorization": "Bearer \(token)"]
         }
         return [:]
+    }
+}
+
+// MARK: - Apollo Async Extension
+extension ApolloClient {
+    /// Async/await wrapper for GraphQL queries
+    func fetch<Query: GraphQLQuery>(
+        query: Query,
+        cachePolicy: CachePolicy = .default
+    ) async throws -> GraphQLResult<Query.Data> {
+        try await withCheckedThrowingContinuation { continuation in
+            self.fetch(query: query, cachePolicy: cachePolicy) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    continuation.resume(returning: graphQLResult)
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
 }

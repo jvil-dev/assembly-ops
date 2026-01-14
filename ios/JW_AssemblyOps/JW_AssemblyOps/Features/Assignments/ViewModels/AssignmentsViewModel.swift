@@ -100,22 +100,3 @@ final class AssignmentsViewModel: ObservableObject {
           fetchAssignments()
       }
 }
-
-// MARK: - Apollo Fetch Extension
-extension ApolloClient {
-    func fetch<Query: GraphQLQuery>(
-        query: Query,
-        cachePolicy: CachePolicy = .default
-    ) async throws -> GraphQLResult<Query.Data> {
-        try await withCheckedThrowingContinuation { continuation in
-            self.fetch(query: query, cachePolicy: cachePolicy) { result in
-                switch result {
-                case .success(let graphQLResult):
-                    continuation.resume(returning: graphQLResult)
-                case .failure(let error):
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
-    }
-}
