@@ -94,31 +94,53 @@ struct AssignmentsListView: View {
     }
     
     private var assignmentsList: some View {
-        ScrollView {
-            LazyVStack(spacing: 16, pinnedViews: .sectionHeaders) {
-                if showTodayOnly && filteredGroupedAssignments.isEmpty {
-                    noTodayAssignmentsView
-                } else {
-                    ForEach(filteredGroupedAssignments, id: \.date) { group in
-                        Section {
-                            ForEach(group.assignments) { assignment in
-                                NavigationLink(value: assignment) {
-                                    AssignmentCardView(assignment: assignment)
+        VStack(spacing: 0) {
+            if viewModel.isUsingCache {
+                cacheIndicator
+            }
+            
+            ScrollView {
+                LazyVStack(spacing: 16, pinnedViews: .sectionHeaders) {
+                    if showTodayOnly && filteredGroupedAssignments.isEmpty {
+                        noTodayAssignmentsView
+                    } else {
+                        ForEach(filteredGroupedAssignments, id: \.date) { group in
+                            Section {
+                                ForEach(group.assignments) { assignment in
+                                    NavigationLink(value: assignment) {
+                                        AssignmentCardView(assignment: assignment)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
+                            } header: {
+                                dateHeader(for: group.date)
                             }
-                        } header: {
-                            dateHeader(for: group.date)
                         }
                     }
                 }
+                .padding(.horizontal)
             }
-            .padding(.horizontal)
+            .background(Color(.systemGroupedBackground))
+            .navigationDestination(for: Assignment.self) { assignment in
+                AssignmentDetailView(assignment: assignment)
+            }
         }
-        .background(Color(.systemGroupedBackground))
-        .navigationDestination(for: Assignment.self) { assignment in
-            AssignmentDetailView(assignment: assignment)
+    }
+    
+    private var cacheIndicator: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "clock.arrow.circlePath")
+            if let timestamp = AssignmentCache.shared.cacheTimestamp {
+                Text("Last updated \(timestamp.formatted(date: .omitted, time: .shortened))")
+            } else {
+                Text("Showing cached data")
+            }
         }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .background(Color(.secondarySystemBackground))
     }
     
     private var noTodayAssignmentsView: some View {

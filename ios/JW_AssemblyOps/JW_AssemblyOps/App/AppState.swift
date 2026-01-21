@@ -106,6 +106,7 @@ final class AppState: ObservableObject {
     /// Log out and clear all stored data
     func logout() {
         KeychainManager.shared.clearAll()
+        AssignmentCache.shared.clear()
         currentVolunteer = nil
         isLoggedIn = false
         NetworkClient.shared.resetClient()
@@ -134,5 +135,7 @@ struct VolunteerInfo: Identifiable {
     let fullName: String
     let congregation: String
     let eventName: String?
+    let eventVenue: String?
+    let eventTheme: String?
     let departmentName: String?
 }

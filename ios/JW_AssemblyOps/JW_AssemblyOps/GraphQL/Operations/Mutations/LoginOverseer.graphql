@@ -1,0 +1,16 @@
+mutation LoginAdmin($input: LoginAdminInput!) {
+  loginAdmin(input: $input) {
+    admin {
+      id
+      email
+      firstName
+      lastName
+      fullName
+      phone
+      congregation
+    }
+    accessToken
+    refreshToken
+    expiresIn
+  }
+}

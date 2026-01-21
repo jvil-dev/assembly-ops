@@ -112,7 +112,10 @@ final class MessagesService {
             ) { result in
                 switch result {
                 case .success(let graphQLResult):
-                    if let count = graphQLResult.data?.markAllMessagesRead.markedCount {
+                    if let errors = graphQLResult.errors, !errors.isEmpty {
+                        let message = errors.first?.localizedDescription ?? "Unknown error"
+                        continuation.resume(throwing: MessagesError.serverError(message))
+                    } else if let count = graphQLResult.data?.markAllMessagesRead.markedCount {
                         continuation.resume(returning: count)
                     } else {
                         continuation.resume(returning: 0)

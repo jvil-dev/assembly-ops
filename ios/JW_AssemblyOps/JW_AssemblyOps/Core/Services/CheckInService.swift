@@ -48,7 +48,14 @@ final class CheckInService {
                         let checkInResult = CheckInResult(
                             id: data.id,
                             status: CheckInStatus(rawValue: data.status.rawValue) ?? .checkedIn,
-                            checkInTime: isoFormatter.date(from: data.checkInTime) ?? Date(),
+                            checkInTime: {
+                                if let parsed = isoFormatter.date(from: data.checkInTime) {
+                                    return parsed
+                                } else {
+                                    print("Failed to parse checkInTime: \(data.checkInTime)")
+                                    return Date()
+                                }
+                            }(),
                             checkOutTime: nil
                         )
                         continuation.resume(returning: checkInResult)

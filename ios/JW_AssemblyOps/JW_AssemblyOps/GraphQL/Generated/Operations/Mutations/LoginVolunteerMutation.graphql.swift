@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "LoginVolunteer"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation LoginVolunteer($input: LoginVolunteerInput!) { loginVolunteer(input: $input) { __typename volunteer { __typename id volunteerId firstName lastName fullName congregation event { __typename id name venue startDate endDate } department { __typename id name } } accessToken refreshToken expiresIn } }"#
+        #"mutation LoginVolunteer($input: LoginVolunteerInput!) { loginVolunteer(input: $input) { __typename volunteer { __typename id volunteerId firstName lastName fullName congregation event { __typename id name venue startDate endDate template { __typename theme } } department { __typename id name } } accessToken refreshToken expiresIn } }"#
       ))
 
     public var input: LoginVolunteerInput
@@ -104,6 +104,7 @@ extension AssemblyOpsAPI {
               .field("venue", String.self),
               .field("startDate", AssemblyOpsAPI.DateTime.self),
               .field("endDate", AssemblyOpsAPI.DateTime.self),
+              .field("template", Template.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
               LoginVolunteerMutation.Data.LoginVolunteer.Volunteer.Event.self
@@ -114,6 +115,26 @@ extension AssemblyOpsAPI {
             var venue: String { __data["venue"] }
             var startDate: AssemblyOpsAPI.DateTime { __data["startDate"] }
             var endDate: AssemblyOpsAPI.DateTime { __data["endDate"] }
+            var template: Template { __data["template"] }
+
+            /// LoginVolunteer.Volunteer.Event.Template
+            ///
+            /// Parent Type: `EventTemplate`
+            struct Template: AssemblyOpsAPI.SelectionSet {
+              let __data: DataDict
+              init(_dataDict: DataDict) { __data = _dataDict }
+
+              static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.EventTemplate }
+              static var __selections: [ApolloAPI.Selection] { [
+                .field("__typename", String.self),
+                .field("theme", String?.self),
+              ] }
+              static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+                LoginVolunteerMutation.Data.LoginVolunteer.Volunteer.Event.Template.self
+              ] }
+
+              var theme: String? { __data["theme"] }
+            }
           }
 
           /// LoginVolunteer.Volunteer.Department
