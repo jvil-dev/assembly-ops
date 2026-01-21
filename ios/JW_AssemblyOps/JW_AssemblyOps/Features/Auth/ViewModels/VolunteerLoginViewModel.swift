@@ -1,5 +1,5 @@
 //
-//  LoginViewModel.swift
+//  VolunteerLoginViewModel.swift
 //  JW_AssemblyOps
 //
 //  Created by Jorge Villeda on 12/27/25.
@@ -32,7 +32,7 @@
 //   - NetworkClient: Apollo GraphQL client
 //   - AppState: Stores tokens and triggers auth state change
 //
-// Used by: LoginView.swift
+// Used by: VolunteerLoginView.swift
 
 import Foundation
 import SwiftUI
@@ -40,7 +40,7 @@ import Combine
 import Apollo
 
 @MainActor
-final class LoginViewModel: ObservableObject {
+final class VolunteerLoginViewModel: ObservableObject {
     @Published var volunteerId: String = ""
     @Published var token: String = ""
     @Published var isLoading: Bool = false
@@ -60,7 +60,7 @@ final class LoginViewModel: ObservableObject {
         errorMessage = nil
         
         let input = AssemblyOpsAPI.LoginVolunteerInput(
-            volunteerId: volunteerId.uppercased().trimmingCharacters(in: .whitespaces),
+            volunteerId: "VOL-" + volunteerId.uppercased().trimmingCharacters(in: .whitespaces),
             token: token.uppercased().trimmingCharacters(in: .whitespaces)
         )
         
@@ -79,6 +79,8 @@ final class LoginViewModel: ObservableObject {
                              fullName: data.volunteer.fullName,
                              congregation: data.volunteer.congregation,
                              eventName: data.volunteer.event.name,
+                             eventVenue: data.volunteer.event.venue,
+                             eventTheme: data.volunteer.event.template.theme,
                              departmentName: data.volunteer.department?.name
                          )
                          self?.appState.didLogin(

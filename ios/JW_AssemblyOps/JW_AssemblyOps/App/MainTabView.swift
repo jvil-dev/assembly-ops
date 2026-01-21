@@ -24,41 +24,57 @@
 
 import SwiftUI
 
-  struct MainTabView: View {
-      @EnvironmentObject private var appState: AppState
-      @StateObject private var badgeManager = UnreadBadgeManager.shared
-
-      var body: some View {
-          TabView {
-              HomeView()
-                  .tabItem {
-                      Label("Home", systemImage: "house")
-                  }
-
-              AssignmentsListView()
-                  .tabItem {
-                      Label("Schedule", systemImage: "calendar")
-                  }
-
-              MessagesView()
-                  .tabItem {
-                      Label("Messages", systemImage: "envelope")
-                  }
-                  .badge(badgeManager.unreadCount > 0 ? badgeManager.unreadCount : 0)
-
-              ProfileView()
-                  .tabItem {
-                      Label("Profile", systemImage: "person")
-                  }
-          }
-          .task {
-              badgeManager.startRefreshing()
-          }
-          .onDisappear {
-              badgeManager.stopRefreshing()
-          }
-      }
-  }
+struct MainTabView: View {
+    @EnvironmentObject private var appState: AppState
+    @ObservedObject private var badgeManager = UnreadBadgeManager.shared
+    @Environment(\.scenePhase) private var scenePhase
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            OfflineBanner()
+                .animation(.easeInOut, value: NetworkMonitor.shared.isConnected)
+            
+            TabView {
+                HomeView()
+                    .tabItem {
+                        Label("Home", systemImage: "house")
+                    }
+                
+                AssignmentsListView()
+                    .tabItem {
+                        Label("Schedule", systemImage: "calendar")
+                    }
+                
+                MessagesView()
+                    .tabItem {
+                        Label("Messages", systemImage: "envelope")
+                    }
+                    .badge(badgeManager.unreadCount)
+                
+                ProfileView()
+                    .tabItem {
+                        Label("Profile", systemImage: "person")
+                    }
+            }
+            .onChange(of: scenePhase) {
+                _, newPhase in
+                switch newPhase {
+                case .active:
+                    badgeManager.startRefreshing()
+                case .inactive, .background:
+                    badgeManager.stopRefreshing()
+                @unknown default:
+                    break
+                }
+            }
+            .onAppear {
+                if scenePhase == .active {
+                    badgeManager.startRefreshing()
+                }
+            }
+        }
+    }
+}
 
 #Preview {
     MainTabView()

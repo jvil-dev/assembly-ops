@@ -44,7 +44,7 @@ struct JW_AssemblyOpsApp: App {
                     // Main app content
                     MainTabView()
                 } else {
-                    LoginView()
+                    LandingView()
                 }
             }
             .environmentObject(appState)

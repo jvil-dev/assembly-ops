@@ -272,9 +272,13 @@ struct ProfileView: View {
             Text("AssemblyOps")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Text("Version 1.0.0 (Beta)")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+            
+            if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+               let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+                Text("Version \(version) (\(build))")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
         }
         .padding(.top, 8)
     }

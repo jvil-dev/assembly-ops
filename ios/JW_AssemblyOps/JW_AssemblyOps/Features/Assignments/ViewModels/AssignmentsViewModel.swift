@@ -7,14 +7,15 @@
 
 // MARK: - Assignments View Model
 //
-// Fetches and manages the volunteer's schedule assignments from the API.
-// Provides computed properties for grouping and filtering assignments.
+// Fetches and manages the volunteer's schedule assignments.
+// Implements offline-first pattern with local caching.
 //
 // Published Properties:
 //   - assignments: Array of all fetched Assignment objects
 //   - isLoading: True while API request is in flight
 //   - errorMessage: Error text to display (nil on success)
-//   - hasLoaded: True after first successful/failed fetch (prevents reload on tab switch)
+//   - hasLoaded: True after first fetch (prevents reload on tab switch)
+//   - isUsingCache: True when displaying cached data instead of live
 //
 // Computed Properties:
 //   - groupedAssignments: Assignments grouped by date, sorted chronologically
@@ -23,14 +24,21 @@
 //   - isEmpty: True if no assignments exist
 //
 // Methods:
-//   - fetchAssignments(): Execute myAssignments GraphQL query
+//   - fetchAssignments(): Fetch from API with cache fallback
 //   - refresh(): Alias for fetchAssignments (pull-to-refresh)
 //
-// Dependencies:
-//   - NetworkClient: Apollo GraphQL client
-//   - Assignment: Local model parsed from GraphQL response
+// Offline Behavior:
+//   - If offline: Load from cache immediately
+//   - If online: Fetch from API, cache result
+//   - On network failure: Fall back to cache with indicator
 //
-// Used by: AssignmentsListView.swift
+// Dependencies:
+//   - AssignmentsService: GraphQL API calls
+//   - AssignmentCache: Local persistence
+//   - NetworkMonitor: Connectivity status
+//
+// Used by: AssignmentsListView
+
 
 import Foundation
 import SwiftUI
@@ -43,6 +51,10 @@ final class AssignmentsViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var hasLoaded: Bool = false
+    @Published var isUsingCache = false
+    
+    private let cache = AssignmentCache.shared
+    private let networkMonitor = NetworkMonitor.shared
     
     /// Assignments grouped by date
     var groupedAssignments: [(date: Date, assignments: [Assignment])] {
@@ -73,27 +85,42 @@ final class AssignmentsViewModel: ObservableObject {
     func fetchAssignments() {
           isLoading = true
           errorMessage = nil
-
-          NetworkClient.shared.apollo.fetch(
-              query: AssemblyOpsAPI.MyAssignmentsQuery(),
-              cachePolicy: .fetchIgnoringCacheData
-          ) { [weak self] result in
-              Task { @MainActor in
-                  switch result {
-                  case .success(let graphQLResult):
-                      if let data = graphQLResult.data?.myAssignments {
-                          self?.assignments = data.compactMap { Assignment(from: $0) }
-                      } else if let errors = graphQLResult.errors, !errors.isEmpty {
-                          self?.errorMessage = errors.first?.localizedDescription ?? "Failed to load assignments"
-                      }
-                  case .failure(let error):
-                      self?.errorMessage = "Unable to connect. Pull to refresh."
-                      print("Fetch assignments error: \(error)")
-                  }
-                  self?.isLoading = false
-                  self?.hasLoaded = true
-              }
-          }
+        
+        // If offline, try cache first
+        if !networkMonitor.isConnected {
+            if let cached = cache.load() {
+                assignments = cached
+                isUsingCache = true
+                isLoading = false
+                hasLoaded = true
+                return
+            }
+        }
+        
+        // Try network fetch
+        Task {
+            do {
+                let fetched = try await AssignmentsService.shared.fetchAssignments()
+                assignments = fetched
+                isUsingCache = false
+                
+                // Cache for offline use
+                cache.save(fetched)
+            } catch {
+                // On network failure, fall back to cache
+                if let cached = cache.load() {
+                    assignments = cached
+                    isUsingCache = true
+                    errorMessage = "Showing cached data. Pull to refresh"
+                } else {
+                    errorMessage = "Unable to load assignments. Check your connection"
+                }
+                isLoading = false
+                hasLoaded = true
+            }
+        } 
+        isLoading = false
+        hasLoaded = true
       }
 
       func refresh() {

@@ -25,15 +25,16 @@ import SwiftUI
 struct LaunchView: View {
   var body: some View {
       VStack(spacing: 20) {
-          Image(systemName: "person.3.fill")
-              .font(.system(size: 60))
-              .foregroundStyle(Color("ThemeColor"))
+          Image("Logo")
+              .resizable()
+              .scaledToFit()
+              .frame(width: 120, height: 120)
 
-          Text("JW AssemblyOps")
+          Text("AssemblyOps")
               .font(.largeTitle)
               .fontWeight(.bold)
 
-          Text("Volunteer Check-In")
+          Text("Volunteer Scheduling Simplified")
               .font(.subheadline)
               .foregroundStyle(.secondary)
 
