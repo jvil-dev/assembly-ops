@@ -29,6 +29,7 @@ import assignmentTypeDefs from './assignment.js';
 import checkInTypeDefs from './checkIn.js';
 import messageTypeDefs from './message.js';
 import eventNoteTypeDefs from './eventNotes.js';
+import attendanceTypeDefs from './attendance.js';
 
 const baseTypeDefs = `#graphql
   scalar DateTime
@@ -60,6 +61,7 @@ const typeDefs = [
   checkInTypeDefs,
   messageTypeDefs,
   eventNoteTypeDefs,
+  attendanceTypeDefs,
 ];
 
 export default typeDefs;

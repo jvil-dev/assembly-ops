@@ -34,6 +34,7 @@ import assignmentResolvers from './assignment.js';
 import checkInResolvers from './checkIn.js';
 import messageResolvers from './message.js';
 import eventNoteResolvers from './eventNote.js';
+import attendanceResolvers from './attendance.js';
 
 const baseResolvers = {
   DateTime: DateTimeResolver,
@@ -76,6 +77,7 @@ const resolvers = {
     ...checkInResolvers.Query,
     ...messageResolvers.Query,
     ...eventNoteResolvers.Query,
+    ...attendanceResolvers.Query,
   },
 
   Mutation: {
@@ -89,6 +91,7 @@ const resolvers = {
     ...checkInResolvers.Mutation,
     ...messageResolvers.Mutation,
     ...eventNoteResolvers.Mutation,
+    ...attendanceResolvers.Mutation,
   },
 
   Admin: authResolvers.Admin,
@@ -99,6 +102,7 @@ const resolvers = {
   Post: postResolvers.Post,
   Session: sessionResolvers.Session,
   ScheduleAssignment: assignmentResolvers.ScheduleAssignment,
+  AttendanceCount: attendanceResolvers.AttendanceCount,
 };
 
 export default resolvers;

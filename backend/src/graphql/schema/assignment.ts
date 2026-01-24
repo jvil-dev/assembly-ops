@@ -1,33 +1,49 @@
 /**
  * Assignment GraphQL Schema
  *
- * Type definitions for schedule assignments and coverage matrix queries.
+ * Type definitions for schedule assignments, acceptance workflow, and captain role.
  * This is where department overseers manage volunteer scheduling.
  *
+ * Enums:
+ *   - AssignmentStatus: PENDING, ACCEPTED, DECLINED, AUTO_DECLINED
+ *
  * Types:
- *   - CoverageSlot: One cell in the posts × sessions grid
- *   - CoveragePost/Session/Volunteer/CheckIn: Lightweight types for coverage matrix
+ *   - ScheduleAssignment: Extended with status, isCaptain, respondedAt, etc.
+ *   - CoverageSlot: One cell in the posts × sessions grid (ACCEPTED only)
+ *   - CoveragePost/Session/Volunteer/CheckIn: Lightweight types for matrix
  *
  * Queries:
- *   - assignment(id): Get single assignment
- *   - assignments(eventId): All assignments for an event
- *   - volunteerAssignments(volunteerId): A volunteer's schedule
- *   - sessionAssignments(sessionId): Who's assigned to a session
- *   - postAssignments(postId): Who's assigned to a post
- *   - myAssignments: Volunteer's own schedule (volunteer auth)
- *   - departmentCoverage(departmentId): Full coverage matrix
- *   - departmentCoverageGaps(departmentId): Only unfilled slots
+ *   - assignment(id), assignments(eventId): Get assignments
+ *   - volunteerAssignments, sessionAssignments, postAssignments: Filtered
+ *   - myAssignments(status?): Volunteer's schedule with optional status filter
+ *   - pendingAssignments(filter): Get PENDING assignments for event/department
+ *   - declinedAssignments(eventId): Get DECLINED/AUTO_DECLINED assignments
+ *   - captainGroup(assignmentId): Volunteers at same post/session as captain
+ *   - departmentCoverage, departmentCoverageGaps: Coverage matrix
  *
  * Mutations:
- *   - createAssignment: Assign one volunteer to post+session
- *   - createAssignments: Bulk assign multiple volunteers
- *   - updateAssignment: Change post or session
- *   - deleteAssignment: Remove an assignment
+ *   - createAssignment: Create with PENDING status
+ *   - acceptAssignment, declineAssignment: Volunteer response
+ *   - forceAssignment: Admin bypasses acceptance (auto-ACCEPTED)
+ *   - setCaptain: Designate assignment as captain
+ *   - captainCheckIn: Captain checks in group member
+ *   - updateAssignment, deleteAssignment: Modify or remove
  *
  * Used by: ./index.ts (schema composition)
  * Implemented by: ../resolvers/assignment.ts
  */
 const assignmentTypeDefs = `#graphql
+  # ============================================
+  # ENUMS
+  # ============================================
+
+  enum AssignmentStatus {
+    PENDING
+    ACCEPTED
+    DECLINED
+    AUTO_DECLINED
+  }
+
   # ============================================
   # TYPES
   # ============================================
@@ -72,6 +88,27 @@ const assignmentTypeDefs = `#graphql
     checkInTime: DateTime!
   }
 
+  type ScheduleAssignment {
+    id: ID!
+    volunteer: Volunteer!
+    post: Post!
+    session: Session!
+    status: AssignmentStatus!
+    isCaptain: Boolean!
+    respondedAt: DateTime
+    declineReason: String
+    acceptDeadline: DateTime
+    forceAssigned: Boolean!
+    checkIn: CheckIn
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
+  type CaptainGroup {
+    captain: ScheduleAssignment!
+    members: [ScheduleAssignment!]!
+  }
+
   # ============================================
   # INPUTS
   # ============================================
@@ -80,15 +117,44 @@ const assignmentTypeDefs = `#graphql
     volunteerId: ID!
     postId: ID!
     sessionId: ID!
-  }
-
-  input CreateAssignmentsInput {
-    assignments: [CreateAssignmentInput!]!
+    isCaptain: Boolean
   }
 
   input UpdateAssignmentInput {
     postId: ID
-    sessionId: ID
+    isCaptain: Boolean
+  }
+
+  input AcceptAssignmentInput {
+    assignmentId: ID!
+  }
+
+  input DeclineAssignmentInput {
+    assignmentId: ID!
+    reason: String
+  }
+
+  input ForceAssignmentInput {
+    volunteerId: ID!
+    postId: ID!
+    sessionId: ID!
+    isCaptain: Boolean
+  }
+
+  input SetCaptainInput {
+    assignmentId: ID!
+    isCaptain: Boolean!
+  }
+
+  input CaptainCheckInInput {
+    assignmentId: ID!
+    notes: String
+  }
+
+  input PendingAssignmentsFilter {
+    eventId: ID
+    departmentId: ID
+    status: AssignmentStatus
   }
 
   # ============================================
@@ -97,20 +163,32 @@ const assignmentTypeDefs = `#graphql
 
   extend type Query {
     assignment(id: ID!): ScheduleAssignment
-    assignments(eventId: ID!): [ScheduleAssignment!]!
+    assignments(eventId: ID, departmentId: ID, sessionId: ID, volunteerId: ID): [ScheduleAssignment!]!
     volunteerAssignments(volunteerId: ID!): [ScheduleAssignment!]!
     sessionAssignments(sessionId: ID!): [ScheduleAssignment!]!
     postAssignments(postId: ID!): [ScheduleAssignment!]!
-    myAssignments: [ScheduleAssignment!]!
+    myAssignments(status: AssignmentStatus): [ScheduleAssignment!]!
+    pendingAssignments(filter: PendingAssignmentsFilter): [ScheduleAssignment!]!
+    declinedAssignments(eventId: ID, departmentId: ID): [ScheduleAssignment!]!
+    captainGroup(postId: ID!, sessionId: ID!): CaptainGroup
     departmentCoverage(departmentId: ID!): [CoverageSlot!]!
     departmentCoverageGaps(departmentId: ID!): [CoverageSlot!]!
   }
 
   extend type Mutation {
     createAssignment(input: CreateAssignmentInput!): ScheduleAssignment!
-    createAssignments(input: CreateAssignmentsInput!): [ScheduleAssignment!]!
     updateAssignment(id: ID!, input: UpdateAssignmentInput!): ScheduleAssignment!
     deleteAssignment(id: ID!): Boolean!
+    bulkCreateAssignments(inputs: [CreateAssignmentInput!]!): [ScheduleAssignment!]!
+
+    acceptAssignment(input: AcceptAssignmentInput!): ScheduleAssignment!
+    declineAssignment(input: DeclineAssignmentInput!): ScheduleAssignment!
+
+    forceAssignment(input: ForceAssignmentInput!): ScheduleAssignment!
+    setCaptain(input: SetCaptainInput!): ScheduleAssignment!
+    setAcceptDeadline(assignmentId: ID!, deadline: DateTime!): ScheduleAssignment!
+
+    captainCheckIn(input: CaptainCheckInInput!): ScheduleAssignment!
   }
 `;
 
