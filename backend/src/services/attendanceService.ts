@@ -1,68 +1,85 @@
 /**
  * Attendance Service
  *
- * Business logic for recording audience attendance counts (CO-24 reporting).
+ * Business logic for recording audience attendance counts with section support.
+ * Used for CO-24 reporting at assemblies and conventions.
  *
  * Methods:
- *   - recordAttendance(adminId, input): Record attendance count for a session
- *   - updateAttendance(attendanceId, input): Update an existing attendance record
- *   - getAttendance(sessionId): Get attendance count for a session
- *   - getEventAttendance(eventId): Get all attendance counts for an event
- *   - deleteAttendance(attendanceId): Delete an attendance record
+ *   - submitAttendanceCount(adminId, input): Record count for session/section
+ *   - updateAttendanceCount(id, input): Update an existing count
+ *   - deleteAttendanceCount(id): Remove a count record
+ *   - getAttendanceCount(id): Get single count by ID
+ *   - getSessionAttendanceCounts(sessionId): All counts for a session
+ *   - getSessionTotalAttendance(sessionId): Sum of all section counts
+ *   - getEventAttendanceSummary(eventId): Aggregated counts per session
  *   - getSessionEventId(sessionId): Get event ID for access control
  *
- * Business Rules:
- *   - Only one attendance count per session (use update for corrections)
- *   - Only EVENT_OVERSEER can record/update/delete attendance
- *   - Ordered by session date and time for event-wide queries
+ * Section Support:
+ *   Attendance can be recorded per section (e.g., "A1", "B2", "Floor", "Balcony").
+ *   Multiple counts per session allowed if sections differ.
+ *   Unique constraint: [sessionId, section] - upsert updates existing.
  *
- * Called by: ../graphql/resolvers/checkIn.ts
+ * Business Rules:
+ *   - One count per session+section combination (upsert on conflict)
+ *   - Only admins with event access can submit/update/delete
+ *   - Counts ordered by session date and time for reports
+ *
+ * Called by: ../graphql/resolvers/attendance.ts
  */
+
 import { PrismaClient, AttendanceCount } from '@prisma/client';
-import { NotFoundError, ValidationError, ConflictError } from '../utils/errors.js';
+import { NotFoundError, ValidationError } from '../utils/errors.js';
 import {
-  recordAttendanceSchema,
-  updateAttendanceSchema,
-  RecordAttendanceInput,
-  UpdateAttendanceInput,
-} from '../graphql/validators/checkIn.js';
+  SubmitAttendanceCountInput,
+  UpdateAttendanceCountInput,
+  submitAttendanceCountSchema,
+  updateAttendanceCountSchema,
+} from '../graphql/validators/attendance.js';
 
 export class AttendanceService {
   constructor(private prisma: PrismaClient) {}
 
   /**
-   * Record attendance count for a session
+   * Submit attendance count for a session section
    */
-  async recordAttendance(adminId: string, input: RecordAttendanceInput): Promise<AttendanceCount> {
-    const result = recordAttendanceSchema.safeParse(input);
+  async submitAttendanceCount(
+    adminId: string,
+    input: SubmitAttendanceCountInput
+  ): Promise<AttendanceCount> {
+    const result = submitAttendanceCountSchema.safeParse(input);
     if (!result.success) {
       throw new ValidationError(result.error.issues[0].message);
     }
 
-    const { sessionId, count, notes } = result.data;
+    const { sessionId, section, count, notes } = result.data;
 
     // Verify session exists
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
     });
+
     if (!session) {
       throw new NotFoundError('Session');
     }
 
-    // Check if attendance already recorded
-    const existing = await this.prisma.attendanceCount.findUnique({
-      where: { sessionId },
-    });
-
-    if (existing) {
-      throw new ConflictError('Attendance already recorded for this session. Use update instead');
-    }
-
-    return this.prisma.attendanceCount.create({
-      data: {
+    // Upsert attendance count (update if exists for this session/section)
+    return this.prisma.attendanceCount.upsert({
+      where: {
+        sessionId_section: {
+          sessionId,
+          section: section ?? '',
+        },
+      },
+      create: {
+        sessionId,
+        section,
         count,
         notes,
-        sessionId,
+        submittedById: adminId,
+      },
+      update: {
+        count,
+        notes,
         submittedById: adminId,
       },
       include: {
@@ -73,33 +90,44 @@ export class AttendanceService {
   }
 
   /**
-   * Update attendance count for a session
+   * Update an attendance count
    */
-  async updateAttendance(
-    attendanceId: string,
-    input: UpdateAttendanceInput
+  async updateAttendanceCount(
+    id: string,
+    input: UpdateAttendanceCountInput
   ): Promise<AttendanceCount> {
-    const result = updateAttendanceSchema.safeParse(input);
+    const result = updateAttendanceCountSchema.safeParse(input);
     if (!result.success) {
       throw new ValidationError(result.error.issues[0].message);
     }
 
-    const validated = result.data;
-
-    const attendance = await this.prisma.attendanceCount.findUnique({
-      where: { id: attendanceId },
+    const existing = await this.prisma.attendanceCount.findUnique({
+      where: { id },
     });
 
-    if (!attendance) {
-      throw new NotFoundError('Attendance record');
+    if (!existing) {
+      throw new NotFoundError('Attendance count');
     }
 
     return this.prisma.attendanceCount.update({
-      where: { id: attendanceId },
+      where: { id },
       data: {
-        count: validated.count,
-        notes: validated.notes,
+        count: result.data.count ?? existing.count,
+        notes: result.data.notes,
       },
+      include: {
+        session: true,
+        submittedBy: true,
+      },
+    });
+  }
+
+  /**
+   * Get a single attendance count by ID
+   */
+  async getAttendanceCount(id: string): Promise<AttendanceCount | null> {
+    return this.prisma.attendanceCount.findUnique({
+      where: { id },
       include: {
         session: true,
         submittedBy: true,
@@ -110,20 +138,32 @@ export class AttendanceService {
   /**
    * Get attendance count for a session
    */
-  async getAttendance(sessionId: string) {
-    return this.prisma.attendanceCount.findUnique({
+  async getSessionAttendanceCounts(sessionId: string): Promise<AttendanceCount[]> {
+    return this.prisma.attendanceCount.findMany({
       where: { sessionId },
       include: {
-        session: true,
         submittedBy: true,
       },
+      orderBy: { section: 'asc' },
     });
   }
 
   /**
-   * Get all attendance counts for an event
+   * Get total attendance count for a session (sum of all sections)
    */
-  async getEventAttendance(eventId: string) {
+  async getSessionTotalAttendance(sessionId: string): Promise<number> {
+    const counts = await this.prisma.attendanceCount.aggregate({
+      where: { sessionId },
+      _sum: { count: true },
+    });
+
+    return counts._sum.count ?? 0;
+  }
+
+  /**
+   * Get attendance count for an event (all sessions)
+   */
+  async getEventAttendanceCounts(eventId: string): Promise<AttendanceCount[]> {
     return this.prisma.attendanceCount.findMany({
       where: {
         session: { eventId },
@@ -132,24 +172,52 @@ export class AttendanceService {
         session: true,
         submittedBy: true,
       },
-      orderBy: [{ session: { date: 'asc' } }, { session: { startTime: 'asc' } }],
+      orderBy: [
+        { session: { date: 'asc' } },
+        { session: { startTime: 'asc' } },
+        { section: 'asc' },
+      ],
     });
   }
 
   /**
-   * Delete attendance record
+   * Get attendance summary for an event
    */
-  async deleteAttendance(attendanceId: string): Promise<boolean> {
-    const attendance = await this.prisma.attendanceCount.findUnique({
-      where: { id: attendanceId },
+  async getEventAttendanceSummary(eventId: string) {
+    const sessions = await this.prisma.session.findMany({
+      where: { eventId },
+      include: {
+        attendanceCounts: true,
+      },
+      orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
     });
 
-    if (!attendance) {
-      throw new NotFoundError('Attendance record');
+    return sessions.map((session) => {
+      const counts = session.attendanceCounts;
+      const total = counts.reduce((sum, c) => sum + c.count, 0);
+
+      return {
+        session,
+        totalCount: total,
+        sectionCounts: counts,
+      };
+    });
+  }
+
+  /**
+   * Delete an attendance count
+   */
+  async deleteAttendanceCount(id: string): Promise<boolean> {
+    const existing = await this.prisma.attendanceCount.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      throw new NotFoundError('Attendance count');
     }
 
     await this.prisma.attendanceCount.delete({
-      where: { id: attendanceId },
+      where: { id },
     });
 
     return true;
@@ -169,5 +237,21 @@ export class AttendanceService {
     }
 
     return session.eventId;
+  }
+
+  /**
+   * Get attendance count's event ID for access control
+   */
+  async getAttendanceCountEventId(id: string): Promise<string> {
+    const count = await this.prisma.attendanceCount.findUnique({
+      where: { id },
+      include: { session: { select: { eventId: true } } },
+    });
+
+    if (!count) {
+      throw new NotFoundError('Attendance count');
+    }
+
+    return count.session.eventId;
   }
 }

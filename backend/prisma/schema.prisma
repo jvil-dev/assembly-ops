@@ -29,14 +29,16 @@ model Admin {
 model AttendanceCount {
   id            String   @id @default(cuid())
   count         Int
+  section       String?
   notes         String?
-  sessionId     String   @unique
+  sessionId     String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   submittedById String
   session       Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   submittedBy   Admin    @relation(fields: [submittedById], references: [id])
 
+  @@unique([sessionId, section])
   @@index([sessionId])
 }
 
@@ -75,19 +77,20 @@ model Department {
 }
 
 model Event {
-  id          String        @id @default(cuid())
-  templateId  String
-  joinCode    String        @unique @default(cuid())
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  departments Department[]
-  template    EventTemplate @relation(fields: [templateId], references: [id])
-  admins      EventAdmin[]
-  notes       EventNote[]
-  messages    Message[]
-  roles       Role[]
-  sessions    Session[]
-  volunteers  Volunteer[]
+  id                 String        @id @default(cuid())
+  templateId         String
+  joinCode           String        @unique @default(cuid())
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  acceptDeadlineDays Int           @default(5) // Days before autoaccept
+  departments        Department[]
+  template           EventTemplate @relation(fields: [templateId], references: [id])
+  admins             EventAdmin[]
+  notes              EventNote[]
+  messages           Message[]
+  roles              Role[]
+  sessions           Session[]
+  volunteers         Volunteer[]
 
   @@index([joinCode])
   @@index([templateId])
@@ -219,21 +222,28 @@ model Role {
 }
 
 model ScheduleAssignment {
-  id          String    @id @default(cuid())
-  volunteerId String
-  postId      String
-  sessionId   String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  checkIn     CheckIn?
-  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  session     Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  id               String           @id @default(cuid())
+  volunteerId      String
+  postId           String
+  sessionId        String
+  status           AssignmentStatus @default(PENDING)
+  isCaptain        Boolean          @default(false)
+  respondedAt      DateTime?
+  declineReason    String?
+  acceptedDeadline DateTime?
+  forceAssigned    Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  checkIn          CheckIn?
+  post             Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
+  session          Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  volunteer        Volunteer        @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
 
   @@unique([volunteerId, sessionId])
   @@index([postId])
   @@index([sessionId])
   @@index([volunteerId])
+  @@index([status])
 }
 
 model Session {
@@ -245,7 +255,7 @@ model Session {
   eventId         String
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
-  attendanceCount AttendanceCount?
+  attendanceCounts AttendanceCount[]
   assignments     ScheduleAssignment[]
   event           Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
@@ -323,4 +333,11 @@ enum RecipientType {
   VOLUNTEER
   DEPARTMENT
   EVENT
+}
+
+enum AssignmentStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  AUTO_DECLINED
 }

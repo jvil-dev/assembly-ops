@@ -1,12 +1,12 @@
 /**
  * Check-In Service
  *
- * Business logic for volunteer check-in/check-out and attendance tracking.
+ * Business logic for volunteer check-in/check-out operations.
  *
  * Methods:
  *   - checkIn(volunteerId, input): Volunteer checks in to their assignment
  *   - checkOut(volunteerId, input): Volunteer checks out of their assignment
- *   - adminCheckIn(adminId, input): Admin checks in a volunteer on their behalf
+ *   - adminCheckIn(adminId, input): Admin checks in a volunteer (override)
  *   - markNoShow(adminId, input): Admin marks a volunteer as no-show
  *   - getCheckIn(id): Get a check-in record by ID
  *   - getSessionCheckIns(sessionId): Get all check-ins for a session
@@ -17,6 +17,10 @@
  *   [No CheckIn] → checkIn → CHECKED_IN → checkOut → CHECKED_OUT
  *                                ↓
  *                      markNoShow → NO_SHOW
+ *
+ * Assignment Status Validation:
+ *   - Volunteers can only check in to ACCEPTED or force-assigned assignments
+ *   - Admins can check in any assignment (override for last-minute substitutions)
  *
  * Authorization:
  *   - Volunteers can only check in/out of their own assignments
@@ -81,6 +85,11 @@ export class CheckInService {
 
     if (assignment.volunteerId !== volunteerId) {
       throw new AuthorizationError('This assignment does not belong to you');
+    }
+
+    // Validate assignment status for volunteer check-in
+    if (assignment.status !== 'ACCEPTED' && !assignment.forceAssigned) {
+      throw new ValidationError('Cannot check in to assignment that has not been accepted');
     }
 
     // Check if already checked in

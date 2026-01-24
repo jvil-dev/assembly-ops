@@ -1,16 +1,19 @@
 /**
  * Check-In Integration Tests
  *
- * Tests for volunteer check-in/check-out and attendance tracking.
+ * Tests for volunteer check-in/check-out operations.
  *
  * Test Coverage:
- *   - Volunteer check-in to assignment
+ *   - Volunteer check-in to assignment (requires ACCEPTED status)
  *   - Volunteer check-out from assignment
- *   - Admin check-in on behalf of volunteer
+ *   - Admin check-in on behalf of volunteer (can override status)
  *   - Mark volunteer as no-show
  *   - Check-in statistics query
- *   - Attendance count recording
+ *
+ * Note: Uses forceAssignment to create ACCEPTED assignments.
+ * Volunteers can only check in to ACCEPTED or force-assigned assignments.
  */
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
 import type { Application } from 'express';
@@ -156,9 +159,9 @@ describe('Check-In Operations', () => {
     const volunteerLoginId = volunteerRes.body.data.createVolunteer.volunteerId;
     const volunteerLoginToken = volunteerRes.body.data.createVolunteer.token;
 
-    // Create assignment
+    // Create assignment with ACCEPTED status (forceAssignment)
     const assignmentRes = await authRequest(
-      `mutation($input: CreateAssignmentInput!) { createAssignment(input: $input) { id } }`,
+      `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { id } }`,
       { input: { volunteerId, postId, sessionId } },
       adminToken
     );
@@ -166,7 +169,7 @@ describe('Check-In Operations', () => {
       console.error('Assignment failed:', assignmentRes.body.errors);
       return;
     }
-    assignmentId = assignmentRes.body.data.createAssignment.id;
+    assignmentId = assignmentRes.body.data.forceAssignment.id;
 
     // Create second volunteer + assignment for no-show test
     const volunteer2Res = await authRequest(
@@ -182,12 +185,12 @@ describe('Check-In Operations', () => {
     if (!volunteer2Res.body.errors) {
       const volunteer2Id = volunteer2Res.body.data.createVolunteer.id;
       const assignment2Res = await authRequest(
-        `mutation($input: CreateAssignmentInput!) { createAssignment(input: $input) { id } }`,
+        `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { id } }`,
         { input: { volunteerId: volunteer2Id, postId, sessionId } },
         adminToken
       );
       if (!assignment2Res.body.errors) {
-        secondAssignmentId = assignment2Res.body.data.createAssignment.id;
+        secondAssignmentId = assignment2Res.body.data.forceAssignment.id;
       }
     }
 
@@ -416,99 +419,4 @@ describe('Check-In Operations', () => {
     });
   });
 
-  // ============================================
-  // ATTENDANCE COUNT
-  // ============================================
-
-  describe('recordAttendance mutation', () => {
-    it('should allow admin to record attendance count', async () => {
-      if (!sessionId || !adminToken) {
-        return console.log('Skipping - missing setup');
-      }
-
-      const response = await authRequest(
-        `mutation RecordAttendance($input: RecordAttendanceInput!) {
-          recordAttendance(input: $input) {
-            id
-            count
-            notes
-            session { id }
-            submittedBy { id }
-          }
-        }`,
-        { input: { sessionId, count: 1250, notes: 'Counted at 10:30 AM' } },
-        adminToken
-      );
-
-      expect(response.status).toBe(200);
-      expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.recordAttendance.count).toBe(1250);
-      expect(response.body.data.recordAttendance.notes).toBe('Counted at 10:30 AM');
-    });
-
-    it('should reject duplicate attendance for same session', async () => {
-      if (!sessionId || !adminToken) {
-        return console.log('Skipping - missing setup');
-      }
-
-      const response = await authRequest(
-        `mutation($input: RecordAttendanceInput!) {
-          recordAttendance(input: $input) { id }
-        }`,
-        { input: { sessionId, count: 1300 } },
-        adminToken
-      );
-
-      expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('already recorded');
-    });
-  });
-
-  describe('attendanceCount query', () => {
-    it('should return attendance count for session', async () => {
-      if (!sessionId || !adminToken) {
-        return console.log('Skipping - missing setup');
-      }
-
-      const response = await authRequest(
-        `query($sessionId: ID!) {
-          attendanceCount(sessionId: $sessionId) {
-            id
-            count
-            notes
-          }
-        }`,
-        { sessionId },
-        adminToken
-      );
-
-      expect(response.status).toBe(200);
-      expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.attendanceCount.count).toBe(1250);
-    });
-  });
-
-  describe('eventAttendanceCounts query', () => {
-    it('should return all attendance counts for event', async () => {
-      if (!eventId || !adminToken) {
-        return console.log('Skipping - missing setup');
-      }
-
-      const response = await authRequest(
-        `query($eventId: ID!) {
-          eventAttendanceCounts(eventId: $eventId) {
-            id
-            count
-            session { id name }
-          }
-        }`,
-        { eventId },
-        adminToken
-      );
-
-      expect(response.status).toBe(200);
-      expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.eventAttendanceCounts.length).toBeGreaterThan(0);
-    });
-  });
 });
