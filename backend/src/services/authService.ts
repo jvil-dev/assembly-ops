@@ -127,7 +127,10 @@ export class AuthService {
       throw new AuthenticationError('Invalid email or password');
     }
 
-    // Verify password
+    // Verify password (passwordHash can be null for OAuth-only accounts)
+    if (!admin.passwordHash) {
+      throw new AuthenticationError('Invalid email or password');
+    }
     const isValid = await verifyPassword(validated.password, admin.passwordHash);
     if (!isValid) {
       throw new AuthenticationError('Invalid email or password');

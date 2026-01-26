@@ -1,0 +1,23 @@
+query Volunteers($eventId: ID!, $departmentId: ID) {
+  volunteers(eventId: $eventId, departmentId: $departmentId) {
+    id
+    volunteerId
+    firstName
+    lastName
+    fullName
+    email
+    phone
+    congregation
+    appointmentStatus
+    notes
+    department {
+      id
+      name
+      departmentType
+    }
+    role {
+      id
+      name
+    }
+  }
+}

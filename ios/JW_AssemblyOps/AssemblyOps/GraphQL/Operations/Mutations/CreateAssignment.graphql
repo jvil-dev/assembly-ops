@@ -1,0 +1,19 @@
+mutation CreateAssignment($input: CreateAssignmentInput!) {
+  createAssignment(input: $input) {
+    id
+    isCheckedIn
+    volunteer {
+      id
+      firstName
+      lastName
+    }
+    post {
+      id
+      name
+    }
+    session {
+      id
+      name
+    }
+  }
+}

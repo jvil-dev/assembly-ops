@@ -30,6 +30,7 @@ import checkInTypeDefs from './checkIn.js';
 import messageTypeDefs from './message.js';
 import eventNoteTypeDefs from './eventNotes.js';
 import attendanceTypeDefs from './attendance.js';
+import { oauthTypeDefs } from './oauth.js';
 
 const baseTypeDefs = `#graphql
   scalar DateTime
@@ -62,6 +63,7 @@ const typeDefs = [
   messageTypeDefs,
   eventNoteTypeDefs,
   attendanceTypeDefs,
+  oauthTypeDefs,
 ];
 
 export default typeDefs;

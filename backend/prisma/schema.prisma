@@ -9,7 +9,7 @@ datasource db {
 model Admin {
   id               String            @id @default(cuid())
   email            String            @unique
-  passwordHash     String
+  passwordHash     String?
   firstName        String
   lastName         String
   phone            String?
@@ -22,6 +22,7 @@ model Admin {
   messages         Message[]
   refreshTokens    RefreshToken[]
   eventNotes       EventNote[]
+  oauthConnections OAuthConnection[]
 
   @@index([email])
 }
@@ -247,17 +248,17 @@ model ScheduleAssignment {
 }
 
 model Session {
-  id              String               @id @default(cuid())
-  name            String
-  date            DateTime             @db.Date
-  startTime       DateTime             @db.Time(6)
-  endTime         DateTime             @db.Time(6)
-  eventId         String
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  id               String               @id @default(cuid())
+  name             String
+  date             DateTime             @db.Date
+  startTime        DateTime             @db.Time(6)
+  endTime          DateTime             @db.Time(6)
+  eventId          String
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
   attendanceCounts AttendanceCount[]
-  assignments     ScheduleAssignment[]
-  event           Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  assignments      ScheduleAssignment[]
+  event            Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([date])
   @@index([eventId])
@@ -289,6 +290,19 @@ model Volunteer {
   @@index([departmentId])
   @@index([eventId])
   @@index([volunteerId])
+}
+
+model OAuthConnection {
+  id         String       @id @default(cuid())
+  provider   AuthProvider
+  providerId String
+  email      String?
+  adminId    String
+  createdAt  DateTime     @default(now())
+  admin      Admin        @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@index([adminId])
 }
 
 enum AppointmentStatus {
@@ -340,4 +354,10 @@ enum AssignmentStatus {
   ACCEPTED
   DECLINED
   AUTO_DECLINED
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  APPLE
 }

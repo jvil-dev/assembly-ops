@@ -1,0 +1,8 @@
+mutation CompleteOAuthRegistration($input: CompleteOAuthRegistrationInput!) {
+    completeOAuthRegistration(input: $input) {
+        admin { id email firstName lastName fullName }
+        accessToken
+        refreshToken
+        expiresIn
+    }
+}
