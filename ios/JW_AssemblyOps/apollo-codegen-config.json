@@ -1,18 +1,18 @@
 {
   "schemaNamespace": "AssemblyOpsAPI",
   "input": {
-    "operationSearchPaths": ["JW_AssemblyOps/GraphQL/Operations/**/*.graphql"],
-    "schemaSearchPaths": ["JW_AssemblyOps/GraphQL/schema.graphql"]
+    "operationSearchPaths": ["AssemblyOps/GraphQL/Operations/**/*.graphql"],
+    "schemaSearchPaths": ["AssemblyOps/GraphQL/schema.graphql"]
   },
   "output": {
     "testMocks": {
       "none": {}
     },
     "schemaTypes": {
-      "path": "JW_AssemblyOps/GraphQL/Generated",
+      "path": "AssemblyOps/GraphQL/Generated",
       "moduleType": {
         "embeddedInTarget": {
-          "name": "JW_AssemblyOps"
+          "name": "AssemblyOps"
         }
       }
     },

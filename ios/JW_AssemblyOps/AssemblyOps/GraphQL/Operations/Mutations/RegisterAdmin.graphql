@@ -1,0 +1,14 @@
+mutation RegisterAdmin($input: RegisterAdminInput!) {
+    registerAdmin(input: $input) {
+        admin {
+            id
+            email
+            firstName
+            lastName
+            fullName
+        }
+        accessToken
+        refreshToken
+        expiresIn
+    }
+}

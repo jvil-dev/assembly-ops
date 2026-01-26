@@ -35,6 +35,7 @@ import checkInResolvers from './checkIn.js';
 import messageResolvers from './message.js';
 import eventNoteResolvers from './eventNote.js';
 import attendanceResolvers from './attendance.js';
+import { oauthResolvers } from './oauth.js';
 
 const baseResolvers = {
   DateTime: DateTimeResolver,
@@ -78,6 +79,7 @@ const resolvers = {
     ...messageResolvers.Query,
     ...eventNoteResolvers.Query,
     ...attendanceResolvers.Query,
+    ...authResolvers.Query,
   },
 
   Mutation: {
@@ -92,6 +94,8 @@ const resolvers = {
     ...messageResolvers.Mutation,
     ...eventNoteResolvers.Mutation,
     ...attendanceResolvers.Mutation,
+    ...authResolvers.Mutation,
+    ...oauthResolvers.Mutation,
   },
 
   Admin: authResolvers.Admin,

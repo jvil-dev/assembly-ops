@@ -1,0 +1,31 @@
+query DepartmentCoverage($departmentId: ID!) {
+  departmentCoverage(departmentId: $departmentId) {
+    post {
+      id
+      name
+      capacity
+    }
+    session {
+      id
+      name
+      date
+      startTime
+      endTime
+    }
+    assignments {
+      id
+      volunteer {
+        id
+        firstName
+        lastName
+      }
+      checkIn {
+        id
+        checkInTime
+      }
+    }
+    filled
+    capacity
+    isFilled
+  }
+}
