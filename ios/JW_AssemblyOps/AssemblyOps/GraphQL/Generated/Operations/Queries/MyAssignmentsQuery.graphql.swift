@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MyAssignments"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query MyAssignments { myAssignments { __typename id post { __typename id name location department { __typename id name departmentType } } session { __typename id name date startTime endTime } isCheckedIn checkIn { __typename id status checkInTime checkOutTime } } }"#
+        #"query MyAssignments { myAssignments { __typename id status isCaptain respondedAt declineReason acceptDeadline forceAssigned post { __typename id name location capacity department { __typename id name departmentType } } session { __typename id name date startTime endTime } checkIn { __typename id status checkInTime checkOutTime } } }"#
       ))
 
     public init() {}
@@ -38,9 +38,14 @@ extension AssemblyOpsAPI {
         static var __selections: [ApolloAPI.Selection] { [
           .field("__typename", String.self),
           .field("id", AssemblyOpsAPI.ID.self),
+          .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
+          .field("isCaptain", Bool.self),
+          .field("respondedAt", AssemblyOpsAPI.DateTime?.self),
+          .field("declineReason", String?.self),
+          .field("acceptDeadline", AssemblyOpsAPI.DateTime?.self),
+          .field("forceAssigned", Bool.self),
           .field("post", Post.self),
           .field("session", Session.self),
-          .field("isCheckedIn", Bool.self),
           .field("checkIn", CheckIn?.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -48,9 +53,14 @@ extension AssemblyOpsAPI {
         ] }
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
+        var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
+        var isCaptain: Bool { __data["isCaptain"] }
+        var respondedAt: AssemblyOpsAPI.DateTime? { __data["respondedAt"] }
+        var declineReason: String? { __data["declineReason"] }
+        var acceptDeadline: AssemblyOpsAPI.DateTime? { __data["acceptDeadline"] }
+        var forceAssigned: Bool { __data["forceAssigned"] }
         var post: Post { __data["post"] }
         var session: Session { __data["session"] }
-        var isCheckedIn: Bool { __data["isCheckedIn"] }
         var checkIn: CheckIn? { __data["checkIn"] }
 
         /// MyAssignment.Post
@@ -66,6 +76,7 @@ extension AssemblyOpsAPI {
             .field("id", AssemblyOpsAPI.ID.self),
             .field("name", String.self),
             .field("location", String?.self),
+            .field("capacity", Int.self),
             .field("department", Department.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -75,6 +86,7 @@ extension AssemblyOpsAPI {
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var name: String { __data["name"] }
           var location: String? { __data["location"] }
+          var capacity: Int { __data["capacity"] }
           var department: Department { __data["department"] }
 
           /// MyAssignment.Post.Department

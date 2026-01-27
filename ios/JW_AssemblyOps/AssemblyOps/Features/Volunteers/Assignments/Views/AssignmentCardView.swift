@@ -7,153 +7,225 @@
 
 // MARK: - Assignment Card View
 //
-// Compact card displaying assignment summary in the schedule list.
-// Used as the row view in AssignmentsListView.
+// A floating card component displaying assignment summary information.
+// Uses the app's design system for consistent styling with warm backgrounds.
 //
-// Components:
-//   - Time column: Start and end times
-//   - Color bar: Represents department (uses assignment.departmentColor, was statusColor)
-//   - Details: Post name, department, optional location
-//   - Status indicator: Badge/icon based on check-in status
+// Features:
+//   - Department color accent stripe on left edge
+//   - Status badge with captain indicator
+//   - Location and time details
+//   - Deadline warning for pending assignments
+//   - Check-in status indicator
+//   - Entrance animation support
 //
-// Status States:
-//   - pending: Chevron (orange if today, gray otherwise)
-//   - checkedIn: Green "In" badge
-//   - checkedOut: Blue "Out" badge
-//   - noShow: Red X icon
-//
-// Behavior:
-//   - Tappable (wrapped in NavigationLink by parent)
-//   - Visual distinction between all status states
-//
-// Preview Data:
-//   - Assignment.preview: Pending assignment (today)
-//   - Assignment.previewCheckedIn: Checked-in assignment
-//   - Assignment.previewCheckedOut: Checked-out assignment
-//   - Assignment.previewNoShow: No-show assignment
-//
-// Dependencies:
-//   - Assignment: Data model with CheckInStatus
-//
-// Used by: AssignmentsListView.swift
 
 import SwiftUI
 
 struct AssignmentCardView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let assignment: Assignment
-    
+    var onTap: (() -> Void)? = nil
+
     var body: some View {
-        HStack(spacing: 12) {
-            // Department color bar
-            Rectangle()
-                .fill(assignment.departmentColor)
-                .frame(width: 4)
-                .clipShape(RoundedRectangle(cornerRadius: 2))
-            
-            // Time column
-            VStack(alignment: .center, spacing: 2) {
-                Text(assignment.startTime, style: .time)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                Text(assignment.endTime, style: .time)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(width: 60)
-            
-            // Details
-            VStack(alignment: .leading, spacing: 4) {
-                Text(assignment.postName)
-                    .font(.headline)
-                
+        Button {
+            onTap?()
+        } label: {
+            cardContent
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var cardContent: some View {
+        HStack(spacing: 0) {
+            // Department color accent stripe
+            accentStripe
+
+            // Main content
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+                // Header: Post name + Status badge
+                headerRow
+
                 // Department with color dot
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(assignment.departmentColor)
-                        .frame(width: 8, height: 8)
-                    
-                    Text(assignment.departmentName)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                
+                departmentRow
+
+                // Location (if available)
                 if let location = assignment.postLocation {
-                    HStack(spacing: 4) {
-                        Image(systemName: "location")
-                            .font(.caption)
-                        Text(location)
-                            .font(.caption)
-                    }
-                    .foregroundStyle(.secondary)
+                    detailRow(icon: "mappin.circle.fill", text: location)
+                }
+
+                // Time
+                detailRow(icon: "clock.fill", text: assignment.timeRangeFormatted)
+
+                // Deadline warning for pending
+                if let deadlineText = assignment.deadlineText {
+                    deadlineRow(text: deadlineText)
+                }
+
+                // Check-in status for accepted
+                if assignment.isAccepted {
+                    checkInStatusRow
                 }
             }
-            
-            Spacer()
-            
-            // Status badge
-            statusBadge
+            .padding(AppTheme.Spacing.cardPadding)
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium))
+        .shadow(
+            color: AppTheme.Shadow.cardPrimary.color,
+            radius: AppTheme.Shadow.cardPrimary.radius,
+            x: AppTheme.Shadow.cardPrimary.x,
+            y: AppTheme.Shadow.cardPrimary.y
+        )
+        .shadow(
+            color: AppTheme.Shadow.cardSecondary.color,
+            radius: AppTheme.Shadow.cardSecondary.radius,
+            x: AppTheme.Shadow.cardSecondary.x,
+            y: AppTheme.Shadow.cardSecondary.y
+        )
     }
-    
+
+    // MARK: - Accent Stripe
+
+    private var accentStripe: some View {
+        Rectangle()
+            .fill(assignment.departmentColor)
+            .frame(width: 4)
+    }
+
+    // MARK: - Header Row
+
+    private var headerRow: some View {
+        HStack(alignment: .center) {
+            Text(assignment.postName)
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            AssignmentStatusBadge(
+                status: assignment.status,
+                isCaptain: assignment.isCaptain
+            )
+        }
+    }
+
+    // MARK: - Department Row
+
+    private var departmentRow: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(assignment.departmentColor)
+                .frame(width: 8, height: 8)
+
+            Text(assignment.departmentName)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+        }
+    }
+
+    // MARK: - Detail Row
+
+    private func detailRow(icon: String, text: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                .frame(width: 16)
+
+            Text(text)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+        }
+    }
+
+    // MARK: - Deadline Row
+
+    private func deadlineRow(text: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "exclamationmark.circle.fill")
+                .font(.system(size: 12))
+                .foregroundStyle(AppTheme.StatusColors.warning)
+
+            Text(text)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.StatusColors.warning)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(AppTheme.StatusColors.warningBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    // MARK: - Check-in Status Row
+
     @ViewBuilder
-    private var statusBadge: some View {
-        switch assignment.checkInStatus {
-        case .checkedIn:
-            Label("In", systemImage: "checkmark.circle.fill")
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundStyle(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.green)
-                .clipShape(Capsule())
-            
-        case .checkedOut:
-            Label("Out", systemImage: "checkmark.circle.fill")
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundStyle(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.blue)
-                .clipShape(Capsule())
-            
-        case .noShow:
-            Image(systemName: "xmark.circle.fill")
-                .foregroundStyle(.red)
-                .font(.title2)
-            
-        case .pending:
-            if assignment.isToday {
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.tertiary)
-                    .font(.caption)
-            } else {
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.tertiary)
-                    .font(.caption)
+    private var checkInStatusRow: some View {
+        if assignment.isCheckedIn {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(AppTheme.StatusColors.accepted)
+
+                Text("Checked in")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.StatusColors.accepted)
+            }
+        } else if assignment.canCheckIn {
+            HStack(spacing: 6) {
+                Image(systemName: "circle")
+                    .font(.system(size: 12))
+                    .foregroundStyle(AppTheme.StatusColors.info)
+
+                Text("Ready to check in")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.StatusColors.info)
             }
         }
     }
-    
-    private var statusColor: Color {
-        switch assignment.checkInStatus {
-        case .checkedIn: return .green
-        case .checkedOut: return .blue
-        case .noShow: return .red
-        case .pending: return assignment.isToday ? .orange : .gray
+
+    // MARK: - Card Background
+
+    private var cardBackground: Color {
+        if assignment.isPending {
+            return colorScheme == .dark
+                ? AppTheme.cardBackground(for: colorScheme)
+                : Color.white.opacity(0.95)
+        } else if assignment.isToday && assignment.isAccepted {
+            return colorScheme == .dark
+                ? AppTheme.cardBackground(for: colorScheme)
+                : Color.white
         }
+        return AppTheme.cardBackground(for: colorScheme)
     }
 }
 
-#Preview {
-    VStack(spacing: 12) {
-        AssignmentCardView(assignment: .preview)
-        AssignmentCardView(assignment: .previewCheckedIn)
+// MARK: - Preview
+
+#Preview("Assignment Cards") {
+    ScrollView {
+        VStack(spacing: AppTheme.Spacing.m) {
+            AssignmentCardView(assignment: .preview)
+            AssignmentCardView(assignment: .previewPending)
+            AssignmentCardView(assignment: .previewCaptain)
+            AssignmentCardView(assignment: .previewCheckedIn)
+        }
+        .screenPadding()
+        .padding(.vertical)
     }
-    .padding()
-    .background(Color(.systemGroupedBackground))
+    .themedBackground(scheme: .light)
+}
+
+#Preview("Dark Mode") {
+    ScrollView {
+        VStack(spacing: AppTheme.Spacing.m) {
+            AssignmentCardView(assignment: .preview)
+            AssignmentCardView(assignment: .previewPending)
+            AssignmentCardView(assignment: .previewCaptain)
+        }
+        .screenPadding()
+        .padding(.vertical)
+    }
+    .themedBackground(scheme: .dark)
+    .preferredColorScheme(.dark)
 }

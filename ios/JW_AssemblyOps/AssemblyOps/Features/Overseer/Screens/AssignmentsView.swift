@@ -8,25 +8,22 @@
 // MARK: - Assignments View (Overseer)
 //
 // Coverage matrix view for overseers to manage volunteer scheduling.
-// Displays posts vs sessions grid showing assignment fill status.
+// Uses the app's design system with warm background and refined cells.
 //
 // Features:
+//   - Warm gradient background
 //   - Scrollable grid: Posts (rows) x Sessions (columns)
-//   - Color-coded cells: Green (filled), Red (gaps), Gray (partial)
+//   - Themed coverage cells with status colors
 //   - Filter menu: Show all, gaps only, or filled only
 //   - Tap cell to open SlotDetailSheet for assignment management
 //   - Pull-to-refresh for coverage data
+//   - Entrance animations
 //
 // Components:
 //   - matrixContent: LazyVGrid displaying the coverage matrix
-//   - headerRow: Session name headers
+//   - headerRow: Session name headers in themed cards
 //   - postRow: Post name + slot cells for each session
-//   - emptyState: Shown when no coverage data exists
-//
-// Data Flow:
-//   1. On appear: Sets departmentId from OverseerSessionState
-//   2. Loads coverage via CoverageMatrixViewModel.loadCoverage()
-//   3. User taps cell → SlotDetailSheet for volunteer assignment
+//   - emptyState: Styled empty state when no coverage data exists
 //
 
 import SwiftUI
@@ -34,26 +31,57 @@ import SwiftUI
 struct AssignmentsView: View {
     @StateObject private var viewModel = CoverageMatrixViewModel()
     @ObservedObject private var sessionState = OverseerSessionState.shared
+    @Environment(\.colorScheme) var colorScheme
+
     @State private var selectedSlot: CoverageSlot?
+    @State private var hasAppeared = false
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading {
-                    ProgressView()
-                } else if viewModel.slots.isEmpty {
-                    emptyState
-                } else {
-                    matrixContent
+            ZStack {
+                // Warm background
+                AppTheme.backgroundGradient(for: colorScheme)
+                    .ignoresSafeArea()
+
+                Group {
+                    if viewModel.isLoading {
+                        LoadingView(message: "Loading coverage...")
+                    } else if viewModel.slots.isEmpty {
+                        emptyState
+                    } else {
+                        matrixContent
+                    }
                 }
             }
             .navigationTitle("Assignments")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Button("Show All") { viewModel.filter = .all }
-                        Button("Gaps Only") { viewModel.filter = .gaps }
-                        Button("Filled Only") { viewModel.filter = .filled }
+                        Button {
+                            viewModel.filter = .all
+                        } label: {
+                            Label("Show All", systemImage: viewModel.filter == .all ? "checkmark" : "")
+                        }
+
+                        Button {
+                            viewModel.filter = .gaps
+                        } label: {
+                            Label("Gaps Only", systemImage: viewModel.filter == .gaps ? "checkmark" : "")
+                        }
+
+                        Button {
+                            viewModel.filter = .filled
+                        } label: {
+                            Label("Filled Only", systemImage: viewModel.filter == .filled ? "checkmark" : "")
+                        }
+
+                        Divider()
+
+                        NavigationLink {
+                            DeclinedAssignmentsView()
+                        } label: {
+                            Label("Declined Assignments", systemImage: "xmark.circle")
+                        }
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                     }
@@ -65,6 +93,11 @@ struct AssignmentsView: View {
             .refreshable {
                 await viewModel.loadCoverage()
             }
+            .onAppear {
+                withAnimation(AppTheme.entranceAnimation) {
+                    hasAppeared = true
+                }
+            }
         }
         .task {
             if let departmentId = sessionState.selectedDepartment?.id {
@@ -74,70 +107,113 @@ struct AssignmentsView: View {
         }
     }
 
+    // MARK: - Matrix Content
+
     private var matrixContent: some View {
         ScrollView([.horizontal, .vertical]) {
-            LazyVGrid(columns: gridColumns, spacing: 2) {
-                // Header row - session names
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                // Header row
                 headerRow
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                // Data rows - one per post
-                ForEach(viewModel.posts, id: \.id) { post in
+                // Data rows
+                ForEach(Array(viewModel.posts.enumerated()), id: \.element.id) { index, post in
                     postRow(post)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index) * 0.02)
                 }
             }
-            .padding()
+            .padding(AppTheme.Spacing.screenEdge)
         }
     }
 
-    private var gridColumns: [GridItem] {
-        var columns: [GridItem] = [.init(.fixed(120), alignment: .leading)]
-        columns += viewModel.sessions.map { _ in .init(.fixed(80)) }
-        return columns
-    }
+    // MARK: - Header Row
 
     private var headerRow: some View {
-        Group {
+        HStack(spacing: AppTheme.Spacing.xs) {
+            // Post column header
             Text("Post")
-                .font(.caption)
-                .fontWeight(.semibold)
+                .font(AppTheme.Typography.captionBold)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                .frame(width: 120, alignment: .leading)
+                .padding(.vertical, AppTheme.Spacing.s)
+                .padding(.horizontal, AppTheme.Spacing.s)
 
+            // Session headers
             ForEach(viewModel.sessions, id: \.id) { session in
                 VStack(spacing: 2) {
                     Text(session.name)
-                        .font(.caption2)
-                        .fontWeight(.semibold)
+                        .font(AppTheme.Typography.captionBold)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
                     Text(formatTime(session.startTime))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .font(AppTheme.Typography.captionSmall)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 }
+                .frame(width: 80)
+                .padding(.vertical, AppTheme.Spacing.s)
+                .background(AppTheme.cardBackground(for: colorScheme))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
             }
         }
     }
+
+    // MARK: - Post Row
 
     @ViewBuilder
     private func postRow(_ post: CoveragePost) -> some View {
-        Text(post.name)
-            .font(.caption)
-            .lineLimit(2)
+        HStack(spacing: AppTheme.Spacing.xs) {
+            // Post name
+            Text(post.name)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+                .frame(width: 120, alignment: .leading)
+                .padding(.vertical, AppTheme.Spacing.s)
+                .padding(.horizontal, AppTheme.Spacing.s)
+                .background(AppTheme.cardBackground(for: colorScheme))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
 
-        ForEach(viewModel.sessions, id: \.id) { session in
-            if let slot = viewModel.slot(for: post.id, session: session.id) {
-                CoverageCell(slot: slot) {
-                    selectedSlot = slot
+            // Coverage cells
+            ForEach(viewModel.sessions, id: \.id) { session in
+                if let slot = viewModel.slot(for: post.id, session: session.id) {
+                    CoverageCell(slot: slot, colorScheme: colorScheme) {
+                        selectedSlot = slot
+                    }
+                } else {
+                    Color.clear
+                        .frame(width: 80, height: 56)
                 }
-            } else {
-                Color.clear
             }
         }
     }
 
+    // MARK: - Empty State
+
     private var emptyState: some View {
-        ContentUnavailableView(
-            "No Assignments Data",
-            systemImage: "tablecells",
-            description: Text("Create posts and sessions first")
-        )
+        VStack(spacing: AppTheme.Spacing.l) {
+            Spacer()
+
+            Image(systemName: "tablecells")
+                .font(.system(size: 48))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+            Text("No Assignments Data")
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+
+            Text("Create posts and sessions first")
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                .multilineTextAlignment(.center)
+
+            Spacer()
+        }
+        .padding(AppTheme.Spacing.screenEdge)
+        .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
     }
+
+    // MARK: - Helpers
 
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -146,37 +222,76 @@ struct AssignmentsView: View {
     }
 }
 
+// MARK: - Coverage Cell
+
 struct CoverageCell: View {
     let slot: CoverageSlot
+    let colorScheme: ColorScheme
     let onTap: () -> Void
+
+    private var statusColor: Color {
+        if slot.isFilled {
+            return AppTheme.StatusColors.accepted
+        } else if slot.filled > 0 {
+            return AppTheme.StatusColors.warning
+        } else {
+            return AppTheme.StatusColors.declined
+        }
+    }
 
     private var backgroundColor: Color {
         if slot.isFilled {
-            return .green.opacity(0.3)
+            return AppTheme.StatusColors.acceptedBackground
         } else if slot.filled > 0 {
-            return .yellow.opacity(0.3)
+            return AppTheme.StatusColors.warningBackground
         } else {
-            return .red.opacity(0.2)
+            return AppTheme.StatusColors.declinedBackground
         }
     }
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 2) {
+            VStack(spacing: 4) {
+                // Fill ratio
                 Text("\(slot.filled)/\(slot.capacity)")
-                    .font(.caption)
-                    .fontWeight(.medium)
+                    .font(AppTheme.Typography.headline)
+                    .foregroundStyle(statusColor)
 
+                // First volunteer name
                 if !slot.assignments.isEmpty {
                     Text(slot.assignments.first?.volunteer.lastName ?? "")
-                        .font(.caption2)
+                        .font(AppTheme.Typography.captionSmall)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                         .lineLimit(1)
                 }
             }
-            .frame(width: 76, height: 50)
+            .frame(width: 80, height: 56)
             .background(backgroundColor)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                    .strokeBorder(statusColor.opacity(0.3), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(CoverageCellButtonStyle())
     }
+}
+
+// MARK: - Coverage Cell Button Style
+
+struct CoverageCellButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+#Preview {
+    AssignmentsView()
+}
+
+#Preview("Dark Mode") {
+    AssignmentsView()
+        .preferredColorScheme(.dark)
 }

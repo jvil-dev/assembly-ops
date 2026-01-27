@@ -111,6 +111,8 @@ final class KeychainManager {
         refreshToken = nil
         tokenExpiresAt = nil
         volunteerId = nil
+        overseerId = nil
+        userType = nil
     }
     
     // MARK: - Private Helpers

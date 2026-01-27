@@ -245,33 +245,41 @@ struct OverseerLoginView: View {
             .font(.footnote)
             .foregroundStyle(.secondary)
 
-        // Sign in with Apple
-        SignInWithAppleButton(.signIn) { request in
-            request.requestedScopes = [.fullName, .email]
-        } onCompletion: { _ in
-            // We handle this via our own tap gesture
-        }
-        .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-        .frame(height: 52)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .onTapGesture { viewModel.signInWithApple() }
-
-        // Google Sign-In
+        // Continue with Google
         Button { viewModel.signInWithGoogle() } label: {
-            HStack {
-                Image(systemName: "globe")
-                    .font(.system(size: 20))
-                Text("Sign in with Google")
+            HStack(spacing: 10) {
+                Image("GoogleLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 18)
+                Text("Continue with Google")
                     .font(.system(size: 17, weight: .medium))
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 52)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.gray.opacity(0.3))
-            )
+            .frame(height: 50)
+            .background(Color(uiColor: .systemBackground))
+            .foregroundStyle(Color(uiColor: .label))
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(Color(uiColor: .separator), lineWidth: 0.5))
         }
-        .foregroundStyle(colorScheme == .dark ? .white : .black)
+        .buttonStyle(.plain)
+
+        // Continue with Apple
+        Button { viewModel.signInWithApple() } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "apple.logo")
+                    .font(.system(size: 18, weight: .medium))
+                Text("Continue with Apple")
+                    .font(.system(size: 17, weight: .medium))
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .background(Color(uiColor: .systemBackground))
+            .foregroundStyle(Color(uiColor: .label))
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(Color(uiColor: .separator), lineWidth: 0.5))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Help

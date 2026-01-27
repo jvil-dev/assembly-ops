@@ -1,0 +1,28 @@
+query CaptainGroup($postId: ID!, $sessionId: ID!) {
+    captainGroup(postId: $postId, sessionId: $sessionId) {
+        captain {
+            id
+            volunteer {
+                id
+                firstName
+                lastName
+            }
+        }
+        members {
+            id
+            status
+            volunteer {
+                id
+                firstName
+                lastName
+                congregation
+                phone
+            }
+            checkIn {
+                id
+                status
+                checkInTime
+            }
+        }
+    }
+}

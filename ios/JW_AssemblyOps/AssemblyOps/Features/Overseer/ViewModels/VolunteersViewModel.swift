@@ -178,6 +178,7 @@ final class VolunteersViewModel: ObservableObject {
                 appointmentStatus: input.appointmentStatus,
                 departmentId: input.departmentId,
                 departmentName: nil,
+                departmentType: nil,
                 roleName: nil
             )
 
@@ -210,6 +211,7 @@ final class VolunteersViewModel: ObservableObject {
             appointmentStatus: volunteer.appointmentStatus?.rawValue,
             departmentId: volunteer.department?.id,
             departmentName: volunteer.department?.name,
+            departmentType: volunteer.department?.departmentType.rawValue,
             roleName: volunteer.role?.name
         )
     }

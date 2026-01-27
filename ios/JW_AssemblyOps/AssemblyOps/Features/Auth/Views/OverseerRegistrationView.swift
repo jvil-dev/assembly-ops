@@ -17,6 +17,9 @@
 //   - Error Display: Shows validation/submission errors
 //
 // Features:
+//   - Warm gradient background matching login views
+//   - Floating card with layered shadows
+//   - Entrance animation on appear
 //   - Form validation via OverseerRegistrationViewModel.isFormValid
 //   - Password confirmation matching
 //   - Minimum 8 character password requirement
@@ -33,30 +36,81 @@ import AuthenticationServices
 struct OverseerRegistrationView: View {
     @StateObject private var viewModel = OverseerRegistrationViewModel()
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.dismiss) var dismiss
+    @FocusState private var focusedField: Field?
+    @State private var hasAppeared = false
+
+    private enum Field: Hashable {
+        case email
+        case password
+        case confirmPassword
+        case firstName
+        case lastName
+        case phone
+        case congregation
+    }
+
+    // MARK: - Adaptive Colors
+
+    private var backgroundTop: Color {
+        colorScheme == .dark
+            ? Color(white: 0.1)
+            : Color(red: 0.98, green: 0.97, blue: 0.95)
+    }
+
+    private var backgroundBottom: Color {
+        colorScheme == .dark
+            ? Color(white: 0.08)
+            : Color(red: 0.96, green: 0.94, blue: 0.91)
+    }
+
+    private var cardBackground: Color {
+        colorScheme == .dark
+            ? Color(white: 0.15)
+            : Color.white
+    }
+
+    private var textSecondary: Color {
+        colorScheme == .dark
+            ? Color.white.opacity(0.6)
+            : Color(red: 0.45, green: 0.45, blue: 0.45)
+    }
+
+    // MARK: - Body
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // Header
-                headerSection
+        GeometryReader { geometry in
+            ZStack {
+                backgroundGradient
 
-                // Email/Password Registration Form
-                registrationForm
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: geometry.size.height * 0.04)
 
-                // Divider
-                dividerSection
+                        cardContent
+                            .padding(.horizontal, 28)
 
-                // OAuth Buttons
-                oauthButtons
-
-                // Error display
-                if let error = viewModel.errorMessage {
-                    errorSection(error)
+                        Spacer(minLength: geometry.size.height * 0.04)
+                    }
+                    .frame(minHeight: geometry.size.height)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
-            .padding()
         }
-        .navigationTitle("Create Account")
+        .navigationBarTitleDisplayMode(.inline)
+        .gesture(
+            DragGesture(minimumDistance: 50)
+                .onEnded { value in
+                    if value.translation.width > 100 && abs(value.translation.height) < 100 {
+                        dismiss()
+                    }
+                }
+        )
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.6).delay(0.1)) {
+                hasAppeared = true
+            }
+        }
         .fullScreenCover(isPresented: $viewModel.showOAuthRegistration) {
             if let data = viewModel.pendingOAuthData {
                 OAuthRegistrationView(
@@ -69,103 +123,292 @@ struct OverseerRegistrationView: View {
         }
     }
 
+    // MARK: - Background
+
+    private var backgroundGradient: some View {
+        LinearGradient(
+            colors: [backgroundTop, backgroundBottom],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
+    }
+
+    // MARK: - Card
+
+    private var cardContent: some View {
+        VStack(spacing: 28) {
+            headerSection
+            formSection
+            errorSection
+            createButton
+            dividerSection
+            oauthButtons
+            helpText
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 32)
+        .background(cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .shadow(color: Color.black.opacity(0.06), radius: 20, x: 0, y: 8)
+        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+        .opacity(hasAppeared ? 1 : 0)
+        .offset(y: hasAppeared ? 0 : 20)
+    }
+
+    // MARK: - Header
+
     private var headerSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 12) {
             Image("Logo")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 80, height: 80)
-            Text("Create Overseer Account")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .frame(width: 100, height: 100)
+                .shadow(color: Color("ThemeColor").opacity(0.15), radius: 12, x: 0, y: 4)
+
+            Text("Create Account")
+                .font(.system(size: 24, weight: .semibold, design: .default))
+                .foregroundStyle(Color("ThemeColor"))
+                .tracking(0.3)
+
+            Text("Register as an event overseer")
+                .font(.subheadline)
+                .foregroundStyle(textSecondary)
         }
     }
 
-    private var registrationForm: some View {
-        VStack(spacing: 16) {
-            TextField("Email", text: $viewModel.email)
-                .keyboardType(.emailAddress)
-                .textInputAutocapitalization(.never)
-                .textContentType(.emailAddress)
+    // MARK: - Form
 
-            SecureField("Password (min 8 characters)", text: $viewModel.password)
-                .textContentType(.newPassword)
+    private var formSection: some View {
+        VStack(spacing: 20) {
+            // Email
+            UnderlineTextField(
+                label: "EMAIL",
+                placeholder: "Enter your email",
+                text: $viewModel.email,
+                isSecure: false,
+                isFocused: focusedField == .email,
+                onSubmit: { focusedField = .password },
+                autocapitalization: .never,
+                keyboardType: .emailAddress,
+                isMonospaced: false
+            )
+            .focused($focusedField, equals: .email)
 
-            SecureField("Confirm Password", text: $viewModel.confirmPassword)
-                .textContentType(.newPassword)
+            // Password
+            UnderlineTextField(
+                label: "PASSWORD",
+                placeholder: "Minimum 8 characters",
+                text: $viewModel.password,
+                isSecure: true,
+                isFocused: focusedField == .password,
+                onSubmit: { focusedField = .confirmPassword }
+            )
+            .focused($focusedField, equals: .password)
 
-            TextField("First Name", text: $viewModel.firstName)
-                .textContentType(.givenName)
+            // Confirm Password
+            UnderlineTextField(
+                label: "CONFIRM PASSWORD",
+                placeholder: "Re-enter your password",
+                text: $viewModel.confirmPassword,
+                isSecure: true,
+                isFocused: focusedField == .confirmPassword,
+                onSubmit: { focusedField = .firstName }
+            )
+            .focused($focusedField, equals: .confirmPassword)
 
-            TextField("Last Name", text: $viewModel.lastName)
-                .textContentType(.familyName)
+            // Password match indicator
+            if !viewModel.confirmPassword.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: viewModel.passwordsMatch ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .font(.caption)
+                    Text(viewModel.passwordsMatch ? "Passwords match" : "Passwords don't match")
+                        .font(.caption)
+                }
+                .foregroundStyle(viewModel.passwordsMatch ? Color.green : Color.red.opacity(0.8))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .transition(.opacity)
+            }
 
-            TextField("Phone (optional)", text: $viewModel.phone)
-                .keyboardType(.phonePad)
-                .textContentType(.telephoneNumber)
+            // First Name
+            UnderlineTextField(
+                label: "FIRST NAME",
+                placeholder: "Enter your first name",
+                text: $viewModel.firstName,
+                isSecure: false,
+                isFocused: focusedField == .firstName,
+                onSubmit: { focusedField = .lastName },
+                autocapitalization: .words,
+                isMonospaced: false
+            )
+            .focused($focusedField, equals: .firstName)
 
-            TextField("Congregation", text: $viewModel.congregation)
+            // Last Name
+            UnderlineTextField(
+                label: "LAST NAME",
+                placeholder: "Enter your last name",
+                text: $viewModel.lastName,
+                isSecure: false,
+                isFocused: focusedField == .lastName,
+                onSubmit: { focusedField = .phone },
+                autocapitalization: .words,
+                isMonospaced: false
+            )
+            .focused($focusedField, equals: .lastName)
 
-            Button {
-                viewModel.register()
-            } label: {
+            // Phone (optional)
+            UnderlineTextField(
+                label: "PHONE (OPTIONAL)",
+                placeholder: "Enter your phone number",
+                text: $viewModel.phone,
+                isSecure: false,
+                isFocused: focusedField == .phone,
+                onSubmit: { focusedField = .congregation },
+                keyboardType: .phonePad,
+                isMonospaced: false
+            )
+            .focused($focusedField, equals: .phone)
+
+            // Congregation
+            UnderlineTextField(
+                label: "CONGREGATION",
+                placeholder: "Enter your congregation",
+                text: $viewModel.congregation,
+                isSecure: false,
+                isFocused: focusedField == .congregation,
+                onSubmit: { viewModel.register() },
+                autocapitalization: .words,
+                isMonospaced: false
+            )
+            .focused($focusedField, equals: .congregation)
+        }
+    }
+
+    // MARK: - Error
+
+    @ViewBuilder
+    private var errorSection: some View {
+        if let error = viewModel.errorMessage {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .font(.subheadline)
+                Text(error)
+                    .font(.subheadline)
+            }
+            .foregroundStyle(Color(red: 0.8, green: 0.25, blue: 0.2))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(red: 0.8, green: 0.25, blue: 0.2).opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .transition(.opacity.combined(with: .scale(scale: 0.95)))
+        }
+    }
+
+    // MARK: - Create Button
+
+    private var createButton: some View {
+        Button {
+            viewModel.register()
+        } label: {
+            Group {
                 if viewModel.isLoading {
                     ProgressView()
                         .tint(.white)
                 } else {
                     Text("Create Account")
+                        .font(.system(size: 17, weight: .semibold))
                 }
             }
             .frame(maxWidth: .infinity)
             .frame(height: 52)
-            .background(viewModel.isFormValid ? Color("ThemeColor") : Color.gray)
-            .foregroundStyle(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .disabled(!viewModel.isFormValid || viewModel.isLoading)
         }
-        .textFieldStyle(.roundedBorder)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(viewModel.isFormValid ? Color("ThemeColor") : Color("ThemeColor").opacity(0.4))
+        )
+        .foregroundStyle(.white)
+        .disabled(!viewModel.isFormValid || viewModel.isLoading)
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isFormValid)
     }
 
+    // MARK: - Divider
+
     private var dividerSection: some View {
-        HStack {
-            Rectangle().fill(Color.gray.opacity(0.3)).frame(height: 1)
-            Text("or").foregroundStyle(.secondary)
-            Rectangle().fill(Color.gray.opacity(0.3)).frame(height: 1)
+        HStack(spacing: 16) {
+            Rectangle()
+                .fill(Color.gray.opacity(0.3))
+                .frame(height: 1)
+            Text("or")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            Rectangle()
+                .fill(Color.gray.opacity(0.3))
+                .frame(height: 1)
         }
     }
+
+    // MARK: - OAuth Buttons
 
     private var oauthButtons: some View {
         VStack(spacing: 12) {
-            SignInWithAppleButton(.signUp) { request in
-                request.requestedScopes = [.fullName, .email]
-            } onCompletion: { _ in }
-            .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-            .frame(height: 52)
-            .cornerRadius(14)
-            .onTapGesture { viewModel.signInWithApple() }
-
+            // Continue with Google
             Button { viewModel.signInWithGoogle() } label: {
-                HStack {
+                HStack(spacing: 10) {
                     Image("GoogleLogo")
                         .resizable()
-                        .frame(width: 20, height: 20)
-                    Text("Sign up with Google")
+                        .scaledToFit()
+                        .frame(width: 18, height: 18)
+                    Text("Continue with Google")
+                        .font(.system(size: 17, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 52)
-                .background(RoundedRectangle(cornerRadius: 14).stroke(Color.gray.opacity(0.3)))
+                .frame(height: 50)
+                .background(Color(uiColor: .systemBackground))
+                .foregroundStyle(Color(uiColor: .label))
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color(uiColor: .separator), lineWidth: 0.5))
             }
-            .foregroundStyle(colorScheme == .dark ? .white : .black)
+            .buttonStyle(.plain)
+
+            // Continue with Apple
+            Button { viewModel.signInWithApple() } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "apple.logo")
+                        .font(.system(size: 18, weight: .medium))
+                    Text("Continue with Apple")
+                        .font(.system(size: 17, weight: .medium))
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(Color(uiColor: .systemBackground))
+                .foregroundStyle(Color(uiColor: .label))
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color(uiColor: .separator), lineWidth: 0.5))
+            }
+            .buttonStyle(.plain)
         }
     }
 
-    private func errorSection(_ error: String) -> some View {
-        Text(error)
-            .foregroundStyle(.red)
-            .font(.caption)
+    // MARK: - Help Text
+
+    private var helpText: some View {
+        Text("By creating an account, you agree to our Terms of Service")
+            .font(.footnote)
+            .foregroundStyle(textSecondary)
+            .multilineTextAlignment(.center)
     }
 }
 
 #Preview {
-    OverseerRegistrationView()
+    NavigationStack {
+        OverseerRegistrationView()
+    }
+}
+
+#Preview("Dark Mode") {
+    NavigationStack {
+        OverseerRegistrationView()
+    }
+    .preferredColorScheme(.dark)
 }

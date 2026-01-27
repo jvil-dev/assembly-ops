@@ -8,7 +8,7 @@
 // MARK: - Create Volunteer Sheet
 //
 // Modal form for overseers to add new volunteers to their department.
-// Collects volunteer info and returns login credentials on success.
+// Uses the app's design system with warm background and styled inputs.
 //
 // Fields:
 //   - Required: First name, last name, congregation
@@ -16,22 +16,17 @@
 //   - Appointment: Publisher, Ministerial Servant, or Elder
 //
 // Features:
+//   - Warm gradient background
+//   - Themed form sections
 //   - Form validation before submission
-//   - Calls VolunteersViewModel.createVolunteer()
 //   - Shows CredentialsSheet with volunteer ID and token on success
-//   - Auto-adds new volunteer to department list
-//
-// Flow:
-//   1. Overseer fills form and taps Create
-//   2. CreateVolunteerMutation returns volunteer ID and login token
-//   3. CredentialsSheet displays credentials for sharing with volunteer
-//   4. Dismiss returns to volunteer list with new entry
 //
 
 import SwiftUI
 
 struct CreateVolunteerSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) var colorScheme
     @ObservedObject var viewModel: VolunteersViewModel
     @ObservedObject private var sessionState = OverseerSessionState.shared
 
@@ -54,34 +49,25 @@ struct CreateVolunteerSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Required") {
-                    TextField("First Name", text: $firstName)
-                    TextField("Last Name", text: $lastName)
-                    TextField("Congregation", text: $congregation)
-                }
+            ScrollView {
+                VStack(spacing: AppTheme.Spacing.xl) {
+                    // Required Fields
+                    requiredFieldsCard
 
-                Section("Optional") {
-                    TextField("Phone", text: $phone)
-                        .keyboardType(.phonePad)
-                    TextField("Email", text: $email)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                }
+                    // Optional Fields
+                    optionalFieldsCard
 
-                Section("Appointment") {
-                    Picker("Appointment", selection: $appointment) {
-                        Text("Publisher").tag("PUBLISHER")
-                        Text("Ministerial Servant").tag("MINISTERIAL_SERVANT")
-                        Text("Elder").tag("ELDER")
-                    }
-                }
+                    // Appointment
+                    appointmentCard
 
-                Section("Notes") {
-                    TextField("Notes (optional)", text: $notes, axis: .vertical)
-                        .lineLimit(3...6)
+                    // Notes
+                    notesCard
                 }
+                .screenPadding()
+                .padding(.top, AppTheme.Spacing.l)
+                .padding(.bottom, AppTheme.Spacing.xxl)
             }
+            .themedBackground(scheme: colorScheme)
             .navigationTitle("New Volunteer")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -89,10 +75,15 @@ struct CreateVolunteerSheet: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") {
-                        Task { await createVolunteer() }
+                    if isSubmitting {
+                        ProgressView()
+                    } else {
+                        Button("Create") {
+                            Task { await createVolunteer() }
+                        }
+                        .disabled(!isFormValid)
+                        .fontWeight(.semibold)
                     }
-                    .disabled(!isFormValid || isSubmitting)
                 }
             }
             .sheet(isPresented: $showCredentials) {
@@ -105,11 +96,104 @@ struct CreateVolunteerSheet: View {
         }
     }
 
+    // MARK: - Required Fields Card
+
+    private var requiredFieldsCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            sectionHeader(icon: "person.fill", title: "Required")
+
+            VStack(spacing: AppTheme.Spacing.m) {
+                themedTextField("First Name", text: $firstName)
+                themedTextField("Last Name", text: $lastName)
+                themedTextField("Congregation", text: $congregation)
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Optional Fields Card
+
+    private var optionalFieldsCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            sectionHeader(icon: "info.circle.fill", title: "Optional")
+
+            VStack(spacing: AppTheme.Spacing.m) {
+                themedTextField("Phone", text: $phone, keyboardType: .phonePad)
+                themedTextField("Email", text: $email, keyboardType: .emailAddress, autocapitalization: .never)
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Appointment Card
+
+    private var appointmentCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            sectionHeader(icon: "person.badge.shield.checkmark.fill", title: "Appointment")
+
+            Picker("Appointment", selection: $appointment) {
+                Text("Publisher").tag("PUBLISHER")
+                Text("Ministerial Servant").tag("MINISTERIAL_SERVANT")
+                Text("Elder").tag("ELDER")
+            }
+            .pickerStyle(.segmented)
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Notes Card
+
+    private var notesCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            sectionHeader(icon: "note.text", title: "Notes")
+
+            TextField("Add notes (optional)", text: $notes, axis: .vertical)
+                .lineLimit(3...6)
+                .padding(AppTheme.Spacing.m)
+                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Helper Views
+
+    private func sectionHeader(icon: String, title: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .foregroundStyle(AppTheme.themeColor)
+            Text(title)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+        }
+    }
+
+    private func themedTextField(
+        _ placeholder: String,
+        text: Binding<String>,
+        keyboardType: UIKeyboardType = .default,
+        autocapitalization: TextInputAutocapitalization = .words
+    ) -> some View {
+        TextField(placeholder, text: text)
+            .keyboardType(keyboardType)
+            .textInputAutocapitalization(autocapitalization)
+            .padding(AppTheme.Spacing.m)
+            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+    }
+
+    // MARK: - Actions
+
     private func createVolunteer() async {
         guard let departmentId = sessionState.selectedDepartment?.id,
               let eventId = sessionState.selectedEvent?.id else { return }
 
         isSubmitting = true
+        HapticManager.shared.lightTap()
 
         let input = CreateVolunteerInput(
             firstName: firstName.trimmingCharacters(in: .whitespaces),
@@ -125,6 +209,7 @@ struct CreateVolunteerSheet: View {
 
         if let result = await viewModel.createVolunteer(input: input) {
             createdCredentials = (result.volunteerId, result.token)
+            HapticManager.shared.success()
             showCredentials = true
         }
 
@@ -132,66 +217,154 @@ struct CreateVolunteerSheet: View {
     }
 }
 
+// MARK: - Credentials Sheet
+
 struct CredentialsSheet: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let volunteerId: String
     let token: String
     let onDismiss: () -> Void
 
+    @State private var showCopiedToast = false
+    @State private var hasAppeared = false
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.green)
+            ScrollView {
+                VStack(spacing: AppTheme.Spacing.xl) {
+                    // Success icon
+                    ZStack {
+                        Circle()
+                            .fill(AppTheme.StatusColors.acceptedBackground)
+                            .frame(width: 100, height: 100)
 
-                Text("Volunteer Created!")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(AppTheme.StatusColors.accepted)
+                    }
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                Text("Share these login credentials with the volunteer:")
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
+                    // Success message
+                    VStack(spacing: AppTheme.Spacing.s) {
+                        Text("Volunteer Created!")
+                            .font(AppTheme.Typography.title)
+                            .foregroundStyle(.primary)
 
-                VStack(spacing: 16) {
-                    CredentialRow(label: "Volunteer ID", value: volunteerId)
-                    CredentialRow(label: "Token", value: token)
+                        Text("Share these login credentials with the volunteer:")
+                            .font(AppTheme.Typography.subheadline)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                            .multilineTextAlignment(.center)
+                    }
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+
+                    // Credentials card
+                    VStack(spacing: AppTheme.Spacing.l) {
+                        CredentialRow(label: "Volunteer ID", value: volunteerId, colorScheme: colorScheme)
+                        CredentialRow(label: "Token", value: token, colorScheme: colorScheme)
+                    }
+                    .cardPadding()
+                    .themedCard(scheme: colorScheme)
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+
+                    // Copy button
+                    Button {
+                        UIPasteboard.general.string = "Volunteer ID: \(volunteerId)\nToken: \(token)"
+                        HapticManager.shared.lightTap()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            showCopiedToast = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation(.easeOut) {
+                                showCopiedToast = false
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "doc.on.doc")
+                            Text("Copy to Clipboard")
+                        }
+                        .font(AppTheme.Typography.headline)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: AppTheme.ButtonHeight.medium)
+                        .foregroundStyle(.white)
+                        .background(AppTheme.themeColor)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
+                    }
+                    .buttonStyle(.plain)
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
                 }
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                Button("Copy to Clipboard") {
-                    UIPasteboard.general.string = "Volunteer ID: \(volunteerId)\nToken: \(token)"
-                }
-                .buttonStyle(.borderedProminent)
-
-                Spacer()
+                .screenPadding()
+                .padding(.top, AppTheme.Spacing.xl)
+                .padding(.bottom, AppTheme.Spacing.xxl)
             }
-            .padding()
+            .themedBackground(scheme: colorScheme)
             .navigationTitle("Credentials")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { onDismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+            .onAppear {
+                withAnimation(AppTheme.entranceAnimation) {
+                    hasAppeared = true
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if showCopiedToast {
+                    copiedToast
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
         }
     }
+
+    private var copiedToast: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(AppTheme.StatusColors.accepted)
+            Text("Copied to clipboard")
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(.primary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
+                .fill(AppTheme.cardBackground(for: colorScheme))
+                .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 4)
+        )
+        .padding(.bottom, AppTheme.Spacing.xl)
+    }
 }
+
+// MARK: - Credential Row
 
 struct CredentialRow: View {
     let label: String
     let value: String
+    let colorScheme: ColorScheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             Text(value)
                 .font(.system(.body, design: .monospaced))
                 .fontWeight(.medium)
+                .foregroundStyle(.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+}
+
+#Preview {
+    CreateVolunteerSheet(viewModel: VolunteersViewModel())
+}
+
+#Preview("Credentials") {
+    CredentialsSheet(volunteerId: "VOL-12345", token: "ABC123XYZ") { }
 }

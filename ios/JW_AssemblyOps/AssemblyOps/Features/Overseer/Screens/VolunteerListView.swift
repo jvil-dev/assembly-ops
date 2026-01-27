@@ -8,25 +8,23 @@
 // MARK: - Volunteer List View
 //
 // Main volunteer management screen for overseers.
-// Supports viewing department volunteers and full event roster.
+// Uses the app's design system with warm background and floating cards.
 //
 // Tabs:
 //   - My Department: Editable list of volunteers in overseer's department
 //   - All Volunteers: Read-only view of entire event roster
 //
 // Features:
+//   - Warm gradient background
+//   - Floating volunteer cards with avatar and details
 //   - Search by name or congregation
 //   - Add new volunteers (My Department tab only)
 //   - Segmented picker for tab switching
-//   - CreateVolunteerSheet for adding new volunteers
+//   - Staggered entrance animations
 //
 // Access Control:
 //   - Department Overseers: Edit own department, view all read-only
 //   - Event Overseers: Full access based on selected department
-//
-// Properties:
-//   - displayedVolunteers: Filtered list based on tab and search
-//   - isEditable: True when in My Department tab
 //
 
 import SwiftUI
@@ -34,9 +32,12 @@ import SwiftUI
 struct VolunteerListView: View {
     @StateObject private var viewModel = VolunteersViewModel()
     @ObservedObject private var sessionState = OverseerSessionState.shared
+    @Environment(\.colorScheme) var colorScheme
+
     @State private var searchText = ""
     @State private var showCreateVolunteer = false
     @State private var selectedTab: VolunteerTab = .myDepartment
+    @State private var hasAppeared = false
 
     enum VolunteerTab: String, CaseIterable {
         case myDepartment = "My Department"
@@ -64,24 +65,25 @@ struct VolunteerListView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Tab picker
-                Picker("Volunteer List", selection: $selectedTab) {
-                    ForEach(VolunteerTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding()
+            ZStack {
+                // Warm background
+                AppTheme.backgroundGradient(for: colorScheme)
+                    .ignoresSafeArea()
 
-                // Volunteer list
-                Group {
-                    if viewModel.isLoading {
-                        ProgressView()
-                    } else if displayedVolunteers.isEmpty {
-                        emptyState
-                    } else {
-                        volunteerList
+                VStack(spacing: 0) {
+                    // Tab picker card
+                    tabPickerCard
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+
+                    // Content
+                    Group {
+                        if viewModel.isLoading {
+                            LoadingView(message: "Loading volunteers...")
+                        } else if displayedVolunteers.isEmpty {
+                            emptyState
+                        } else {
+                            volunteerList
+                        }
                     }
                 }
             }
@@ -104,6 +106,11 @@ struct VolunteerListView: View {
             .refreshable {
                 await loadVolunteers()
             }
+            .onAppear {
+                withAnimation(AppTheme.entranceAnimation) {
+                    hasAppeared = true
+                }
+            }
         }
         .task {
             await loadVolunteers()
@@ -114,6 +121,19 @@ struct VolunteerListView: View {
         .onChange(of: selectedTab) { _, _ in
             Task { await loadVolunteers() }
         }
+    }
+
+    // MARK: - Tab Picker Card
+
+    private var tabPickerCard: some View {
+        Picker("Volunteer List", selection: $selectedTab) {
+            ForEach(VolunteerTab.allCases, id: \.self) { tab in
+                Text(tab.rawValue).tag(tab)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, AppTheme.Spacing.screenEdge)
+        .padding(.vertical, AppTheme.Spacing.m)
     }
 
     private func loadVolunteers() async {
@@ -130,45 +150,136 @@ struct VolunteerListView: View {
         }
     }
 
+    // MARK: - Volunteer List
+
     private var volunteerList: some View {
-        List(displayedVolunteers) { volunteer in
-            NavigationLink(destination: VolunteerDetailView(volunteer: volunteer, isEditable: isEditable)) {
-                VolunteerRowView(volunteer: volunteer, showDepartment: selectedTab == .allVolunteers)
+        ScrollView {
+            LazyVStack(spacing: AppTheme.Spacing.m) {
+                ForEach(Array(displayedVolunteers.enumerated()), id: \.element.id) { index, volunteer in
+                    NavigationLink(destination: VolunteerDetailView(volunteer: volunteer, isEditable: isEditable)) {
+                        VolunteerRowView(volunteer: volunteer, showDepartment: selectedTab == .allVolunteers)
+                    }
+                    .buttonStyle(.plain)
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index) * 0.02)
+                }
             }
+            .screenPadding()
+            .padding(.top, AppTheme.Spacing.s)
+            .padding(.bottom, AppTheme.Spacing.xxl)
         }
     }
 
+    // MARK: - Empty State
+
     private var emptyState: some View {
-        ContentUnavailableView(
-            selectedTab == .myDepartment ? "No Volunteers" : "No Event Volunteers",
-            systemImage: "person.3",
-            description: Text(selectedTab == .myDepartment
+        VStack(spacing: AppTheme.Spacing.l) {
+            Spacer()
+
+            Image(systemName: "person.3")
+                .font(.system(size: 48))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+            Text(selectedTab == .myDepartment ? "No Volunteers" : "No Event Volunteers")
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+
+            Text(selectedTab == .myDepartment
                 ? "Tap + to add your first volunteer"
                 : "No volunteers have been added to this event yet")
-        )
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                .multilineTextAlignment(.center)
+
+            Spacer()
+        }
+        .padding(AppTheme.Spacing.screenEdge)
     }
 }
 
+// MARK: - Volunteer Row View
+
 struct VolunteerRowView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let volunteer: VolunteerListItem
     var showDepartment: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(volunteer.fullName)
-                .font(.headline)
-            HStack {
-                Text(volunteer.congregation)
-                if showDepartment, let dept = volunteer.departmentName {
-                    Text("•")
-                    Text(dept)
-                        .foregroundStyle(Color("ThemeColor"))
+        HStack(spacing: AppTheme.Spacing.m) {
+            // Avatar with initials
+            ZStack {
+                Circle()
+                    .fill(departmentColor.opacity(0.15))
+                    .frame(width: 48, height: 48)
+
+                Circle()
+                    .strokeBorder(departmentColor.opacity(0.3), lineWidth: 1)
+                    .frame(width: 48, height: 48)
+
+                Text(volunteer.initials)
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundStyle(departmentColor)
+            }
+
+            // Details
+            VStack(alignment: .leading, spacing: 4) {
+                Text(volunteer.fullName)
+                    .font(AppTheme.Typography.headline)
+                    .foregroundStyle(.primary)
+
+                HStack(spacing: 6) {
+                    Text(volunteer.congregation)
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+                    if showDepartment, let dept = volunteer.departmentName {
+                        Circle()
+                            .fill(AppTheme.textTertiary(for: colorScheme))
+                            .frame(width: 3, height: 3)
+
+                        Text(dept)
+                            .font(AppTheme.Typography.subheadline)
+                            .foregroundStyle(departmentColor)
+                    }
                 }
             }
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+
+            Spacer()
+
+            // Chevron
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
         }
-        .padding(.vertical, 4)
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    private var departmentColor: Color {
+        if let type = volunteer.departmentType {
+            return DepartmentColor.color(for: type)
+        }
+        return AppTheme.themeColor
     }
 }
 
+// MARK: - Volunteer List Item Extensions
+
+extension VolunteerListItem {
+    var initials: String {
+        let names = fullName.split(separator: " ")
+        if names.count >= 2 {
+            return String(names[0].prefix(1) + names[1].prefix(1)).uppercased()
+        }
+        return String(fullName.prefix(2)).uppercased()
+    }
+}
+
+#Preview {
+    VolunteerListView()
+}
+
+#Preview("Dark Mode") {
+    VolunteerListView()
+        .preferredColorScheme(.dark)
+}
