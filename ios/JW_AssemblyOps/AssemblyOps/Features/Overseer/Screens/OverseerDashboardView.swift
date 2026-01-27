@@ -8,7 +8,7 @@
 // MARK: - Overseer Dashboard View
 //
 // Main home screen for overseer users showing event overview and quick stats.
-// Provides access to event/department selection and key metrics.
+// Uses the app's design system with warm backgrounds and floating cards.
 //
 // Sections:
 //   - Event Picker Header: Tap to switch events (shows current event name/venue)
@@ -19,6 +19,8 @@
 //   - Auto-loads events on appear via OverseerSessionState.loadEvents()
 //   - Conditionally shows department picker for Event Overseers
 //   - Displays selectEventPrompt when no event selected
+//   - Warm gradient background with floating cards
+//   - Staggered entrance animations
 //
 // Navigation:
 //   - EventPickerSheet: Modal for event selection
@@ -29,18 +31,22 @@ import SwiftUI
 
 struct OverseerDashboardView: View {
     @StateObject private var sessionState = OverseerSessionState.shared
+    @Environment(\.colorScheme) var colorScheme
     @State private var showEventPicker = false
     @State private var showDepartmentPicker = false
+    @State private var hasAppeared = false
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Event picker header
                 eventPickerHeader
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
                 // Department selector (Event Overseers only)
                 if sessionState.isEventOverseer && sessionState.selectedEvent != nil {
                     departmentSelector
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
                 }
 
                 if let event = sessionState.selectedEvent {
@@ -49,6 +55,7 @@ struct OverseerDashboardView: View {
                     selectEventPrompt
                 }
             }
+            .themedBackground(scheme: colorScheme)
             .navigationTitle("Dashboard")
             .sheet(isPresented: $showEventPicker) {
                 EventPickerSheet()
@@ -56,72 +63,98 @@ struct OverseerDashboardView: View {
             .sheet(isPresented: $showDepartmentPicker) {
                 DepartmentPickerSheet()
             }
+            .onAppear {
+                withAnimation(AppTheme.entranceAnimation) {
+                    hasAppeared = true
+                }
+            }
         }
         .task {
             await sessionState.loadEvents()
         }
     }
 
+    // MARK: - Event Picker Header
+
     private var eventPickerHeader: some View {
         Button {
             showEventPicker = true
         } label: {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(sessionState.selectedEvent?.name ?? "Select Event")
-                        .font(.headline)
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(.primary)
                     if let venue = sessionState.selectedEvent?.venue {
                         Text(venue)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                     }
                 }
                 Spacer()
                 Image(systemName: "chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
-            .padding()
-            .background(Color(.secondarySystemBackground))
+            .cardPadding()
+            .background(AppTheme.cardBackground(for: colorScheme))
         }
         .buttonStyle(.plain)
     }
 
-    /// Department selector for Event Overseers to switch between departments
+    // MARK: - Department Selector
+
     private var departmentSelector: some View {
         Button {
             showDepartmentPicker = true
         } label: {
-            HStack {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "building.2")
-                    .foregroundStyle(Color("ThemeColor"))
+                    .font(.system(size: 14))
+                    .foregroundStyle(AppTheme.themeColor)
+
                 Text(sessionState.selectedDepartment?.name ?? "All Departments")
-                    .font(.subheadline)
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(.primary)
+
                 Spacer()
+
                 Image(systemName: "chevron.right")
-                    .font(.caption)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
-            .padding(.horizontal)
-            .padding(.vertical, 10)
-            .background(Color(.tertiarySystemBackground))
+            .padding(.horizontal, AppTheme.Spacing.cardPadding)
+            .padding(.vertical, AppTheme.Spacing.m)
+            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
         }
         .buttonStyle(.plain)
     }
 
+    // MARK: - Dashboard Content
+
     @ViewBuilder
     private func dashboardContent(for event: EventSummary) -> some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: AppTheme.Spacing.xl) {
                 // Quick stats cards
                 statsSection
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
 
-                // Assignments overview (formerly coverage)
+                // Assignments overview
                 assignmentsOverviewSection
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
 
                 // Recent activity
                 recentActivitySection
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
             }
-            .padding()
+            .screenPadding()
+            .padding(.top, AppTheme.Spacing.l)
+            .padding(.bottom, AppTheme.Spacing.xxl)
         }
     }
+
+    // MARK: - Empty State
 
     private var selectEventPrompt: some View {
         ContentUnavailableView(
@@ -131,50 +164,127 @@ struct OverseerDashboardView: View {
         )
     }
 
+    // MARK: - Stats Section
+
     private var statsSection: some View {
-        LazyVGrid(columns: [.init(), .init()], spacing: 12) {
-            StatCard(title: "Volunteers", value: "\(sessionState.selectedDepartment?.volunteerCount ?? 0)", icon: "person.3")
-            StatCard(title: "Assignments", value: "—", icon: "calendar")
-            StatCard(title: "Pending", value: "—", icon: "clock")
-            StatCard(title: "Coverage", value: "—", icon: "chart.pie")
+        LazyVGrid(columns: [.init(), .init()], spacing: AppTheme.Spacing.m) {
+            StatCard(
+                title: "Volunteers",
+                value: "\(sessionState.selectedDepartment?.volunteerCount ?? 0)",
+                icon: "person.3",
+                colorScheme: colorScheme
+            )
+            StatCard(
+                title: "Assignments",
+                value: "—",
+                icon: "calendar",
+                colorScheme: colorScheme
+            )
+            StatCard(
+                title: "Pending",
+                value: "—",
+                icon: "clock",
+                colorScheme: colorScheme
+            )
+            StatCard(
+                title: "Coverage",
+                value: "—",
+                icon: "chart.pie",
+                colorScheme: colorScheme
+            )
         }
     }
 
+    // MARK: - Assignments Overview
+
     private var assignmentsOverviewSection: some View {
-        // Simplified assignments preview
-        Text("Assignments Overview")
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            Text("Assignments Overview")
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(AppTheme.themeColor)
+
+            HStack {
+                Spacer()
+                VStack(spacing: 8) {
+                    Image(systemName: "tablecells")
+                        .font(.system(size: 28))
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    Text("View the Assignments tab for coverage details")
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        .multilineTextAlignment(.center)
+                }
+                Spacer()
+            }
+            .padding(.vertical, AppTheme.Spacing.l)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
     }
 
+    // MARK: - Recent Activity
+
     private var recentActivitySection: some View {
-        // Recent check-ins, accepts, declines
-        Text("Recent Activity")
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            Text("Recent Activity")
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(AppTheme.themeColor)
+
+            HStack {
+                Spacer()
+                VStack(spacing: 8) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 28))
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    Text("No recent activity")
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                }
+                Spacer()
+            }
+            .padding(.vertical, AppTheme.Spacing.l)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
     }
 }
+
+// MARK: - Stat Card
 
 struct StatCard: View {
     let title: String
     let value: String
     let icon: String
+    let colorScheme: ColorScheme
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: icon)
-                .font(.title2)
-                .foregroundStyle(Color("ThemeColor"))
+                .font(.system(size: 24))
+                .foregroundStyle(AppTheme.themeColor)
+
             Text(value)
-                .font(.title)
+                .font(AppTheme.Typography.title)
                 .fontWeight(.bold)
+                .foregroundStyle(.primary)
+
             Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
         }
         .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
     }
 }
 
 #Preview {
     OverseerDashboardView()
+}
+
+#Preview("Dark Mode") {
+    OverseerDashboardView()
+        .preferredColorScheme(.dark)
 }

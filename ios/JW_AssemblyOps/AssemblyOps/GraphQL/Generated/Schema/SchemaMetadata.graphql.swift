@@ -31,6 +31,7 @@ extension AssemblyOpsAPI {
       switch typename {
       case "Admin": return AssemblyOpsAPI.Objects.Admin
       case "AuthPayload": return AssemblyOpsAPI.Objects.AuthPayload
+      case "CaptainGroup": return AssemblyOpsAPI.Objects.CaptainGroup
       case "CheckIn": return AssemblyOpsAPI.Objects.CheckIn
       case "CoverageAssignment": return AssemblyOpsAPI.Objects.CoverageAssignment
       case "CoverageCheckIn": return AssemblyOpsAPI.Objects.CoverageCheckIn

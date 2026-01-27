@@ -8,6 +8,7 @@
 // MARK: - Profile View
 //
 // Displays volunteer profile information and provides logout functionality.
+// Uses the app's design system with warm background and floating cards.
 //
 // Components:
 //   - Profile header: Avatar with initials, name, congregation, appointment status
@@ -16,20 +17,29 @@
 //   - Contact card: Phone and email (if available)
 //   - Logout button: Confirms and logs out volunteer
 //
+// Features:
+//   - Warm gradient background
+//   - Floating cards with layered shadows
+//   - Staggered entrance animations
+//   - Pull to refresh
+//
 // Dependencies:
 //   - ProfileViewModel: Fetches volunteer data from GraphQL
 //   - AppState: Handles logout
 //   - DepartmentColor: Provides department color mapping
+//   - AppTheme: Design system tokens
 //
-// Used by: MainTabView.swift (Profile tab)
 
 import SwiftUI
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @EnvironmentObject private var appState: AppState
+    @Environment(\.colorScheme) var colorScheme
+
     @State private var showingLogoutAlert = false
-    
+    @State private var hasAppeared = false
+
     var body: some View {
         NavigationStack {
             Group {
@@ -66,225 +76,259 @@ struct ProfileView: View {
             }
         }
     }
-    
+
     private func profileContent(volunteer: Volunteer) -> some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: AppTheme.Spacing.xl) {
                 // Profile header
                 profileHeader(volunteer: volunteer)
-                
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+
                 // Department card
                 if let deptName = volunteer.departmentName,
                    let deptType = volunteer.departmentType {
                     departmentCard(name: deptName, type: deptType)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
                 }
-                
+
                 // Event info
                 eventCard(volunteer: volunteer)
-                
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+
                 // Contact info
                 if volunteer.phone != nil || volunteer.email != nil {
                     contactCard(volunteer: volunteer)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
                 }
-                
+
                 // Logout button
                 logoutButton
-                
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
+
                 // App version
                 appVersion
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
             }
-            .padding()
+            .screenPadding()
+            .padding(.top, AppTheme.Spacing.l)
+            .padding(.bottom, AppTheme.Spacing.xxl)
         }
-        .background(Color(.systemGroupedBackground))
+        .themedBackground(scheme: colorScheme)
+        .onAppear {
+            withAnimation(AppTheme.entranceAnimation) {
+                hasAppeared = true
+            }
+        }
     }
-    
-    // MARK: - Subviews
-    
+
+    // MARK: - Profile Header
+
     private func profileHeader(volunteer: Volunteer) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.l) {
             // Avatar with initials
             ZStack {
                 Circle()
-                    .fill(volunteer.departmentColor.opacity(0.2))
-                    .frame(width: 80, height: 80)
-                
+                    .fill(volunteer.departmentColor.opacity(0.15))
+                    .frame(width: 88, height: 88)
+
+                Circle()
+                    .strokeBorder(volunteer.departmentColor.opacity(0.3), lineWidth: 2)
+                    .frame(width: 88, height: 88)
+
                 Text(volunteer.initials)
-                    .font(.title)
-                    .fontWeight(.bold)
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(volunteer.departmentColor)
             }
-            
-            VStack(spacing: 4) {
+
+            VStack(spacing: AppTheme.Spacing.xs) {
                 Text(volunteer.fullName)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
+                    .font(AppTheme.Typography.title)
+                    .foregroundStyle(.primary)
+
                 Text(volunteer.congregation)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
                 if let appointment = volunteer.appointmentStatus {
                     Text(formatAppointment(appointment))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(AppTheme.Typography.captionBold)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                        .background(Color(.tertiarySystemGroupedBackground))
+                        .padding(.vertical, 6)
+                        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
                         .clipShape(Capsule())
                 }
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .cardPadding()
+        .padding(.vertical, AppTheme.Spacing.s)
+        .themedCard(scheme: colorScheme)
     }
-    
+
+    // MARK: - Department Card
+
     private func departmentCard(name: String, type: String) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.m) {
+            // Department icon circle
             Circle()
                 .fill(DepartmentColor.color(for: type))
-                .frame(width: 40, height: 40)
+                .frame(width: 44, height: 44)
                 .overlay(
                     Image(systemName: departmentIcon(for: type))
                         .foregroundStyle(.white)
                         .font(.system(size: 18, weight: .medium))
                 )
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text("Department")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 Text(name)
-                    .font(.headline)
+                    .font(AppTheme.Typography.headline)
+                    .foregroundStyle(.primary)
             }
-            
+
             Spacer()
-            
+
             // Lanyard color indicator
             VStack(spacing: 2) {
                 Text(DepartmentColor.colorName(for: type))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(AppTheme.Typography.captionSmall)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 Text("Lanyard")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .font(AppTheme.Typography.captionSmall)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
     }
-    
+
+    // MARK: - Event Card
+
     private func eventCard(volunteer: Volunteer) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Event", systemImage: "calendar")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            // Header
+            HStack(spacing: 8) {
+                Image(systemName: "calendar")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("Event")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
             Text(volunteer.eventName)
-                .font(.headline)
-            
-            if let venue = volunteer.eventVenue {
-                HStack(spacing: 6) {
-                    Image(systemName: "building.2")
-                        .font(.caption)
-                    Text(venue)
-                        .font(.subheadline)
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+                if let venue = volunteer.eventVenue {
+                    infoRow(icon: "building.2", text: venue)
                 }
-                .foregroundStyle(.secondary)
-            }
-            
-            if let address = volunteer.eventAddress {
-                HStack(spacing: 6) {
-                    Image(systemName: "location")
-                        .font(.caption)
-                    Text(address)
-                        .font(.subheadline)
+
+                if let address = volunteer.eventAddress {
+                    infoRow(icon: "location", text: address)
                 }
-                .foregroundStyle(.secondary)
-            }
-            
-            if let dateRange = volunteer.eventDateRange {
-                HStack(spacing: 6) {
-                    Image(systemName: "clock")
-                        .font(.caption)
-                    Text(dateRange)
-                        .font(.subheadline)
+
+                if let dateRange = volunteer.eventDateRange {
+                    infoRow(icon: "clock", text: dateRange)
                 }
-                .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
     }
-    
+
+    // MARK: - Contact Card
+
     private func contactCard(volunteer: Volunteer) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Contact Info", systemImage: "person.text.rectangle")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            if let phone = volunteer.phone {
-                HStack(spacing: 6) {
-                    Image(systemName: "phone")
-                        .font(.caption)
-                    Text(phone)
-                        .font(.subheadline)
-                }
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            // Header
+            HStack(spacing: 8) {
+                Image(systemName: "person.text.rectangle")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("Contact Info")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
-            
-            if let email = volunteer.email {
-                HStack(spacing: 6) {
-                    Image(systemName: "envelope")
-                        .font(.caption)
-                    Text(email)
-                        .font(.subheadline)
+
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+                if let phone = volunteer.phone {
+                    infoRow(icon: "phone", text: phone)
+                }
+
+                if let email = volunteer.email {
+                    infoRow(icon: "envelope", text: email)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
     }
-    
+
+    // MARK: - Info Row Helper
+
+    private func infoRow(icon: String, text: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                .frame(width: 16)
+            Text(text)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+        }
+    }
+
+    // MARK: - Logout Button
+
     private var logoutButton: some View {
         Button(role: .destructive) {
             showingLogoutAlert = true
         } label: {
-            HStack {
+            HStack(spacing: 8) {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
                 Text("Log Out")
             }
-            .font(.headline)
+            .font(AppTheme.Typography.headline)
             .frame(maxWidth: .infinity)
-            .frame(height: 50)
+            .frame(height: AppTheme.ButtonHeight.medium)
+            .foregroundStyle(AppTheme.StatusColors.declined)
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                    .fill(AppTheme.StatusColors.declinedBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                    .strokeBorder(AppTheme.StatusColors.declined.opacity(0.3), lineWidth: 1)
+            )
         }
-        .buttonStyle(.bordered)
-        .tint(.red)
+        .buttonStyle(.plain)
     }
-    
+
+    // MARK: - App Version
+
     private var appVersion: some View {
         VStack(spacing: 4) {
             Text("AssemblyOps")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
             if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
                let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
                 Text("Version \(version) (\(build))")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .font(AppTheme.Typography.captionSmall)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
         }
-        .padding(.top, 8)
+        .padding(.top, AppTheme.Spacing.s)
     }
-    
+
     // MARK: - Helpers
-    
+
     private func formatAppointment(_ status: String) -> String {
         switch status.uppercased() {
         case "ELDER": return "Elder"
@@ -293,7 +337,7 @@ struct ProfileView: View {
         default: return status
         }
     }
-    
+
     private func departmentIcon(for type: String) -> String {
         switch type.uppercased() {
         case "PARKING": return "car"
@@ -317,4 +361,10 @@ struct ProfileView: View {
 #Preview {
     ProfileView()
         .environmentObject(AppState.shared)
+}
+
+#Preview("Dark Mode") {
+    ProfileView()
+        .environmentObject(AppState.shared)
+        .preferredColorScheme(.dark)
 }

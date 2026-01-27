@@ -8,41 +8,53 @@
 // MARK: - Event Picker Sheet
 //
 // Modal list for overseers to switch between events they have access to.
-// Displays event details and updates OverseerSessionState on selection.
+// Uses the app's design system with warm background and floating cards.
 //
 // Features:
+//   - Warm gradient background
+//   - Floating event cards with selection state
 //   - Lists all events from OverseerSessionState.events
-//   - EventRow shows: name, theme, date range, checkmark for selected
 //   - Selection triggers loadDepartments for the new event
-//   - Dismisses automatically after selection
-//
-// Components:
-//   - EventRow: Reusable row displaying event summary with selection state
-//
-// Usage:
-//   - Presented from OverseerDashboardView event header
-//   - Available to both Event and Department Overseers
+//   - Entrance animations
 //
 
 import SwiftUI
 
 struct EventPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) var colorScheme
     @ObservedObject private var sessionState = OverseerSessionState.shared
+
+    @State private var hasAppeared = false
 
     var body: some View {
         NavigationStack {
-            List(sessionState.events) { event in
-                Button {
-                    sessionState.selectedEvent = event
-                    Task {
-                        await sessionState.loadDepartments(for: event.id)
+            ScrollView {
+                LazyVStack(spacing: AppTheme.Spacing.m) {
+                    ForEach(Array(sessionState.events.enumerated()), id: \.element.id) { index, event in
+                        Button {
+                            HapticManager.shared.lightTap()
+                            sessionState.selectedEvent = event
+                            Task {
+                                await sessionState.loadDepartments(for: event.id)
+                            }
+                            dismiss()
+                        } label: {
+                            EventRow(
+                                event: event,
+                                isSelected: event.id == sessionState.selectedEvent?.id,
+                                colorScheme: colorScheme
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index) * 0.03)
                     }
-                    dismiss()
-                } label: {
-                    EventRow(event: event, isSelected: event.id == sessionState.selectedEvent?.id)
                 }
+                .screenPadding()
+                .padding(.top, AppTheme.Spacing.l)
+                .padding(.bottom, AppTheme.Spacing.xxl)
             }
+            .themedBackground(scheme: colorScheme)
             .navigationTitle("Select Event")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -50,35 +62,68 @@ struct EventPickerSheet: View {
                     Button("Cancel") { dismiss() }
                 }
             }
+            .onAppear {
+                withAnimation(AppTheme.entranceAnimation) {
+                    hasAppeared = true
+                }
+            }
         }
     }
 }
 
+// MARK: - Event Row
+
 struct EventRow: View {
     let event: EventSummary
     let isSelected: Bool
+    let colorScheme: ColorScheme
 
     var body: some View {
-        HStack {
+        HStack(spacing: AppTheme.Spacing.m) {
+            // Event icon
+            ZStack {
+                Circle()
+                    .fill(isSelected ? AppTheme.themeColor.opacity(0.15) : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    .frame(width: 48, height: 48)
+
+                Image(systemName: "calendar")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(isSelected ? AppTheme.themeColor : AppTheme.textSecondary(for: colorScheme))
+            }
+
+            // Event details
             VStack(alignment: .leading, spacing: 4) {
                 Text(event.name)
-                    .font(.headline)
+                    .font(AppTheme.Typography.headline)
+                    .foregroundStyle(.primary)
+
                 if let theme = event.theme {
                     Text(theme)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        .lineLimit(1)
                 }
+
                 Text(formatDateRange(event.startDate, event.endDate))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
+
             Spacer()
+
+            // Selection indicator
             if isSelected {
-                Image(systemName: "checkmark")
-                    .foregroundStyle(Color("ThemeColor"))
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 22))
+                    .foregroundStyle(AppTheme.themeColor)
             }
         }
-        .contentShape(Rectangle())
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
+                .strokeBorder(isSelected ? AppTheme.themeColor.opacity(0.3) : Color.clear, lineWidth: 2)
+        )
     }
 
     private func formatDateRange(_ start: Date, _ end: Date) -> String {
@@ -86,4 +131,8 @@ struct EventRow: View {
         formatter.dateFormat = "MMM d"
         return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
     }
+}
+
+#Preview {
+    EventPickerSheet()
 }

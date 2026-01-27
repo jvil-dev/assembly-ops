@@ -64,17 +64,81 @@ final class AppState: ObservableObject {
         isLoading = true
 
         if KeychainManager.shared.isLoggedIn {
+            // Restore user type from keychain
+            if KeychainManager.shared.userType == "overseer" {
+                userType = .overseer
+            } else {
+                userType = .volunteer
+            }
+
             if KeychainManager.shared.isTokenExpired {
                 // Token expired, try to refresh
                 refreshTokenIfNeeded()
             } else {
-                isLoggedIn = true
-                isLoading = false
+                // Fetch user profile to populate current user info
+                fetchUserProfile()
             }
         } else {
             isLoggedIn = false
             isLoading = false
         }
+    }
+
+    /// Fetch user profile after session restore
+    private func fetchUserProfile() {
+        if userType == .volunteer {
+            fetchVolunteerProfile()
+        } else if userType == .overseer {
+            fetchOverseerProfile()
+        } else {
+            isLoggedIn = true
+            isLoading = false
+        }
+    }
+
+    /// Fetch volunteer profile from server
+    private func fetchVolunteerProfile() {
+        NetworkClient.shared.apollo.fetch(
+            query: AssemblyOpsAPI.MyVolunteerProfileQuery(),
+            cachePolicy: .fetchIgnoringCacheData
+        ) { [weak self] result in
+            Task { @MainActor in
+                switch result {
+                case .success(let graphQLResult):
+                    if let profile = graphQLResult.data?.myVolunteerProfile {
+                        self?.currentVolunteer = VolunteerInfo(
+                            id: profile.id,
+                            volunteerId: profile.volunteerId,
+                            firstName: profile.firstName,
+                            lastName: profile.lastName,
+                            fullName: profile.fullName,
+                            congregation: profile.congregation,
+                            eventName: profile.event.name,
+                            eventVenue: profile.event.venue,
+                            eventTheme: nil,
+                            departmentName: profile.department?.name
+                        )
+                        self?.isLoggedIn = true
+                    } else {
+                        // Profile fetch failed, but tokens are valid - proceed anyway
+                        self?.isLoggedIn = true
+                    }
+                case .failure(let error):
+                    print("Profile fetch failed: \(error)")
+                    // Network error but tokens exist - proceed with login
+                    self?.isLoggedIn = true
+                }
+                self?.isLoading = false
+            }
+        }
+    }
+
+    /// Fetch overseer profile from server
+    private func fetchOverseerProfile() {
+        // TODO: Add MyOverseerProfile query when available
+        // For now, just proceed with login
+        isLoggedIn = true
+        isLoading = false
     }
 
     /// Refresh access token using refresh token
@@ -116,6 +180,8 @@ final class AppState: ObservableObject {
         KeychainManager.shared.clearAll()
         AssignmentCache.shared.clear()
         currentVolunteer = nil
+        currentOverseer = nil
+        userType = .unknown
         isLoggedIn = false
         NetworkClient.shared.resetClient()
     }
@@ -128,7 +194,9 @@ final class AppState: ObservableObject {
             expiresIn: expiresIn
         )
         KeychainManager.shared.volunteerId = volunteer.id
+        KeychainManager.shared.userType = "volunteer"
         currentVolunteer = volunteer
+        userType = .volunteer
         isLoggedIn = true
         NetworkClient.shared.resetClient()
     }
@@ -174,4 +242,14 @@ struct OverseerInfo: Identifiable {
     let email: String
     let fullName: String
     let overseerType: String
+
+    var initials: String {
+        let names = fullName.split(separator: " ")
+        if names.count >= 2 {
+            return "\(names[0].prefix(1))\(names[1].prefix(1))".uppercased()
+        } else if let first = names.first {
+            return String(first.prefix(2)).uppercased()
+        }
+        return "?"
+    }
 }

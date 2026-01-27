@@ -1,10 +1,17 @@
 query MyAssignments {
   myAssignments {
     id
+    status
+    isCaptain
+    respondedAt
+    declineReason
+    acceptDeadline
+    forceAssigned
     post {
       id
       name
       location
+      capacity
       department {
         id
         name
@@ -18,7 +25,6 @@ query MyAssignments {
       startTime
       endTime
     }
-    isCheckedIn
     checkIn {
       id
       status

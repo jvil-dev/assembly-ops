@@ -72,6 +72,10 @@ final class OverseerRegistrationViewModel: ObservableObject {
         !lastName.trimmingCharacters(in: .whitespaces).isEmpty &&
         !congregation.trimmingCharacters(in: .whitespaces).isEmpty
     }
+
+    var passwordsMatch: Bool {
+        password == confirmPassword
+    }
     
     // MARK: - Email/Password Registration
     

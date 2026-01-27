@@ -1,0 +1,8 @@
+mutation DeclineAssignment($input: DeclineAssignmentInput!) {
+    declineAssignment(input: $input) {
+        id
+        status
+        respondedAt
+        declineReason
+    }
+}

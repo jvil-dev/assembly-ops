@@ -40,5 +40,6 @@ struct VolunteerListItem: Identifiable {
     let appointmentStatus: String?
     let departmentId: String?
     let departmentName: String?
+    let departmentType: String?
     let roleName: String?
 }

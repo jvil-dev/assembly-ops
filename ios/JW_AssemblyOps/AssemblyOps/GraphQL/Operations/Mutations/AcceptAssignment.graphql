@@ -1,0 +1,7 @@
+mutation AcceptAssignment($input: AcceptAssignmentInput!) {
+    acceptAssignment(input: $input) {
+        id
+        status
+        respondedAt
+    }
+}

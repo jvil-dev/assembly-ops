@@ -22,6 +22,10 @@
 //   - todayAssignments: Only assignments scheduled for today
 //   - upcomingAssignments: Today and future assignments
 //   - isEmpty: True if no assignments exist
+//   - pendingCount: Count of pending assignments requiring response
+//   - hasPendingAssignments: True if any pending assignments exist
+//   - pendingAssignments: Pending assignments sorted by date
+//   - acceptedAssignments: Accepted assignments sorted by date
 //
 // Methods:
 //   - fetchAssignments(): Fetch from API with cache fallback
@@ -80,7 +84,29 @@ final class AssignmentsViewModel: ObservableObject {
     var isEmpty: Bool {
         assignments.isEmpty
     }
-    
+
+    /// Count of pending assignments requiring response
+    var pendingCount: Int {
+        assignments.filter { $0.status == .pending }.count
+    }
+
+    /// True if there are any pending assignments
+    var hasPendingAssignments: Bool {
+        pendingCount > 0
+    }
+
+    /// Pending assignments sorted by date
+    var pendingAssignments: [Assignment] {
+        assignments.filter { $0.status == .pending }
+            .sorted { $0.date < $1.date }
+    }
+
+    /// Accepted assignments sorted by date
+    var acceptedAssignments: [Assignment] {
+        assignments.filter { $0.status == .accepted }
+            .sorted { $0.date < $1.date }
+    }
+
     /// Fetch assignments from API
     func fetchAssignments() {
           isLoading = true

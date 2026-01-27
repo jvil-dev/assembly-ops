@@ -88,42 +88,70 @@ private struct CachedAssignment: Codable {
     let id: String
     let postName: String
     let postLocation: String?
+    let postId: String
     let departmentName: String
     let departmentType: String
     let sessionName: String
+    let sessionId: String
     let date: Date
     let startTime: Date
     let endTime: Date
+
+    // Assignment status (acceptance workflow)
+    let status: String
+    let isCaptain: Bool
+    let respondedAt: Date?
+    let declineReason: String?
+    let acceptDeadline: Date?
+    let forceAssigned: Bool
+
+    // Check-in status (attendance tracking)
     let checkInStatus: String
     let checkInTime: Date?
     let checkOutTime: Date?
-    
+
     init(from assignment: Assignment) {
         self.id = assignment.id
         self.postName = assignment.postName
         self.postLocation = assignment.postLocation
+        self.postId = assignment.postId
         self.departmentName = assignment.departmentName
         self.departmentType = assignment.departmentType
         self.sessionName = assignment.sessionName
+        self.sessionId = assignment.sessionId
         self.date = assignment.date
         self.startTime = assignment.startTime
         self.endTime = assignment.endTime
+        self.status = assignment.status.rawValue
+        self.isCaptain = assignment.isCaptain
+        self.respondedAt = assignment.respondedAt
+        self.declineReason = assignment.declineReason
+        self.acceptDeadline = assignment.acceptDeadline
+        self.forceAssigned = assignment.forceAssigned
         self.checkInStatus = assignment.checkInStatus.rawValue
         self.checkInTime = assignment.checkInTime
         self.checkOutTime = assignment.checkOutTime
     }
-    
+
     func toAssignment() -> Assignment {
         Assignment(
             id: id,
             postName: postName,
             postLocation: postLocation,
+            postId: postId,
             departmentName: departmentName,
             departmentType: departmentType,
             sessionName: sessionName,
+            sessionId: sessionId,
             date: date,
             startTime: startTime,
             endTime: endTime,
+            status: AssignmentStatus(rawValue: status) ?? .pending,
+            isCaptain: isCaptain,
+            respondedAt: respondedAt,
+            declineReason: declineReason,
+            acceptDeadline: acceptDeadline,
+            forceAssigned: forceAssigned,
             checkInStatus: CheckInStatus(rawValue: checkInStatus) ?? .pending,
             checkInTime: checkInTime,
             checkOutTime: checkOutTime
