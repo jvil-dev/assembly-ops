@@ -1,0 +1,48 @@
+mutation CreateVolunteerProfile($input: CreateVolunteerProfileInput!) {
+  createVolunteerProfile(input: $input) {
+    id
+    firstName
+    lastName
+    email
+    phone
+    appointmentStatus
+    congregation {
+      id
+      name
+    }
+  }
+}
+
+mutation AddVolunteerToEvent($input: AddVolunteerToEventInput!) {
+  addVolunteerToEvent(input: $input) {
+    eventVolunteer {
+      id
+      volunteerId
+      volunteerProfile {
+        id
+        firstName
+        lastName
+      }
+    }
+    volunteerId
+    token
+    inviteMessage
+  }
+}
+
+mutation CreateAndAddVolunteer($input: CreateAndAddVolunteerInput!) {
+  createAndAddVolunteer(input: $input) {
+    eventVolunteer {
+      id
+      volunteerId
+      volunteerProfile {
+        id
+        firstName
+        lastName
+      }
+    }
+    volunteerId
+    token
+    inviteMessage
+  }
+}

@@ -214,7 +214,7 @@ struct VolunteerLoginView: View {
 
     private var formSection: some View {
         VStack(spacing: 24) {
-            // Volunteer ID field with prefix
+            // Volunteer ID field with prefix picker
             VStack(alignment: .leading, spacing: 6) {
                 Text("VOLUNTEER ID")
                     .font(.caption)
@@ -222,13 +222,24 @@ struct VolunteerLoginView: View {
                     .foregroundStyle(focusedField == .volunteerId ? Color("ThemeColor") : Color.gray)
                     .animation(.easeInOut(duration: 0.2), value: focusedField)
 
-                HStack(spacing: 4) {
-                    // Fixed prefix
-                    Text("VOL-")
+                HStack(spacing: 0) {
+                    // Event type prefix picker
+                    Picker("", selection: $viewModel.idPrefix) {
+                        Text("CA").tag("CA")
+                        Text("RC").tag("RC")
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                    .font(.system(size: 17, weight: .medium, design: .monospaced))
+                    .tint(colorScheme == .dark ? .white.opacity(0.8) : .gray)
+                    .frame(width: 60)
+
+                    // Dash separator
+                    Text("-")
                         .font(.system(size: 17, weight: .medium, design: .monospaced))
                         .foregroundStyle(colorScheme == .dark ? .white.opacity(0.6) : .gray)
 
-                    // User input
+                    // User input (suffix only)
                     TextField("XXXXXX", text: $viewModel.volunteerId)
                         .font(.system(size: 17, weight: .regular, design: .monospaced))
                         .foregroundStyle(colorScheme == .dark ? .white : .black)
@@ -247,7 +258,7 @@ struct VolunteerLoginView: View {
                     .animation(.easeInOut(duration: 0.25), value: focusedField)
             }
 
-            // Token field (unchanged)
+            // Token field
             UnderlineTextField(
                 label: "TOKEN",
                 placeholder: "Enter your token",

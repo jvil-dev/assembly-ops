@@ -42,8 +42,16 @@ struct AssemblyOpsApp: App {
                     LaunchView()
                 } else if appState.isLoggedIn {
                     if appState.isOverseer {
-                        OverseerTabView()
-                            .environmentObject(appState)
+                        if appState.needsProfileSetup {
+                            OverseerProfileSetupView()
+                                .environmentObject(appState)
+                        } else if appState.needsEventSetup {
+                            EventSetupView()
+                                .environmentObject(appState)
+                        } else {
+                            OverseerTabView()
+                                .environmentObject(appState)
+                        }
                     } else {
                         VolunteerTabView()
                             .environmentObject(appState)

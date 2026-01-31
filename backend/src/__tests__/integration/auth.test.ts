@@ -42,7 +42,6 @@ describe('Auth GraphQL', () => {
           password: 'Test123!',
           firstName: 'Test',
           lastName: 'Admin',
-          congregation: 'Test Congregation',
         },
       }
     );
@@ -130,7 +129,6 @@ describe('Auth GraphQL', () => {
             password: 'Test123!',
             firstName: 'Another',
             lastName: 'Admin',
-            congregation: 'Another Congregation',
           },
         }
       );

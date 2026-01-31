@@ -10,7 +10,6 @@ describe('Auth', () => {
     password: 'TestPassword123!',
     firstName: 'Test',
     lastName: 'User',
-    congregation: 'Test Congregation',
   };
 
   let accessToken: string;

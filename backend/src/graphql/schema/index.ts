@@ -31,6 +31,9 @@ import messageTypeDefs from './message.js';
 import eventNoteTypeDefs from './eventNotes.js';
 import attendanceTypeDefs from './attendance.js';
 import { oauthTypeDefs } from './oauth.js';
+import { circuitTypeDefs } from './circuit.js';
+import { congregationTypeDefs } from './congregation.js';
+import { volunteerProfileTypeDefs } from './volunteerProfile.js';
 
 const baseTypeDefs = `#graphql
   scalar DateTime
@@ -64,6 +67,9 @@ const typeDefs = [
   eventNoteTypeDefs,
   attendanceTypeDefs,
   oauthTypeDefs,
+  circuitTypeDefs,
+  congregationTypeDefs,
+  volunteerProfileTypeDefs,
 ];
 
 export default typeDefs;

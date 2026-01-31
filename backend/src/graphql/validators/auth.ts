@@ -45,15 +45,6 @@ export const registerAdminSchema = z.object({
     .min(1, 'Last name is required')
     .max(50, 'Last name too long')
     .transform((v: string) => v.trim()),
-  phone: z
-    .string()
-    .nullish()
-    .transform((v: string | null | undefined) => v?.trim() || null),
-  congregation: z
-    .string()
-    .min(1, 'Congregation is required')
-    .max(100, 'Congregation name too long')
-    .transform((v: string) => v.trim()),
 });
 
 export const loginAdminSchema = z.object({

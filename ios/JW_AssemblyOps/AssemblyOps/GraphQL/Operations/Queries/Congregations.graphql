@@ -1,0 +1,23 @@
+query Congregations($state: String!, $language: String) {
+  congregations(state: $state, language: $language) {
+    id
+    name
+    city
+    state
+    language
+    circuit {
+      id
+      code
+    }
+  }
+}
+
+query CongregationsByCircuit($circuitId: ID!) {
+  congregationsByCircuit(circuitId: $circuitId) {
+    id
+    name
+    city
+    state
+    language
+  }
+}

@@ -34,8 +34,6 @@ export interface RegisterInput {
   password: string;
   firstName: string;
   lastName: string;
-  phone?: string | null;
-  congregation: string;
 }
 
 export interface LoginInput {
@@ -45,6 +43,18 @@ export interface LoginInput {
 
 export interface RefreshInput {
   refreshToken: string;
+}
+
+export interface LoginEventVolunteerInput {
+  volunteerId: string;
+  token: string;
+}
+
+export interface UpdateAdminProfileInput {
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
+  congregationId?: string | null;
 }
 
 const authResolvers = {
@@ -71,10 +81,7 @@ const authResolvers = {
       context: Context
     ) => {
       const authService = new AuthService(context.prisma);
-      const result = await authService.registerAdmin({
-        ...input,
-        phone: input.phone ?? null,
-      });
+      const result = await authService.registerAdmin(input);
 
       return {
         admin: result.admin,
@@ -94,6 +101,22 @@ const authResolvers = {
 
       return {
         admin: result.admin,
+        accessToken: result.tokens.accessToken,
+        refreshToken: result.tokens.refreshToken,
+        expiresIn: result.tokens.expiresIn,
+      };
+    },
+
+    loginEventVolunteer: async (
+      _parent: unknown,
+      { input }: { input: LoginEventVolunteerInput },
+      context: Context
+    ) => {
+      const authService = new AuthService(context.prisma);
+      const result = await authService.loginEventVolunteer(input.volunteerId, input.token);
+
+      return {
+        eventVolunteer: result.eventVolunteer,
         accessToken: result.tokens.accessToken,
         refreshToken: result.tokens.refreshToken,
         expiresIn: result.tokens.expiresIn,
@@ -142,6 +165,16 @@ const authResolvers = {
 
       return { success: true };
     },
+
+    updateAdminProfile: async (
+      _parent: unknown,
+      { input }: { input: UpdateAdminProfileInput },
+      context: Context
+    ) => {
+      requireAdmin(context);
+      const authService = new AuthService(context.prisma);
+      return authService.updateProfile(context.admin.id, input);
+    },
   },
 
   Admin: {
@@ -156,6 +189,13 @@ const authResolvers = {
     ): Promise<EventAdmin[]> => {
       return context.prisma.eventAdmin.findMany({
         where: { adminId: admin.id },
+      });
+    },
+
+    congregationRef: async (admin: Admin, _args: unknown, context: Context) => {
+      if (!(admin as Admin & { congregationId?: string | null }).congregationId) return null;
+      return context.prisma.congregation.findUnique({
+        where: { id: (admin as Admin & { congregationId: string }).congregationId },
       });
     },
   },

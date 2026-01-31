@@ -99,6 +99,8 @@ const types = `#graphql
     fullName: String!
     phone: String
     congregation: String
+    congregationId: ID
+    congregationRef: Congregation
     eventRoles: [EventAdmin!]!
     createdAt: DateTime!
   }

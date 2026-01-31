@@ -46,8 +46,6 @@ struct OverseerRegistrationView: View {
         case confirmPassword
         case firstName
         case lastName
-        case phone
-        case congregation
     }
 
     // MARK: - Adaptive Colors
@@ -250,37 +248,11 @@ struct OverseerRegistrationView: View {
                 text: $viewModel.lastName,
                 isSecure: false,
                 isFocused: focusedField == .lastName,
-                onSubmit: { focusedField = .phone },
-                autocapitalization: .words,
-                isMonospaced: false
-            )
-            .focused($focusedField, equals: .lastName)
-
-            // Phone (optional)
-            UnderlineTextField(
-                label: "PHONE (OPTIONAL)",
-                placeholder: "Enter your phone number",
-                text: $viewModel.phone,
-                isSecure: false,
-                isFocused: focusedField == .phone,
-                onSubmit: { focusedField = .congregation },
-                keyboardType: .phonePad,
-                isMonospaced: false
-            )
-            .focused($focusedField, equals: .phone)
-
-            // Congregation
-            UnderlineTextField(
-                label: "CONGREGATION",
-                placeholder: "Enter your congregation",
-                text: $viewModel.congregation,
-                isSecure: false,
-                isFocused: focusedField == .congregation,
                 onSubmit: { viewModel.register() },
                 autocapitalization: .words,
                 isMonospaced: false
             )
-            .focused($focusedField, equals: .congregation)
+            .focused($focusedField, equals: .lastName)
         }
     }
 

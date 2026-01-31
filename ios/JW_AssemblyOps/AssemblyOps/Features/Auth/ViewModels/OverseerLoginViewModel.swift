@@ -83,6 +83,10 @@ final class OverseerLoginViewModel: ObservableObject {
                             id: data.admin.id,
                             email: data.admin.email,
                             fullName: data.admin.fullName,
+                            firstName: data.admin.firstName,
+                            lastName: data.admin.lastName,
+                            phone: data.admin.phone,
+                            congregationId: data.admin.congregationId,
                             overseerType: ""
                         )
                         self?.appState.didLoginAsOverseer(overseer: overseer, accessToken: data.accessToken, refreshToken: data.refreshToken, expiresIn: data.expiresIn)
@@ -153,6 +157,10 @@ final class OverseerLoginViewModel: ObservableObject {
                                     id: admin.id,
                                     email: admin.email,
                                     fullName: admin.fullName,
+                                    firstName: admin.firstName ?? "",
+                                    lastName: admin.lastName ?? "",
+                                    phone: nil,
+                                    congregationId: nil,
                                     overseerType: ""
                                 )
                             },
@@ -197,6 +205,10 @@ final class OverseerLoginViewModel: ObservableObject {
                                     id: admin.id,
                                     email: admin.email,
                                     fullName: admin.fullName,
+                                    firstName: admin.firstName ?? "",
+                                    lastName: admin.lastName ?? "",
+                                    phone: nil,
+                                    congregationId: nil,
                                     overseerType: ""
                                 )
                             },

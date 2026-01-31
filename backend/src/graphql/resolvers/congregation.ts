@@ -1,0 +1,74 @@
+/**
+ * Congregation Resolvers
+ *
+ * Handles congregation queries for volunteer management.
+ *
+ * Queries:
+ *   - congregations: Get congregations by state (optionally filtered by language)
+ *   - congregationsByCircuit: Get all congregations in a circuit
+ *   - congregation: Get a single congregation by ID
+ *
+ * Type Resolvers:
+ *   - Congregation.circuit: Get the circuit this congregation belongs to
+ *   - Congregation.volunteerProfiles: Get all volunteer profiles in this congregation
+ *
+ * Schema: ../schema/congregation.ts
+ */
+import { Context } from '../context.js';
+import { Congregation } from '@prisma/client';
+
+const congregationResolvers = {
+  Query: {
+    congregations: async (
+      _parent: unknown,
+      args: { state: string; language?: string },
+      context: Context
+    ): Promise<Congregation[]> => {
+      return context.prisma.congregation.findMany({
+        where: {
+          state: args.state,
+          ...(args.language && { language: args.language }),
+        },
+        orderBy: { name: 'asc' },
+      });
+    },
+
+    congregationsByCircuit: async (
+      _parent: unknown,
+      { circuitId }: { circuitId: string },
+      context: Context
+    ): Promise<Congregation[]> => {
+      return context.prisma.congregation.findMany({
+        where: { circuitId },
+        orderBy: { name: 'asc' },
+      });
+    },
+
+    congregation: async (
+      _parent: unknown,
+      { id }: { id: string },
+      context: Context
+    ): Promise<Congregation | null> => {
+      return context.prisma.congregation.findUnique({
+        where: { id },
+      });
+    },
+  },
+
+  Congregation: {
+    circuit: async (congregation: Congregation, _args: unknown, context: Context) => {
+      return context.prisma.circuit.findUnique({
+        where: { id: congregation.circuitId },
+      });
+    },
+
+    volunteerProfiles: async (congregation: Congregation, _args: unknown, context: Context) => {
+      return context.prisma.volunteerProfile.findMany({
+        where: { congregationId: congregation.id },
+        orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+      });
+    },
+  },
+};
+
+export default congregationResolvers;

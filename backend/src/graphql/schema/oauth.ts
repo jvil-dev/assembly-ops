@@ -31,8 +31,6 @@ export const oauthTypeDefs = `#graphql
     pendingOAuthToken: String!
     firstName: String!
     lastName: String!
-    phone: String
-    congregation: String!
   }
 
   extend type Mutation {

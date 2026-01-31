@@ -50,7 +50,6 @@ describe('Session Operations', () => {
             password: 'TestPassword123!',
             firstName: 'Session',
             lastName: 'Tester',
-            congregation: 'Test Congregation',
           },
         },
       });

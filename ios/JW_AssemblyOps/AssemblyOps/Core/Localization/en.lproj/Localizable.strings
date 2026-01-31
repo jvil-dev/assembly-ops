@@ -1,0 +1,87 @@
+/*
+  Localizable.strings (English)
+  AssemblyOps
+*/
+
+// MARK: - Common
+"common.cancel" = "Cancel";
+"common.done" = "Done";
+"common.save" = "Save";
+"common.delete" = "Delete";
+"common.edit" = "Edit";
+"common.loading" = "Loading...";
+"common.error" = "Error";
+"common.success" = "Success";
+"common.retry" = "Retry";
+"common.search" = "Search";
+"common.add" = "Add";
+"common.remove" = "Remove";
+"common.copy" = "Copy";
+"common.share" = "Share";
+
+// MARK: - Auth
+"auth.login" = "Sign In";
+"auth.logout" = "Sign Out";
+"auth.volunteerId" = "Volunteer ID";
+"auth.token" = "Token";
+"auth.invalidCredentials" = "Invalid credentials";
+"auth.needHelp" = "Need help? Ask your department overseer";
+
+// MARK: - Event Types
+"eventType.circuitAssembly" = "Circuit Assembly";
+"eventType.regionalConvention" = "Regional Convention";
+"eventType.specialConvention" = "Special Convention";
+
+// MARK: - Departments
+"department.accounts" = "Accounts";
+"department.attendant" = "Attendant";
+"department.audioVideo" = "Audio/Video";
+"department.baptism" = "Baptism";
+"department.cleaning" = "Cleaning";
+"department.firstAid" = "First Aid";
+"department.information" = "Information";
+"department.installation" = "Installation";
+"department.lostFound" = "Lost & Found";
+"department.parking" = "Parking";
+"department.rooming" = "Rooming";
+"department.trucking" = "Trucking";
+
+// MARK: - Appointment Status
+"appointmentStatus.publisher" = "Publisher";
+"appointmentStatus.ministerialServant" = "Ministerial Servant";
+"appointmentStatus.elder" = "Elder";
+
+// MARK: - Assignment Status
+"assignmentStatus.pending" = "Pending";
+"assignmentStatus.accepted" = "Accepted";
+"assignmentStatus.declined" = "Declined";
+"assignmentStatus.autoDeclined" = "Auto-Declined";
+
+// MARK: - Check-In Status
+"checkInStatus.checkedIn" = "Checked In";
+"checkInStatus.checkedOut" = "Checked Out";
+"checkInStatus.noShow" = "No Show";
+
+// MARK: - Tabs
+"tab.home" = "Home";
+"tab.schedule" = "Schedule";
+"tab.messages" = "Messages";
+"tab.profile" = "Profile";
+"tab.dashboard" = "Dashboard";
+"tab.volunteers" = "Volunteers";
+"tab.assignments" = "Assignments";
+
+// MARK: - Volunteer
+"volunteer.add" = "Add Volunteer";
+"volunteer.search" = "Search volunteers";
+"volunteer.credentials" = "Login Credentials";
+"volunteer.inviteMessage" = "Invite Message";
+"volunteer.shareInvite" = "Share Invite";
+"volunteer.copyMessage" = "Copy Message";
+"volunteer.addedSuccess" = "%@ has been added!";
+"volunteer.shareCredentials" = "Share the credentials below so they can log in";
+
+// MARK: - Settings
+"settings.language" = "Language";
+"settings.english" = "English";
+"settings.spanish" = "Spanish";

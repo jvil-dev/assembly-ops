@@ -8,6 +8,7 @@ mutation LoginAdmin($input: LoginAdminInput!) {
       fullName
       phone
       congregation
+      congregationId
     }
     accessToken
     refreshToken

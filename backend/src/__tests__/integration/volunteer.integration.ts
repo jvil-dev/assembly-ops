@@ -30,7 +30,6 @@ describe('Volunteer Operations', () => {
             password: 'TestPassword123!',
             firstName: 'Vol',
             lastName: 'Tester',
-            congregation: 'Test Congregation',
           },
         },
       });

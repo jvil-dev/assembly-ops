@@ -349,6 +349,7 @@ const assignmentResolvers = {
       context: Context
     ) => {
       if (parent.volunteer) return parent.volunteer;
+      if (!parent.volunteerId) return null;
       return context.prisma.volunteer.findUnique({
         where: { id: parent.volunteerId },
       });

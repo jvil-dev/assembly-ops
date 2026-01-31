@@ -49,7 +49,6 @@ describe('Post Operations', () => {
             password: 'TestPassword123!',
             firstName: 'Post',
             lastName: 'Tester',
-            congregation: 'Test Congregation',
           },
         },
       });

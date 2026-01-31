@@ -44,7 +44,6 @@ describe('Message Operations', () => {
             password: 'TestPassword123',
             firstName: 'Message',
             lastName: 'Tester',
-            congregation: 'Test Congregation',
           },
         },
       });

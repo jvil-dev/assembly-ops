@@ -1,0 +1,7 @@
+mutation ClaimDepartment($input: ClaimDepartmentInput!) {
+    claimDepartment(input: $input) {
+        id
+        name
+        departmentType
+    }
+}

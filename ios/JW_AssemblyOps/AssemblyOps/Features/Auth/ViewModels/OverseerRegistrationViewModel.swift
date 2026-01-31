@@ -13,8 +13,6 @@
 // Properties:
 //   - email/password/confirmPassword: Account credential fields
 //   - firstName/lastName: Required name fields
-//   - phone: Optional contact number
-//   - congregation: Required congregation name
 //   - isLoading: True during registration request
 //   - errorMessage: User-facing error for failed registration
 //   - showOAuthRegistration: Triggers OAuth completion flow
@@ -23,7 +21,7 @@
 // Validation:
 //   - Email must not be empty
 //   - Password must be 8+ characters and match confirmation
-//   - First name, last name, and congregation are required
+//   - First name and last name are required
 //
 // Methods:
 //   - register(): Create account via RegisterAdminMutation
@@ -47,8 +45,6 @@ final class OverseerRegistrationViewModel: ObservableObject {
     @Published var confirmPassword = ""
     @Published var firstName = ""
     @Published var lastName = ""
-    @Published var phone = ""
-    @Published var congregation = ""
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var showOAuthRegistration = false
@@ -69,8 +65,7 @@ final class OverseerRegistrationViewModel: ObservableObject {
         password == confirmPassword &&
         password.count >= 8 &&
         !firstName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !lastName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !congregation.trimmingCharacters(in: .whitespaces).isEmpty
+        !lastName.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     var passwordsMatch: Bool {
@@ -89,10 +84,8 @@ final class OverseerRegistrationViewModel: ObservableObject {
             email: email.lowercased().trimmingCharacters(in: .whitespaces),
             password: password,
             firstName: firstName.trimmingCharacters(in: .whitespaces),
-            lastName: lastName.trimmingCharacters(in: .whitespaces),
-            phone: phone.isEmpty ? .none : .some(phone),
-            congregation: congregation.trimmingCharacters(in: .whitespaces)
-            )
+            lastName: lastName.trimmingCharacters(in: .whitespaces)
+        )
         
         NetworkClient.shared.apollo.perform(
             mutation: AssemblyOpsAPI.RegisterAdminMutation(input: input)
@@ -105,6 +98,10 @@ final class OverseerRegistrationViewModel: ObservableObject {
                             id: data.admin.id,
                             email: data.admin.email,
                             fullName: data.admin.fullName,
+                            firstName: data.admin.firstName,
+                            lastName: data.admin.lastName,
+                            phone: nil,
+                            congregationId: nil,
                             overseerType: ""
                         )
                         self?.appState.didLoginAsOverseer(overseer: overseer, accessToken: data.accessToken, refreshToken: data.refreshToken, expiresIn: data.expiresIn)
@@ -175,6 +172,10 @@ final class OverseerRegistrationViewModel: ObservableObject {
                                     id: admin.id,
                                     email: admin.email,
                                     fullName: admin.fullName,
+                                    firstName: admin.firstName ?? "",
+                                    lastName: admin.lastName ?? "",
+                                    phone: nil,
+                                    congregationId: nil,
                                     overseerType: ""
                                 )
                             },
@@ -218,6 +219,10 @@ final class OverseerRegistrationViewModel: ObservableObject {
                                     id: admin.id,
                                     email: admin.email,
                                     fullName: admin.fullName,
+                                    firstName: admin.firstName ?? "",
+                                    lastName: admin.lastName ?? "",
+                                    phone: nil,
+                                    congregationId: nil,
                                     overseerType: ""
                                 )
                             },

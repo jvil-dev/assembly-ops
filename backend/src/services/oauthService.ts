@@ -80,8 +80,6 @@ export class OAuthService {
     pendingOAuthToken: string;
     firstName: string;
     lastName: string;
-    phone?: string;
-    congregation: string;
   }) {
     const pending = verifyPendingOAuthToken(input.pendingOAuthToken);
     if (!pending) throw new AuthenticationError('Invalid or expired registration token');
@@ -93,8 +91,6 @@ export class OAuthService {
           passwordHash: null,
           firstName: input.firstName,
           lastName: input.lastName,
-          phone: input.phone,
-          congregation: input.congregation,
         },
       });
       await tx.oAuthConnection.create({

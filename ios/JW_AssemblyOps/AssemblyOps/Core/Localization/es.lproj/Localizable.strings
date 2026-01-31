@@ -1,0 +1,87 @@
+/*
+  Localizable.strings (Spanish)
+  AssemblyOps
+*/
+
+// MARK: - Common
+"common.cancel" = "Cancelar";
+"common.done" = "Listo";
+"common.save" = "Guardar";
+"common.delete" = "Eliminar";
+"common.edit" = "Editar";
+"common.loading" = "Cargando...";
+"common.error" = "Error";
+"common.success" = "Éxito";
+"common.retry" = "Reintentar";
+"common.search" = "Buscar";
+"common.add" = "Agregar";
+"common.remove" = "Quitar";
+"common.copy" = "Copiar";
+"common.share" = "Compartir";
+
+// MARK: - Auth
+"auth.login" = "Iniciar Sesión";
+"auth.logout" = "Cerrar Sesión";
+"auth.volunteerId" = "ID de Voluntario";
+"auth.token" = "Token";
+"auth.invalidCredentials" = "Credenciales inválidas";
+"auth.needHelp" = "¿Necesitas ayuda? Pregunta a tu superintendente de departamento";
+
+// MARK: - Event Types
+"eventType.circuitAssembly" = "Asamblea de Circuito";
+"eventType.regionalConvention" = "Asamblea Regional";
+"eventType.specialConvention" = "Asamblea Especial";
+
+// MARK: - Departments
+"department.accounts" = "Cuentas";
+"department.attendant" = "Acomodadores";
+"department.audioVideo" = "Audio/Video";
+"department.baptism" = "Bautismo";
+"department.cleaning" = "Limpieza";
+"department.firstAid" = "Primeros Auxilios";
+"department.information" = "Información";
+"department.installation" = "Instalación";
+"department.lostFound" = "Objetos Perdidos";
+"department.parking" = "Estacionamiento";
+"department.rooming" = "Alojamiento";
+"department.trucking" = "Transporte";
+
+// MARK: - Appointment Status
+"appointmentStatus.publisher" = "Publicador";
+"appointmentStatus.ministerialServant" = "Siervo Ministerial";
+"appointmentStatus.elder" = "Anciano";
+
+// MARK: - Assignment Status
+"assignmentStatus.pending" = "Pendiente";
+"assignmentStatus.accepted" = "Aceptada";
+"assignmentStatus.declined" = "Rechazada";
+"assignmentStatus.autoDeclined" = "Auto-Rechazada";
+
+// MARK: - Check-In Status
+"checkInStatus.checkedIn" = "Registrado";
+"checkInStatus.checkedOut" = "Salida";
+"checkInStatus.noShow" = "No Se Presentó";
+
+// MARK: - Tabs
+"tab.home" = "Inicio";
+"tab.schedule" = "Horario";
+"tab.messages" = "Mensajes";
+"tab.profile" = "Perfil";
+"tab.dashboard" = "Panel";
+"tab.volunteers" = "Voluntarios";
+"tab.assignments" = "Asignaciones";
+
+// MARK: - Volunteer
+"volunteer.add" = "Agregar Voluntario";
+"volunteer.search" = "Buscar voluntarios";
+"volunteer.credentials" = "Credenciales de Acceso";
+"volunteer.inviteMessage" = "Mensaje de Invitación";
+"volunteer.shareInvite" = "Compartir Invitación";
+"volunteer.copyMessage" = "Copiar Mensaje";
+"volunteer.addedSuccess" = "¡%@ ha sido agregado!";
+"volunteer.shareCredentials" = "Comparte las credenciales para que puedan iniciar sesión";
+
+// MARK: - Settings
+"settings.language" = "Idioma";
+"settings.english" = "Inglés";
+"settings.spanish" = "Español";

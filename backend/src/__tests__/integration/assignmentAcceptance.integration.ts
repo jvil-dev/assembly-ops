@@ -49,7 +49,6 @@ describe('Assignment Acceptance Operations', () => {
             password: 'TestPassword123',
             firstName: 'Accept',
             lastName: 'Tester',
-            congregation: 'Test Congregation',
           },
         },
       });

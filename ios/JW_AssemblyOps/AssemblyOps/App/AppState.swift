@@ -48,6 +48,8 @@ final class AppState: ObservableObject {
     @Published var currentVolunteer: VolunteerInfo?
     @Published var currentOverseer: OverseerInfo?
     @Published var userType: UserType = .unknown
+    @Published var needsProfileSetup: Bool = false
+    @Published var needsEventSetup: Bool = false
     
     enum UserType {
         case unknown
@@ -135,10 +137,57 @@ final class AppState: ObservableObject {
 
     /// Fetch overseer profile from server
     private func fetchOverseerProfile() {
-        // TODO: Add MyOverseerProfile query when available
-        // For now, just proceed with login
-        isLoggedIn = true
-        isLoading = false
+        NetworkClient.shared.apollo.fetch(
+            query: AssemblyOpsAPI.MeQuery(),
+            cachePolicy: .fetchIgnoringCacheData
+        ) { [weak self] result in
+            Task { @MainActor in
+                switch result {
+                case .success(let graphQLResult):
+                    if let me = graphQLResult.data?.me {
+                        self?.currentOverseer = OverseerInfo(
+                            id: me.id,
+                            email: me.email,
+                            fullName: me.fullName,
+                            firstName: me.firstName,
+                            lastName: me.lastName,
+                            phone: me.phone,
+                            congregationId: me.congregationId,
+                            overseerType: ""
+                        )
+                        self?.needsProfileSetup = me.congregationId == nil
+                    }
+                    // After profile, check if overseer has events
+                    self?.checkOverseerEvents()
+                case .failure(let error):
+                    print("Overseer profile fetch failed: \(error)")
+                    // Network error but tokens exist - proceed
+                    self?.isLoggedIn = true
+                    self?.isLoading = false
+                }
+            }
+        }
+    }
+
+    /// Check if overseer has any events (after profile is loaded)
+    private func checkOverseerEvents() {
+        NetworkClient.shared.apollo.fetch(
+            query: AssemblyOpsAPI.MyEventsQuery(),
+            cachePolicy: .fetchIgnoringCacheData
+        ) { [weak self] result in
+            Task { @MainActor in
+                switch result {
+                case .success(let graphQLResult):
+                    let eventCount = graphQLResult.data?.myEvents.count ?? 0
+                    self?.needsEventSetup = eventCount == 0
+                case .failure:
+                    // Network error - don't block, assume they might have events
+                    self?.needsEventSetup = false
+                }
+                self?.isLoggedIn = true
+                self?.isLoading = false
+            }
+        }
     }
 
     /// Refresh access token using refresh token
@@ -182,6 +231,8 @@ final class AppState: ObservableObject {
         currentVolunteer = nil
         currentOverseer = nil
         userType = .unknown
+        needsProfileSetup = false
+        needsEventSetup = false
         isLoggedIn = false
         NetworkClient.shared.resetClient()
     }
@@ -212,9 +263,11 @@ final class AppState: ObservableObject {
         KeychainManager.shared.userType = "overseer"
         currentOverseer = overseer
         userType = .overseer
-        isLoggedIn = true
+        needsProfileSetup = !overseer.isProfileComplete
         NetworkClient.shared.resetClient()
-        
+
+        // Check events after login
+        checkOverseerEvents()
     }
     
     var isOverseer: Bool {
@@ -241,7 +294,15 @@ struct OverseerInfo: Identifiable {
     let id: String
     let email: String
     let fullName: String
+    let firstName: String
+    let lastName: String
+    let phone: String?
+    let congregationId: String?
     let overseerType: String
+
+    var isProfileComplete: Bool {
+        congregationId != nil && !fullName.trimmingCharacters(in: .whitespaces).isEmpty
+    }
 
     var initials: String {
         let names = fullName.split(separator: " ")

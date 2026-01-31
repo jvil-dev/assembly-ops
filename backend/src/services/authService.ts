@@ -43,6 +43,7 @@ import {
   RegisterAdminInput,
   LoginAdminInput,
 } from '../graphql/validators/auth.js';
+import { verifyToken } from '../utils/credentials.js';
 
 export class AuthService {
   private tokenService: TokenService;
@@ -82,8 +83,6 @@ export class AuthService {
         passwordHash,
         firstName: validated.firstName,
         lastName: validated.lastName,
-        phone: validated.phone,
-        congregation: validated.congregation,
       },
       select: {
         id: true,
@@ -188,8 +187,131 @@ export class AuthService {
     return true;
   }
 
-  async logoutAll(userId: string, userType: 'admin' | 'volunteer'): Promise<boolean> {
+  async logoutAll(userId: string, userType: 'admin' | 'volunteer' | 'eventVolunteer'): Promise<boolean> {
     await this.tokenService.revokeAllUserTokens(userId, userType);
     return true;
+  }
+
+  /**
+   * Update an admin's profile (patch-style: only provided fields are updated)
+   */
+  async updateProfile(
+    adminId: string,
+    input: {
+      firstName?: string | null;
+      lastName?: string | null;
+      phone?: string | null;
+      congregationId?: string | null;
+    }
+  ) {
+    const data: Record<string, unknown> = {};
+
+    if (input.firstName !== undefined && input.firstName !== null) {
+      data.firstName = input.firstName;
+    }
+    if (input.lastName !== undefined && input.lastName !== null) {
+      data.lastName = input.lastName;
+    }
+    if (input.phone !== undefined) {
+      data.phone = input.phone;
+    }
+    if (input.congregationId !== undefined && input.congregationId !== null) {
+      // Look up congregation to also update the backward-compat string field
+      const congregation = await this.prisma.congregation.findUnique({
+        where: { id: input.congregationId },
+        select: { name: true, city: true },
+      });
+      if (!congregation) {
+        throw new ValidationError('Congregation not found');
+      }
+      data.congregationId = input.congregationId;
+      data.congregation = `${congregation.name} - ${congregation.city}`;
+    }
+
+    return this.prisma.admin.update({
+      where: { id: adminId },
+      data,
+    });
+  }
+
+  /**
+   * Login an EventVolunteer using their volunteer ID (CA-XXXXXX or RC-XXXXXX) and token
+   */
+  async loginEventVolunteer(volunteerId: string, token: string): Promise<{
+    eventVolunteer: {
+      id: string;
+      volunteerId: string;
+      volunteerProfile: {
+        id: string;
+        firstName: string;
+        lastName: string;
+      };
+      event: {
+        id: string;
+        template: {
+          name: string;
+        };
+      };
+      department: { id: string; name: string } | null;
+    };
+    tokens: TokenPair;
+  }> {
+    // Find event volunteer by ID
+    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
+      where: { volunteerId },
+      include: {
+        volunteerProfile: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        event: {
+          include: {
+            template: {
+              select: { name: true },
+            },
+          },
+        },
+        department: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    if (!eventVolunteer) {
+      throw new AuthenticationError('Invalid volunteer ID or token');
+    }
+
+    // Verify token against hash
+    const isValid = await verifyToken(token, eventVolunteer.tokenHash);
+
+    if (!isValid) {
+      throw new AuthenticationError('Invalid volunteer ID or token');
+    }
+
+    // Delete any existing tokens for this event volunteer
+    await this.tokenService.deleteAllUserTokens(eventVolunteer.id, 'eventVolunteer');
+
+    // Generate JWT tokens
+    const tokens = generateTokens({
+      sub: eventVolunteer.id,
+      type: 'eventVolunteer',
+    });
+
+    // Store refresh token
+    await this.tokenService.createRefreshToken(tokens.refreshToken, eventVolunteer.id, 'eventVolunteer');
+
+    return {
+      eventVolunteer: {
+        id: eventVolunteer.id,
+        volunteerId: eventVolunteer.volunteerId,
+        volunteerProfile: eventVolunteer.volunteerProfile,
+        event: eventVolunteer.event,
+        department: eventVolunteer.department,
+      },
+      tokens,
+    };
   }
 }

@@ -44,13 +44,23 @@ const authTypeDefs = `#graphql
     success: Boolean!
   }
 
+  type EventVolunteerAuthPayload {
+    eventVolunteer: EventVolunteer!
+    accessToken: String!
+    refreshToken: String!
+    expiresIn: Int!
+  }
+
+  input LoginEventVolunteerInput {
+    volunteerId: String!
+    token: String!
+  }
+
   input RegisterAdminInput {
     email: String!
     password: String!
     firstName: String!
     lastName: String!
-    phone: String
-    congregation: String!
   }
 
   input LoginAdminInput {
@@ -62,6 +72,13 @@ const authTypeDefs = `#graphql
     refreshToken: String!
   }
 
+  input UpdateAdminProfileInput {
+    firstName: String
+    lastName: String
+    phone: String
+    congregationId: ID
+  }
+
   extend type Query {
     me: Admin
   }
@@ -69,9 +86,11 @@ const authTypeDefs = `#graphql
   extend type Mutation {
     registerAdmin(input: RegisterAdminInput!): AuthPayload!
     loginAdmin(input: LoginAdminInput!): AuthPayload!
+    loginEventVolunteer(input: LoginEventVolunteerInput!): EventVolunteerAuthPayload!
     refreshToken(input: RefreshTokenInput!): TokenPayload!
     logoutAdmin(refreshToken: String!): LogoutPayload!
     logoutAllSessions: LogoutPayload!
+    updateAdminProfile(input: UpdateAdminProfileInput!): Admin!
   }
 `;
 
