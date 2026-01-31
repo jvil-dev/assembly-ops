@@ -86,7 +86,7 @@ export interface CoverageSlot {
       id: string;
       firstName: string;
       lastName: string;
-    };
+    } | null;
     checkIn: {
       id: string;
       checkInTime: Date;
@@ -225,6 +225,7 @@ export class AssignmentService {
       where: { id: assignmentId },
       include: {
         volunteer: { select: { eventId: true } },
+        eventVolunteer: { select: { eventId: true } },
       },
     });
 
@@ -232,7 +233,11 @@ export class AssignmentService {
       throw new NotFoundError('Assignment');
     }
 
-    const eventId = assignment.volunteer.eventId;
+    // Get eventId from either volunteer or eventVolunteer
+    const eventId = assignment.volunteer?.eventId ?? assignment.eventVolunteer?.eventId;
+    if (!eventId) {
+      throw new ValidationError('Assignment has no associated volunteer');
+    }
 
     // If changing post, verify it's in the same event
     if (validated.postId) {

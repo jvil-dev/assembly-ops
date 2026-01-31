@@ -1,84 +1,18 @@
 /// <reference types="node" />
-import { EventType } from '@prisma/client';
-import prisma from '../src/config/database.js';
+import { seedCircuits } from './seed/circuits.js';
+import { seedCongregations } from './seed/congregations.js';
+import { seedEventTemplates } from './seed/event_templates.js';
 
 async function main() {
-  console.log('Seeding EventTemplates...');
+  console.log('Starting seed...\n');
 
-  const templates = [
-    {
-      eventType: EventType.CIRCUIT_ASSEMBLY,
-      circuit: 'MA-11',
-      region: 'US-MA',
-      serviceYear: 2026,
-      name: 'Circuit Assembly with Circuit Overseer',
-      theme: 'Worship With Spirit and Truth',
-      themeScripture: 'John 4:24',
-      venue: 'Natick, Massachusetts (AH)',
-      address: '85 Bacon St, Natick MA 01760-2901',
-      startDate: new Date('2026-03-07'),
-      endDate: new Date('2026-03-07'),
-      language: 'en',
-    },
-    {
-      eventType: EventType.REGIONAL_CONVENTION,
-      circuit: null,
-      region: 'US-MA',
-      serviceYear: 2026,
-      name: 'Regional Convention',
-      theme: 'Eternal Happiness',
-      themeScripture: null,
-      venue: "Natick, MA Assembly Hall of Jehovah's Witnesses",
-      address: '85 Bacon St, Natick MA 01760-2901',
-      startDate: new Date('2026-06-12'),
-      endDate: new Date('2026-06-14'),
-      language: 'en',
-    },
-    {
-      eventType: EventType.CIRCUIT_ASSEMBLY,
-      circuit: 'MA-12',
-      region: 'US-MA',
-      serviceYear: 2026,
-      name: 'Circuit Assembly with Circuit Overseer',
-      theme: 'Worship With Spirit and Truth',
-      themeScripture: 'John 4:24',
-      venue: 'Natick, Massachusetts (AH)',
-      address: '85 Bacon St, Natick MA 01760-2901',
-      startDate: new Date('2026-03-14'),
-      endDate: new Date('2026-03-14'),
-      language: 'en',
-    },
-    {
-      eventType: EventType.CIRCUIT_ASSEMBLY,
-      circuit: 'MA-11',
-      region: 'US-MA',
-      serviceYear: 2026,
-      name: 'Circuit Assembly',
-      theme: null,
-      themeScripture: null,
-      venue: 'Natick, Massachusetts (AH)',
-      address: '85 Bacon St, Natick MA 01760-2901',
-      startDate: new Date('2026-09-12'),
-      endDate: new Date('2026-09-12'),
-      language: 'en',
-    },
-  ];
+  // Seed in order: circuits → congregations → event templates
+  // (congregations reference circuits, templates reference circuits)
+  await seedCircuits();
+  await seedCongregations();
+  await seedEventTemplates();
 
-  for (const template of templates) {
-    await prisma.eventTemplate.upsert({
-      where: {
-        eventType_circuit_startDate: {
-          eventType: template.eventType,
-          circuit: template.circuit ?? '',
-          startDate: template.startDate,
-        },
-      },
-      update: template,
-      create: template,
-    });
-  }
-
-  console.log(`Seeded ${templates.length} EventTemplates`);
+  console.log('\nSeed complete!');
 }
 
 main()
@@ -86,6 +20,6 @@ main()
     process.exit(0);
   })
   .catch((e) => {
-    console.error(e);
+    console.error('Seed failed:', e);
     process.exit(1);
   });

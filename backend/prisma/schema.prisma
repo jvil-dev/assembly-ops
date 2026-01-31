@@ -6,6 +6,82 @@ datasource db {
   provider = "postgresql"
 }
 
+model Circuit {
+  id             String          @id @default(cuid())
+  code           String          @unique
+  region         String
+  language       String          @default("E")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  congregations  Congregation[]
+  eventTemplates EventTemplate[]
+
+  @@index([region])
+  @@index([language])
+}
+
+model Congregation {
+  id                String             @id @default(cuid())
+  name              String
+  city              String
+  state             String
+  language          String             @default("E")
+  circuitId         String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  circuit           Circuit            @relation(fields: [circuitId], references: [id], onDelete: Cascade)
+  volunteerProfiles VolunteerProfile[]
+  admins            Admin[]
+
+  @@unique([name, city, state])
+  @@index([circuitId])
+  @@index([state, language])
+}
+
+model VolunteerProfile {
+  id                String            @id @default(cuid())
+  firstName         String
+  lastName          String
+  email             String?
+  phone             String?
+  appointmentStatus AppointmentStatus @default(PUBLISHER)
+  notes             String?
+  congregationId    String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  congregation      Congregation      @relation(fields: [congregationId], references: [id])
+  eventVolunteers   EventVolunteer[]
+
+  @@index([congregationId])
+  @@index([lastName, firstName])
+}
+
+model EventVolunteer {
+  id                 String               @id @default(cuid())
+  volunteerId        String               @unique // "CA-XXXXX" or "RC-XXXXXX"
+  tokenHash          String // bcrypt hash for auth
+  token              String
+  volunteerProfileId String
+  eventId            String
+  departmentId       String?
+  roleId             String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  volunteerProfile   VolunteerProfile     @relation(fields: [volunteerProfileId], references: [id])
+  event              Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  department         Department?          @relation(fields: [departmentId], references: [id])
+  role               Role?                @relation(fields: [roleId], references: [id])
+  assignments        ScheduleAssignment[]
+  checkIns           CheckIn[]
+  messages           Message[]
+  refreshTokens      RefreshToken[]
+
+  @@unique([volunteerProfileId, eventId]) // One profile per event
+  @@index([eventId])
+  @@index([departmentId])
+  @@index([volunteerProfileId])
+}
+
 model Admin {
   id               String            @id @default(cuid())
   email            String            @unique
@@ -13,7 +89,8 @@ model Admin {
   firstName        String
   lastName         String
   phone            String?
-  congregation     String
+  congregation     String? // Optional - set during profile completion
+  congregationId   String? // NEW: FK to Congregation
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   attendanceCounts AttendanceCount[]
@@ -23,8 +100,10 @@ model Admin {
   refreshTokens    RefreshToken[]
   eventNotes       EventNote[]
   oauthConnections OAuthConnection[]
+  congregationRef  Congregation?     @relation(fields: [congregationId], references: [id])
 
   @@index([email])
+  @@index([congregationId])
 }
 
 model AttendanceCount {
@@ -44,54 +123,58 @@ model AttendanceCount {
 }
 
 model CheckIn {
-  id            String             @id @default(cuid())
-  checkInTime   DateTime           @default(now())
-  checkOutTime  DateTime?
-  assignmentId  String             @unique
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  checkedInById String?
-  notes         String?
-  status        CheckInStatus      @default(CHECKED_IN)
-  assignment    ScheduleAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  checkedInBy   Admin?             @relation(fields: [checkedInById], references: [id])
+  id               String             @id @default(cuid())
+  checkInTime      DateTime           @default(now())
+  checkOutTime     DateTime?
+  assignmentId     String             @unique
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  checkedInById    String?
+  checkedInByVolId String? // NEW: Captain (EventVolunteer) who checked in
+  notes            String?
+  status           CheckInStatus      @default(CHECKED_IN)
+  assignment       ScheduleAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  checkedInBy      Admin?             @relation(fields: [checkedInById], references: [id])
+  checkedInByVol   EventVolunteer?    @relation(fields: [checkedInByVolId], references: [id])
 
   @@index([assignmentId])
 }
 
 model Department {
-  id             String         @id @default(cuid())
-  name           String
-  departmentType DepartmentType
-  description    String?
-  eventId        String
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  event          Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  overseer       EventAdmin?
-  notes          EventNote[]
-  posts          Post[]
-  volunteers     Volunteer[]
+  id              String           @id @default(cuid())
+  name            String
+  departmentType  DepartmentType
+  description     String?
+  eventId         String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  event           Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  overseer        EventAdmin?
+  notes           EventNote[]
+  posts           Post[]
+  volunteers      Volunteer[] // Keep during migration
+  eventVolunteers EventVolunteer[] // NEW
 
   @@unique([eventId, departmentType])
   @@index([eventId])
 }
 
 model Event {
-  id                 String        @id @default(cuid())
+  id                 String           @id @default(cuid())
   templateId         String
-  joinCode           String        @unique @default(cuid())
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  acceptDeadlineDays Int           @default(5) // Days before autoaccept
+  joinCode           String           @unique @default(cuid())
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  acceptDeadlineDays Int              @default(5)
   departments        Department[]
-  template           EventTemplate @relation(fields: [templateId], references: [id])
+  template           EventTemplate    @relation(fields: [templateId], references: [id])
   admins             EventAdmin[]
   notes              EventNote[]
   messages           Message[]
   roles              Role[]
   sessions           Session[]
-  volunteers         Volunteer[]
+  volunteers         Volunteer[] // Keep during migration
+  eventVolunteers    EventVolunteer[] // NEW
 
   @@index([joinCode])
   @@index([templateId])
@@ -133,7 +216,8 @@ model EventNote {
 model EventTemplate {
   id             String    @id @default(cuid())
   eventType      EventType
-  circuit        String?
+  circuit        String? // Keep for backward compat during migration
+  circuitId      String? // NEW: FK to Circuit
   region         String
   serviceYear    Int
   name           String
@@ -147,32 +231,37 @@ model EventTemplate {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   events         Event[]
+  circuitRef     Circuit?  @relation(fields: [circuitId], references: [id])
 
   @@unique([eventType, circuit, startDate])
   @@index([region])
   @@index([serviceYear])
+  @@index([circuitId])
 }
 
 model Message {
-  id            String        @id @default(cuid())
-  subject       String?
-  body          String
-  recipientType RecipientType
-  recipientId   String
-  isRead        Boolean       @default(false)
-  readAt        DateTime?
-  eventId       String
-  senderId      String?
-  volunteerId   String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  event         Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  sender        Admin?        @relation(fields: [senderId], references: [id])
-  volunteer     Volunteer?    @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  id               String          @id @default(cuid())
+  subject          String?
+  body             String
+  recipientType    RecipientType
+  recipientId      String
+  isRead           Boolean         @default(false)
+  readAt           DateTime?
+  eventId          String
+  senderId         String?
+  volunteerId      String? // OLD
+  eventVolunteerId String? // NEW
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  event            Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  sender           Admin?          @relation(fields: [senderId], references: [id])
+  volunteer        Volunteer?      @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  eventVolunteer   EventVolunteer? @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
   @@index([recipientType, recipientId])
   @@index([volunteerId])
+  @@index([eventVolunteerId])
 }
 
 model Post {
@@ -191,32 +280,36 @@ model Post {
 }
 
 model RefreshToken {
-  id          String     @id @default(cuid())
-  token       String     @unique
-  expiresAt   DateTime
-  revoked     Boolean    @default(false)
-  adminId     String?
-  volunteerId String?
-  createdAt   DateTime   @default(now())
-  admin       Admin?     @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  volunteer   Volunteer? @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  id               String          @id @default(cuid())
+  token            String          @unique
+  expiresAt        DateTime
+  revoked          Boolean         @default(false)
+  adminId          String?
+  volunteerId      String? // OLD
+  eventVolunteerId String? // NEW
+  createdAt        DateTime        @default(now())
+  admin            Admin?          @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  volunteer        Volunteer?      @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  eventVolunteer   EventVolunteer? @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
 
   @@index([adminId])
   @@index([expiresAt])
   @@index([token])
   @@index([volunteerId])
+  @@index([eventVolunteerId])
 }
 
 model Role {
-  id          String      @id @default(cuid())
-  name        String
-  description String?
-  sortOrder   Int         @default(0)
-  eventId     String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  volunteers  Volunteer[]
+  id              String           @id @default(cuid())
+  name            String
+  description     String?
+  sortOrder       Int              @default(0)
+  eventId         String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  event           Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  volunteers      Volunteer[] // OLD
+  eventVolunteers EventVolunteer[] // NEW
 
   @@unique([eventId, name])
   @@index([eventId])
@@ -224,7 +317,8 @@ model Role {
 
 model ScheduleAssignment {
   id               String           @id @default(cuid())
-  volunteerId      String
+  volunteerId      String? // OLD: FK to Volunteer (nullable during migration)
+  eventVolunteerId String? // NEW: FK to EventVolunteer
   postId           String
   sessionId        String
   status           AssignmentStatus @default(PENDING)
@@ -238,12 +332,15 @@ model ScheduleAssignment {
   checkIn          CheckIn?
   post             Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
   session          Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  volunteer        Volunteer        @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  volunteer        Volunteer?       @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  eventVolunteer   EventVolunteer?  @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
 
   @@unique([volunteerId, sessionId])
+  @@unique([eventVolunteerId, sessionId])
   @@index([postId])
   @@index([sessionId])
   @@index([volunteerId])
+  @@index([eventVolunteerId])
   @@index([status])
 }
 

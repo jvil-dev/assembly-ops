@@ -1,11 +1,16 @@
 /**
- * Volunteer Credentials Generator
+ * Credential Generation Utilities
  *
- * Generates unique login credentials for volunteers. Unlike admins who use
- * email/password, volunteers get a generated ID + token that can be printed
- * on cards or sent via SMS.
+ * Generates secure volunteer IDs and tokens for event authentication.
  *
- * Credential Format:
+ * NEW EventVolunteer Format (Sprint 6.3):
+ *   - volunteerId: [PREFIX]-[6 alphanumeric chars]
+ *     - CA = Circuit Assembly
+ *     - RC = Regional Convention
+ *     Example: CA-A7X9K2, RC-B3M8P1
+ *   - token: 32 characters, cryptographically secure
+ *
+ * LEGACY Volunteer Format (kept for backward compatibility):
  *   - volunteerId: "VOL-XXXXXX" (6 alphanumeric chars after prefix)
  *   - token: 8 hex characters (e.g., "A1B2C3D4")
  *
@@ -13,35 +18,83 @@
  *   Uses ABCDEFGHJKLMNPQRSTUVWXYZ23456789 (removes ambiguous: 0, O, I, 1)
  *   This makes it easier to read/type from printed cards.
  *
- * Functions:
- *   - generateVolunteerId(): Creates "VOL-XXXXXX" ID
- *   - generateLoginToken(): Creates 8-char hex token
- *   - generateVolunteerCredentials(): Returns { volunteerId, token, tokenHash }
- *
  * Security:
  *   - Plain token is ONLY returned once (at creation)
  *   - Only the bcrypt hash (tokenHash) is stored in database
  *   - If volunteer loses credentials, use regenerateCredentials()
  *
- * Used by: VolunteerService.createVolunteer(), regenerateCredentials()
+ * Used by:
+ *   - VolunteerService (legacy Volunteer model)
+ *   - volunteerProfileResolvers (new EventVolunteer model)
  */
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { hashPassword } from './password.js';
+
+// Characters for volunteer ID suffix (removed confusing: I, O, 0, 1)
+const ID_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+// ============================================
+// NEW: EventVolunteer Credential Functions
+// ============================================
+
+/**
+ * Generate a volunteer ID with event-type prefix
+ * Format: [PREFIX]-[6 alphanumeric chars]
+ * Example: CA-A7X9K2, RC-B3M8P1
+ */
+export function generateEventVolunteerId(prefix: 'CA' | 'RC'): string {
+  let suffix = '';
+
+  for (let i = 0; i < 6; i++) {
+    suffix += ID_CHARS.charAt(Math.floor(Math.random() * ID_CHARS.length));
+  }
+
+  return `${prefix}-${suffix}`;
+}
+
+/**
+ * Generate a secure random token
+ * 32 characters, URL-safe base64
+ */
+export function generateToken(): string {
+  return crypto.randomBytes(24).toString('base64url').slice(0, 32);
+}
+
+/**
+ * Hash a token using bcrypt
+ */
+export async function hashToken(token: string): Promise<string> {
+  return bcrypt.hash(token, 10);
+}
+
+/**
+ * Verify a token against its hash
+ */
+export async function verifyToken(token: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(token, hash);
+}
+
+// ============================================
+// LEGACY: Volunteer Credential Functions
+// (kept for backward compatibility during migration)
+// ============================================
 
 /**
  * Generates a volunteer ID like "VOL-A1B2C3"
+ * @deprecated Use generateEventVolunteerId() for new EventVolunteer model
  */
 export function generateVolunteerId(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed ambiguous: 0, O, I, 1
   let id = '';
   for (let i = 0; i < 6; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
+    id += ID_CHARS.charAt(Math.floor(Math.random() * ID_CHARS.length));
   }
   return `VOL-${id}`;
 }
 
 /**
  * Generates a random token for volunteer login
+ * @deprecated Use generateToken() for new EventVolunteer model
  */
 export function generateLoginToken(): string {
   return crypto.randomBytes(4).toString('hex').toUpperCase(); // 8 chars like "A1B2C3D4"
@@ -49,6 +102,7 @@ export function generateLoginToken(): string {
 
 /**
  * Generates volunteer credentials (ID + token + hash)
+ * @deprecated Use generateEventVolunteerId() + generateToken() + hashToken() for new model
  */
 export async function generateVolunteerCredentials(): Promise<{
   volunteerId: string;

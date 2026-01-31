@@ -39,7 +39,7 @@ export class TokenService {
   async createRefreshToken(
     token: string,
     userId: string,
-    userType: 'admin' | 'volunteer'
+    userType: 'admin' | 'volunteer' | 'eventVolunteer'
   ): Promise<void> {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
@@ -50,6 +50,7 @@ export class TokenService {
         expiresAt,
         adminId: userType === 'admin' ? userId : null,
         volunteerId: userType === 'volunteer' ? userId : null,
+        eventVolunteerId: userType === 'eventVolunteer' ? userId : null,
       },
     });
   }
@@ -61,11 +62,19 @@ export class TokenService {
     });
   }
 
-  async revokeAllUserTokens(userId: string, userType: 'admin' | 'volunteer'): Promise<void> {
-    const where =
-      userType === 'admin'
-        ? { adminId: userId, revoked: false }
-        : { volunteerId: userId, revoked: false };
+  async revokeAllUserTokens(
+    userId: string,
+    userType: 'admin' | 'volunteer' | 'eventVolunteer'
+  ): Promise<void> {
+    let where: { adminId?: string; volunteerId?: string; eventVolunteerId?: string; revoked: boolean };
+
+    if (userType === 'admin') {
+      where = { adminId: userId, revoked: false };
+    } else if (userType === 'volunteer') {
+      where = { volunteerId: userId, revoked: false };
+    } else {
+      where = { eventVolunteerId: userId, revoked: false };
+    }
 
     await this.prisma.refreshToken.updateMany({
       where,
@@ -73,8 +82,19 @@ export class TokenService {
     });
   }
 
-  async deleteAllUserTokens(userId: string, userType: 'admin' | 'volunteer'): Promise<void> {
-    const where = userType === 'admin' ? { adminId: userId } : { volunteerId: userId };
+  async deleteAllUserTokens(
+    userId: string,
+    userType: 'admin' | 'volunteer' | 'eventVolunteer'
+  ): Promise<void> {
+    let where: { adminId?: string; volunteerId?: string; eventVolunteerId?: string };
+
+    if (userType === 'admin') {
+      where = { adminId: userId };
+    } else if (userType === 'volunteer') {
+      where = { volunteerId: userId };
+    } else {
+      where = { eventVolunteerId: userId };
+    }
 
     await this.prisma.refreshToken.deleteMany({ where });
   }
@@ -82,7 +102,7 @@ export class TokenService {
   async rotateRefreshToken(
     oldToken: string,
     userId: string,
-    userType: 'admin' | 'volunteer',
+    userType: 'admin' | 'volunteer' | 'eventVolunteer',
     email?: string
   ): Promise<TokenPair | null> {
     const storedToken = await this.prisma.refreshToken.findUnique({
@@ -121,7 +141,7 @@ export class TokenService {
 
   async validateRefreshToken(token: string): Promise<{
     userId: string;
-    userType: 'admin' | 'volunteer';
+    userType: 'admin' | 'volunteer' | 'eventVolunteer';
   } | null> {
     try {
       const payload = verifyRefreshToken(token);
