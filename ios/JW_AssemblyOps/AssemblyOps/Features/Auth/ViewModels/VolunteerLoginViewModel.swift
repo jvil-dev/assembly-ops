@@ -11,20 +11,22 @@
 // Manages form state, validation, loading states, and error handling.
 //
 // Published Properties:
-//   - volunteerId: User-entered volunteer ID (e.g., "VOL-ABC123")
+//   - idPrefix: Event type prefix ("CA" or "RC")
+//   - volunteerId: User-entered volunteer ID suffix (e.g., "A7X9K2")
 //   - token: User-entered auth token
 //   - isLoading: True while login request is in flight
 //   - errorMessage: Error text to display (nil on success)
 //
 // Computed Properties:
-//   - isFormValid: True if both fields have non-empty values
+//   - fullVolunteerId: Constructed ID with prefix (e.g., "CA-A7X9K2")
+//   - isFormValid: True if suffix has 4+ chars and token is non-empty
 //
 // Methods:
 //   - login(): Execute loginVolunteer mutation, store tokens on success
 //
 // Flow:
-//   1. User enters volunteerId and token
-//   2. login() validates form, calls GraphQL mutation
+//   1. User selects event type prefix (CA/RC) and enters suffix + token
+//   2. login() validates form, calls GraphQL mutation with fullVolunteerId
 //   3. On success: AppState.didLogin() stores tokens, triggers navigation
 //   4. On failure: errorMessage displayed to user
 //
@@ -41,15 +43,21 @@ import Apollo
 
 @MainActor
 final class VolunteerLoginViewModel: ObservableObject {
-    @Published var volunteerId: String = ""
+    @Published var idPrefix: String = "CA"   // Event type prefix: "CA" or "RC"
+    @Published var volunteerId: String = ""   // Suffix only (e.g., "A7X9K2")
     @Published var token: String = ""
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
-    
+
     private let appState = AppState.shared
-    
+
+    /// Constructs the full volunteer ID: "CA-A7X9K2" or "RC-B3M8P1"
+    var fullVolunteerId: String {
+        "\(idPrefix)-\(volunteerId.uppercased().trimmingCharacters(in: .whitespaces))"
+    }
+
     var isFormValid: Bool {
-        !volunteerId.trimmingCharacters(in: .whitespaces).isEmpty &&
+        volunteerId.trimmingCharacters(in: .whitespaces).count >= 4 &&
         !token.trimmingCharacters(in: .whitespaces).isEmpty
     }
     
@@ -60,8 +68,8 @@ final class VolunteerLoginViewModel: ObservableObject {
         errorMessage = nil
         
         let input = AssemblyOpsAPI.LoginVolunteerInput(
-            volunteerId: "VOL-" + volunteerId.uppercased().trimmingCharacters(in: .whitespaces),
-            token: token.uppercased().trimmingCharacters(in: .whitespaces)
+            volunteerId: fullVolunteerId,
+            token: token.trimmingCharacters(in: .whitespaces)
         )
         
         NetworkClient.shared.apollo.perform(

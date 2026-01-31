@@ -1,0 +1,18 @@
+query EventTemplates($serviceYear: Int) {
+    eventTemplates(serviceYear: $serviceYear) {
+        id
+        eventType
+        circuit
+        region
+        serviceYear
+        name
+        theme
+        themeScripture
+        venue
+        address
+        startDate
+        endDate
+        language
+        isActivated
+    }
+}

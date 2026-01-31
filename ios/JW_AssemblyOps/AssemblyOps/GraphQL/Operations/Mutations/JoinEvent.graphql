@@ -1,0 +1,14 @@
+mutation JoinEvent($input: JoinEventInput!) {
+    joinEvent(input: $input) {
+        id
+        role
+        event {
+            id
+            name
+            eventType
+            venue
+            startDate
+            endDate
+        }
+    }
+}

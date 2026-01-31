@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "LoginAdmin"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation LoginAdmin($input: LoginAdminInput!) { loginAdmin(input: $input) { __typename admin { __typename id email firstName lastName fullName phone congregation } accessToken refreshToken expiresIn } }"#
+        #"mutation LoginAdmin($input: LoginAdminInput!) { loginAdmin(input: $input) { __typename admin { __typename id email firstName lastName fullName phone congregation congregationId } accessToken refreshToken expiresIn } }"#
       ))
 
     public var input: LoginAdminInput
@@ -74,6 +74,7 @@ extension AssemblyOpsAPI {
             .field("fullName", String.self),
             .field("phone", String?.self),
             .field("congregation", String?.self),
+            .field("congregationId", AssemblyOpsAPI.ID?.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             LoginAdminMutation.Data.LoginAdmin.Admin.self
@@ -86,6 +87,7 @@ extension AssemblyOpsAPI {
           var fullName: String { __data["fullName"] }
           var phone: String? { __data["phone"] }
           var congregation: String? { __data["congregation"] }
+          var congregationId: AssemblyOpsAPI.ID? { __data["congregationId"] }
         }
       }
     }

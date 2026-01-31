@@ -1,0 +1,12 @@
+mutation ActivateEvent($input: ActivateEventInput!) {
+    activateEvent(input: $input) {
+        id
+        name
+        joinCode
+        eventType
+        venue
+        address
+        startDate
+        endDate
+    }
+}

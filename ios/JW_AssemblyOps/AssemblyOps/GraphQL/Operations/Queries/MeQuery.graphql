@@ -1,0 +1,21 @@
+query Me {
+    me {
+        id
+        email
+        firstName
+        lastName
+        fullName
+        phone
+        congregationId
+        congregationRef {
+            id
+            name
+            city
+            state
+            circuit {
+                id
+                code
+            }
+        }
+    }
+}

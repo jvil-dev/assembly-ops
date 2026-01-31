@@ -51,8 +51,6 @@ struct OAuthRegistrationView: View {
 
     @State private var firstNameField: String
     @State private var lastNameField: String
-    @State private var phone = ""
-    @State private var congregation = ""
     @State private var isSubmitting = false
     @State private var errorMessage: String?
 
@@ -61,8 +59,6 @@ struct OAuthRegistrationView: View {
     private enum Field {
         case firstName
         case lastName
-        case phone
-        case congregation
     }
 
     init(email: String, firstName: String?, lastName: String?, pendingOAuthToken: String) {
@@ -229,40 +225,12 @@ struct OAuthRegistrationView: View {
                 text: $lastNameField,
                 isSecure: false,
                 isFocused: focusedField == .lastName,
-                onSubmit: { focusedField = .phone },
-                autocapitalization: .words,
-                keyboardType: .default,
-                isMonospaced: false
-            )
-            .focused($focusedField, equals: .lastName)
-
-            // Phone (optional)
-            UnderlineTextField(
-                label: "PHONE (OPTIONAL)",
-                placeholder: "Enter your phone number",
-                text: $phone,
-                isSecure: false,
-                isFocused: focusedField == .phone,
-                onSubmit: { focusedField = .congregation },
-                autocapitalization: .never,
-                keyboardType: .phonePad,
-                isMonospaced: false
-            )
-            .focused($focusedField, equals: .phone)
-
-            // Congregation
-            UnderlineTextField(
-                label: "CONGREGATION",
-                placeholder: "Enter your congregation",
-                text: $congregation,
-                isSecure: false,
-                isFocused: focusedField == .congregation,
                 onSubmit: { register() },
                 autocapitalization: .words,
                 keyboardType: .default,
                 isMonospaced: false
             )
-            .focused($focusedField, equals: .congregation)
+            .focused($focusedField, equals: .lastName)
         }
     }
 
@@ -327,8 +295,7 @@ struct OAuthRegistrationView: View {
 
     private var isFormValid: Bool {
         !firstNameField.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !lastNameField.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !congregation.trimmingCharacters(in: .whitespaces).isEmpty
+        !lastNameField.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     // MARK: - Registration
@@ -342,9 +309,7 @@ struct OAuthRegistrationView: View {
         let input = AssemblyOpsAPI.CompleteOAuthRegistrationInput(
             pendingOAuthToken: pendingOAuthToken,
             firstName: firstNameField.trimmingCharacters(in: .whitespaces),
-            lastName: lastNameField.trimmingCharacters(in: .whitespaces),
-            phone: phone.isEmpty ? .none : .some(phone),
-            congregation: congregation.trimmingCharacters(in: .whitespaces)
+            lastName: lastNameField.trimmingCharacters(in: .whitespaces)
         )
 
         NetworkClient.shared.apollo.perform(
@@ -358,6 +323,10 @@ struct OAuthRegistrationView: View {
                             id: data.admin.id,
                             email: data.admin.email,
                             fullName: data.admin.fullName,
+                            firstName: data.admin.firstName ?? "",
+                            lastName: data.admin.lastName ?? "",
+                            phone: nil,
+                            congregationId: nil,
                             overseerType: ""
                         )
                         appState.didLoginAsOverseer(

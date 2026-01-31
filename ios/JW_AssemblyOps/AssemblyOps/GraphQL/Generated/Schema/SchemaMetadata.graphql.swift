@@ -33,6 +33,8 @@ extension AssemblyOpsAPI {
       case "AuthPayload": return AssemblyOpsAPI.Objects.AuthPayload
       case "CaptainGroup": return AssemblyOpsAPI.Objects.CaptainGroup
       case "CheckIn": return AssemblyOpsAPI.Objects.CheckIn
+      case "Circuit": return AssemblyOpsAPI.Objects.Circuit
+      case "Congregation": return AssemblyOpsAPI.Objects.Congregation
       case "CoverageAssignment": return AssemblyOpsAPI.Objects.CoverageAssignment
       case "CoverageCheckIn": return AssemblyOpsAPI.Objects.CoverageCheckIn
       case "CoveragePost": return AssemblyOpsAPI.Objects.CoveragePost
@@ -44,6 +46,8 @@ extension AssemblyOpsAPI {
       case "Event": return AssemblyOpsAPI.Objects.Event
       case "EventAdmin": return AssemblyOpsAPI.Objects.EventAdmin
       case "EventTemplate": return AssemblyOpsAPI.Objects.EventTemplate
+      case "EventVolunteer": return AssemblyOpsAPI.Objects.EventVolunteer
+      case "EventVolunteerCredentials": return AssemblyOpsAPI.Objects.EventVolunteerCredentials
       case "MarkAllReadResult": return AssemblyOpsAPI.Objects.MarkAllReadResult
       case "Message": return AssemblyOpsAPI.Objects.Message
       case "Mutation": return AssemblyOpsAPI.Objects.Mutation
@@ -56,6 +60,7 @@ extension AssemblyOpsAPI {
       case "TokenPayload": return AssemblyOpsAPI.Objects.TokenPayload
       case "Volunteer": return AssemblyOpsAPI.Objects.Volunteer
       case "VolunteerAuthPayload": return AssemblyOpsAPI.Objects.VolunteerAuthPayload
+      case "VolunteerProfile": return AssemblyOpsAPI.Objects.VolunteerProfile
       default: return nil
       }
     }
