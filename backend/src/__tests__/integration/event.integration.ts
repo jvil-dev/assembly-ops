@@ -30,7 +30,6 @@ describe('Event Operations', () => {
             password: 'TestPassword123!',
             firstName: 'Event',
             lastName: 'Tester',
-            congregation: 'Test Congregation',
           },
         },
       });

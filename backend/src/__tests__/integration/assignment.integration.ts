@@ -58,7 +58,6 @@ describe('Assignment Operations', () => {
             password: 'TestPassword123!',
             firstName: 'Assignment',
             lastName: 'Tester',
-            congregation: 'Test Congregation',
           },
         },
       });

@@ -47,7 +47,6 @@ describe('Attendance Count Operations', () => {
             password: 'TestPassword123',
             firstName: 'Attendance',
             lastName: 'Tester',
-            congregation: 'Test Congregation',
           },
         },
       });

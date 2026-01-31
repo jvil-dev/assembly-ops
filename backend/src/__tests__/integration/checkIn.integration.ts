@@ -55,7 +55,6 @@ describe('Check-In Operations', () => {
           password: 'TestPassword123!',
           firstName: 'CheckIn',
           lastName: 'Tester',
-          congregation: 'Test Congregation',
         },
       }
     );

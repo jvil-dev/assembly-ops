@@ -50,7 +50,6 @@ describe('Captain Operations', () => {
             password: 'TestPassword123',
             firstName: 'Captain',
             lastName: 'Tester',
-            congregation: 'Test Congregation',
           },
         },
       });
