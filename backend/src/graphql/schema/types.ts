@@ -11,7 +11,7 @@
  *
  * Enums:
  *   - EventType: CIRCUIT_ASSEMBLY, REGIONAL_CONVENTION, SPECIAL_CONVENTION
- *   - EventRole: EVENT_OVERSEER, DEPARTMENT_OVERSEER
+ *   - EventRole: APP_ADMIN, DEPARTMENT_OVERSEER
  *   - DepartmentType: The 12 convention departments (ATTENDANT, PARKING, etc.)
  *   - AppointmentStatus: PUBLISHER, MINISTERIAL_SERVANT, ELDER
  *   - RecipientType: For messages - VOLUNTEER, DEPARTMENT, or EVENT
@@ -36,7 +36,7 @@ const types = `#graphql
   }
 
   enum EventRole {
-    EVENT_OVERSEER
+    APP_ADMIN
     DEPARTMENT_OVERSEER
   }
 

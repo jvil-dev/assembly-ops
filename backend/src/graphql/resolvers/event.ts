@@ -9,11 +9,13 @@
  *   - event: Get a single event by ID (requires event access)
  *   - eventDepartments: Get all departments for an event
  *   - availableDepartments: Get department types not yet claimed
+ *   - eventAdmins: Get all admins for an event (requires event access)
  *
  * Mutations:
  *   - activateEvent: Create a real event from a template (generates join code)
  *   - joinEvent: Join an existing event using join code
  *   - claimDepartment: Claim a department as its overseer
+ *   - promoteToAppAdmin: Promote a Department Overseer to App Admin (APP_ADMIN only)
  *
  * Type Resolvers:
  *   - Event: name, eventType, venue, etc. (derived from template)
@@ -100,6 +102,17 @@ const eventResolvers = {
       const claimedTypes = claimedDepartments.map((d) => d.departmentType);
       return ALL_DEPARTMENT_TYPES.filter((t) => !claimedTypes.includes(t));
     },
+
+    eventAdmins: async (
+      _parent: unknown,
+      { eventId }: { eventId: string },
+      context: Context
+    ): Promise<EventAdmin[]> => {
+      requireAdmin(context);
+      await requireEventAccess(context, eventId);
+      const eventService = new EventService(context.prisma);
+      return eventService.getEventAdmins(eventId);
+    },
   },
 
   Mutation: {
@@ -132,6 +145,17 @@ const eventResolvers = {
       await requireEventAccess(context, input.eventId);
       const eventService = new EventService(context.prisma);
       return eventService.claimDepartment(input, context.admin.id);
+    },
+
+    promoteToAppAdmin: async (
+      _parent: unknown,
+      { input }: { input: { eventId: string; adminId: string } },
+      context: Context
+    ): Promise<EventAdmin> => {
+      requireAdmin(context);
+      await requireEventAccess(context, input.eventId);
+      const eventService = new EventService(context.prisma);
+      return eventService.promoteToAppAdmin(input, context.admin.id);
     },
   },
 

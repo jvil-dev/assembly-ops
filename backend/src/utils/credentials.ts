@@ -54,11 +54,16 @@ export function generateEventVolunteerId(prefix: 'CA' | 'RC'): string {
 }
 
 /**
- * Generate a secure random token
- * 32 characters, URL-safe base64
+ * Generate a secure random token using the unambiguous character set
+ * 8 characters, easy to read/type from printed cards
+ * Combined with volunteerId, provides sufficient entropy for login
  */
 export function generateToken(): string {
-  return crypto.randomBytes(24).toString('base64url').slice(0, 32);
+  let token = '';
+  for (let i = 0; i < 8; i++) {
+    token += ID_CHARS.charAt(Math.floor(Math.random() * ID_CHARS.length));
+  }
+  return token;
 }
 
 /**
@@ -73,6 +78,55 @@ export async function hashToken(token: string): Promise<string> {
  */
 export async function verifyToken(token: string, hash: string): Promise<boolean> {
   return bcrypt.compare(token, hash);
+}
+
+// ============================================
+// TOKEN ENCRYPTION (AES-256-GCM)
+// ============================================
+
+const ALGORITHM = 'aes-256-gcm' as const;
+const IV_LENGTH = 12;
+const AUTH_TAG_LENGTH = 16;
+
+function getEncryptionKey(): Buffer {
+  const keyHex = process.env.VOLUNTEER_TOKEN_KEY;
+  if (!keyHex || keyHex.length !== 64) {
+    throw new Error('VOLUNTEER_TOKEN_KEY must be set as a 64-character hex string');
+  }
+  return Buffer.from(keyHex, 'hex');
+}
+
+/**
+ * Encrypt a volunteer token using AES-256-GCM
+ * Returns base64 string: [IV (12 bytes)][authTag (16 bytes)][ciphertext]
+ */
+export function encryptToken(plainToken: string): string {
+  const key = getEncryptionKey();
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
+
+  const encrypted = Buffer.concat([cipher.update(plainToken, 'utf8'), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+
+  return Buffer.concat([iv, authTag, encrypted]).toString('base64');
+}
+
+/**
+ * Decrypt an AES-256-GCM encrypted token
+ * Input: base64 string from encryptToken()
+ */
+export function decryptToken(encryptedToken: string): string {
+  const key = getEncryptionKey();
+  const data = Buffer.from(encryptedToken, 'base64');
+
+  const iv = data.subarray(0, IV_LENGTH);
+  const authTag = data.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
+  const ciphertext = data.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
+
+  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
+  decipher.setAuthTag(authTag);
+
+  return decipher.update(ciphertext, undefined, 'utf8') + decipher.final('utf8');
 }
 
 // ============================================

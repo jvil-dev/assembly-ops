@@ -7,6 +7,7 @@
  *   - activateEventSchema: Validates event activation (templateId required)
  *   - joinEventSchema: Validates joining an event (joinCode required)
  *   - claimDepartmentSchema: Validates department claiming (eventId + departmentType)
+ *   - promoteToAppAdminSchema: Validates admin promotion (eventId + adminId)
  *
  * Note on nativeEnum:
  *   z.nativeEnum(DepartmentType) validates against Prisma's enum values.
@@ -32,6 +33,12 @@ export const claimDepartmentSchema = z.object({
   }),
 });
 
+export const promoteToAppAdminSchema = z.object({
+  eventId: z.string().cuid('Invalid event ID format'),
+  adminId: z.string().cuid('Invalid admin ID format'),
+});
+
 export type ActivateEventInput = z.infer<typeof activateEventSchema>;
 export type JoinEventInput = z.infer<typeof joinEventSchema>;
 export type ClaimDepartmentInput = z.infer<typeof claimDepartmentSchema>;
+export type PromoteToAppAdminInput = z.infer<typeof promoteToAppAdminSchema>;

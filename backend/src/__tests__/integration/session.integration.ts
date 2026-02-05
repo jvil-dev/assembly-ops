@@ -6,7 +6,7 @@
  * All departments share the same sessions within an event.
  *
  * Test Setup:
- *   1. Register a new admin (becomes EVENT_OVERSEER)
+ *   1. Register a new admin (becomes APP_ADMIN)
  *   2. Fetch event templates and activate an event
  *
  * Tests:
@@ -15,7 +15,7 @@
  *   - sessions: Query sessions by eventId with assignmentCount
  *
  * Authorization:
- *   Session mutations require EVENT_OVERSEER role.
+ *   Session mutations require APP_ADMIN role.
  *
  * TODO: Add updateSession and deleteSession tests
  */

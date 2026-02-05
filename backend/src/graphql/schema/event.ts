@@ -9,11 +9,13 @@
  *   - event: Get a single event by ID
  *   - eventDepartments: Get all departments for an event
  *   - availableDepartments: Get department types not yet claimed
+ *   - eventAdmins: Get all admins for an event (APP_ADMIN only)
  *
  * Mutations:
  *   - activateEvent: Create a real event from a template
  *   - joinEvent: Join an existing event using a join code
  *   - claimDepartment: Claim a department as its overseer
+ *   - promoteToAppAdmin: Promote a Department Overseer to App Admin (APP_ADMIN only)
  *
  * Event Lifecycle:
  *   1. Templates are seeded (Circuit Assembly 2025, etc.)
@@ -42,6 +44,11 @@ const eventTypeDefs = `#graphql
     departmentType: DepartmentType!
   }
 
+  input PromoteToAppAdminInput {
+    eventId: ID!
+    adminId: ID!
+  }
+
   # ============================================
   # QUERIES & MUTATIONS
   # ============================================
@@ -52,12 +59,14 @@ const eventTypeDefs = `#graphql
     event(id: ID!): Event
     eventDepartments(eventId: ID!): [Department!]!
     availableDepartments(eventId: ID!): [DepartmentType!]!
+    eventAdmins(eventId: ID!): [EventAdmin!]!
   }
 
   extend type Mutation {
     activateEvent(input: ActivateEventInput!): Event!
     joinEvent(input: JoinEventInput!): EventAdmin!
     claimDepartment(input: ClaimDepartmentInput!): Department!
+    promoteToAppAdmin(input: PromoteToAppAdminInput!): EventAdmin!
   }
 `;
 
