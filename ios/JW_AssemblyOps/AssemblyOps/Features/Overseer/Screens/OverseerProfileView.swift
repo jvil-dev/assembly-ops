@@ -54,13 +54,19 @@ struct OverseerProfileView: View {
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
                     }
 
+                    // Admin management (App Admins only)
+                    if sessionState.isEventOverseer {
+                        adminManagementLink
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+                    }
+
                     // Logout button
                     logoutButton
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
 
                     // App version
                     appVersion
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
                 }
                 .screenPadding()
                 .padding(.top, AppTheme.Spacing.l)
@@ -116,7 +122,9 @@ struct OverseerProfileView: View {
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
 
                     // Role badge
-                    Text(formatRole(overseer.overseerType))
+                    Text(sessionState.isEventOverseer
+                        ? NSLocalizedString("role.app_admin", comment: "")
+                        : NSLocalizedString("role.department_overseer", comment: ""))
                         .font(AppTheme.Typography.captionBold)
                         .foregroundStyle(AppTheme.themeColor)
                         .padding(.horizontal, 12)
@@ -199,6 +207,28 @@ struct OverseerProfileView: View {
         .themedCard(scheme: colorScheme)
     }
 
+    // MARK: - Admin Management Link
+
+    private var adminManagementLink: some View {
+        NavigationLink(destination: AdminManagementView()) {
+            HStack {
+                Image(systemName: "person.2.badge.gearshape")
+                    .foregroundStyle(AppTheme.themeColor)
+                    .frame(width: 24)
+                Text(NSLocalizedString("admin.manage.title", comment: ""))
+                    .font(AppTheme.Typography.body)
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+        }
+        .buttonStyle(.plain)
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
     // MARK: - Info Row Helper
 
     private func infoRow(icon: String, text: String) -> some View {
@@ -258,17 +288,6 @@ struct OverseerProfileView: View {
     }
 
     // MARK: - Helpers
-
-    private func formatRole(_ overseerType: String) -> String {
-        switch overseerType {
-        case "EVENT_OVERSEER":
-            return "Event Overseer"
-        case "DEPARTMENT_OVERSEER":
-            return "Department Overseer"
-        default:
-            return overseerType
-        }
-    }
 
     private func departmentIcon(for type: String) -> String {
         switch type.uppercased() {

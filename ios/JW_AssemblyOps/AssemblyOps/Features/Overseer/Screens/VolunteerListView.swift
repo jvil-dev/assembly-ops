@@ -118,6 +118,9 @@ struct VolunteerListView: View {
         .onChange(of: sessionState.selectedDepartment?.id) { _, _ in
             Task { await loadVolunteers() }
         }
+        .onChange(of: sessionState.claimedDepartment?.id) { _, _ in
+            Task { await loadVolunteers() }
+        }
         .onChange(of: selectedTab) { _, _ in
             Task { await loadVolunteers() }
         }
@@ -141,9 +144,11 @@ struct VolunteerListView: View {
 
         switch selectedTab {
         case .myDepartment:
+            let deptId = sessionState.selectedDepartment?.id
+                ?? sessionState.claimedDepartment?.id
             await viewModel.loadDepartmentVolunteers(
                 eventId: eventId,
-                departmentId: sessionState.selectedDepartment?.id
+                departmentId: deptId
             )
         case .allVolunteers:
             await viewModel.loadAllVolunteers(eventId: eventId)

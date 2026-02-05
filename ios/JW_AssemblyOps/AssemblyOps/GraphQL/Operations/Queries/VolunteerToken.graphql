@@ -1,0 +1,3 @@
+query VolunteerToken($id: ID!) {
+  volunteerToken(id: $id)
+}

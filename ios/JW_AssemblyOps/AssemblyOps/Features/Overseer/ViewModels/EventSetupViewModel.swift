@@ -147,6 +147,8 @@ final class EventSetupViewModel: ObservableObject {
                             joinCode: data.joinCode,
                             venue: data.venue
                         )
+                        // Load departments so App Admin can claim one after activation
+                        self?.loadAvailableDepartments(eventId: data.id)
                         HapticManager.shared.success()
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
                         self?.errorMessage = errors.first?.localizedDescription ?? "Failed to activate event"

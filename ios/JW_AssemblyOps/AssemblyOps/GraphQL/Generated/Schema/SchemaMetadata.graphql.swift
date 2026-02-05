@@ -60,6 +60,7 @@ extension AssemblyOpsAPI {
       case "TokenPayload": return AssemblyOpsAPI.Objects.TokenPayload
       case "Volunteer": return AssemblyOpsAPI.Objects.Volunteer
       case "VolunteerAuthPayload": return AssemblyOpsAPI.Objects.VolunteerAuthPayload
+      case "VolunteerCredentials": return AssemblyOpsAPI.Objects.VolunteerCredentials
       case "VolunteerProfile": return AssemblyOpsAPI.Objects.VolunteerProfile
       default: return nil
       }
