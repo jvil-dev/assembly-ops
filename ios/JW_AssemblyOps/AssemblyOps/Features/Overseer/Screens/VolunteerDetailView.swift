@@ -41,6 +41,8 @@ struct VolunteerDetailView: View {
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel: VolunteerDetailViewModel
     @State private var showDeleteConfirmation = false
+    @State private var showRegenerateConfirmation = false
+    @State private var showToken = false
     @State private var hasAppeared = false
     @State private var showCopiedToast = false
 
@@ -107,6 +109,26 @@ struct VolunteerDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Are you sure you want to remove \(volunteer.fullName) from your department?")
+        }
+        .confirmationDialog(
+            "Regenerate Credentials",
+            isPresented: $showRegenerateConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Regenerate", role: .destructive) {
+                Task { await viewModel.regenerateCredentials() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will invalidate \(volunteer.fullName)'s current login credentials. They will need new credentials to log in.")
+        }
+        .sheet(item: $viewModel.regeneratedCredentials) { creds in
+            VolunteerCredentialsView(
+                volunteerName: volunteer.fullName,
+                volunteerId: creds.volunteerId,
+                token: creds.token,
+                inviteMessage: "Your new login credentials:\nVolunteer ID: \(creds.volunteerId)\nToken: \(creds.token)"
+            )
         }
         .alert("Error", isPresented: .init(
             get: { viewModel.errorMessage != nil },
@@ -254,46 +276,119 @@ struct VolunteerDetailView: View {
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
 
-            // Volunteer ID
+            // Volunteer ID row
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Volunteer ID")
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                     Text(volunteer.volunteerId)
-                        .font(.system(.body, design: .monospaced))
+                        .font(.system(size: 17, design: .monospaced))
                         .foregroundStyle(.primary)
                 }
 
                 Spacer()
 
-                // Copy button
-                Button {
-                    UIPasteboard.general.string = "Volunteer ID: \(volunteer.volunteerId)"
-                    HapticManager.shared.lightTap()
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        showCopiedToast = true
+                copyButton(text: volunteer.volunteerId)
+            }
+
+            Divider()
+
+            // Token row
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Token")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+                    if viewModel.isLoadingToken {
+                        ProgressView()
+                            .frame(height: 20)
+                    } else if let token = viewModel.token {
+                        Text(showToken ? token : String(repeating: "\u{2022}", count: 8))
+                            .font(.system(size: 17, design: .monospaced))
+                            .foregroundStyle(.primary)
+                    } else {
+                        Button("Tap to view") {
+                            Task { await viewModel.fetchToken() }
+                        }
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.themeColor)
                     }
-                    // Hide toast after 2 seconds
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        withAnimation(.easeOut) {
-                            showCopiedToast = false
+                }
+
+                Spacer()
+
+                if viewModel.token != nil {
+                    // Show/Hide toggle
+                    Button {
+                        showToken.toggle()
+                        HapticManager.shared.lightTap()
+                    } label: {
+                        Image(systemName: showToken ? "eye.slash" : "eye")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(AppTheme.themeColor)
+                    }
+                    .padding(.trailing, 8)
+
+                    // Copy token
+                    if let token = viewModel.token {
+                        copyButton(text: token)
+                    }
+                }
+            }
+
+            // Regenerate button (editable only)
+            if isEditable {
+                Divider()
+
+                Button {
+                    showRegenerateConfirmation = true
+                } label: {
+                    HStack(spacing: 8) {
+                        if viewModel.isRegenerating {
+                            ProgressView()
+                                .tint(AppTheme.StatusColors.warning)
+                        } else {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                            Text("Regenerate Credentials")
                         }
                     }
-                } label: {
-                    Image(systemName: "doc.on.doc")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(AppTheme.themeColor)
-                        .frame(width: 40, height: 40)
-                        .background(AppTheme.themeColor.opacity(0.1))
-                        .clipShape(Circle())
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.StatusColors.warning)
                 }
                 .buttonStyle(.plain)
+                .disabled(viewModel.isRegenerating)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Copy Button Helper
+
+    private func copyButton(text: String) -> some View {
+        Button {
+            UIPasteboard.general.string = text
+            HapticManager.shared.lightTap()
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                showCopiedToast = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation(.easeOut) {
+                    showCopiedToast = false
+                }
+            }
+        } label: {
+            Image(systemName: "doc.on.doc")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(AppTheme.themeColor)
+                .frame(width: 40, height: 40)
+                .background(AppTheme.themeColor.opacity(0.1))
+                .clipShape(Circle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Remove Button

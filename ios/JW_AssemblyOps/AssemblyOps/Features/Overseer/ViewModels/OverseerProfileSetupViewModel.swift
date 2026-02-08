@@ -174,6 +174,7 @@ final class OverseerProfileSetupViewModel: ObservableObject {
                             lastName: data.lastName,
                             phone: data.phone,
                             congregationId: data.congregationId,
+                            circuitId: data.congregationRef?.circuit.id,
                             overseerType: self?.appState.currentOverseer?.overseerType ?? ""
                         )
                         self?.appState.needsProfileSetup = false

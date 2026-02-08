@@ -102,7 +102,7 @@ const messageResolvers = {
       context: Context
     ) => {
       requireAdmin(context);
-      await requireEventAccess(context, input.eventId, ['EVENT_OVERSEER']);
+      await requireEventAccess(context, input.eventId, ['APP_ADMIN']);
 
       const messageService = new MessageService(context.prisma);
       return messageService.sendBroadcast(context.admin.id, input);

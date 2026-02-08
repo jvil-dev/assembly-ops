@@ -31,20 +31,63 @@ struct DepartmentPickerSheet: View {
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: AppTheme.Spacing.m) {
-                    ForEach(Array(sessionState.departments.enumerated()), id: \.element.id) { index, department in
-                        Button {
-                            HapticManager.shared.lightTap()
-                            sessionState.selectDepartment(department)
-                            dismiss()
-                        } label: {
-                            DepartmentRow(
-                                department: department,
-                                isSelected: department.id == sessionState.selectedDepartment?.id,
-                                colorScheme: colorScheme
-                            )
+                    // "All Departments" option
+                    Button {
+                        HapticManager.shared.lightTap()
+                        sessionState.selectDepartment(nil)
+                        dismiss()
+                    } label: {
+                        HStack(spacing: AppTheme.Spacing.m) {
+                            Circle()
+                                .fill(AppTheme.themeColor)
+                                .frame(width: 44, height: 44)
+                                .overlay(
+                                    Image(systemName: "square.grid.2x2")
+                                        .font(.system(size: 18, weight: .medium))
+                                        .foregroundStyle(.white)
+                                )
+
+                            Text("All Departments")
+                                .font(AppTheme.Typography.headline)
+                                .foregroundStyle(.primary)
+
+                            Spacer()
+
+                            if sessionState.selectedDepartment == nil {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 22))
+                                    .foregroundStyle(AppTheme.themeColor)
+                            }
                         }
-                        .buttonStyle(.plain)
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index) * 0.02)
+                        .cardPadding()
+                        .themedCard(scheme: colorScheme)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
+                                .strokeBorder(sessionState.selectedDepartment == nil ? AppTheme.themeColor.opacity(0.3) : Color.clear, lineWidth: 2)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+
+                    if sessionState.isLoadingDepartments {
+                        ProgressView("Loading departments...")
+                            .padding(.vertical, AppTheme.Spacing.xl)
+                    } else {
+                        ForEach(Array(sessionState.departments.enumerated()), id: \.element.id) { index, department in
+                            Button {
+                                HapticManager.shared.lightTap()
+                                sessionState.selectDepartment(department)
+                                dismiss()
+                            } label: {
+                                DepartmentRow(
+                                    department: department,
+                                    isSelected: department.id == sessionState.selectedDepartment?.id,
+                                    colorScheme: colorScheme
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index + 1) * 0.02)
+                        }
                     }
                 }
                 .screenPadding()

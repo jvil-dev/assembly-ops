@@ -5,12 +5,14 @@
  *
  * Methods:
  *   - getEventTemplates(serviceYear?): Get available event templates
- *   - activateEvent(input, adminId): Create event from template, admin becomes EVENT_OVERSEER
+ *   - activateEvent(input, adminId): Create event from template, admin becomes APP_ADMIN
  *   - joinEvent(input, adminId): Join event using join code as DEPARTMENT_OVERSEER
  *   - claimDepartment(input, adminId): Claim a department in an event
  *   - getMyEvents(adminId): Get all events this admin is part of
  *   - getEvent(eventId): Get single event with all related data
  *   - getEventDepartments(eventId): Get departments for an event
+ *   - getEventAdmins(eventId): Get all admins for an event
+ *   - promoteToAppAdmin(input, adminId): Promote a Department Overseer to App Admin
  *
  * Event Lifecycle:
  *   1. HQ seeds event templates (Circuit Assembly 2025, etc.)
@@ -30,7 +32,7 @@
  * Called by: ../graphql/resolvers/event.ts
  */
 import { PrismaClient, EventRole, DepartmentType } from '@prisma/client';
-import { NotFoundError, ConflictError, ValidationError } from '../utils/errors.js';
+import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '../utils/errors.js';
 import {
   activateEventSchema,
   joinEventSchema,
@@ -99,14 +101,14 @@ export class EventService {
       throw new ConflictError('You have already activated this event');
     }
 
-    // Create event and add admin as EVENT_OVERSEER
+    // Create event and add admin as APP_ADMIN
     const event = await this.prisma.event.create({
       data: {
         templateId,
         admins: {
           create: {
             adminId,
-            role: EventRole.EVENT_OVERSEER,
+            role: EventRole.APP_ADMIN,
           },
         },
       },
@@ -228,14 +230,14 @@ export class EventService {
     });
 
     // Update eventAdmin with department
-    // Preserve EVENT_OVERSEER role if already set (they can manage sessions AND a department)
+    // Preserve APP_ADMIN role if already set (they can manage sessions AND a department)
     await this.prisma.eventAdmin.update({
       where: { id: eventAdmin.id },
       data: {
         departmentId: department.id,
         role:
-          eventAdmin.role === EventRole.EVENT_OVERSEER
-            ? EventRole.EVENT_OVERSEER
+          eventAdmin.role === EventRole.APP_ADMIN
+            ? EventRole.APP_ADMIN
             : EventRole.DEPARTMENT_OVERSEER,
       },
     });
@@ -321,5 +323,80 @@ export class EventService {
       },
       orderBy: { name: 'asc' },
     });
+  }
+
+  async getEventAdmins(eventId: string) {
+    return this.prisma.eventAdmin.findMany({
+      where: { eventId },
+      include: {
+        admin: true,
+        event: true,
+        department: true,
+      },
+      orderBy: { claimedAt: 'asc' },
+    });
+  }
+
+  async promoteToAppAdmin(
+    input: { eventId: string; adminId: string },
+    requestingAdminId: string,
+  ) {
+    const { eventId, adminId } = input;
+
+    // 1. Verify requesting admin is APP_ADMIN for this event
+    const requestingEventAdmin = await this.prisma.eventAdmin.findUnique({
+      where: {
+        adminId_eventId: {
+          adminId: requestingAdminId,
+          eventId,
+        },
+      },
+    });
+
+    if (
+      !requestingEventAdmin ||
+      requestingEventAdmin.role !== EventRole.APP_ADMIN
+    ) {
+      throw new AuthorizationError(
+        'Only App Admins can promote other admins',
+      );
+    }
+
+    // 2. Find target admin
+    const targetEventAdmin = await this.prisma.eventAdmin.findUnique({
+      where: {
+        adminId_eventId: {
+          adminId,
+          eventId,
+        },
+      },
+      include: {
+        admin: true,
+        event: true,
+        department: true,
+      },
+    });
+
+    if (!targetEventAdmin) {
+      throw new NotFoundError('Admin not found for this event');
+    }
+
+    // 3. Check if already APP_ADMIN (idempotent)
+    if (targetEventAdmin.role === EventRole.APP_ADMIN) {
+      return targetEventAdmin;
+    }
+
+    // 4. Promote to APP_ADMIN
+    const updated = await this.prisma.eventAdmin.update({
+      where: { id: targetEventAdmin.id },
+      data: { role: EventRole.APP_ADMIN },
+      include: {
+        admin: true,
+        event: true,
+        department: true,
+      },
+    });
+
+    return updated;
   }
 }

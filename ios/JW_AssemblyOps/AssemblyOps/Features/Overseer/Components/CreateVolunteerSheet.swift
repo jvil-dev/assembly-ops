@@ -23,6 +23,7 @@
 //
 
 import SwiftUI
+import Apollo
 
 struct CreateVolunteerSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -32,7 +33,6 @@ struct CreateVolunteerSheet: View {
 
     @State private var firstName = ""
     @State private var lastName = ""
-    @State private var congregation = ""
     @State private var phone = ""
     @State private var email = ""
     @State private var appointment = "PUBLISHER"
@@ -41,10 +41,15 @@ struct CreateVolunteerSheet: View {
     @State private var showCredentials = false
     @State private var createdCredentials: (id: String, token: String)?
 
+    @State private var congregations: [CongregationItem] = []
+    @State private var selectedCongregation: CongregationItem?
+    @State private var isLoadingCongregations = false
+    @State private var errorMessage: String?
+
     private var isFormValid: Bool {
         !firstName.trimmingCharacters(in: .whitespaces).isEmpty &&
         !lastName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !congregation.trimmingCharacters(in: .whitespaces).isEmpty
+        selectedCongregation != nil
     }
 
     var body: some View {
@@ -93,6 +98,19 @@ struct CreateVolunteerSheet: View {
                     }
                 }
             }
+            .task {
+                await loadCongregations()
+            }
+            .alert("Error", isPresented: Binding(
+                get: { errorMessage != nil },
+                set: { if !$0 { errorMessage = nil } }
+            )) {
+                Button("OK") { errorMessage = nil }
+            } message: {
+                if let msg = errorMessage {
+                    Text(msg)
+                }
+            }
         }
     }
 
@@ -105,7 +123,54 @@ struct CreateVolunteerSheet: View {
             VStack(spacing: AppTheme.Spacing.m) {
                 themedTextField("First Name", text: $firstName)
                 themedTextField("Last Name", text: $lastName)
-                themedTextField("Congregation", text: $congregation)
+
+                // Congregation dropdown
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+                    Text("Congregation")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+                    if isLoadingCongregations {
+                        HStack {
+                            ProgressView()
+                            Text("Loading congregations...")
+                                .font(AppTheme.Typography.body)
+                                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        }
+                        .padding(AppTheme.Spacing.m)
+                    } else if congregations.isEmpty {
+                        Text("No congregations available")
+                            .font(AppTheme.Typography.body)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                            .padding(AppTheme.Spacing.m)
+                    } else {
+                        Menu {
+                            ForEach(congregations) { cong in
+                                Button {
+                                    selectedCongregation = cong
+                                    HapticManager.shared.lightTap()
+                                } label: {
+                                    Text("\(cong.name) - \(cong.city)")
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                Text(selectedCongregation.map { "\($0.name) - \($0.city)" } ?? "Select congregation")
+                                    .font(AppTheme.Typography.body)
+                                    .foregroundStyle(selectedCongregation != nil
+                                        ? (colorScheme == .dark ? .white : .primary)
+                                        : AppTheme.textTertiary(for: colorScheme))
+                                Spacer()
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.caption)
+                                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                            }
+                            .padding(AppTheme.Spacing.m)
+                            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                        }
+                    }
+                }
             }
         }
         .cardPadding()
@@ -188,9 +253,52 @@ struct CreateVolunteerSheet: View {
 
     // MARK: - Actions
 
+    private func loadCongregations() async {
+        guard let circuitId = AppState.shared.currentOverseer?.circuitId else { return }
+
+        isLoadingCongregations = true
+        do {
+            let result = try await NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.CongregationsByCircuitQuery(circuitId: circuitId),
+                cachePolicy: .fetchIgnoringCacheData
+            )
+            if let data = result.data?.congregationsByCircuit {
+                congregations = data.map { cong in
+                    CongregationItem(
+                        id: cong.id,
+                        name: cong.name,
+                        city: cong.city,
+                        state: cong.state,
+                        language: cong.language
+                    )
+                }
+            }
+        } catch {
+            print("Failed to load congregations: \(error)")
+        }
+        isLoadingCongregations = false
+    }
+
     private func createVolunteer() async {
-        guard let departmentId = sessionState.selectedDepartment?.id,
-              let eventId = sessionState.selectedEvent?.id else { return }
+        guard let eventId = sessionState.selectedEvent?.id else {
+            errorMessage = "No event selected. Please go back and select an event."
+            HapticManager.shared.error()
+            return
+        }
+
+        // Use selectedDepartment first, fall back to claimedDepartment
+        guard let departmentId = sessionState.selectedDepartment?.id
+                ?? sessionState.claimedDepartment?.id else {
+            errorMessage = "No department selected. Please go back and select a department."
+            HapticManager.shared.error()
+            return
+        }
+
+        guard let congregation = selectedCongregation else {
+            errorMessage = "Please select a congregation."
+            HapticManager.shared.error()
+            return
+        }
 
         isSubmitting = true
         HapticManager.shared.lightTap()
@@ -198,7 +306,7 @@ struct CreateVolunteerSheet: View {
         let input = CreateVolunteerInput(
             firstName: firstName.trimmingCharacters(in: .whitespaces),
             lastName: lastName.trimmingCharacters(in: .whitespaces),
-            congregation: congregation.trimmingCharacters(in: .whitespaces),
+            congregation: "\(congregation.name) - \(congregation.city)",
             phone: phone.isEmpty ? nil : phone,
             email: email.isEmpty ? nil : email,
             appointmentStatus: appointment,
@@ -211,6 +319,9 @@ struct CreateVolunteerSheet: View {
             createdCredentials = (result.volunteerId, result.token)
             HapticManager.shared.success()
             showCredentials = true
+        } else {
+            errorMessage = viewModel.error ?? "Failed to create volunteer. Please try again."
+            HapticManager.shared.error()
         }
 
         isSubmitting = false

@@ -81,6 +81,19 @@
 "volunteer.addedSuccess" = "¡%@ ha sido agregado!";
 "volunteer.shareCredentials" = "Comparte las credenciales para que puedan iniciar sesión";
 
+// MARK: - Roles
+"role.app_admin" = "Administrador de la App";
+"role.department_overseer" = "Superintendente de Departamento";
+
+// MARK: - Admin Management
+"admin.manage.title" = "Gestionar Administradores";
+"admin.promote.button" = "Promover a Administrador de la App";
+"admin.promote.alert.title" = "¿Promover a Administrador de la App?";
+"admin.promote.alert.message" = "%@ tendrá acceso completo a todos los departamentos y podrá promover a otros superintendentes.";
+"admin.promote.success" = "Promovido exitosamente";
+"admin.list.empty" = "No hay otros administradores";
+"admin.list.empty.subtitle" = "Comparte el código de unión del evento para agregar superintendentes de departamento";
+
 // MARK: - Settings
 "settings.language" = "Idioma";
 "settings.english" = "Inglés";

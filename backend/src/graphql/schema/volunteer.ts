@@ -101,6 +101,7 @@ const volunteerTypeDefs = `#graphql
     volunteer(id: ID!): Volunteer
     volunteers(eventId: ID!, departmentId: ID): [Volunteer!]!
     myVolunteerProfile: Volunteer
+    volunteerToken(id: ID!): String!
   }
 
   extend type Mutation {

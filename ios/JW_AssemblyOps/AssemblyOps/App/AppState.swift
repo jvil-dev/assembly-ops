@@ -153,6 +153,7 @@ final class AppState: ObservableObject {
                             lastName: me.lastName,
                             phone: me.phone,
                             congregationId: me.congregationId,
+                            circuitId: me.congregationRef?.circuit.id,
                             overseerType: ""
                         )
                         self?.needsProfileSetup = me.congregationId == nil
@@ -211,15 +212,18 @@ final class AppState: ObservableObject {
                             refreshToken: data.refreshToken,
                             expiresIn: data.expiresIn
                         )
-                        self?.isLoggedIn = true
+                        // Fetch profile after refresh (populates currentOverseer/currentVolunteer
+                        // and checks needsProfileSetup/needsEventSetup)
+                        self?.fetchUserProfile()
                     } else {
                         self?.logout()
+                        self?.isLoading = false
                     }
                 case .failure(let error):
                     print("Token refresh failed: \(error)")
                     self?.logout()
+                    self?.isLoading = false
                 }
-                self?.isLoading = false
             }
         }
     }
@@ -261,13 +265,13 @@ final class AppState: ObservableObject {
         )
         KeychainManager.shared.overseerId = overseer.id
         KeychainManager.shared.userType = "overseer"
-        currentOverseer = overseer
         userType = .overseer
-        needsProfileSetup = !overseer.isProfileComplete
         NetworkClient.shared.resetClient()
 
-        // Check events after login
-        checkOverseerEvents()
+        // Fetch full profile from server (login responses may have partial data,
+        // e.g. OAuth logins don't return congregationId). This also chains into
+        // checkOverseerEvents() to determine needsEventSetup.
+        fetchOverseerProfile()
     }
     
     var isOverseer: Bool {
@@ -298,6 +302,7 @@ struct OverseerInfo: Identifiable {
     let lastName: String
     let phone: String?
     let congregationId: String?
+    let circuitId: String?
     let overseerType: String
 
     var isProfileComplete: Bool {

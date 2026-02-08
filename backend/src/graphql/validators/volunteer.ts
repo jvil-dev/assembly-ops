@@ -70,7 +70,7 @@ export const loginVolunteerSchema = z.object({
   token: z
     .string()
     .min(1, 'Token is required')
-    .transform((v: string) => v.toUpperCase().trim()),
+    .transform((v: string) => v.trim()),
 });
 
 export type CreateVolunteerInput = z.infer<typeof createVolunteerSchema>;

@@ -327,6 +327,7 @@ struct OAuthRegistrationView: View {
                             lastName: data.admin.lastName ?? "",
                             phone: nil,
                             congregationId: nil,
+                            circuitId: nil,
                             overseerType: ""
                         )
                         appState.didLoginAsOverseer(

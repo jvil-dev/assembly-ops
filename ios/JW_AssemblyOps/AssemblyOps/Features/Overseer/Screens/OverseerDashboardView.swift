@@ -170,7 +170,7 @@ struct OverseerDashboardView: View {
         LazyVGrid(columns: [.init(), .init()], spacing: AppTheme.Spacing.m) {
             StatCard(
                 title: "Volunteers",
-                value: "\(sessionState.selectedDepartment?.volunteerCount ?? 0)",
+                value: "\(sessionState.selectedDepartment?.volunteerCount ?? sessionState.selectedEvent?.volunteerCount ?? 0)",
                 icon: "person.3",
                 colorScheme: colorScheme
             )

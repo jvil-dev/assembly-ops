@@ -68,6 +68,23 @@ const volunteerResolvers = {
       const volunteerService = new VolunteerService(context.prisma);
       return volunteerService.getVolunteer(context.volunteer.id);
     },
+
+    volunteerToken: async (_parent: unknown, { id }: { id: string }, context: Context) => {
+      requireAdmin(context);
+
+      const volunteer = await context.prisma.volunteer.findUnique({
+        where: { id },
+      });
+
+      if (!volunteer) {
+        throw new Error('Volunteer not found');
+      }
+
+      await requireEventAccess(context, volunteer.eventId);
+
+      const volunteerService = new VolunteerService(context.prisma);
+      return volunteerService.getVolunteerToken(id);
+    },
   },
 
   Mutation: {

@@ -23,12 +23,14 @@ struct EventTemplateListView: View {
     @ObservedObject var viewModel: EventSetupViewModel
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
-    @State private var showJoinCodeAlert = false
 
     var body: some View {
         ScrollView {
             VStack(spacing: AppTheme.Spacing.xl) {
-                if viewModel.isLoadingTemplates {
+                if viewModel.activatedEvent != nil {
+                    // Post-activation: show join code + department claiming
+                    activatedContent
+                } else if viewModel.isLoadingTemplates {
                     ProgressView("Loading templates...")
                         .padding(.top, AppTheme.Spacing.xxl)
                 } else if viewModel.templates.isEmpty {
@@ -70,7 +72,7 @@ struct EventTemplateListView: View {
             .padding(.bottom, AppTheme.Spacing.xxl)
         }
         .themedBackground(scheme: colorScheme)
-        .navigationTitle("Activate Event")
+        .navigationTitle(viewModel.activatedEvent != nil ? "Event Activated" : "Activate Event")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             viewModel.loadTemplates()
@@ -78,20 +80,197 @@ struct EventTemplateListView: View {
                 hasAppeared = true
             }
         }
-        .alert("Event Activated", isPresented: $showJoinCodeAlert) {
-            Button("Go to Dashboard") {
-                viewModel.completeSetup()
+    }
+
+    // MARK: - Activated Content
+
+    private var activatedContent: some View {
+        VStack(spacing: AppTheme.Spacing.xl) {
+            // Success header
+            VStack(spacing: AppTheme.Spacing.m) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(AppTheme.StatusColors.accepted)
+
+                Text("Event Created!")
+                    .font(AppTheme.Typography.title)
+                    .fontWeight(.bold)
             }
-        } message: {
+            .padding(.vertical, AppTheme.Spacing.l)
+
+            // Event info + join code card
             if let event = viewModel.activatedEvent {
-                Text("Your event \"\(event.name)\" has been created.\n\nJoin Code: \(event.joinCode)\n\nShare this code with Department Overseers so they can join.")
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "calendar.circle.fill")
+                            .foregroundStyle(AppTheme.themeColor)
+                        Text("Event Details")
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    }
+
+                    Text(event.name)
+                        .font(AppTheme.Typography.headline)
+                        .fontWeight(.semibold)
+
+                    Label(event.venue, systemImage: "mappin")
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+                    Divider()
+
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Join Code")
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                            Text(event.joinCode)
+                                .font(.system(.title2, design: .monospaced))
+                                .fontWeight(.bold)
+                                .foregroundStyle(AppTheme.themeColor)
+                        }
+                        Spacer()
+                        Button {
+                            UIPasteboard.general.string = event.joinCode
+                            HapticManager.shared.lightTap()
+                        } label: {
+                            Image(systemName: "doc.on.doc")
+                                .font(.title3)
+                                .foregroundStyle(AppTheme.themeColor)
+                        }
+                    }
+
+                    Text("Share this code with Department Overseers so they can join.")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
+                .cardPadding()
+                .themedCard(scheme: colorScheme)
+            }
+
+            // Department claiming section
+            if !viewModel.availableDepartments.isEmpty || viewModel.isLoadingDepartments {
+                departmentClaimSection
+            }
+
+            // Skip / Go to dashboard
+            Button {
+                viewModel.completeSetup()
+            } label: {
+                Text(viewModel.availableDepartments.isEmpty && !viewModel.isLoadingDepartments
+                    ? "Go to Dashboard"
+                    : "Skip for Now")
+                    .font(AppTheme.Typography.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppTheme.Spacing.l)
+                    .background(viewModel.availableDepartments.isEmpty && !viewModel.isLoadingDepartments
+                        ? AppTheme.themeColor
+                        : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    .foregroundStyle(viewModel.availableDepartments.isEmpty && !viewModel.isLoadingDepartments
+                        ? .white
+                        : AppTheme.textSecondary(for: colorScheme))
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
             }
         }
-        .onChange(of: viewModel.activatedEvent != nil) { activated in
-            if activated {
-                showJoinCodeAlert = true
+    }
+
+    // MARK: - Department Claim Section
+
+    private var departmentClaimSection: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: 8) {
+                Image(systemName: "square.grid.2x2.fill")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("Claim Your Department")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            Text("Select the department you'll be overseeing:")
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+            if viewModel.isLoadingDepartments {
+                ProgressView()
+            } else {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppTheme.Spacing.m) {
+                    ForEach(viewModel.availableDepartments, id: \.self) { deptType in
+                        departmentButton(deptType)
+                    }
+                }
+            }
+
+            // Error
+            if let error = viewModel.errorMessage {
+                Text(error)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(.red)
+            }
+
+            // Claim button
+            if let selected = viewModel.selectedDepartmentType,
+               let event = viewModel.activatedEvent {
+                Button {
+                    viewModel.claimDepartment(eventId: event.id, departmentType: selected)
+                } label: {
+                    HStack(spacing: AppTheme.Spacing.s) {
+                        if viewModel.isClaiming {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Text("Claim \(formatDepartment(selected))")
+                                .font(AppTheme.Typography.headline)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppTheme.Spacing.l)
+                    .background(AppTheme.themeColor)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
+                }
+                .disabled(viewModel.isClaiming)
             }
         }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Department Button
+
+    private func departmentButton(_ deptType: String) -> some View {
+        Button {
+            viewModel.selectedDepartmentType = deptType
+            HapticManager.shared.lightTap()
+        } label: {
+            VStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: departmentIcon(deptType))
+                    .font(.title3)
+                    .foregroundStyle(viewModel.selectedDepartmentType == deptType
+                        ? AppTheme.themeColor
+                        : AppTheme.textSecondary(for: colorScheme))
+
+                Text(formatDepartment(deptType))
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(viewModel.selectedDepartmentType == deptType
+                        ? (colorScheme == .dark ? .white : .primary)
+                        : AppTheme.textSecondary(for: colorScheme))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(AppTheme.Spacing.m)
+            .background(viewModel.selectedDepartmentType == deptType
+                ? AppTheme.themeColor.opacity(0.1)
+                : AppTheme.cardBackgroundSecondary(for: colorScheme))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                    .stroke(viewModel.selectedDepartmentType == deptType
+                        ? AppTheme.themeColor
+                        : .clear, lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Template Section
@@ -225,4 +404,91 @@ struct EventTemplateListView: View {
         }
         return isoString
     }
+
+    private func formatDepartment(_ type: String) -> String {
+        switch type {
+        case "ACCOUNTS": return "Accounts"
+        case "ATTENDANT": return "Attendant"
+        case "AUDIO_VIDEO": return "Audio/Video"
+        case "BAPTISM": return "Baptism"
+        case "CLEANING": return "Cleaning"
+        case "FIRST_AID": return "First Aid"
+        case "INFORMATION_VOLUNTEER_SERVICE": return "Information"
+        case "INSTALLATION": return "Installation"
+        case "LOST_FOUND_CHECKROOM": return "Lost & Found"
+        case "PARKING": return "Parking"
+        case "ROOMING": return "Rooming"
+        case "TRUCKING_EQUIPMENT": return "Trucking"
+        default: return type
+        }
+    }
+
+    private func departmentIcon(_ type: String) -> String {
+        switch type {
+        case "ACCOUNTS": return "dollarsign.circle"
+        case "ATTENDANT": return "person.2"
+        case "AUDIO_VIDEO": return "speaker.wave.2"
+        case "BAPTISM": return "drop"
+        case "CLEANING": return "sparkles"
+        case "FIRST_AID": return "cross.case"
+        case "INFORMATION_VOLUNTEER_SERVICE": return "info.circle"
+        case "INSTALLATION": return "hammer"
+        case "LOST_FOUND_CHECKROOM": return "questionmark.folder"
+        case "PARKING": return "car"
+        case "ROOMING": return "bed.double"
+        case "TRUCKING_EQUIPMENT": return "truck.box"
+        default: return "square.grid.2x2"
+        }
+    }
+}
+
+// MARK: - Previews
+
+#Preview("Templates") {
+    NavigationStack {
+        EventTemplateListView(viewModel: {
+            let vm = EventSetupViewModel()
+            vm.templates = [
+                EventTemplateItem(id: "1", eventType: "CIRCUIT_ASSEMBLY", circuit: "CA-7", region: "US-South", serviceYear: 2026, name: "Circuit Assembly with CO Visit", theme: "Keep Walking by Spirit", themeScripture: "Galatians 5:16", venue: "Assembly Hall of Jehovah's Witnesses", address: "123 Assembly Dr", startDate: "2026-03-15T00:00:00Z", endDate: "2026-03-16T00:00:00Z", language: "EN", isActivated: false),
+                EventTemplateItem(id: "2", eventType: "CIRCUIT_ASSEMBLY", circuit: "CA-7", region: "US-South", serviceYear: 2026, name: "Circuit Assembly", theme: nil, themeScripture: nil, venue: "Assembly Hall of Jehovah's Witnesses", address: "123 Assembly Dr", startDate: "2026-06-20T00:00:00Z", endDate: "2026-06-21T00:00:00Z", language: "ES", isActivated: true),
+                EventTemplateItem(id: "3", eventType: "REGIONAL_CONVENTION", circuit: nil, region: "US-South", serviceYear: 2026, name: "Regional Convention 2026", theme: "Declare the Good News!", themeScripture: "Mark 13:10", venue: "NRG Center", address: "1 NRG Park", startDate: "2026-07-04T00:00:00Z", endDate: "2026-07-06T00:00:00Z", language: "EN", isActivated: false),
+            ]
+            return vm
+        }())
+    }
+}
+
+#Preview("Activated") {
+    NavigationStack {
+        EventTemplateListView(viewModel: {
+            let vm = EventSetupViewModel()
+            vm.activatedEvent = ActivatedEventInfo(
+                id: "evt-1",
+                name: "Circuit Assembly with CO Visit",
+                joinCode: "ABC123",
+                venue: "Assembly Hall of Jehovah's Witnesses"
+            )
+            vm.availableDepartments = ["ATTENDANT", "PARKING", "CLEANING", "FIRST_AID", "AUDIO_VIDEO", "ACCOUNTS"]
+            return vm
+        }())
+    }
+}
+
+#Preview("Empty") {
+    NavigationStack {
+        EventTemplateListView(viewModel: EventSetupViewModel())
+    }
+}
+
+#Preview("Dark") {
+    NavigationStack {
+        EventTemplateListView(viewModel: {
+            let vm = EventSetupViewModel()
+            vm.templates = [
+                EventTemplateItem(id: "1", eventType: "CIRCUIT_ASSEMBLY", circuit: "CA-7", region: "US-South", serviceYear: 2026, name: "Circuit Assembly with CO Visit", theme: "Keep Walking by Spirit", themeScripture: nil, venue: "Assembly Hall", address: "123 Assembly Dr", startDate: "2026-03-15T00:00:00Z", endDate: "2026-03-16T00:00:00Z", language: "EN", isActivated: false),
+            ]
+            return vm
+        }())
+    }
+    .preferredColorScheme(.dark)
 }

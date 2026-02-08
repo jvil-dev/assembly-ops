@@ -102,6 +102,7 @@ final class OverseerRegistrationViewModel: ObservableObject {
                             lastName: data.admin.lastName,
                             phone: nil,
                             congregationId: nil,
+                            circuitId: nil,
                             overseerType: ""
                         )
                         self?.appState.didLoginAsOverseer(overseer: overseer, accessToken: data.accessToken, refreshToken: data.refreshToken, expiresIn: data.expiresIn)
@@ -175,7 +176,8 @@ final class OverseerRegistrationViewModel: ObservableObject {
                                     firstName: admin.firstName ?? "",
                                     lastName: admin.lastName ?? "",
                                     phone: nil,
-                                    congregationId: nil,
+                                    congregationId: nil, 
+                                    circuitId: nil,
                                     overseerType: ""
                                 )
                             },
@@ -223,6 +225,7 @@ final class OverseerRegistrationViewModel: ObservableObject {
                                     lastName: admin.lastName ?? "",
                                     phone: nil,
                                     congregationId: nil,
+                                    circuitId: nil,
                                     overseerType: ""
                                 )
                             },

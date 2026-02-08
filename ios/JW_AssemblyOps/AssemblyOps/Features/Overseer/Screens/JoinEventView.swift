@@ -310,7 +310,8 @@ struct JoinEventView: View {
 
     private func formatRole(_ role: String) -> String {
         switch role {
-        case "EVENT_OVERSEER": return "Event Overseer"
+        case "APP_ADMIN": return "App Administrator"
+        case "EVENT_OVERSEER": return "App Administrator"  // Legacy fallback
         case "DEPARTMENT_OVERSEER": return "Department Overseer"
         default: return role
         }
@@ -351,4 +352,40 @@ struct JoinEventView: View {
         default: return "square.grid.2x2"
         }
     }
+}
+
+// MARK: - Previews
+
+#Preview("Join Code Entry") {
+    NavigationStack {
+        JoinEventView(viewModel: EventSetupViewModel())
+    }
+}
+
+#Preview("Event Joined") {
+    NavigationStack {
+        JoinEventView(viewModel: {
+            let vm = EventSetupViewModel()
+            vm.joinedEvent = JoinedEventInfo(
+                eventAdminId: "ea-1",
+                role: "DEPARTMENT_OVERSEER",
+                eventId: "evt-1",
+                eventName: "Circuit Assembly with CO Visit",
+                venue: "Assembly Hall of Jehovah's Witnesses"
+            )
+            vm.availableDepartments = ["ATTENDANT", "PARKING", "CLEANING", "FIRST_AID", "AUDIO_VIDEO", "ACCOUNTS"]
+            return vm
+        }())
+    }
+}
+
+#Preview("Dark") {
+    NavigationStack {
+        JoinEventView(viewModel: {
+            let vm = EventSetupViewModel()
+            vm.joinCode = "XYZ789"
+            return vm
+        }())
+    }
+    .preferredColorScheme(.dark)
 }

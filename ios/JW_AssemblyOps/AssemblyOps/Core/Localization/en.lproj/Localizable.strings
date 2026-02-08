@@ -81,6 +81,19 @@
 "volunteer.addedSuccess" = "%@ has been added!";
 "volunteer.shareCredentials" = "Share the credentials below so they can log in";
 
+// MARK: - Roles
+"role.app_admin" = "App Administrator";
+"role.department_overseer" = "Department Overseer";
+
+// MARK: - Admin Management
+"admin.manage.title" = "Manage Administrators";
+"admin.promote.button" = "Promote to App Administrator";
+"admin.promote.alert.title" = "Promote to App Administrator?";
+"admin.promote.alert.message" = "%@ will have full access to all departments and can promote other overseers.";
+"admin.promote.success" = "Promoted successfully";
+"admin.list.empty" = "No other administrators";
+"admin.list.empty.subtitle" = "Share the event join code to add department overseers";
+
 // MARK: - Settings
 "settings.language" = "Language";
 "settings.english" = "English";

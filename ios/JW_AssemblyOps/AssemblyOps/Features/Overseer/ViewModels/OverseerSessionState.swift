@@ -98,13 +98,13 @@ final class OverseerSessionState: ObservableObject {
                 )
                 mappedEvents.append(summary)
 
-                // Check if this user is an Event Overseer for any event
-                if eventAdmin.role == .case(.eventOverseer) {
+                // Check if this user is an App Admin for any event
+                if eventAdmin.role == .case(.appAdmin) {
                     foundEventOverseerRole = true
                 }
 
-                // If department overseer, store claimed department
-                if eventAdmin.role == .case(.departmentOverseer), let dept = eventAdmin.department {
+                // Store claimed department for any role that has one
+                if let dept = eventAdmin.department {
                     claimedDepartment = DepartmentSummary(
                         id: dept.id,
                         name: dept.name,
@@ -116,6 +116,8 @@ final class OverseerSessionState: ObservableObject {
 
             events = mappedEvents
             isEventOverseer = foundEventOverseerRole
+
+            print("[SessionState] loadEvents: \(events.count) events, isEventOverseer=\(isEventOverseer), claimedDepartment=\(claimedDepartment?.name ?? "nil")")
 
             // Auto-select first event
             if let first = events.first {
@@ -132,6 +134,8 @@ final class OverseerSessionState: ObservableObject {
 
     // MARK: - Load Departments
 
+    @Published var isLoadingDepartments = false
+
     func loadDepartments(for eventId: String) async {
         // Department overseers can only see their claimed department
         guard isEventOverseer else {
@@ -142,15 +146,27 @@ final class OverseerSessionState: ObservableObject {
             return
         }
 
+        isLoadingDepartments = true
+
         do {
             let result = try await NetworkClient.shared.apollo.fetch(
-                query: AssemblyOpsAPI.EventDetailsQuery(eventId: eventId),
+                query: AssemblyOpsAPI.EventDepartmentsQuery(eventId: eventId),
                 cachePolicy: .fetchIgnoringCacheData
             )
 
-            guard let eventData = result.data?.event else { return }
+            if let errors = result.errors, !errors.isEmpty {
+                print("[SessionState] EventDepartmentsQuery errors: \(errors.map { $0.localizedDescription })")
+            }
 
-            departments = eventData.departments.map { dept in
+            guard let data = result.data?.eventDepartments else {
+                print("[SessionState] EventDepartmentsQuery returned nil for eventId: \(eventId)")
+                isLoadingDepartments = false
+                return
+            }
+
+            print("[SessionState] EventDepartmentsQuery returned \(data.count) departments")
+
+            departments = data.map { dept in
                 DepartmentSummary(
                     id: dept.id,
                     name: dept.name,
@@ -159,12 +175,19 @@ final class OverseerSessionState: ObservableObject {
                 )
             }
 
-            // Event overseers start with no department selected (view all)
-            selectedDepartment = nil
+            // Auto-select claimed department if available, otherwise view all
+            if let claimed = claimedDepartment,
+               departments.contains(where: { $0.id == claimed.id }) {
+                selectedDepartment = claimed
+            } else {
+                selectedDepartment = nil
+            }
 
         } catch {
-            print("Failed to load departments: \(error)")
+            print("[SessionState] Failed to load departments: \(error)")
         }
+
+        isLoadingDepartments = false
     }
 
     // MARK: - Select Department

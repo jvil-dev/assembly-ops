@@ -33,7 +33,7 @@
  */
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError, ValidationError, AuthenticationError } from '../utils/errors.js';
-import { generateVolunteerCredentials } from '../utils/credentials.js';
+import { generateEventVolunteerId, generateToken, hashToken, encryptToken, decryptToken } from '../utils/credentials.js';
 import { verifyPassword } from '../utils/password.js';
 import { generateTokens, TokenPair } from '../utils/jwt.js';
 import { TokenService } from './tokenService.js';
@@ -74,23 +74,29 @@ export class VolunteerService {
 
     const validated = result.data;
 
-    // Verify event exists
+    // Verify event exists and get event type for ID prefix
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
+      include: { template: true },
     });
 
     if (!event) {
       throw new NotFoundError('Event');
     }
 
-    // Generate credentials
-    const credentials = await generateVolunteerCredentials();
+    // Generate credentials with event-type prefix (CA for Circuit Assembly, RC for Regional/Special Convention)
+    const prefix = event.template.eventType === 'CIRCUIT_ASSEMBLY' ? 'CA' : 'RC';
+    const volunteerId = generateEventVolunteerId(prefix);
+    const token = generateToken();
+    const tokenHash = await hashToken(token);
+    const encryptedToken = encryptToken(token);
 
     // Create volunteer
     const volunteer = await this.prisma.volunteer.create({
       data: {
-        volunteerId: credentials.volunteerId,
-        tokenHash: credentials.tokenHash,
+        volunteerId,
+        tokenHash,
+        encryptedToken,
         firstName: validated.firstName,
         lastName: validated.lastName,
         email: validated.email,
@@ -107,7 +113,7 @@ export class VolunteerService {
     return {
       id: volunteer.id,
       volunteerId: volunteer.volunteerId,
-      token: credentials.token, // Plain token to give to volunteer
+      token, // Plain token to give to volunteer
       firstName: volunteer.firstName,
       lastName: volunteer.lastName,
       congregation: volunteer.congregation,
@@ -125,24 +131,30 @@ export class VolunteerService {
 
     const { eventId, volunteers } = result.data;
 
-    // Verify event exists
+    // Verify event exists and get event type for ID prefix
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
+      include: { template: true },
     });
 
     if (!event) {
       throw new NotFoundError('Event');
     }
 
+    const prefix = event.template.eventType === 'CIRCUIT_ASSEMBLY' ? 'CA' : 'RC';
     const createdVolunteers: CreatedVolunteer[] = [];
 
     for (const volunteerInput of volunteers) {
-      const credentials = await generateVolunteerCredentials();
+      const volId = generateEventVolunteerId(prefix);
+      const volToken = generateToken();
+      const volTokenHash = await hashToken(volToken);
+      const volEncryptedToken = encryptToken(volToken);
 
       const volunteer = await this.prisma.volunteer.create({
         data: {
-          volunteerId: credentials.volunteerId,
-          tokenHash: credentials.tokenHash,
+          volunteerId: volId,
+          tokenHash: volTokenHash,
+          encryptedToken: volEncryptedToken,
           firstName: volunteerInput.firstName,
           lastName: volunteerInput.lastName,
           email: volunteerInput.email,
@@ -159,7 +171,7 @@ export class VolunteerService {
       createdVolunteers.push({
         id: volunteer.id,
         volunteerId: volunteer.volunteerId,
-        token: credentials.token,
+        token: volToken,
         firstName: volunteer.firstName,
         lastName: volunteer.lastName,
         congregation: volunteer.congregation,
@@ -302,19 +314,27 @@ export class VolunteerService {
   }> {
     const volunteer = await this.prisma.volunteer.findUnique({
       where: { id: volunteerId },
+      include: {
+        event: { include: { template: true } },
+      },
     });
 
     if (!volunteer) {
       throw new NotFoundError('Volunteer');
     }
 
-    const credentials = await generateVolunteerCredentials();
+    const prefix = volunteer.event.template.eventType === 'CIRCUIT_ASSEMBLY' ? 'CA' : 'RC';
+    const newVolunteerId = generateEventVolunteerId(prefix);
+    const token = generateToken();
+    const tokenHash = await hashToken(token);
+    const encryptedToken = encryptToken(token);
 
     await this.prisma.volunteer.update({
       where: { id: volunteerId },
       data: {
-        volunteerId: credentials.volunteerId,
-        tokenHash: credentials.tokenHash,
+        volunteerId: newVolunteerId,
+        tokenHash,
+        encryptedToken,
       },
     });
 
@@ -322,8 +342,24 @@ export class VolunteerService {
     await this.tokenService.revokeAllUserTokens(volunteerId, 'volunteer');
 
     return {
-      volunteerId: credentials.volunteerId,
-      token: credentials.token,
+      volunteerId: newVolunteerId,
+      token,
     };
+  }
+
+  async getVolunteerToken(volunteerId: string): Promise<string> {
+    const volunteer = await this.prisma.volunteer.findUnique({
+      where: { id: volunteerId },
+    });
+
+    if (!volunteer) {
+      throw new NotFoundError('Volunteer');
+    }
+
+    if (!volunteer.encryptedToken) {
+      throw new NotFoundError('Token not available for this volunteer');
+    }
+
+    return decryptToken(volunteer.encryptedToken);
   }
 }
