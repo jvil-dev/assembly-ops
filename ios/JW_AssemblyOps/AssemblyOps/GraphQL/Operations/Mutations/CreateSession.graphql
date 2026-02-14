@@ -1,0 +1,10 @@
+mutation CreateSession($eventId: ID!, $input: CreateSessionInput!) {
+    createSession(eventId: $eventId, input: $input) {
+        id
+        name
+        date
+        startTime
+        endTime
+        createdAt
+    }
+}

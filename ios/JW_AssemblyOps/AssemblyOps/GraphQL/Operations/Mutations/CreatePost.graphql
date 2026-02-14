@@ -1,0 +1,10 @@
+mutation CreatePost($departmentId: ID!, $input: CreatePostInput!) {
+    createPost(departmentId: $departmentId, input: $input) {
+        id
+        name
+        description
+        location
+        capacity
+        createdAt
+    }
+}
