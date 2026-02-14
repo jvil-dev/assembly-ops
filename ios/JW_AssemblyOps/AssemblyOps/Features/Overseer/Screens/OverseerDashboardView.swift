@@ -31,9 +31,14 @@ import SwiftUI
 
 struct OverseerDashboardView: View {
     @StateObject private var sessionState = OverseerSessionState.shared
+    @StateObject private var attendanceVM = AttendanceViewModel()
+    @StateObject private var checkInStatsVM = CheckInStatsViewModel()
+    @StateObject private var messagesVM = SentMessagesViewModel()
     @Environment(\.colorScheme) var colorScheme
     @State private var showEventPicker = false
     @State private var showDepartmentPicker = false
+    @State private var showCreateSession = false
+    @State private var showCreatePost = false
     @State private var hasAppeared = false
 
     var body: some View {
@@ -57,11 +62,43 @@ struct OverseerDashboardView: View {
             }
             .themedBackground(scheme: colorScheme)
             .navigationTitle("Dashboard")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        // Session creation (APP_ADMIN only)
+                        if sessionState.isEventOverseer {
+                            Button {
+                                showCreateSession = true
+                            } label: {
+                                Label("session.create".localized, systemImage: "calendar.badge.plus")
+                            }
+                        }
+
+                        // Post creation (any admin with department)
+                        if sessionState.selectedDepartment != nil {
+                            Button {
+                                showCreatePost = true
+                            } label: {
+                                Label("post.create".localized, systemImage: "mappin.circle.fill")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .disabled(sessionState.selectedEvent == nil)
+                }
+            }
             .sheet(isPresented: $showEventPicker) {
                 EventPickerSheet()
             }
             .sheet(isPresented: $showDepartmentPicker) {
                 DepartmentPickerSheet()
+            }
+            .sheet(isPresented: $showCreateSession) {
+                CreateSessionSheet()
+            }
+            .sheet(isPresented: $showCreatePost) {
+                CreatePostSheet()
             }
             .onAppear {
                 withAnimation(AppTheme.entranceAnimation) {
@@ -71,6 +108,13 @@ struct OverseerDashboardView: View {
         }
         .task {
             await sessionState.loadEvents()
+
+            // Load attendance summary - provides session data dor check-in stats
+            if let eventId = sessionState.selectedEvent?.id {
+                await attendanceVM.loadEventSummary(eventId: eventId)
+                await checkInStatsVM.loadStatsForLatestSession(sessions: attendanceVM.sessionSummaries)
+                await messagesVM.fetchMessages()
+            }
         }
     }
 
@@ -144,9 +188,8 @@ struct OverseerDashboardView: View {
                 assignmentsOverviewSection
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
 
-                // Recent activity
+                // Check-in stats and attendance actions
                 recentActivitySection
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
             }
             .screenPadding()
             .padding(.top, AppTheme.Spacing.l)
@@ -223,29 +266,72 @@ struct OverseerDashboardView: View {
         .themedCard(scheme: colorScheme)
     }
 
-    // MARK: - Recent Activity
+    // MARK: - Check-In Stats
 
+    @ViewBuilder
     private var recentActivitySection: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            Text("Recent Activity")
-                .font(AppTheme.Typography.headline)
-                .foregroundStyle(AppTheme.themeColor)
-
-            HStack {
-                Spacer()
-                VStack(spacing: 8) {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 28))
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                    Text("No recent activity")
-                        .font(AppTheme.Typography.subheadline)
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                }
-                Spacer()
+        // Check-In Stats (if available)
+        if let currentStats = checkInStatsVM.stats.first {
+            NavigationLink(destination: CheckInStatsView()) {
+                CheckInStatsCard(stats: currentStats)
             }
-            .padding(.vertical, AppTheme.Spacing.l)
+            .buttonStyle(.plain)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+
+        // Attendance Quick Actions
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: 8) {
+                Image(systemName: "number")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("ATTENDANCE")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            NavigationLink(destination: AttendanceInputView()) {
+                HStack(spacing: AppTheme.Spacing.m) {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundStyle(AppTheme.themeColor)
+                        .frame(width: 24)
+
+                    Text("Submit Count")
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(.primary)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
+                .padding(AppTheme.Spacing.m)
+                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                .cornerRadius(AppTheme.CornerRadius.small)
+            }
+            .buttonStyle(.plain)
+
+            NavigationLink(destination: AttendanceSummaryView()) {
+                HStack(spacing: AppTheme.Spacing.m) {
+                    Image(systemName: "list.bullet.clipboard")
+                        .foregroundStyle(AppTheme.themeColor)
+                        .frame(width: 24)
+
+                    Text("View Summary")
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(.primary)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
+                .padding(AppTheme.Spacing.m)
+                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                .cornerRadius(AppTheme.CornerRadius.small)
+            }
+            .buttonStyle(.plain)
+        }
         .cardPadding()
         .themedCard(scheme: colorScheme)
     }
@@ -277,6 +363,74 @@ struct StatCard: View {
         .frame(maxWidth: .infinity)
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+}
+
+// MARK: - Recent Message Dashboard Row
+
+private struct RecentMessageDashboardRow: View {
+    let message: SentMessageItem
+    let colorScheme: ColorScheme
+
+    var body: some View {
+        HStack(spacing: AppTheme.Spacing.m) {
+            // Icon based on recipient type
+            ZStack {
+                Circle()
+                    .fill(recipientColor.opacity(0.15))
+                    .frame(width: 36, height: 36)
+
+                Image(systemName: recipientIcon)
+                    .font(.system(size: 14))
+                    .foregroundStyle(recipientColor)
+            }
+
+            // Message preview
+            VStack(alignment: .leading, spacing: 4) {
+                Text(message.subject ?? message.body)
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Text(message.recipientTypeDisplayName)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            }
+
+            Spacer()
+
+            // Time ago
+            Text(timeAgo)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+        }
+        .padding(AppTheme.Spacing.m)
+        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+        .cornerRadius(AppTheme.CornerRadius.small)
+    }
+
+    private var recipientIcon: String {
+        switch message.recipientType {
+        case "VOLUNTEER": return "person"
+        case "DEPARTMENT": return "person.3"
+        case "EVENT": return "megaphone"
+        default: return "envelope"
+        }
+    }
+
+    private var recipientColor: Color {
+        switch message.recipientType {
+        case "VOLUNTEER": return AppTheme.themeColor
+        case "DEPARTMENT": return .blue
+        case "EVENT": return .purple
+        default: return .gray
+        }
+    }
+
+    private var timeAgo: String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: message.createdAt, relativeTo: Date())
     }
 }
 

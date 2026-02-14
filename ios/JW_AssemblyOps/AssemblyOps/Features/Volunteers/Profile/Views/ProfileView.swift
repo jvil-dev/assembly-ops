@@ -35,6 +35,7 @@ import SwiftUI
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @EnvironmentObject private var appState: AppState
+    @ObservedObject private var localizationManager = LocalizationManager.shared
     @Environment(\.colorScheme) var colorScheme
 
     @State private var showingLogoutAlert = false
@@ -101,13 +102,17 @@ struct ProfileView: View {
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
                 }
 
+                // Language selector
+                languageCard
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
+
                 // Logout button
                 logoutButton
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
 
                 // App version
                 appVersion
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.3)
             }
             .screenPadding()
             .padding(.top, AppTheme.Spacing.l)
@@ -281,6 +286,32 @@ struct ProfileView: View {
                 .font(AppTheme.Typography.subheadline)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
         }
+    }
+
+    // MARK: - Logout Button
+
+    // MARK: - Language Card
+
+    private var languageCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            // Header
+            HStack(spacing: 8) {
+                Image(systemName: "globe")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("LANGUAGE")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            // Language picker
+            Picker("language.select".localized, selection: $localizationManager.currentLanguage) {
+                Text("language.english".localized).tag("en")
+                Text("language.spanish".localized).tag("es")
+            }
+            .pickerStyle(.segmented)
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
     }
 
     // MARK: - Logout Button

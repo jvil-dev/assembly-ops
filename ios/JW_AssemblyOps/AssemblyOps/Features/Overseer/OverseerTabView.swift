@@ -47,13 +47,18 @@ struct OverseerTabView: View {
                     .tabItem {
                         Label("Assignments", systemImage: "tablecells")
                     }
+                
+                OverseerMessagesView()
+                    .tabItem {
+                        Label("Messages", systemImage: "envelope")
+                    }
 
                 OverseerProfileView()
                     .tabItem {
                         Label("Profile", systemImage: "person")
                     }
             }
-            .tint(AppTheme.themeColor) // Theme color for tab bar and glass effect on iOS 26
+            .tint(AppTheme.themeColor)
         }
     }
 }

@@ -26,11 +26,11 @@
 
 import Foundation
 
-enum MessageRecipientType: String {
+enum MessageRecipientType: String, CaseIterable {
     case volunteer = "VOLUNTEER"
     case department = "DEPARTMENT"
     case event = "EVENT"
-    
+
     var displayName: String {
         switch self {
         case .volunteer: return "Direct"
@@ -38,11 +38,32 @@ enum MessageRecipientType: String {
         case .event: return "Announcement"
         }
     }
-    
+
     var icon: String {
         switch self {
         case .volunteer: return "person"
         case .department: return "person.2"
+        case .event: return "megaphone"
+        }
+    }
+}
+
+// MARK: - Overseer Compose Extension
+extension MessageRecipientType {
+    /// Display name for overseer message compose context
+    var composeDisplayName: String {
+        switch self {
+        case .volunteer: return "Individual Volunteer"
+        case .department: return "Department"
+        case .event: return "Event Broadcast"
+        }
+    }
+
+    /// Icon for overseer message compose context
+    var composeIcon: String {
+        switch self {
+        case .volunteer: return "person"
+        case .department: return "person.3"
         case .event: return "megaphone"
         }
     }

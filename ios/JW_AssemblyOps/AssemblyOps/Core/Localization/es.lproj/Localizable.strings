@@ -98,3 +98,72 @@
 "settings.language" = "Idioma";
 "settings.english" = "Inglés";
 "settings.spanish" = "Español";
+
+// MARK: - Asistencia
+"attendance.title" = "Asistencia";
+"attendance.submit" = "Registrar Asistencia";
+"attendance.summary" = "Resumen de Asistencia";
+"attendance.session" = "Sesión";
+"attendance.section" = "Sección (opcional)";
+"attendance.section.placeholder" = "ej., Planta Principal, Balcón";
+"attendance.count" = "Conteo";
+"attendance.notes" = "Notas (opcional)";
+"attendance.total" = "Total";
+"attendance.submit.button" = "Enviar Conteo";
+"attendance.submitted" = "Conteo registrado";
+"attendance.delete.confirm" = "¿Eliminar este conteo?";
+"attendance.empty" = "No hay conteos de asistencia registrados";
+"attendance.event.total" = "Total del Evento";
+
+// MARK: - Mensajes (Superintendente)
+"messages.compose" = "Redactar Mensaje";
+"messages.send" = "Enviar";
+"messages.sent" = "Mensajes Enviados";
+"messages.recipient" = "Destinatario";
+"messages.recipient.individual" = "Voluntario Individual";
+"messages.recipient.department" = "Departamento";
+"messages.recipient.event" = "Anuncio del Evento";
+"messages.subject" = "Asunto (opcional)";
+"messages.body" = "Mensaje";
+"messages.body.placeholder" = "Escribe tu mensaje...";
+"messages.sent.success" = "Mensaje enviado exitosamente";
+"messages.sent.count" = "Mensaje enviado a %d voluntarios";
+"messages.select.volunteer" = "Seleccionar Voluntario";
+"messages.empty.sent" = "No hay mensajes enviados";
+"messages.quick.department" = "Mensaje al Departamento";
+"messages.quick.broadcast" = "Anuncio del Evento";
+
+// MARK: - Estadísticas de Registro
+"stats.checkin" = "Estado de Registro";
+"stats.checked.in" = "Registrados";
+"stats.checked.out" = "Salieron";
+"stats.no.show" = "Ausentes";
+"stats.pending" = "Pendientes";
+"stats.total" = "Total de Asignaciones";
+"stats.rate" = "Tasa de Asistencia";
+
+// Creación de Sesión
+"session.create" = "Crear Sesión";
+"session.name" = "Nombre de Sesión";
+"session.date" = "Fecha";
+"session.startTime" = "Hora de Inicio";
+"session.endTime" = "Hora de Finalización";
+"session.timeFormat" = "Use formato de 24 horas (ej., 09:00, 14:30)";
+"session.created" = "Sesión Creada";
+"session.createdMessage" = "La sesión '%@' ha sido creada.";
+"session.error.invalidTime" = "Formato de hora inválido. Use HH:MM (24 horas).";
+
+// Creación de Puesto
+"post.create" = "Crear Puesto";
+"post.name" = "Nombre del Puesto";
+"post.description" = "Descripción";
+"post.location" = "Ubicación";
+"post.capacity" = "Capacidad";
+"post.created" = "Puesto Creado";
+"post.createdMessage" = "El puesto '%@' ha sido creado.";
+"post.examples" = "Ejemplos";
+
+// Idioma
+"language.select" = "Seleccionar Idioma";
+"language.english" = "English";
+"language.spanish" = "Español";

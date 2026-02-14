@@ -1,0 +1,10 @@
+mutation CreateSessions($input: CreateSessionsInput!) {
+    createSessions(input: $input) {
+        id
+        name
+        date
+        startTime
+        endTime
+        createdAt
+    }
+}

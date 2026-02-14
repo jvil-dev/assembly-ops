@@ -98,3 +98,72 @@
 "settings.language" = "Language";
 "settings.english" = "English";
 "settings.spanish" = "Spanish";
+
+// MARK: - Attendance
+"attendance.title" = "Attendance";
+"attendance.submit" = "Submit Attendance";
+"attendance.summary" = "Attendance Summary";
+"attendance.session" = "Session";
+"attendance.section" = "Section (optional)";
+"attendance.section.placeholder" = "e.g., Main Floor, Balcony";
+"attendance.count" = "Count";
+"attendance.notes" = "Notes (optional)";
+"attendance.total" = "Total";
+"attendance.submit.button" = "Submit Count";
+"attendance.submitted" = "Count submitted";
+"attendance.delete.confirm" = "Delete this count?";
+"attendance.empty" = "No attendance counts recorded yet";
+"attendance.event.total" = "Event Total";
+
+// MARK: - Messages (Overseer)
+"messages.compose" = "Compose Message";
+"messages.send" = "Send";
+"messages.sent" = "Sent Messages";
+"messages.recipient" = "Recipient";
+"messages.recipient.individual" = "Individual Volunteer";
+"messages.recipient.department" = "Department";
+"messages.recipient.event" = "Event Broadcast";
+"messages.subject" = "Subject (optional)";
+"messages.body" = "Message";
+"messages.body.placeholder" = "Write your message...";
+"messages.sent.success" = "Message sent successfully";
+"messages.sent.count" = "Message sent to %d volunteers";
+"messages.select.volunteer" = "Select Volunteer";
+"messages.empty.sent" = "No messages sent yet";
+"messages.quick.department" = "Message Department";
+"messages.quick.broadcast" = "Event Broadcast";
+
+// MARK: - Check-In Stats
+"stats.checkin" = "Check-In Status";
+"stats.checked.in" = "Checked In";
+"stats.checked.out" = "Left";
+"stats.no.show" = "No Show";
+"stats.pending" = "Pending";
+"stats.total" = "Total Assignments";
+"stats.rate" = "Attendance Rate";
+
+// Session Creation
+"session.create" = "Create Session";
+"session.name" = "Session Name";
+"session.date" = "Date";
+"session.startTime" = "Start Time";
+"session.endTime" = "End Time";
+"session.timeFormat" = "Use 24-hour format (e.g., 09:00, 14:30)";
+"session.created" = "Session Created";
+"session.createdMessage" = "Session '%@' has been created.";
+"session.error.invalidTime" = "Invalid time format. Use HH:MM (24-hour).";
+
+// Post Creation
+"post.create" = "Create Post";
+"post.name" = "Post Name";
+"post.description" = "Description";
+"post.location" = "Location";
+"post.capacity" = "Capacity";
+"post.created" = "Post Created";
+"post.createdMessage" = "Post '%@' has been created.";
+"post.examples" = "Examples";
+
+// Language
+"language.select" = "Select Language";
+"language.english" = "English";
+"language.spanish" = "Español";

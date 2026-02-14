@@ -1,0 +1,16 @@
+query SentMessages($limit: Int, $offset: Int) {
+  sentMessages(limit: $limit, offset: $offset) {
+    id
+    subject
+    body
+    recipientType
+    isRead
+    readAt
+    volunteer {
+      id
+      firstName
+      lastName
+    }
+    createdAt
+  }
+}

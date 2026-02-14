@@ -1,0 +1,9 @@
+mutation SendBroadcast($input: SendBroadcastInput!) {
+  sendBroadcast(input: $input) {
+    id
+    subject
+    body
+    recipientType
+    createdAt
+  }
+}

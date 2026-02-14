@@ -29,6 +29,7 @@ import SwiftUI
 struct OverseerProfileView: View {
     @EnvironmentObject private var appState: AppState
     @ObservedObject private var sessionState = OverseerSessionState.shared
+    @ObservedObject private var localizationManager = LocalizationManager.shared
     @Environment(\.colorScheme) var colorScheme
 
     @State private var showLogoutConfirmation = false
@@ -54,19 +55,23 @@ struct OverseerProfileView: View {
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
                     }
 
+                    // Language selector
+                    languageCard
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+
                     // Admin management (App Admins only)
                     if sessionState.isEventOverseer {
                         adminManagementLink
-                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
                     }
 
                     // Logout button
                     logoutButton
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
 
                     // App version
                     appVersion
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.3)
                 }
                 .screenPadding()
                 .padding(.top, AppTheme.Spacing.l)
@@ -90,6 +95,30 @@ struct OverseerProfileView: View {
                 Button("Cancel", role: .cancel) {}
             }
         }
+    }
+
+    // MARK: - Language Card
+
+    private var languageCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            // Header
+            HStack(spacing: 8) {
+                Image(systemName: "globe")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("LANGUAGE")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            // Language picker
+            Picker("language.select".localized, selection: $localizationManager.currentLanguage) {
+                Text("language.english".localized).tag("en")
+                Text("language.spanish".localized).tag("es")
+            }
+            .pickerStyle(.segmented)
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
     }
 
     // MARK: - Profile Header
