@@ -126,6 +126,117 @@ final class MessagesService {
             }
         }
     }
+    
+    /// Send message to individual volunteer
+    func sendMessage(volunteerId: String, subject: String?, body: String) async throws -> SentMessageItem {
+        let input = AssemblyOpsAPI.SendMessageInput(
+            volunteerId: volunteerId,
+            subject: subject.map { .some($0) } ?? .none,  // GraphQLNullable pattern
+            body: body
+        )
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.SendMessageMutation(input: input)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.sendMessage,
+                       let item = SentMessageItem(from: data) {
+                        continuation.resume(returning: item)
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: MessagesError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(throwing: MessagesError.serverError("Failed to send message"))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: MessagesError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    /// Broadcast to all volunteers in a department
+    func sendDepartmentMessage(departmentId: String, subject: String?, body: String) async throws -> [SentMessageItem] {
+        let input = AssemblyOpsAPI.SendDepartmentMessageInput(
+            departmentId: departmentId,
+            subject: subject.map { .some($0) } ?? .none,
+            body: body
+        )
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.SendDepartmentMessageMutation(input: input)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.sendDepartmentMessage {
+                        let items = data.compactMap { SentMessageItem(from: $0) }
+                        continuation.resume(returning: items)
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: MessagesError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: MessagesError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    /// Broadcast to entire event (requires APP_ADMIN role)
+    func sendBroadcast(eventId: String, subject: String?, body: String) async throws -> [SentMessageItem] {
+        let input = AssemblyOpsAPI.SendBroadcastInput(
+            eventId: eventId,
+            subject: subject.map { .some($0) } ?? .none,
+            body: body
+        )
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.SendBroadcastMutation(input: input)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.sendBroadcast {
+                        let items = data.compactMap { SentMessageItem(from: $0) }
+                        continuation.resume(returning: items)
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: MessagesError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: MessagesError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    /// Fetch messages sent by the current admin
+    func fetchSentMessages(limit: Int = 50, offset: Int = 0) async throws -> [SentMessageItem] {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.SentMessagesQuery(
+                    limit: .some(limit),
+                    offset: .some(offset)
+                ),
+                cachePolicy: .fetchIgnoringCacheData
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.sentMessages {
+                        let items = data.compactMap { SentMessageItem(from: $0) }
+                        continuation.resume(returning: items)
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: MessagesError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: MessagesError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
 }
 
 /// Messages errors
