@@ -55,6 +55,13 @@ struct AppTheme {
             : Color(red: 0.98, green: 0.97, blue: 0.96)
     }
 
+    /// Primary text color
+    static func textPrimary(for scheme: ColorScheme) -> Color {
+        scheme == .dark
+            ? Color.white
+            : Color(red: 0.1, green: 0.1, blue: 0.1)
+    }
+
     /// Secondary text color
     static func textSecondary(for scheme: ColorScheme) -> Color {
         scheme == .dark

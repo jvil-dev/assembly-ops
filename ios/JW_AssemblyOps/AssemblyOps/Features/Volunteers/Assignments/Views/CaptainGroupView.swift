@@ -38,6 +38,7 @@ struct CaptainGroupView: View {
     let onCheckIn: () -> Void
 
     @StateObject private var viewModel = CaptainGroupViewModel()
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -46,8 +47,8 @@ struct CaptainGroupView: View {
                     .frame(maxWidth: .infinity)
             } else if viewModel.members.isEmpty {
                 Text("No group members assigned")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             } else {
                 ForEach(viewModel.members) { member in
                     GroupMemberRow(
@@ -80,17 +81,18 @@ private struct GroupMemberRow: View {
     let onCheckIn: () -> Void
 
     @State private var isCheckingIn = false
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(member.fullName)
-                    .font(.subheadline)
+                    .font(AppTheme.Typography.subheadline)
                     .fontWeight(.medium)
 
                 Text(member.congregation)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             }
 
             Spacer()
@@ -101,8 +103,8 @@ private struct GroupMemberRow: View {
                         .foregroundColor(.green)
                     if let time = member.checkInTime {
                         Text(time, style: .time)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                     }
                 }
             } else if member.canCheckIn {
@@ -115,11 +117,10 @@ private struct GroupMemberRow: View {
                             .progressViewStyle(CircularProgressViewStyle())
                     } else {
                         Text("Check In")
-                            .font(.caption)
-                            .fontWeight(.medium)
+                            .font(AppTheme.Typography.captionBold)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(Color.blue)
+                            .background(AppTheme.themeColor)
                             .foregroundColor(.white)
                             .cornerRadius(6)
                     }
@@ -127,8 +128,8 @@ private struct GroupMemberRow: View {
                 .disabled(isCheckingIn)
             } else {
                 Text(member.assignmentStatus.displayName)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             }
         }
         .padding(.vertical, 8)
