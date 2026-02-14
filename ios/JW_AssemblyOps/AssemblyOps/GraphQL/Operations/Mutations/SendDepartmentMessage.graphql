@@ -1,0 +1,9 @@
+mutation SendDepartmentMessage($input: SendDepartmentMessageInput!) {
+  sendDepartmentMessage(input: $input) {
+    id
+    subject
+    body
+    recipientType
+    createdAt
+  }
+}

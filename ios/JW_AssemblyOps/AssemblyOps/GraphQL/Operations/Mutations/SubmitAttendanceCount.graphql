@@ -1,0 +1,13 @@
+mutation SubmitAttendanceCount($input: SubmitAttendanceCountInput!) {
+  submitAttendanceCount(input: $input) {
+    id
+    count
+    section
+    notes
+    session {
+      id
+      name
+    }
+    createdAt
+  }
+}

@@ -30,9 +30,11 @@ extension AssemblyOpsAPI {
     static func objectType(forTypename typename: String) -> ApolloAPI.Object? {
       switch typename {
       case "Admin": return AssemblyOpsAPI.Objects.Admin
+      case "AttendanceCount": return AssemblyOpsAPI.Objects.AttendanceCount
       case "AuthPayload": return AssemblyOpsAPI.Objects.AuthPayload
       case "CaptainGroup": return AssemblyOpsAPI.Objects.CaptainGroup
       case "CheckIn": return AssemblyOpsAPI.Objects.CheckIn
+      case "CheckInStats": return AssemblyOpsAPI.Objects.CheckInStats
       case "Circuit": return AssemblyOpsAPI.Objects.Circuit
       case "Congregation": return AssemblyOpsAPI.Objects.Congregation
       case "CoverageAssignment": return AssemblyOpsAPI.Objects.CoverageAssignment
@@ -57,6 +59,7 @@ extension AssemblyOpsAPI {
       case "Role": return AssemblyOpsAPI.Objects.Role
       case "ScheduleAssignment": return AssemblyOpsAPI.Objects.ScheduleAssignment
       case "Session": return AssemblyOpsAPI.Objects.Session
+      case "SessionAttendanceSummary": return AssemblyOpsAPI.Objects.SessionAttendanceSummary
       case "TokenPayload": return AssemblyOpsAPI.Objects.TokenPayload
       case "Volunteer": return AssemblyOpsAPI.Objects.Volunteer
       case "VolunteerAuthPayload": return AssemblyOpsAPI.Objects.VolunteerAuthPayload

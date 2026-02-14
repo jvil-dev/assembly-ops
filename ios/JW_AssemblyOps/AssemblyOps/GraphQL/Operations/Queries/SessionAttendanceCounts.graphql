@@ -1,0 +1,19 @@
+query SessionAttendanceCounts($sessionId: ID!) {
+  sessionAttendanceCounts(sessionId: $sessionId) {
+    id
+    count
+    section
+    notes
+    session {
+      id
+      name
+    }
+    submittedBy {
+      id
+      firstName
+      lastName
+    }
+    createdAt
+    updatedAt
+  }
+}

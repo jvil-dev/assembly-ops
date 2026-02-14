@@ -1,0 +1,105 @@
+// @generated
+// This file was automatically generated and should not be edited.
+
+@_exported import ApolloAPI
+
+extension AssemblyOpsAPI {
+  class SentMessagesQuery: GraphQLQuery {
+    static let operationName: String = "SentMessages"
+    static let operationDocument: ApolloAPI.OperationDocument = .init(
+      definition: .init(
+        #"query SentMessages($limit: Int, $offset: Int) { sentMessages(limit: $limit, offset: $offset) { __typename id subject body recipientType isRead readAt volunteer { __typename id firstName lastName } createdAt } }"#
+      ))
+
+    public var limit: GraphQLNullable<Int>
+    public var offset: GraphQLNullable<Int>
+
+    public init(
+      limit: GraphQLNullable<Int>,
+      offset: GraphQLNullable<Int>
+    ) {
+      self.limit = limit
+      self.offset = offset
+    }
+
+    public var __variables: Variables? { [
+      "limit": limit,
+      "offset": offset
+    ] }
+
+    struct Data: AssemblyOpsAPI.SelectionSet {
+      let __data: DataDict
+      init(_dataDict: DataDict) { __data = _dataDict }
+
+      static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Query }
+      static var __selections: [ApolloAPI.Selection] { [
+        .field("sentMessages", [SentMessage].self, arguments: [
+          "limit": .variable("limit"),
+          "offset": .variable("offset")
+        ]),
+      ] }
+      static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+        SentMessagesQuery.Data.self
+      ] }
+
+      var sentMessages: [SentMessage] { __data["sentMessages"] }
+
+      /// SentMessage
+      ///
+      /// Parent Type: `Message`
+      struct SentMessage: AssemblyOpsAPI.SelectionSet {
+        let __data: DataDict
+        init(_dataDict: DataDict) { __data = _dataDict }
+
+        static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Message }
+        static var __selections: [ApolloAPI.Selection] { [
+          .field("__typename", String.self),
+          .field("id", AssemblyOpsAPI.ID.self),
+          .field("subject", String?.self),
+          .field("body", String.self),
+          .field("recipientType", GraphQLEnum<AssemblyOpsAPI.RecipientType>.self),
+          .field("isRead", Bool.self),
+          .field("readAt", AssemblyOpsAPI.DateTime?.self),
+          .field("volunteer", Volunteer?.self),
+          .field("createdAt", AssemblyOpsAPI.DateTime.self),
+        ] }
+        static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+          SentMessagesQuery.Data.SentMessage.self
+        ] }
+
+        var id: AssemblyOpsAPI.ID { __data["id"] }
+        var subject: String? { __data["subject"] }
+        var body: String { __data["body"] }
+        var recipientType: GraphQLEnum<AssemblyOpsAPI.RecipientType> { __data["recipientType"] }
+        var isRead: Bool { __data["isRead"] }
+        var readAt: AssemblyOpsAPI.DateTime? { __data["readAt"] }
+        var volunteer: Volunteer? { __data["volunteer"] }
+        var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }
+
+        /// SentMessage.Volunteer
+        ///
+        /// Parent Type: `Volunteer`
+        struct Volunteer: AssemblyOpsAPI.SelectionSet {
+          let __data: DataDict
+          init(_dataDict: DataDict) { __data = _dataDict }
+
+          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Volunteer }
+          static var __selections: [ApolloAPI.Selection] { [
+            .field("__typename", String.self),
+            .field("id", AssemblyOpsAPI.ID.self),
+            .field("firstName", String.self),
+            .field("lastName", String.self),
+          ] }
+          static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+            SentMessagesQuery.Data.SentMessage.Volunteer.self
+          ] }
+
+          var id: AssemblyOpsAPI.ID { __data["id"] }
+          var firstName: String { __data["firstName"] }
+          var lastName: String { __data["lastName"] }
+        }
+      }
+    }
+  }
+
+}

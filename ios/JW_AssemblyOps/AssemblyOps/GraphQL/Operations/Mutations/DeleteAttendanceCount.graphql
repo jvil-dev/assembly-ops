@@ -1,0 +1,3 @@
+mutation DeleteAttendanceCount($id: ID!) {
+  deleteAttendanceCount(id: $id)
+}
