@@ -56,7 +56,7 @@ struct ProfileView: View {
                     EmptyView()
                 }
             }
-            .navigationTitle("Profile")
+            .navigationTitle("profile.title".localized)
             .refreshable {
                 viewModel.refresh()
             }
@@ -65,7 +65,7 @@ struct ProfileView: View {
                     viewModel.fetchProfile()
                 }
             }
-            .alert("Log Out", isPresented: $showingLogoutAlert) {
+            .alert("profile.logout".localized, isPresented: $showingLogoutAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Log Out", role: .destructive) {
                     Task {
@@ -73,7 +73,7 @@ struct ProfileView: View {
                     }
                 }
             } message: {
-                Text("Are you sure you want to log out?")
+                Text("profile.logout.confirm".localized)
             }
         }
     }
@@ -186,7 +186,7 @@ struct ProfileView: View {
                 )
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Department")
+                Text("profile.section.department".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 Text(name)
@@ -215,10 +215,10 @@ struct ProfileView: View {
     private func eventCard(volunteer: Volunteer) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "calendar")
                     .foregroundStyle(AppTheme.themeColor)
-                Text("Event")
+                Text("profile.section.event".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
@@ -251,21 +251,25 @@ struct ProfileView: View {
     private func contactCard(volunteer: Volunteer) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person.text.rectangle")
                     .foregroundStyle(AppTheme.themeColor)
-                Text("Contact Info")
+                Text("profile.section.contact".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
                 if let phone = volunteer.phone {
-                    infoRow(icon: "phone", text: phone)
+                    Link(destination: URL(string: "tel:\(phone.replacingOccurrences(of: " ", with: ""))")!) {
+                        infoRow(icon: "phone", text: phone)
+                    }
                 }
 
                 if let email = volunteer.email {
-                    infoRow(icon: "envelope", text: email)
+                    Link(destination: URL(string: "mailto:\(email)")!) {
+                        infoRow(icon: "envelope", text: email)
+                    }
                 }
             }
         }
@@ -277,7 +281,7 @@ struct ProfileView: View {
     // MARK: - Info Row Helper
 
     private func infoRow(icon: String, text: String) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: icon)
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -295,7 +299,7 @@ struct ProfileView: View {
     private var languageCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "globe")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("LANGUAGE")
@@ -320,9 +324,9 @@ struct ProfileView: View {
         Button(role: .destructive) {
             showingLogoutAlert = true
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
-                Text("Log Out")
+                Text("profile.logout".localized)
             }
             .font(AppTheme.Typography.headline)
             .frame(maxWidth: .infinity)
@@ -343,7 +347,7 @@ struct ProfileView: View {
     // MARK: - App Version
 
     private var appVersion: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: AppTheme.Spacing.xs) {
             Text("AssemblyOps")
                 .font(AppTheme.Typography.caption)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))

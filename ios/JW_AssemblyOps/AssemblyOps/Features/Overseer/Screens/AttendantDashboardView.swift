@@ -32,8 +32,13 @@ struct AttendantDashboardView: View {
     @ObservedObject private var sessionState = OverseerSessionState.shared
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
+    @State private var isInitialLoading = true
 
     var body: some View {
+        if isInitialLoading {
+            LoadingView(message: "attendant.dashboard.title".localized)
+                .themedBackground(scheme: colorScheme)
+        } else {
         ScrollView {
             VStack(spacing: AppTheme.Spacing.xl) {
                 incidentsCard
@@ -61,6 +66,7 @@ struct AttendantDashboardView: View {
                 hasAppeared = true
             }
         }
+        }
     }
 
     // MARK: - Incidents Card
@@ -68,7 +74,7 @@ struct AttendantDashboardView: View {
     private var incidentsCard: some View {
         NavigationLink(destination: SafetyIncidentListView()) {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "exclamationmark.triangle")
                         .foregroundStyle(incidentVM.unresolvedCount > 0 ? AppTheme.StatusColors.warning : AppTheme.themeColor)
                     Text("attendant.incidents.title".localized.uppercased())
@@ -103,9 +109,9 @@ struct AttendantDashboardView: View {
     private var alertsCard: some View {
         NavigationLink(destination: LostPersonAlertsView()) {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "person.crop.circle.badge.questionmark")
-                        .foregroundStyle(alertVM.unresolvedCount > 0 ? .red : AppTheme.themeColor)
+                        .foregroundStyle(alertVM.unresolvedCount > 0 ? AppTheme.StatusColors.declined : AppTheme.themeColor)
                     Text("attendant.lostPerson.title".localized.uppercased())
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -115,7 +121,7 @@ struct AttendantDashboardView: View {
                     if alertVM.unresolvedCount > 0 {
                         Text("\(alertVM.unresolvedCount) \("attendant.lostPerson.active".localized)")
                             .font(AppTheme.Typography.headline)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(AppTheme.StatusColors.declined)
                     } else {
                         Text("attendant.lostPerson.empty".localized)
                             .font(AppTheme.Typography.headline)
@@ -138,7 +144,7 @@ struct AttendantDashboardView: View {
     private var attendanceCountsCard: some View {
         NavigationLink(destination: AttendanceCountBreakdownView()) {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "number.square")
                         .foregroundStyle(AppTheme.themeColor)
                     Text("attendant.attendance.title".localized.uppercased())
@@ -167,7 +173,7 @@ struct AttendantDashboardView: View {
     private var meetingsCard: some View {
         NavigationLink(destination: AttendantMeetingsView()) {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "person.3.sequence")
                         .foregroundStyle(AppTheme.themeColor)
                     Text("attendant.meetings.title".localized.uppercased())
@@ -194,11 +200,15 @@ struct AttendantDashboardView: View {
     // MARK: - Data Loading
 
     private func loadAllData() async {
-        guard let eventId = sessionState.selectedEvent?.id else { return }
+        guard let eventId = sessionState.selectedEvent?.id else {
+            isInitialLoading = false
+            return
+        }
         async let i: () = incidentVM.loadIncidents(eventId: eventId)
         async let a: () = alertVM.loadAlerts(eventId: eventId)
         async let m: () = meetingVM.loadMeetings(eventId: eventId)
         _ = await (i, a, m)
+        isInitialLoading = false
     }
 }
 

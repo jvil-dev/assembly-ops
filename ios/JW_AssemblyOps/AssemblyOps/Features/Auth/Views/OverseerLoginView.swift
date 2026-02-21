@@ -22,13 +22,6 @@
 // Navigation:
 //   - On successful login: AppState updates and navigates to OverseerTabView
 //   - On OAuth new user: Presents OAuthRegistrationView to complete profile
-//
-// Components:
-//   - backgroundGradient: Adaptive gradient background
-//   - cardContent: Main login card with form and buttons
-//   - formSection: Email and password text fields
-//   - oauthSection: Apple and Google sign-in buttons
-//
 
 import SwiftUI
 import AuthenticationServices
@@ -45,46 +38,21 @@ struct OverseerLoginView: View {
         case password
     }
 
-    // MARK: - Adaptive Colors
-    
-    private var backgroundTop: Color {
-        colorScheme == .dark
-            ? Color(white: 0.1)
-            : Color(red: 0.98, green: 0.97, blue: 0.95)
-    }
-    
-    private var backgroundBottom: Color {
-        colorScheme == .dark
-            ? Color(white: 0.08)
-            : Color(red: 0.96, green: 0.94, blue: 0.91)
-    }
-    
-    private var cardBackground: Color {
-        colorScheme == .dark
-            ? Color(white: 0.15)
-            : Color.white
-    }
-    
-    private var textSecondary: Color {
-        colorScheme == .dark
-            ? Color.white.opacity(0.6)
-            : Color(red: 0.45, green: 0.45, blue: 0.45)
-    }
-
     // MARK: - Body
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                backgroundGradient
+                AppTheme.backgroundGradient(for: colorScheme)
+                    .ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 0) {
                         Spacer(minLength: geometry.size.height * 0.12)
-                        
+
                         cardContent
                             .padding(.horizontal, 28)
-                        
+
                         Spacer(minLength: geometry.size.height * 0.08)
                     }
                     .frame(minHeight: geometry.size.height)
@@ -101,39 +69,28 @@ struct OverseerLoginView: View {
                 }
         )
         .onAppear {
-            withAnimation(.easeOut(duration: 0.6).delay(0.1)) {
+            withAnimation(AppTheme.entranceAnimation) {
                 hasAppeared = true
             }
         }
     }
 
-    // MARK: - Background
-
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [backgroundTop, backgroundBottom],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
-    }
-
     // MARK: - Card
 
     private var cardContent: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: AppTheme.Spacing.xxl) {
             headerSection
             formSection
             errorSection
             loginButton
             helpText
         }
-        .padding(.horizontal, 32)
+        .padding(.horizontal, AppTheme.Spacing.xxl)
         .padding(.vertical, 40)
-        .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .shadow(color: Color.black.opacity(0.06), radius: 20, x: 0, y: 8)
-        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+        .background(AppTheme.cardBackground(for: colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large))
+        .shadow(color: AppTheme.Shadow.cardPrimary.color, radius: AppTheme.Shadow.cardPrimary.radius, x: 0, y: AppTheme.Shadow.cardPrimary.y)
+        .shadow(color: AppTheme.Shadow.cardSecondary.color, radius: AppTheme.Shadow.cardSecondary.radius, x: 0, y: AppTheme.Shadow.cardSecondary.y)
         .opacity(hasAppeared ? 1 : 0)
         .offset(y: hasAppeared ? 0 : 20)
     }
@@ -141,28 +98,28 @@ struct OverseerLoginView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.l) {
             Image("Logo")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 160, height: 160)
-                .shadow(color: Color("ThemeColor").opacity(0.15), radius: 12, x: 0, y: 4)
+                .shadow(color: AppTheme.themeColor.opacity(0.15), radius: 12, x: 0, y: 4)
 
             Text("AssemblyOps")
                 .font(.system(size: 28, weight: .semibold, design: .default))
-                .foregroundStyle(Color("ThemeColor"))
+                .foregroundStyle(AppTheme.themeColor)
                 .tracking(0.5)
 
             Text("Overseer sign in")
-                .font(.subheadline)
-                .foregroundStyle(textSecondary)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
         }
     }
 
     // MARK: - Form
 
     private var formSection: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: AppTheme.Spacing.xl) {
             // Email field
             UnderlineTextField(
                 label: "EMAIL",
@@ -195,18 +152,18 @@ struct OverseerLoginView: View {
     @ViewBuilder
     private var errorSection: some View {
         if let error = viewModel.errorMessage {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "exclamationmark.circle.fill")
-                    .font(.subheadline)
+                    .font(AppTheme.Typography.subheadline)
                 Text(error)
-                    .font(.subheadline)
+                    .font(AppTheme.Typography.subheadline)
             }
-            .foregroundStyle(Color(red: 0.8, green: 0.25, blue: 0.2))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .foregroundStyle(AppTheme.StatusColors.declined)
+            .padding(.horizontal, AppTheme.Spacing.l)
+            .padding(.vertical, AppTheme.Spacing.m)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(red: 0.8, green: 0.25, blue: 0.2).opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .background(AppTheme.StatusColors.declinedBackground)
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
             .transition(.opacity.combined(with: .scale(scale: 0.95)))
         }
     }
@@ -224,26 +181,26 @@ struct OverseerLoginView: View {
                         .tint(.white)
                 } else {
                     Text("Sign In")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(AppTheme.Typography.bodyMedium)
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 52)
+            .frame(height: AppTheme.ButtonHeight.large)
         }
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(viewModel.isFormValid ? Color("ThemeColor") : Color("ThemeColor").opacity(0.4))
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                .fill(viewModel.isFormValid ? AppTheme.themeColor : AppTheme.themeColor.opacity(0.4))
         )
         .foregroundStyle(.white)
         .disabled(!viewModel.isFormValid || viewModel.isLoading)
         .animation(.easeInOut(duration: 0.2), value: viewModel.isFormValid)
 
         Divider()
-            .padding(.vertical, 8)
+            .padding(.vertical, AppTheme.Spacing.s)
 
         Text("or")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+            .font(AppTheme.Typography.caption)
+            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
 
         // Continue with Google
         Button { viewModel.signInWithGoogle() } label: {
@@ -253,7 +210,7 @@ struct OverseerLoginView: View {
                     .scaledToFit()
                     .frame(width: 18, height: 18)
                 Text("Continue with Google")
-                    .font(.system(size: 17, weight: .medium))
+                    .font(AppTheme.Typography.bodyMedium)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 50)
@@ -270,7 +227,7 @@ struct OverseerLoginView: View {
                 Image(systemName: "apple.logo")
                     .font(.system(size: 18, weight: .medium))
                 Text("Continue with Apple")
-                    .font(.system(size: 17, weight: .medium))
+                    .font(AppTheme.Typography.bodyMedium)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 50)
@@ -286,8 +243,8 @@ struct OverseerLoginView: View {
 
     private var helpText: some View {
         Text("Contact your event coordinator for access")
-            .font(.footnote)
-            .foregroundStyle(textSecondary)
+            .font(AppTheme.Typography.caption)
+            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             .multilineTextAlignment(.center)
     }
 }

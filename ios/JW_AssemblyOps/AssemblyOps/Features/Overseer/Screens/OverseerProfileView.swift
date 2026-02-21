@@ -78,7 +78,7 @@ struct OverseerProfileView: View {
                 .padding(.bottom, AppTheme.Spacing.xxl)
             }
             .themedBackground(scheme: colorScheme)
-            .navigationTitle("Profile")
+            .navigationTitle("profile.title".localized)
             .onAppear {
                 withAnimation(AppTheme.entranceAnimation) {
                     hasAppeared = true
@@ -102,7 +102,7 @@ struct OverseerProfileView: View {
     private var languageCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "globe")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("LANGUAGE")
@@ -174,10 +174,10 @@ struct OverseerProfileView: View {
     private var eventCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "calendar")
                     .foregroundStyle(AppTheme.themeColor)
-                Text("Current Event")
+                Text("overseer.profile.section.event".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
@@ -211,7 +211,7 @@ struct OverseerProfileView: View {
                     )
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Department")
+                    Text("overseer.profile.section.department".localized)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                     Text(department.name)
@@ -261,7 +261,7 @@ struct OverseerProfileView: View {
     // MARK: - Info Row Helper
 
     private func infoRow(icon: String, text: String) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: icon)
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -278,9 +278,9 @@ struct OverseerProfileView: View {
         Button {
             showLogoutConfirmation = true
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
-                Text("Log Out")
+                Text("profile.logout".localized)
             }
             .font(AppTheme.Typography.headline)
             .frame(maxWidth: .infinity)
@@ -301,7 +301,7 @@ struct OverseerProfileView: View {
     // MARK: - App Version
 
     private var appVersion: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: AppTheme.Spacing.xs) {
             Text("AssemblyOps")
                 .font(AppTheme.Typography.caption)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))

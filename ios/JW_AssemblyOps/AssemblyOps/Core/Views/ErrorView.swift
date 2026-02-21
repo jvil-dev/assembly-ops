@@ -8,38 +8,53 @@
 // MARK: - Error View
 //
 // Reusable error state view with retry functionality.
-// Uses iOS ContentUnavailableView for consistent system styling.
 //
 // Properties:
 //   - message: Error description to display
-//   - retryAction: Async closure called when "Try Again" is tapped
-//
-// Components:
-//   - Warning icon
-//   - Error message
-//   - "Try Again" button
-//
-// Used by: AssignmentsListView.swift (on fetch failure)
+//   - retryAction: Async closure called when retry is tapped
 
 import SwiftUI
 
 struct ErrorView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let message: String
     let retryAction: () async -> Void
-    
+
     var body: some View {
-        ContentUnavailableView {
-            Label("Error", systemImage: "exclamationmark.triangle")
-        } description: {
+        VStack(spacing: AppTheme.Spacing.l) {
+            Spacer()
+
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 48))
+                .foregroundStyle(AppTheme.StatusColors.warning)
+
+            Text("common.error".localized)
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+
             Text(message)
-        } actions: {
-            Button("Try Again") {
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                .multilineTextAlignment(.center)
+
+            Button {
+                HapticManager.shared.error()
                 Task {
                     await retryAction()
                 }
+            } label: {
+                Label("common.retry".localized, systemImage: "arrow.clockwise")
+                    .font(AppTheme.Typography.bodyMedium)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.bordered)
+            .tint(AppTheme.themeColor)
+
+            Spacer()
         }
+        .padding(AppTheme.Spacing.screenEdge)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .themedBackground(scheme: colorScheme)
     }
 }
 

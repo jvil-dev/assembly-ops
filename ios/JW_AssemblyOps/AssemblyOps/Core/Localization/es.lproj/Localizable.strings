@@ -414,6 +414,48 @@
 "attendant.info.disruptions.lockDoors" = "Cierre con llave y bloquee las puertas para proteger al mayor número de asistentes";
 "attendant.info.disruptions.noWeapons" = "Los acomodadores NO tienen permiso de portar armas";
 
+// MARK: - Horario (Voluntario)
+"schedule.title" = "Mi Horario";
+"schedule.filter.all" = "Todos";
+"schedule.filter.today" = "Hoy";
+"schedule.noToday.title" = "Sin Asignaciones Hoy";
+"schedule.noToday.subtitle" = "No tienes asignaciones programadas para hoy.";
+"schedule.showAll" = "Ver Todas las Asignaciones";
+
+// MARK: - Detalle de Asignación
+"assignment.title" = "Asignación";
+"assignment.section.details" = "DETALLES";
+"assignment.section.attendance" = "ASISTENCIA";
+"assignment.section.yourGroup" = "TU GRUPO";
+"assignment.checkedIn" = "Registrado";
+"assignment.readyToCheckIn" = "Listo para registrarse";
+
+// MARK: - Mensajes (Voluntario)
+"messages.title" = "Mensajes";
+"messages.filter.all" = "Todos";
+"messages.filter.unread" = "Sin Leer";
+"messages.markAllRead" = "Marcar Todo como Leído";
+"messages.from" = "De:";
+"messages.detail.title" = "Mensaje";
+"messages.detail.body" = "MENSAJE";
+"messages.empty.title" = "No Hay Mensajes";
+"messages.empty.subtitle" = "Los mensajes de tu superintendente aparecerán aquí.";
+"messages.empty.unread.title" = "No Hay Mensajes Sin Leer";
+"messages.empty.unread.subtitle" = "¡Estás al día!";
+
+// MARK: - Perfil
+"profile.title" = "Perfil";
+"profile.section.department" = "DEPARTAMENTO";
+"profile.section.contact" = "INFORMACIÓN DE CONTACTO";
+"profile.section.event" = "EVENTO";
+"profile.logout" = "Cerrar Sesión";
+"profile.logout.confirm" = "¿Estás seguro de que deseas cerrar sesión?";
+"profile.section.language" = "IDIOMA";
+
+// MARK: - Perfil del Superintendente
+"overseer.profile.section.event" = "EVENTO ACTUAL";
+"overseer.profile.section.department" = "DEPARTAMENTO";
+
 // Idioma
 "language.select" = "Seleccionar Idioma";
 "language.english" = "English";

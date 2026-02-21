@@ -19,6 +19,7 @@ struct SafetyIncidentListView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
     @State private var selectedIncident: SafetyIncidentItem?
+    @State private var showError = false
 
     var body: some View {
         ScrollView {
@@ -26,7 +27,9 @@ struct SafetyIncidentListView: View {
                 // Filter toggle
                 Toggle("attendant.incidents.showResolved".localized, isOn: $viewModel.showResolved)
                     .font(AppTheme.Typography.subheadline)
-                    .padding(.horizontal, AppTheme.Spacing.s)
+                    .tint(AppTheme.themeColor)
+                    .cardPadding()
+                    .themedCard(scheme: colorScheme)
                     .onChange(of: viewModel.showResolved) { _, _ in
                         Task {
                             if let eventId = sessionState.selectedEvent?.id {
@@ -72,7 +75,8 @@ struct SafetyIncidentListView: View {
                 hasAppeared = true
             }
         }
-        .alert("common.error".localized, isPresented: .constant(viewModel.error != nil)) {
+        .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
+        .alert("common.error".localized, isPresented: $showError) {
             Button("common.ok".localized) { viewModel.error = nil }
         } message: {
             Text(viewModel.error ?? "")
@@ -102,7 +106,7 @@ struct SafetyIncidentListView: View {
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(AppTheme.StatusColors.acceptedBackground)
-                            .cornerRadius(AppTheme.CornerRadius.small)
+                            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                     }
                 }
 
@@ -135,7 +139,7 @@ struct SafetyIncidentListView: View {
                 }
 
                 if let notes = incident.resolutionNotes {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                         Text("attendant.incidents.notes".localized)
                             .font(AppTheme.Typography.caption)
                             .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -145,7 +149,7 @@ struct SafetyIncidentListView: View {
                     }
                     .padding(AppTheme.Spacing.s)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                 }
             }
             .cardPadding()

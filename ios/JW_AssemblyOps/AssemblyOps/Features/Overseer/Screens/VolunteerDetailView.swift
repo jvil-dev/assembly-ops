@@ -240,7 +240,7 @@ struct VolunteerDetailView: View {
     private var contactCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person.text.rectangle")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("Contact Info")
@@ -268,7 +268,7 @@ struct VolunteerDetailView: View {
     private var credentialsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "key")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("Login Credentials")
@@ -278,7 +278,7 @@ struct VolunteerDetailView: View {
 
             // Volunteer ID row
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text("Volunteer ID")
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -296,7 +296,7 @@ struct VolunteerDetailView: View {
 
             // Token row
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text("Token")
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -345,7 +345,7 @@ struct VolunteerDetailView: View {
                 Button {
                     showRegenerateConfirmation = true
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.s) {
                         if viewModel.isRegenerating {
                             ProgressView()
                                 .tint(AppTheme.StatusColors.warning)
@@ -397,7 +397,7 @@ struct VolunteerDetailView: View {
         Button {
             showDeleteConfirmation = true
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 if viewModel.isLoading {
                     ProgressView()
                         .tint(AppTheme.StatusColors.declined)
@@ -426,7 +426,7 @@ struct VolunteerDetailView: View {
     // MARK: - Copied Toast
 
     private var copiedToast: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(AppTheme.StatusColors.accepted)
             Text("Copied to clipboard")
@@ -446,7 +446,7 @@ struct VolunteerDetailView: View {
     // MARK: - Info Row Helper
 
     private func infoRow(icon: String, text: String) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: icon)
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))

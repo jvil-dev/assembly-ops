@@ -30,13 +30,10 @@ struct CheckInStatsView: View {
     @ObservedObject private var sessionState: OverseerSessionState = .shared
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
+    @State private var showError = false
 
     var body: some View {
-        ZStack {
-            // Background
-            AppTheme.backgroundGradient(for: colorScheme)
-                .ignoresSafeArea()
-
+        Group {
             if viewModel.isLoading && viewModel.stats.isEmpty {
                 LoadingView(message: "Loading stats...")
             } else if viewModel.stats.isEmpty {
@@ -45,6 +42,7 @@ struct CheckInStatsView: View {
                 statsList
             }
         }
+        .themedBackground(scheme: colorScheme)
         .navigationTitle("Check-In Stats")
         .navigationBarTitleDisplayMode(.large)
         .refreshable {
@@ -53,8 +51,9 @@ struct CheckInStatsView: View {
         .task {
             await loadData()
         }
-        .alert("Error", isPresented: .constant(viewModel.error != nil)) {
-            Button("OK") {
+        .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
+        .alert("common.error".localized, isPresented: $showError) {
+            Button("common.ok".localized) {
                 HapticManager.shared.lightTap()
                 viewModel.error = nil
             }
@@ -120,7 +119,7 @@ struct CheckInStatsView: View {
     private var overallSummaryCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "chart.bar")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("OVERALL SUMMARY")
@@ -130,14 +129,14 @@ struct CheckInStatsView: View {
 
             // Totals
             HStack(spacing: AppTheme.Spacing.m) {
-                statColumn(value: totalCheckedIn, label: "Total Checked In", color: .green)
-                statColumn(value: totalCheckedOut, label: "Total Left", color: .blue)
-                statColumn(value: totalNoShow, label: "Total No Show", color: .red)
-                statColumn(value: totalPending, label: "Total Pending", color: .orange)
+                statColumn(value: totalCheckedIn, label: "Total Checked In", color: AppTheme.StatusColors.accepted)
+                statColumn(value: totalCheckedOut, label: "Total Left", color: AppTheme.StatusColors.info)
+                statColumn(value: totalNoShow, label: "Total No Show", color: AppTheme.StatusColors.declined)
+                statColumn(value: totalPending, label: "Total Pending", color: AppTheme.StatusColors.pending)
             }
 
             // Overall rate
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 HStack {
                     Text("Overall Attendance Rate")
                         .font(AppTheme.Typography.caption)
@@ -156,7 +155,7 @@ struct CheckInStatsView: View {
     }
 
     private func statColumn(value: Int, label: String, color: Color) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: AppTheme.Spacing.xs) {
             Text("\(value)")
                 .font(AppTheme.Typography.title)
                 .foregroundStyle(color)

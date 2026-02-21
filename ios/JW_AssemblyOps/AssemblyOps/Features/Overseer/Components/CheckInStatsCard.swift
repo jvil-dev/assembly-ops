@@ -27,10 +27,10 @@ struct CheckInStatsCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Section header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "checkmark.circle")
                     .foregroundStyle(AppTheme.themeColor)
-                Text("CHECK-IN STATUS")
+                Text("stats.checkin".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
@@ -41,16 +41,16 @@ struct CheckInStatsCard: View {
 
             // Stats row: 4 columns
             HStack(spacing: AppTheme.Spacing.m) {
-                statColumn(value: stats.checkedIn, label: "Checked In", color: .green)
-                statColumn(value: stats.checkedOut, label: "Left", color: .blue)
-                statColumn(value: stats.noShow, label: "No Show", color: .red)
-                statColumn(value: stats.pending, label: "Pending", color: .orange)
+                statColumn(value: stats.checkedIn, label: "stats.checked.in".localized, color: AppTheme.StatusColors.accepted)
+                statColumn(value: stats.checkedOut, label: "stats.checked.out".localized, color: AppTheme.StatusColors.info)
+                statColumn(value: stats.noShow, label: "stats.no.show".localized, color: AppTheme.StatusColors.declined)
+                statColumn(value: stats.pending, label: "stats.pending".localized, color: AppTheme.StatusColors.pending)
             }
 
             // Progress bar
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 HStack {
-                    Text("Attendance Rate")
+                    Text("stats.rate".localized)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                     Spacer()
@@ -67,7 +67,7 @@ struct CheckInStatsCard: View {
     }
 
     private func statColumn(value: Int, label: String, color: Color) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: AppTheme.Spacing.xs) {
             Text("\(value)")
                 .font(AppTheme.Typography.title)
                 .foregroundStyle(color)

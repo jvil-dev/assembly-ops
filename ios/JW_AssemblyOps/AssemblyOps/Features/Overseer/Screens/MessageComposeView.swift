@@ -41,6 +41,7 @@ struct MessageComposeView: View {
     @Environment(\.dismiss) var dismiss
     @State private var hasAppeared = false
     @State private var showRecipientPicker = false
+    @State private var showError = false
 
     private let maxBodyLength = 5000
 
@@ -97,8 +98,9 @@ struct MessageComposeView: View {
                     ? "Message sent successfully."
                     : "Message sent to \(viewModel.sentCount) volunteers.")
             }
-            .alert("Error", isPresented: .constant(viewModel.error != nil)) {
-                Button("OK") {
+            .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
+            .alert("common.error".localized, isPresented: $showError) {
+                Button("common.ok".localized) {
                     HapticManager.shared.lightTap()
                     viewModel.error = nil
                 }
@@ -124,7 +126,7 @@ struct MessageComposeView: View {
     private var recipientTypeCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Section header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person.2")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("RECIPIENT TYPE")
@@ -181,7 +183,7 @@ struct MessageComposeView: View {
     private var recipientCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Section header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("RECIPIENT")
@@ -211,7 +213,7 @@ struct MessageComposeView: View {
                 }
                 .padding(AppTheme.Spacing.m)
                 .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                .cornerRadius(AppTheme.CornerRadius.small)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
             }
         }
         .cardPadding()
@@ -222,7 +224,7 @@ struct MessageComposeView: View {
     private var messageCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Section header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "envelope")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("MESSAGE")
@@ -231,7 +233,7 @@ struct MessageComposeView: View {
             }
 
             // Subject field
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text("Subject (optional)")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
@@ -239,11 +241,11 @@ struct MessageComposeView: View {
                     .textFieldStyle(.plain)
                     .padding(AppTheme.Spacing.m)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
             }
 
             // Body field
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 HStack {
                     Text("Message *")
                         .font(AppTheme.Typography.caption)
@@ -260,7 +262,7 @@ struct MessageComposeView: View {
                     .frame(minHeight: 120)
                     .padding(AppTheme.Spacing.s)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                     .overlay(
                         RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
                             .stroke(AppTheme.textTertiary(for: colorScheme).opacity(0.2), lineWidth: 1)
@@ -297,7 +299,7 @@ struct MessageComposeView: View {
             .background(viewModel.isValid && viewModel.body.count <= maxBodyLength
                 ? AppTheme.themeColor
                 : AppTheme.textSecondary(for: colorScheme))
-            .cornerRadius(AppTheme.CornerRadius.button)
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
         }
         .disabled(!viewModel.isValid || viewModel.isSending || viewModel.body.count > maxBodyLength)
     }

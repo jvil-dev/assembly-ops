@@ -61,7 +61,7 @@ struct AttendantInfoView: View {
 
     private var headerCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "book.closed.fill")
                     .foregroundStyle(AppTheme.themeColor)
                     .font(.system(size: 20))
@@ -94,7 +94,7 @@ struct AttendantInfoView: View {
                 HapticManager.shared.lightTap()
             } label: {
                 HStack {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.s) {
                         Image(systemName: section.icon)
                             .foregroundStyle(AppTheme.themeColor)
                         Text(section.titleKey.localized)

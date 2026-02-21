@@ -113,7 +113,7 @@ struct AssignmentDetailView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Post name and status
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text(assignment.postName)
                         .font(AppTheme.Typography.title)
                         .foregroundStyle(.primary)
@@ -246,7 +246,7 @@ struct AssignmentDetailView: View {
         )
         return NavigationLink(destination: SubmitSectionCountView(post: postItem)) {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "number.square")
                         .foregroundStyle(AppTheme.themeColor)
                     Text("attendant.detail.submitCount".localized)
@@ -255,7 +255,7 @@ struct AssignmentDetailView: View {
                 }
 
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                         Text(assignment.postName)
                             .font(AppTheme.Typography.bodyMedium)
                             .foregroundStyle(.primary)
@@ -282,7 +282,7 @@ struct AssignmentDetailView: View {
 
     private var captainGroupCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "star.fill")
                     .foregroundStyle(.yellow)
                 Text("Your Group")

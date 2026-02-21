@@ -104,7 +104,7 @@ struct OverseerProfileSetupView: View {
 
     private var nameCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person.fill")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("Personal Information")
@@ -127,7 +127,7 @@ struct OverseerProfileSetupView: View {
 
     private var congregationCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "building.2.fill")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("Congregation")
@@ -233,7 +233,7 @@ struct OverseerProfileSetupView: View {
 
     private func circuitInfoCard(circuit: CircuitItem) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "map.fill")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("Circuit Information")

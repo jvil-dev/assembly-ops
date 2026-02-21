@@ -38,20 +38,16 @@ struct AssignmentsView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                AppTheme.backgroundGradient(for: colorScheme)
-                    .ignoresSafeArea()
-
-                Group {
-                    if isLoading && sessions.isEmpty {
-                        LoadingView(message: "Loading sessions...")
-                    } else if sessions.isEmpty {
-                        emptyState
-                    } else {
-                        sessionList
-                    }
+            Group {
+                if isLoading && sessions.isEmpty {
+                    LoadingView(message: "Loading sessions...")
+                } else if sessions.isEmpty {
+                    emptyState
+                } else {
+                    sessionList
                 }
             }
+            .themedBackground(scheme: colorScheme)
             .navigationTitle("Assignments")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -140,7 +136,7 @@ struct AssignmentsView: View {
                     .foregroundStyle(AppTheme.themeColor)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text(session.name)
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)
@@ -169,7 +165,7 @@ struct AssignmentsView: View {
             if Calendar.current.isDateInToday(date) {
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(Color.orange)
+                        .fill(AppTheme.StatusColors.pending)
                         .frame(width: 8, height: 8)
                     Text("Today")
                         .font(AppTheme.Typography.headline)

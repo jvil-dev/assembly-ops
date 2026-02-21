@@ -101,7 +101,7 @@ struct EventTemplateListView: View {
             // Event info + join code card
             if let event = viewModel.activatedEvent {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.s) {
                         Image(systemName: "calendar.circle.fill")
                             .foregroundStyle(AppTheme.themeColor)
                         Text("Event Details")
@@ -120,7 +120,7 @@ struct EventTemplateListView: View {
                     Divider()
 
                     HStack {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                             Text("Join Code")
                                 .font(AppTheme.Typography.caption)
                                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -178,7 +178,7 @@ struct EventTemplateListView: View {
 
     private var departmentClaimSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "square.grid.2x2.fill")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("Claim Your Department")
@@ -277,7 +277,7 @@ struct EventTemplateListView: View {
 
     private func templateSection(title: String, icon: String, templates: [EventTemplateItem], delay: Double) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: icon)
                     .foregroundStyle(AppTheme.themeColor)
                 Text(title)
@@ -303,7 +303,7 @@ struct EventTemplateListView: View {
         } label: {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                         Text(template.name)
                             .font(AppTheme.Typography.headline)
                             .foregroundStyle(template.isActivated

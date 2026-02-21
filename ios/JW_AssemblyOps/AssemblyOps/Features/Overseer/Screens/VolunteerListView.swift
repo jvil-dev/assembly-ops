@@ -65,28 +65,23 @@ struct VolunteerListView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                // Warm background
-                AppTheme.backgroundGradient(for: colorScheme)
-                    .ignoresSafeArea()
+            VStack(spacing: 0) {
+                // Tab picker card
+                tabPickerCard
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                VStack(spacing: 0) {
-                    // Tab picker card
-                    tabPickerCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
-
-                    // Content
-                    Group {
-                        if viewModel.isLoading {
-                            LoadingView(message: "Loading volunteers...")
-                        } else if displayedVolunteers.isEmpty {
-                            emptyState
-                        } else {
-                            volunteerList
-                        }
+                // Content
+                Group {
+                    if viewModel.isLoading {
+                        LoadingView(message: "Loading volunteers...")
+                    } else if displayedVolunteers.isEmpty {
+                        emptyState
+                    } else {
+                        volunteerList
                     }
                 }
             }
+            .themedBackground(scheme: colorScheme)
             .navigationTitle("Volunteers")
             .searchable(text: $searchText, prompt: "Search by name or congregation")
             .toolbar {
@@ -227,7 +222,7 @@ struct VolunteerRowView: View {
             }
 
             // Details
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text(volunteer.fullName)
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)

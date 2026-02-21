@@ -8,24 +8,41 @@
 // MARK: - Empty Assignments View
 //
 // Empty state displayed when volunteer has no schedule assignments.
-// Uses iOS ContentUnavailableView for consistent system styling.
-//
-// Components:
-//   - Icon: Calendar with clock badge
-//   - Title: "No Assignments Yet"
-//   - Description: Explains assignments come from overseer
 //
 // Used by: AssignmentsListView.swift (when assignments array is empty)
 
 import SwiftUI
 
 struct EmptyAssignmentsView: View {
+    @Environment(\.colorScheme) var colorScheme
+    @State private var hasAppeared = false
+
     var body: some View {
-        ContentUnavailableView(
-            "No Assignments Yet",
-            systemImage: "calendar.badge.clock",
-            description: Text("Your schedule will appear here once your overseer assigns you to posts.")
-        )
+        VStack(spacing: AppTheme.Spacing.l) {
+            Spacer()
+
+            Image(systemName: "calendar.badge.clock")
+                .font(.system(size: 48))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+            Text("No Assignments Yet")
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+
+            Text("Your schedule will appear here once your overseer assigns you to posts.")
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                .multilineTextAlignment(.center)
+
+            Spacer()
+        }
+        .padding(AppTheme.Spacing.screenEdge)
+        .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+        .onAppear {
+            withAnimation(AppTheme.entranceAnimation) {
+                hasAppeared = true
+            }
+        }
     }
 }
 

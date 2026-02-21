@@ -22,7 +22,7 @@
 //   - Fetches assignments on first appear (via .task)
 //   - Pull-to-refresh triggers refetch
 //   - Tapping a card navigates to AssignmentDetailView
-//   - Date headers show "Today" (with orange dot), "Tomorrow", or full date
+//   - Date headers show "Today" (with dot), "Tomorrow", or full date
 //   - Today filter with haptic feedback on toggle
 //
 // Dependencies:
@@ -37,7 +37,9 @@ import SwiftUI
 
 struct AssignmentsListView: View {
     @StateObject private var viewModel = AssignmentsViewModel()
+    @Environment(\.colorScheme) var colorScheme
     @State private var showTodayOnly = false
+    @State private var hasAppeared = false
 
     var body: some View {
         NavigationStack {
@@ -54,7 +56,7 @@ struct AssignmentsListView: View {
                     assignmentsList
                 }
             }
-            .navigationTitle("My Schedule")
+            .navigationTitle("schedule.title".localized)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     filterButton
@@ -68,8 +70,15 @@ struct AssignmentsListView: View {
                     viewModel.fetchAssignments()
                 }
             }
+            .onAppear {
+                withAnimation(AppTheme.entranceAnimation) {
+                    hasAppeared = true
+                }
+            }
         }
     }
+
+    // MARK: - Filter Button
 
     private var filterButton: some View {
         Button {
@@ -77,21 +86,24 @@ struct AssignmentsListView: View {
             HapticManager.shared.lightTap()
         } label: {
             Label(
-                showTodayOnly ? "All" : "Today",
+                showTodayOnly ? "schedule.filter.all".localized : "schedule.filter.today".localized,
                 systemImage: showTodayOnly ? "calendar" : "sun.max"
             )
         }
     }
 
+    // MARK: - Filtered Data
+
     private var filteredGroupedAssignments: [(date: Date, assignments: [Assignment])] {
         if showTodayOnly {
-            let today = viewModel.groupedAssignments.filter { group in
+            return viewModel.groupedAssignments.filter { group in
                 Calendar.current.isDateInToday(group.date)
             }
-            return today
         }
         return viewModel.groupedAssignments
     }
+
+    // MARK: - Assignments List
 
     private var assignmentsList: some View {
         VStack(spacing: 0) {
@@ -100,17 +112,22 @@ struct AssignmentsListView: View {
             }
 
             ScrollView {
-                LazyVStack(spacing: 16, pinnedViews: .sectionHeaders) {
+                LazyVStack(spacing: AppTheme.Spacing.l, pinnedViews: .sectionHeaders) {
                     if showTodayOnly && filteredGroupedAssignments.isEmpty {
                         noTodayAssignmentsView
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
                     } else {
-                        ForEach(filteredGroupedAssignments, id: \.date) { group in
+                        ForEach(Array(filteredGroupedAssignments.enumerated()), id: \.element.date) { groupIndex, group in
                             Section {
-                                ForEach(group.assignments) { assignment in
+                                ForEach(Array(group.assignments.enumerated()), id: \.element.id) { index, assignment in
                                     NavigationLink(value: assignment) {
                                         AssignmentCardView(assignment: assignment)
                                     }
                                     .buttonStyle(.plain)
+                                    .entranceAnimation(
+                                        hasAppeared: hasAppeared,
+                                        delay: Double(groupIndex) * 0.05 + Double(index) * 0.03
+                                    )
                                 }
                             } header: {
                                 dateHeader(for: group.date)
@@ -118,9 +135,11 @@ struct AssignmentsListView: View {
                         }
                     }
                 }
-                .padding(.horizontal)
+                .screenPadding()
+                .padding(.top, AppTheme.Spacing.l)
+                .padding(.bottom, AppTheme.Spacing.xxl)
             }
-            .background(Color(.systemGroupedBackground))
+            .themedBackground(scheme: colorScheme)
             .navigationDestination(for: Assignment.self) { assignment in
                 AssignmentDetailView(assignment: assignment) {
                     viewModel.refresh()
@@ -128,6 +147,8 @@ struct AssignmentsListView: View {
             }
         }
     }
+
+    // MARK: - Cache Indicator
 
     private var cacheIndicator: some View {
         HStack(spacing: 6) {
@@ -138,31 +159,35 @@ struct AssignmentsListView: View {
                 Text("Showing cached data")
             }
         }
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .padding(.vertical, 8)
+        .font(AppTheme.Typography.caption)
+        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+        .padding(.vertical, AppTheme.Spacing.s)
         .frame(maxWidth: .infinity)
-        .background(Color(.secondarySystemBackground))
+        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
     }
 
+    // MARK: - No Today View
+
     private var noTodayAssignmentsView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.l) {
             Image(systemName: "sun.max")
-                .font(.system(size: 50))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 48))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
 
-            Text("No Assignments Today")
-                .font(.headline)
+            Text("schedule.noToday.title".localized)
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
 
-            Text("You don't have any assignments scheduled for today.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            Text("schedule.noToday.subtitle".localized)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 .multilineTextAlignment(.center)
 
-            Button("Show All Assignments") {
+            Button("schedule.showAll".localized) {
                 showTodayOnly = false
             }
             .buttonStyle(.bordered)
+            .tint(AppTheme.themeColor)
         }
         .padding(.top, 60)
     }
@@ -174,31 +199,32 @@ struct AssignmentsListView: View {
             if Calendar.current.isDateInToday(date) {
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(Color.orange)
+                        .fill(AppTheme.StatusColors.pending)
                         .frame(width: 8, height: 8)
                     Text("Today")
-                        .font(.headline)
+                        .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)
                 }
                 Text("• \(date.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             } else if Calendar.current.isDateInTomorrow(date) {
                 Text("Tomorrow")
-                    .font(.headline)
+                    .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)
                 Text("• \(date.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             } else {
                 Text(date.formatted(date: .complete, time: .omitted))
-                    .font(.headline)
+                    .font(AppTheme.Typography.headline)
+                    .foregroundStyle(.primary)
             }
             Spacer()
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 4)
-        .background(Color(.systemGroupedBackground))
+        .padding(.vertical, AppTheme.Spacing.s)
+        .padding(.horizontal, AppTheme.Spacing.xs)
+        .background(.ultraThinMaterial)
     }
 }
 

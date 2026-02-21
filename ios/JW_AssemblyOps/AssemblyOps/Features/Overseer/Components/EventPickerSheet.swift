@@ -92,7 +92,7 @@ struct EventRow: View {
             }
 
             // Event details
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text(event.name)
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)

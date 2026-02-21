@@ -414,6 +414,48 @@
 "attendant.info.disruptions.lockDoors" = "Lock and barricade doors to protect the largest number of attendees";
 "attendant.info.disruptions.noWeapons" = "Attendants are NOT permitted to carry weapons";
 
+// MARK: - Schedule (Volunteer)
+"schedule.title" = "My Schedule";
+"schedule.filter.all" = "All";
+"schedule.filter.today" = "Today";
+"schedule.noToday.title" = "No Assignments Today";
+"schedule.noToday.subtitle" = "You don't have any assignments scheduled for today.";
+"schedule.showAll" = "Show All Assignments";
+
+// MARK: - Assignment Detail
+"assignment.title" = "Assignment";
+"assignment.section.details" = "DETAILS";
+"assignment.section.attendance" = "ATTENDANCE";
+"assignment.section.yourGroup" = "YOUR GROUP";
+"assignment.checkedIn" = "Checked in";
+"assignment.readyToCheckIn" = "Ready to check in";
+
+// MARK: - Messages (Volunteer)
+"messages.title" = "Messages";
+"messages.filter.all" = "All";
+"messages.filter.unread" = "Unread";
+"messages.markAllRead" = "Mark All Read";
+"messages.from" = "From:";
+"messages.detail.title" = "Message";
+"messages.detail.body" = "MESSAGE";
+"messages.empty.title" = "No Messages Yet";
+"messages.empty.subtitle" = "Messages from your overseer will appear here.";
+"messages.empty.unread.title" = "No Unread Messages";
+"messages.empty.unread.subtitle" = "You're all caught up!";
+
+// MARK: - Profile
+"profile.title" = "Profile";
+"profile.section.department" = "DEPARTMENT";
+"profile.section.contact" = "CONTACT INFO";
+"profile.section.event" = "EVENT";
+"profile.logout" = "Log Out";
+"profile.logout.confirm" = "Are you sure you want to log out?";
+"profile.section.language" = "LANGUAGE";
+
+// MARK: - Overseer Profile
+"overseer.profile.section.event" = "CURRENT EVENT";
+"overseer.profile.section.department" = "DEPARTMENT";
+
 // Language
 "language.select" = "Select Language";
 "language.english" = "English";

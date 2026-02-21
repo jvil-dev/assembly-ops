@@ -13,11 +13,7 @@ struct SentMessagesView: View {
     @State private var hasAppeared = false
 
     var body: some View {
-        ZStack {
-            // Background
-            AppTheme.backgroundGradient(for: colorScheme)
-                .ignoresSafeArea()
-
+        Group {
             if viewModel.isLoading && !viewModel.hasLoaded {
                 LoadingView(message: "Loading messages...")
             } else if viewModel.isEmpty {
@@ -26,6 +22,7 @@ struct SentMessagesView: View {
                 messagesList
             }
         }
+        .themedBackground(scheme: colorScheme)
         .navigationTitle("Sent Messages")
         .navigationBarTitleDisplayMode(.large)
         .refreshable {
@@ -106,7 +103,7 @@ private struct SentMessageRow: View {
             // Header row: recipient type badge + timestamp
             HStack {
                 // Recipient type badge
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.xs) {
                     Image(systemName: recipientIcon)
                         .font(.caption)
                     Text(message.recipientTypeDisplayName)
@@ -116,7 +113,7 @@ private struct SentMessageRow: View {
                 .padding(.horizontal, AppTheme.Spacing.s)
                 .padding(.vertical, 4)
                 .background(recipientColor)
-                .cornerRadius(AppTheme.CornerRadius.small)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
 
                 Spacer()
 
@@ -153,7 +150,7 @@ private struct SentMessageRow: View {
 
             // Read status indicator (for individual messages)
             if message.recipientType == "VOLUNTEER" {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.xs) {
                     Image(systemName: message.isRead ? "checkmark.circle.fill" : "circle")
                         .font(.caption)
                         .foregroundStyle(message.isRead ? AppTheme.StatusColors.accepted : AppTheme.textTertiary(for: colorScheme))

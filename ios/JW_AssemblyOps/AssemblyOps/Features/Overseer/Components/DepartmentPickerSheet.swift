@@ -135,7 +135,7 @@ private struct DepartmentRow: View {
                 )
 
             // Department info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text(department.name)
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)

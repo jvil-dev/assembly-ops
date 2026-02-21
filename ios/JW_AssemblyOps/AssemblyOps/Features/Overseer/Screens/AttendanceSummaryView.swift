@@ -29,13 +29,10 @@ struct AttendanceSummaryView: View {
     @ObservedObject private var sessionState: OverseerSessionState = .shared
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
+    @State private var showError = false
 
     var body: some View {
-        ZStack {
-            // Background
-            AppTheme.backgroundGradient(for: colorScheme)
-                .ignoresSafeArea()
-
+        Group {
             if viewModel.isLoading {
                 LoadingView(message: "Loading attendance...")
             } else {
@@ -55,6 +52,7 @@ struct AttendanceSummaryView: View {
                 }
             }
         }
+        .themedBackground(scheme: colorScheme)
         .navigationTitle("Attendance Summary")
         .navigationBarTitleDisplayMode(.large)
         .refreshable {
@@ -67,8 +65,9 @@ struct AttendanceSummaryView: View {
                 await viewModel.loadEventSummary(eventId: eventId)
             }
         }
-        .alert("Error", isPresented: .constant(viewModel.error != nil)) {
-            Button("OK") {
+        .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
+        .alert("common.error".localized, isPresented: $showError) {
+            Button("common.ok".localized) {
                 HapticManager.shared.lightTap()
                 viewModel.error = nil
             }
@@ -87,7 +86,7 @@ struct AttendanceSummaryView: View {
     // MARK: - Total Banner Card
     private var totalBannerCard: some View {
         VStack(spacing: AppTheme.Spacing.m) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person.3.fill")
                     .font(.system(size: 24))
                     .foregroundStyle(AppTheme.themeColor)
@@ -115,11 +114,11 @@ struct AttendanceSummaryView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Session header
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text(summary.sessionName)
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.xs) {
                         Image(systemName: "calendar")
                             .font(.caption)
                         Text(summary.sessionDate, style: .date)
@@ -176,7 +175,7 @@ struct AttendanceSummaryView: View {
                         }
                         .padding(AppTheme.Spacing.s)
                         .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                        .cornerRadius(AppTheme.CornerRadius.small)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                     }
                 }
             }

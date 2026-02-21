@@ -21,6 +21,7 @@ struct AttendantMeetingsView: View {
     @State private var hasAppeared = false
     @State private var showCreateMeeting = false
     @State private var expandedMeetingId: String?
+    @State private var showError = false
 
     var body: some View {
         ScrollView {
@@ -56,6 +57,11 @@ struct AttendantMeetingsView: View {
         .sheet(isPresented: $showCreateMeeting) {
             CreateMeetingSheet()
         }
+        .onChange(of: showCreateMeeting) { _, isShowing in
+            if !isShowing, let eventId = sessionState.selectedEvent?.id {
+                Task { await viewModel.loadMeetings(eventId: eventId) }
+            }
+        }
         .refreshable {
             if let eventId = sessionState.selectedEvent?.id {
                 await viewModel.loadMeetings(eventId: eventId)
@@ -71,7 +77,8 @@ struct AttendantMeetingsView: View {
                 hasAppeared = true
             }
         }
-        .alert("common.error".localized, isPresented: .constant(viewModel.error != nil)) {
+        .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
+        .alert("common.error".localized, isPresented: $showError) {
             Button("common.ok".localized) { viewModel.error = nil }
         } message: {
             Text(viewModel.error ?? "")
@@ -83,7 +90,7 @@ struct AttendantMeetingsView: View {
     private func meetingRow(_ meeting: AttendantMeetingItem) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text(meeting.sessionName)
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)
@@ -93,7 +100,7 @@ struct AttendantMeetingsView: View {
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 }
                 Spacer()
-                VStack(alignment: .trailing, spacing: 4) {
+                VStack(alignment: .trailing, spacing: AppTheme.Spacing.xs) {
                     Text("\(meeting.attendees.count)")
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(AppTheme.themeColor)
@@ -112,7 +119,7 @@ struct AttendantMeetingsView: View {
 
             // Expandable attendee list
             Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
+                withAnimation(AppTheme.quickAnimation) {
                     expandedMeetingId = expandedMeetingId == meeting.id ? nil : meeting.id
                 }
             } label: {
@@ -145,7 +152,7 @@ struct AttendantMeetingsView: View {
                         }
                         .padding(AppTheme.Spacing.s)
                         .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                        .cornerRadius(AppTheme.CornerRadius.small)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                     }
                 }
             }
@@ -179,18 +186,22 @@ struct AttendantMeetingsView: View {
                     .padding(.horizontal, AppTheme.Spacing.xl)
                     .padding(.vertical, AppTheme.Spacing.m)
                     .background(AppTheme.themeColor)
-                    .cornerRadius(AppTheme.CornerRadius.button)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, AppTheme.Spacing.xxl)
     }
 
-    private func formatDate(_ date: Date) -> String {
+    private static let meetingDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        return formatter.string(from: date)
+        return formatter
+    }()
+
+    private func formatDate(_ date: Date) -> String {
+        Self.meetingDateFormatter.string(from: date)
     }
 }
 

@@ -47,21 +47,16 @@ struct RecipientPickerSheet: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                // Warm background
-                AppTheme.backgroundGradient(for: colorScheme)
-                    .ignoresSafeArea()
-
-                Group {
-                    if viewModel.isLoading {
-                        LoadingView(message: "Loading volunteers...")
-                    } else if filteredVolunteers.isEmpty {
-                        emptyState
-                    } else {
-                        volunteerList
-                    }
+            Group {
+                if viewModel.isLoading {
+                    LoadingView(message: "Loading volunteers...")
+                } else if filteredVolunteers.isEmpty {
+                    emptyState
+                } else {
+                    volunteerList
                 }
             }
+            .themedBackground(scheme: colorScheme)
             .searchable(text: $searchText, prompt: "Search volunteers...")
             .navigationTitle("Select Volunteer")
             .navigationBarTitleDisplayMode(.inline)
@@ -165,7 +160,7 @@ private struct RecipientPickerRow: View {
             }
 
             // Volunteer info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text(volunteer.fullName)
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)

@@ -261,7 +261,7 @@ struct OverseerRegistrationView: View {
     @ViewBuilder
     private var errorSection: some View {
         if let error = viewModel.errorMessage {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "exclamationmark.circle.fill")
                     .font(.subheadline)
                 Text(error)
