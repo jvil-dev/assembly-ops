@@ -99,7 +99,7 @@ struct MyAttendantSectionsView: View {
     private func postRow(_ post: AttendantPostItem) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text(post.name)
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)

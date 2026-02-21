@@ -18,6 +18,7 @@ struct MyAttendantMeetingsView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
+    @State private var showError = false
 
     var body: some View {
         ScrollView {
@@ -56,7 +57,8 @@ struct MyAttendantMeetingsView: View {
                 hasAppeared = true
             }
         }
-        .alert("common.error".localized, isPresented: .constant(viewModel.error != nil)) {
+        .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
+        .alert("common.error".localized, isPresented: $showError) {
             Button("common.ok".localized) { viewModel.error = nil }
         } message: {
             Text(viewModel.error ?? "")
@@ -68,7 +70,7 @@ struct MyAttendantMeetingsView: View {
     private func meetingCard(_ meeting: AttendantMeetingItem) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Session & date header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "calendar")
                     .foregroundStyle(AppTheme.themeColor)
                 Text(meeting.sessionName)

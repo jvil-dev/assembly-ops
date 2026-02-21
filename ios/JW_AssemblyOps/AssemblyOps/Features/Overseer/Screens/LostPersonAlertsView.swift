@@ -20,6 +20,7 @@ struct LostPersonAlertsView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
     @State private var selectedAlert: LostPersonAlertItem?
+    @State private var showError = false
 
     var body: some View {
         ScrollView {
@@ -27,7 +28,9 @@ struct LostPersonAlertsView: View {
                 // Filter toggle
                 Toggle("attendant.incidents.showResolved".localized, isOn: $viewModel.showResolved)
                     .font(AppTheme.Typography.subheadline)
-                    .padding(.horizontal, AppTheme.Spacing.s)
+                    .tint(AppTheme.themeColor)
+                    .cardPadding()
+                    .themedCard(scheme: colorScheme)
                     .onChange(of: viewModel.showResolved) { _, _ in
                         Task {
                             if let eventId = sessionState.selectedEvent?.id {
@@ -73,7 +76,8 @@ struct LostPersonAlertsView: View {
                 hasAppeared = true
             }
         }
-        .alert("common.error".localized, isPresented: .constant(viewModel.error != nil)) {
+        .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
+        .alert("common.error".localized, isPresented: $showError) {
             Button("common.ok".localized) { viewModel.error = nil }
         } message: {
             Text(viewModel.error ?? "")
@@ -91,7 +95,7 @@ struct LostPersonAlertsView: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
                 HStack {
                     Image(systemName: "person.crop.circle.badge.questionmark")
-                        .foregroundStyle(alert.resolved ? AppTheme.StatusColors.accepted : .red)
+                        .foregroundStyle(alert.resolved ? AppTheme.StatusColors.accepted : AppTheme.StatusColors.declined)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(alert.personName)
                             .font(AppTheme.Typography.headline)
@@ -110,16 +114,16 @@ struct LostPersonAlertsView: View {
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(AppTheme.StatusColors.acceptedBackground)
-                            .cornerRadius(AppTheme.CornerRadius.small)
+                            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                     } else {
                         Text("attendant.lostPerson.active".localized.uppercased())
                             .font(AppTheme.Typography.caption)
                             .fontWeight(.semibold)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(AppTheme.StatusColors.declined)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.red.opacity(0.1))
-                            .cornerRadius(AppTheme.CornerRadius.small)
+                            .background(AppTheme.StatusColors.declinedBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                     }
                 }
 
@@ -149,7 +153,7 @@ struct LostPersonAlertsView: View {
                             .font(AppTheme.Typography.caption)
                             .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                         if let phone = alert.contactPhone {
-                            Text(phone)
+                            Link(phone, destination: URL(string: "tel:\(phone.replacingOccurrences(of: " ", with: ""))")!)
                                 .font(AppTheme.Typography.caption)
                                 .foregroundStyle(AppTheme.themeColor)
                         }
@@ -168,7 +172,7 @@ struct LostPersonAlertsView: View {
                 }
 
                 if let notes = alert.resolutionNotes {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                         Text("attendant.lostPerson.resolutionNotes".localized)
                             .font(AppTheme.Typography.caption)
                             .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -178,7 +182,7 @@ struct LostPersonAlertsView: View {
                     }
                     .padding(AppTheme.Spacing.s)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                 }
             }
             .cardPadding()

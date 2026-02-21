@@ -64,20 +64,16 @@ struct SessionDetailView: View {
     }
 
     var body: some View {
-        ZStack {
-            AppTheme.backgroundGradient(for: colorScheme)
-                .ignoresSafeArea()
-
-            Group {
-                if viewModel.isLoading && viewModel.slots.isEmpty {
-                    LoadingView(message: "Loading posts...")
-                } else if sessionPosts.isEmpty {
-                    emptyState
-                } else {
-                    postList
-                }
+        Group {
+            if viewModel.isLoading && viewModel.slots.isEmpty {
+                LoadingView(message: "Loading posts...")
+            } else if sessionPosts.isEmpty {
+                emptyState
+            } else {
+                postList
             }
         }
+        .themedBackground(scheme: colorScheme)
         .navigationTitle(session.name)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -262,7 +258,7 @@ struct SessionDetailView: View {
     }
 
     private func statBadge(value: String, label: String) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: AppTheme.Spacing.xs) {
             Text(value)
                 .font(AppTheme.Typography.headline)
                 .foregroundStyle(AppTheme.themeColor)
@@ -306,7 +302,7 @@ struct SessionDetailView: View {
             } else {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(slot.assignments) { assignment in
-                        HStack(spacing: 8) {
+                        HStack(spacing: AppTheme.Spacing.s) {
                             // Initials circle
                             ZStack {
                                 Circle()

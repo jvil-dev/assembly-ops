@@ -25,6 +25,7 @@ struct SubmitSectionCountView: View {
     @State private var didSubmit = false
     @State private var sessions: [SessionAttendanceSummaryItem] = []
     @State private var selectedSessionId: String?
+    @State private var showError = false
 
     var body: some View {
         ScrollView {
@@ -33,7 +34,7 @@ struct SubmitSectionCountView: View {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
                     SectionHeaderLabel(icon: "map", title: "attendant.count.post".localized)
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                         Text(post.name)
                             .font(AppTheme.Typography.headline)
                         if let location = post.location {
@@ -45,7 +46,7 @@ struct SubmitSectionCountView: View {
                     .padding(AppTheme.Spacing.m)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                 }
                 .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
@@ -75,7 +76,7 @@ struct SubmitSectionCountView: View {
                                         ? AppTheme.themeColor.opacity(0.1)
                                         : AppTheme.cardBackgroundSecondary(for: colorScheme)
                                 )
-                                .cornerRadius(AppTheme.CornerRadius.small)
+                                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                             }
                             .buttonStyle(.plain)
                         }
@@ -95,7 +96,7 @@ struct SubmitSectionCountView: View {
                     .pickerStyle(.wheel)
                     .frame(height: 120)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                 }
                 .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
 
@@ -137,7 +138,7 @@ struct SubmitSectionCountView: View {
                     .padding(.vertical, AppTheme.Spacing.m)
                     .foregroundStyle(.white)
                     .background(count > 0 && selectedSessionId != nil ? AppTheme.themeColor : Color.gray)
-                    .cornerRadius(AppTheme.CornerRadius.button)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
                 }
                 .disabled(count == 0 || selectedSessionId == nil || viewModel.isSaving)
                 .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
@@ -151,7 +152,8 @@ struct SubmitSectionCountView: View {
         .alert("attendant.count.success".localized, isPresented: $didSubmit) {
             Button("common.ok".localized) { dismiss() }
         }
-        .alert("common.error".localized, isPresented: .constant(viewModel.error != nil)) {
+        .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
+        .alert("common.error".localized, isPresented: $showError) {
             Button("common.ok".localized) { viewModel.error = nil }
         } message: {
             Text(viewModel.error ?? "")

@@ -101,7 +101,7 @@ struct AdminManagementView: View {
     private func adminCard(_ admin: EventAdminItem) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text(admin.fullName)
                         .font(AppTheme.Typography.headline)
                     Text(admin.email)
@@ -126,7 +126,7 @@ struct AdminManagementView: View {
             }
 
             if let dept = admin.departmentName {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "building.2")
                         .font(.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))

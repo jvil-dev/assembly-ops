@@ -46,6 +46,7 @@ struct VolunteerPickerSheet: View {
     @State private var errorMessage: String?
     @State private var hasAppeared = false
     @State private var forceAssign = false
+    @State private var showError = false
 
     var filteredVolunteers: [VolunteerListItem] {
         if searchText.isEmpty {
@@ -61,21 +62,16 @@ struct VolunteerPickerSheet: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                // Warm background
-                AppTheme.backgroundGradient(for: colorScheme)
-                    .ignoresSafeArea()
-
-                Group {
-                    if viewModel.isLoading {
-                        LoadingView(message: "Loading volunteers...")
-                    } else if filteredVolunteers.isEmpty {
-                        emptyState
-                    } else {
-                        volunteerList
-                    }
+            Group {
+                if viewModel.isLoading {
+                    LoadingView(message: "Loading volunteers...")
+                } else if filteredVolunteers.isEmpty {
+                    emptyState
+                } else {
+                    volunteerList
                 }
             }
+            .themedBackground(scheme: colorScheme)
             .searchable(text: $searchText, prompt: "Search volunteers")
             .navigationTitle("Select Volunteers")
             .navigationBarTitleDisplayMode(.inline)
@@ -95,8 +91,9 @@ struct VolunteerPickerSheet: View {
                     }
                 }
             }
-            .alert("Error", isPresented: .constant(errorMessage != nil)) {
-                Button("OK") { errorMessage = nil }
+            .onChange(of: errorMessage) { _, newValue in showError = newValue != nil }
+            .alert("common.error".localized, isPresented: $showError) {
+                Button("common.ok".localized) { errorMessage = nil }
             } message: {
                 Text(errorMessage ?? "")
             }
@@ -334,7 +331,7 @@ private struct VolunteerPickerRow: View {
             .opacity(isDisabled ? 0.4 : 1)
 
             // Volunteer info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text(volunteer.fullName)
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)

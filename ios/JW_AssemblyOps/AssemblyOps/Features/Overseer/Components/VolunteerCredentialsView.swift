@@ -82,7 +82,7 @@ struct VolunteerCredentialsView: View {
         VStack(spacing: AppTheme.Spacing.m) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 56))
-                .foregroundStyle(.green)
+                .foregroundStyle(AppTheme.StatusColors.accepted)
 
             Text("\(volunteerName) has been added!")
                 .font(AppTheme.Typography.title)
@@ -102,7 +102,7 @@ struct VolunteerCredentialsView: View {
     private var credentialsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.l) {
             // Section header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "key.fill")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("Login Credentials")
@@ -128,7 +128,7 @@ struct VolunteerCredentialsView: View {
 
             // Token
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text("Token")
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
@@ -160,7 +160,7 @@ struct VolunteerCredentialsView: View {
                     }
                 } label: {
                     Image(systemName: copiedToken ? "checkmark" : "doc.on.doc")
-                        .foregroundStyle(copiedToken ? .green : AppTheme.themeColor)
+                        .foregroundStyle(copiedToken ? AppTheme.StatusColors.accepted : AppTheme.themeColor)
                 }
             }
         }
@@ -172,7 +172,7 @@ struct VolunteerCredentialsView: View {
 
     private var inviteCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "envelope.fill")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("Invite Message")
@@ -185,7 +185,7 @@ struct VolunteerCredentialsView: View {
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 .padding()
                 .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                .cornerRadius(AppTheme.CornerRadius.small)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
@@ -208,7 +208,7 @@ struct VolunteerCredentialsView: View {
                 .padding()
                 .background(AppTheme.themeColor)
                 .foregroundStyle(.white)
-                .cornerRadius(AppTheme.CornerRadius.button)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
             }
 
             // Copy all button
@@ -224,7 +224,7 @@ struct VolunteerCredentialsView: View {
                 .padding()
                 .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
                 .foregroundStyle(AppTheme.themeColor)
-                .cornerRadius(AppTheme.CornerRadius.button)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
             }
         }
     }
@@ -238,7 +238,7 @@ struct VolunteerCredentialsView: View {
         onCopy: @escaping () -> Void
     ) -> some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text(label)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
@@ -252,7 +252,7 @@ struct VolunteerCredentialsView: View {
 
             Button(action: onCopy) {
                 Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
-                    .foregroundStyle(isCopied ? .green : AppTheme.themeColor)
+                    .foregroundStyle(isCopied ? AppTheme.StatusColors.accepted : AppTheme.themeColor)
             }
         }
     }

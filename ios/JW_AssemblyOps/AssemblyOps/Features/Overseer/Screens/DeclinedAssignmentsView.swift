@@ -35,26 +35,22 @@ struct DeclinedAssignmentsView: View {
     @State private var hasAppeared = false
 
     var body: some View {
-        ZStack {
-            // Warm background
-            AppTheme.backgroundGradient(for: colorScheme)
-                .ignoresSafeArea()
-
-            Group {
-                if viewModel.isLoading {
-                    LoadingView(message: "Loading declined assignments...")
-                } else if viewModel.assignments.isEmpty {
-                    emptyState
-                } else {
-                    assignmentList
-                }
+        Group {
+            if viewModel.isLoading {
+                LoadingView(message: "Loading declined assignments...")
+            } else if viewModel.assignments.isEmpty {
+                emptyState
+            } else {
+                assignmentList
             }
         }
+        .themedBackground(scheme: colorScheme)
         .navigationTitle("Declined")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
+                    HapticManager.shared.lightTap()
                     Task { await viewModel.refresh() }
                 } label: {
                     Image(systemName: "arrow.clockwise")
@@ -233,7 +229,7 @@ private struct DeclinedAssignmentRow: View {
     }
 
     private func detailRow(icon: String, text: String) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: icon)
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))

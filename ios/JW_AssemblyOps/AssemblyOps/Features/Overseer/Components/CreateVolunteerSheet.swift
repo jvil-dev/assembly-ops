@@ -386,7 +386,7 @@ struct CredentialsSheet: View {
                             }
                         }
                     } label: {
-                        HStack(spacing: 8) {
+                        HStack(spacing: AppTheme.Spacing.s) {
                             Image(systemName: "doc.on.doc")
                             Text("Copy to Clipboard")
                         }
@@ -428,7 +428,7 @@ struct CredentialsSheet: View {
     }
 
     private var copiedToast: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(AppTheme.StatusColors.accepted)
             Text("Copied to clipboard")
@@ -454,7 +454,7 @@ struct CredentialRow: View {
     let colorScheme: ColorScheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
             Text(label)
                 .font(AppTheme.Typography.caption)
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))

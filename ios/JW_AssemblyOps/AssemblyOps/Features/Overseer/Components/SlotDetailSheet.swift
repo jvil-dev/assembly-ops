@@ -145,7 +145,7 @@ struct SlotDetailSheet: View {
     private var slotInfoCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "tablecells")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("Post Details")
@@ -203,7 +203,7 @@ struct SlotDetailSheet: View {
     private var volunteersCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person.3.fill")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("Assigned Volunteers")
@@ -284,7 +284,7 @@ struct SlotDetailSheet: View {
         Button {
             showVolunteerPicker = true
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "plus.circle.fill")
                 Text("Assign Volunteer")
             }
@@ -404,7 +404,7 @@ struct AssignmentRow: View {
                     .foregroundStyle(.primary)
 
                 if let checkIn = assignment.checkIn {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.xs) {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 10))
                         Text("Checked in \(checkIn.checkInTime, style: .time)")
@@ -412,7 +412,7 @@ struct AssignmentRow: View {
                     .font(AppTheme.Typography.captionSmall)
                     .foregroundStyle(AppTheme.StatusColors.accepted)
                 } else if assignment.isPending {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.xs) {
                         Image(systemName: "clock")
                             .font(.system(size: 10))
                         Text("assignment.status.pending".localized)

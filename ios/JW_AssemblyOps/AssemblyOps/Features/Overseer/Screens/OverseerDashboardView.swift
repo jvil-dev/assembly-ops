@@ -95,7 +95,7 @@ struct OverseerDashboardView: View {
             showEventPicker = true
         } label: {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text(sessionState.selectedEvent?.name ?? "Select Event")
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)
@@ -112,6 +112,7 @@ struct OverseerDashboardView: View {
             }
             .cardPadding()
             .background(AppTheme.cardBackground(for: colorScheme))
+            .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(.plain)
     }
@@ -218,7 +219,7 @@ struct OverseerDashboardView: View {
 
             HStack {
                 Spacer()
-                VStack(spacing: 8) {
+                VStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "tablecells")
                         .font(.system(size: 28))
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -250,7 +251,7 @@ struct OverseerDashboardView: View {
 
         // Attendance Quick Actions
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "number")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("ATTENDANCE")
@@ -276,7 +277,7 @@ struct OverseerDashboardView: View {
                 }
                 .padding(AppTheme.Spacing.m)
                 .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                .cornerRadius(AppTheme.CornerRadius.small)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
             }
             .buttonStyle(.plain)
 
@@ -298,7 +299,7 @@ struct OverseerDashboardView: View {
                 }
                 .padding(AppTheme.Spacing.m)
                 .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                .cornerRadius(AppTheme.CornerRadius.small)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
             }
             .buttonStyle(.plain)
         }
@@ -334,74 +335,6 @@ struct StatCard: View {
         .frame(maxWidth: .infinity)
         .cardPadding()
         .themedCard(scheme: colorScheme)
-    }
-}
-
-// MARK: - Recent Message Dashboard Row
-
-private struct RecentMessageDashboardRow: View {
-    let message: SentMessageItem
-    let colorScheme: ColorScheme
-
-    var body: some View {
-        HStack(spacing: AppTheme.Spacing.m) {
-            // Icon based on recipient type
-            ZStack {
-                Circle()
-                    .fill(recipientColor.opacity(0.15))
-                    .frame(width: 36, height: 36)
-
-                Image(systemName: recipientIcon)
-                    .font(.system(size: 14))
-                    .foregroundStyle(recipientColor)
-            }
-
-            // Message preview
-            VStack(alignment: .leading, spacing: 4) {
-                Text(message.subject ?? message.body)
-                    .font(AppTheme.Typography.subheadline)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-
-                Text(message.recipientTypeDisplayName)
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-            }
-
-            Spacer()
-
-            // Time ago
-            Text(timeAgo)
-                .font(AppTheme.Typography.caption)
-                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-        }
-        .padding(AppTheme.Spacing.m)
-        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-        .cornerRadius(AppTheme.CornerRadius.small)
-    }
-
-    private var recipientIcon: String {
-        switch message.recipientType {
-        case "VOLUNTEER": return "person"
-        case "DEPARTMENT": return "person.3"
-        case "EVENT": return "megaphone"
-        default: return "envelope"
-        }
-    }
-
-    private var recipientColor: Color {
-        switch message.recipientType {
-        case "VOLUNTEER": return AppTheme.themeColor
-        case "DEPARTMENT": return .blue
-        case "EVENT": return .purple
-        default: return .gray
-        }
-    }
-
-    private var timeAgo: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: message.createdAt, relativeTo: Date())
     }
 }
 

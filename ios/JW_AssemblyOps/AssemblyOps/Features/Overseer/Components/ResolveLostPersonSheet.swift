@@ -78,7 +78,7 @@ struct ResolveLostPersonSheet: View {
                             .frame(minHeight: 100)
                             .padding(AppTheme.Spacing.s)
                             .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                            .cornerRadius(AppTheme.CornerRadius.small)
+                            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                     }
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
                 }

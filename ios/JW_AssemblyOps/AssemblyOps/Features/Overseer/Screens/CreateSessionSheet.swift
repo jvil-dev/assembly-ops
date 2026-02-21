@@ -145,12 +145,12 @@ struct CreateSessionSheet: View {
             SectionHeaderLabel(icon: "clock", title: "TIME RANGE")
 
             HStack(spacing: AppTheme.Spacing.l) {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
                     Text("session.startTime".localized)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
 
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.xs) {
                         Picker("Hour", selection: $startHour) {
                             ForEach(0..<24) { hour in
                                 Text(String(format: "%02d", hour)).tag(hour)
@@ -175,12 +175,12 @@ struct CreateSessionSheet: View {
                     .frame(height: 100)
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
                     Text("session.endTime".localized)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
 
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.xs) {
                         Picker("Hour", selection: $endHour) {
                             ForEach(0..<24) { hour in
                                 Text(String(format: "%02d", hour)).tag(hour)

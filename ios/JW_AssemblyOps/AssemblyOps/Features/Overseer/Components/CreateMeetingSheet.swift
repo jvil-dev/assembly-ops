@@ -77,7 +77,7 @@ struct CreateMeetingSheet: View {
                                             ? AppTheme.themeColor.opacity(0.1)
                                             : AppTheme.cardBackgroundSecondary(for: colorScheme)
                                     )
-                                    .cornerRadius(AppTheme.CornerRadius.small)
+                                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -139,7 +139,7 @@ struct CreateMeetingSheet: View {
                             }
                             .padding(AppTheme.Spacing.s)
                             .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                            .cornerRadius(AppTheme.CornerRadius.small)
+                            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
 
                             // Select all / deselect all
                             HStack(spacing: AppTheme.Spacing.m) {
@@ -212,7 +212,7 @@ struct CreateMeetingSheet: View {
                                             ? AppTheme.themeColor.opacity(0.06)
                                             : Color.clear
                                     )
-                                    .cornerRadius(AppTheme.CornerRadius.small)
+                                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                                 }
                                 .buttonStyle(.plain)
                             }

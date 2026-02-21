@@ -13,28 +13,46 @@
 //   - No messages: "No Messages Yet" with envelope icon
 //   - No unread (filtered): "No Unread Messages" with checkmark
 //
-// Dependencies:
-//   - showUnreadOnly: Boolean to determine which state to show
-//
 // Used by: MessagesView
-
-
 
 import SwiftUI
 
 struct EmptyMessagesView: View {
+    @Environment(\.colorScheme) var colorScheme
+    @State private var hasAppeared = false
+
     let showUnreadOnly: Bool
-    
+
     var body: some View {
-        ContentUnavailableView(
-            showUnreadOnly ? "No Unread Messages" : "No Messages Yet",
-            systemImage: showUnreadOnly ? "checkmark.circle" : "envelope",
-            description: Text(
-                showUnreadOnly 
-                    ? "You're all caught up!"
-                    : "Messages from your overseer will appear here."
-            )
-        )
+        VStack(spacing: AppTheme.Spacing.l) {
+            Spacer()
+
+            Image(systemName: showUnreadOnly ? "checkmark.circle" : "envelope")
+                .font(.system(size: 48))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+            Text(showUnreadOnly ? "messages.empty.unread.title".localized : "messages.empty.title".localized)
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+
+            Text(showUnreadOnly
+                ? "messages.empty.unread.subtitle".localized
+                : "messages.empty.subtitle".localized)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                .multilineTextAlignment(.center)
+
+            Spacer()
+        }
+        .padding(AppTheme.Spacing.screenEdge)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .themedBackground(scheme: colorScheme)
+        .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+        .onAppear {
+            withAnimation(AppTheme.entranceAnimation) {
+                hasAppeared = true
+            }
+        }
     }
 }
 

@@ -36,32 +36,27 @@ struct OverseerMessagesView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                // Background
-                AppTheme.backgroundGradient(for: colorScheme)
-                    .ignoresSafeArea()
+            ScrollView {
+                VStack(spacing: AppTheme.Spacing.xl) {
+                    // Compose button card
+                    composeCard
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                ScrollView {
-                    VStack(spacing: AppTheme.Spacing.xl) {
-                        // Compose button card
-                        composeCard
-                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+                    // Quick actions
+                    quickActionsCard
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
 
-                        // Quick actions
-                        quickActionsCard
-                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
-
-                        // Recent sent messages
-                        if !viewModel.messages.isEmpty {
-                            recentMessagesCard
-                                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
-                        }
+                    // Recent sent messages
+                    if !viewModel.messages.isEmpty {
+                        recentMessagesCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
                     }
-                    .screenPadding()
-                    .padding(.top, AppTheme.Spacing.l)
-                    .padding(.bottom, AppTheme.Spacing.xxl)
                 }
+                .screenPadding()
+                .padding(.top, AppTheme.Spacing.l)
+                .padding(.bottom, AppTheme.Spacing.xxl)
             }
+            .themedBackground(scheme: colorScheme)
             .navigationTitle("Messages")
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showComposeSheet) {
@@ -97,7 +92,7 @@ struct OverseerMessagesView: View {
                         .foregroundStyle(.white)
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text("Compose Message")
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)
@@ -122,7 +117,7 @@ struct OverseerMessagesView: View {
     private var quickActionsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Section header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "bolt.fill")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("QUICK ACTIONS")
@@ -159,7 +154,7 @@ struct OverseerMessagesView: View {
                     }
                     .padding(AppTheme.Spacing.m)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                 }
                 .buttonStyle(.plain)
             }
@@ -193,7 +188,7 @@ struct OverseerMessagesView: View {
                     }
                     .padding(AppTheme.Spacing.m)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                 }
                 .buttonStyle(.plain)
             }
@@ -207,7 +202,7 @@ struct OverseerMessagesView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Section header with "View All" link
             HStack {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "envelope.fill")
                         .foregroundStyle(AppTheme.themeColor)
                     Text("RECENT MESSAGES")
@@ -218,7 +213,7 @@ struct OverseerMessagesView: View {
                 Spacer()
 
                 NavigationLink(destination: SentMessagesView()) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.xs) {
                         Text("View All")
                             .font(AppTheme.Typography.caption)
                         Image(systemName: "chevron.right")
@@ -259,7 +254,7 @@ private struct RecentMessageRow: View {
             }
 
             // Message info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 if let subject = message.subject, !subject.isEmpty {
                     Text(subject)
                         .font(AppTheme.Typography.subheadline)
@@ -272,7 +267,7 @@ private struct RecentMessageRow: View {
                         .lineLimit(1)
                 }
 
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.xs) {
                     Text(message.recipientTypeDisplayName)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
@@ -298,7 +293,7 @@ private struct RecentMessageRow: View {
         }
         .padding(AppTheme.Spacing.m)
         .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-        .cornerRadius(AppTheme.CornerRadius.small)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
     }
 
     private var recipientIcon: String {

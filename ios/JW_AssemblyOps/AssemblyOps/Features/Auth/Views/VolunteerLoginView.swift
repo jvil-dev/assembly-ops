@@ -32,27 +32,27 @@ import SwiftUI
 
 struct UnderlineTextField: View {
     @Environment(\.colorScheme) var colorScheme
-    
+
     let label: String
     let placeholder: String
     @Binding var text: String
     var isSecure: Bool = false
     var isFocused: Bool
     var onSubmit: () -> Void = {}
-    
+
     var autocapitalization: TextInputAutocapitalization = .characters
     var keyboardType: UIKeyboardType = .default
     var isMonospaced: Bool = true
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             // Floating label
             Text(label)
-                .font(.caption)
+                .font(AppTheme.Typography.caption)
                 .fontWeight(.medium)
-                .foregroundStyle(isFocused ? Color("ThemeColor") : Color.gray)
+                .foregroundStyle(isFocused ? AppTheme.themeColor : Color.gray)
                 .animation(.easeInOut(duration: 0.2), value: isFocused)
-            
+
             // Text field
             Group {
                 if isSecure {
@@ -65,18 +65,18 @@ struct UnderlineTextField: View {
                         .onSubmit(onSubmit)
                 }
             }
-            .font(isMonospaced 
+            .font(isMonospaced
                 ? .system(size: 17, weight: .regular, design: .monospaced)
                 : .system(size: 17, weight: .regular, design: .default))
             .foregroundStyle(colorScheme == .dark ? .white : .black)
             .textInputAutocapitalization(autocapitalization)
             .keyboardType(keyboardType)
             .autocorrectionDisabled()
-            .tint(Color("ThemeColor"))
-            
+            .tint(AppTheme.themeColor)
+
             // Animated underline
             Rectangle()
-                .fill(isFocused ? Color("ThemeColor").opacity(0.3) : Color.clear)
+                .fill(isFocused ? AppTheme.themeColor.opacity(0.3) : Color.clear)
                 .frame(height: isFocused ? 2 : 1)
                 .animation(.easeInOut(duration: 0.25), value: isFocused)
         }
@@ -96,46 +96,21 @@ struct VolunteerLoginView: View {
         case token
     }
 
-    // MARK: - Adaptive Colors
-    
-    private var backgroundTop: Color {
-        colorScheme == .dark
-            ? Color(white: 0.1)
-            : Color(red: 0.98, green: 0.97, blue: 0.95)
-    }
-    
-    private var backgroundBottom: Color {
-        colorScheme == .dark
-            ? Color(white: 0.08)
-            : Color(red: 0.96, green: 0.94, blue: 0.91)
-    }
-    
-    private var cardBackground: Color {
-        colorScheme == .dark
-            ? Color(white: 0.15)
-            : Color.white
-    }
-    
-    private var textSecondary: Color {
-        colorScheme == .dark
-            ? Color.white.opacity(0.6)
-            : Color(red: 0.45, green: 0.45, blue: 0.45)
-    }
-
     // MARK: - Body
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                backgroundGradient
+                AppTheme.backgroundGradient(for: colorScheme)
+                    .ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 0) {
                         Spacer(minLength: geometry.size.height * 0.12)
-                        
+
                         cardContent
                             .padding(.horizontal, 28)
-                        
+
                         Spacer(minLength: geometry.size.height * 0.08)
                     }
                     .frame(minHeight: geometry.size.height)
@@ -152,39 +127,28 @@ struct VolunteerLoginView: View {
                 }
         )
         .onAppear {
-            withAnimation(.easeOut(duration: 0.6).delay(0.1)) {
+            withAnimation(AppTheme.entranceAnimation) {
                 hasAppeared = true
             }
         }
     }
 
-    // MARK: - Background
-
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [backgroundTop, backgroundBottom],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
-    }
-
     // MARK: - Card
 
     private var cardContent: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: AppTheme.Spacing.xxl) {
             headerSection
             formSection
             errorSection
             loginButton
             helpText
         }
-        .padding(.horizontal, 32)
+        .padding(.horizontal, AppTheme.Spacing.xxl)
         .padding(.vertical, 40)
-        .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .shadow(color: Color.black.opacity(0.06), radius: 20, x: 0, y: 8)
-        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+        .background(AppTheme.cardBackground(for: colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large))
+        .shadow(color: AppTheme.Shadow.cardPrimary.color, radius: AppTheme.Shadow.cardPrimary.radius, x: 0, y: AppTheme.Shadow.cardPrimary.y)
+        .shadow(color: AppTheme.Shadow.cardSecondary.color, radius: AppTheme.Shadow.cardSecondary.radius, x: 0, y: AppTheme.Shadow.cardSecondary.y)
         .opacity(hasAppeared ? 1 : 0)
         .offset(y: hasAppeared ? 0 : 20)
     }
@@ -192,34 +156,34 @@ struct VolunteerLoginView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.l) {
             Image("Logo")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 160, height: 160)
-                .shadow(color: Color("ThemeColor").opacity(0.15), radius: 12, x: 0, y: 4)
+                .shadow(color: AppTheme.themeColor.opacity(0.15), radius: 12, x: 0, y: 4)
 
             Text("AssemblyOps")
                 .font(.system(size: 28, weight: .semibold, design: .default))
-                .foregroundStyle(Color("ThemeColor"))
+                .foregroundStyle(AppTheme.themeColor)
                 .tracking(0.5)
 
             Text("Sign in to view your assignments")
-                .font(.subheadline)
-                .foregroundStyle(textSecondary)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
         }
     }
 
     // MARK: - Form
 
     private var formSection: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: AppTheme.Spacing.xl) {
             // Volunteer ID field with prefix picker
             VStack(alignment: .leading, spacing: 6) {
                 Text("VOLUNTEER ID")
-                    .font(.caption)
+                    .font(AppTheme.Typography.caption)
                     .fontWeight(.medium)
-                    .foregroundStyle(focusedField == .volunteerId ? Color("ThemeColor") : Color.gray)
+                    .foregroundStyle(focusedField == .volunteerId ? AppTheme.themeColor : Color.gray)
                     .animation(.easeInOut(duration: 0.2), value: focusedField)
 
                 HStack(spacing: 0) {
@@ -245,7 +209,7 @@ struct VolunteerLoginView: View {
                         .foregroundStyle(colorScheme == .dark ? .white : .black)
                         .textInputAutocapitalization(.characters)
                         .autocorrectionDisabled()
-                        .tint(Color("ThemeColor"))
+                        .tint(AppTheme.themeColor)
                         .focused($focusedField, equals: .volunteerId)
                         .submitLabel(.next)
                         .onSubmit { focusedField = .token }
@@ -253,7 +217,7 @@ struct VolunteerLoginView: View {
 
                 // Underline
                 Rectangle()
-                    .fill(focusedField == .volunteerId ? Color("ThemeColor").opacity(0.3) : Color.clear)
+                    .fill(focusedField == .volunteerId ? AppTheme.themeColor.opacity(0.3) : Color.clear)
                     .frame(height: focusedField == .volunteerId ? 2 : 1)
                     .animation(.easeInOut(duration: 0.25), value: focusedField)
             }
@@ -277,18 +241,18 @@ struct VolunteerLoginView: View {
     @ViewBuilder
     private var errorSection: some View {
         if let error = viewModel.errorMessage {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "exclamationmark.circle.fill")
-                    .font(.subheadline)
+                    .font(AppTheme.Typography.subheadline)
                 Text(error)
-                    .font(.subheadline)
+                    .font(AppTheme.Typography.subheadline)
             }
-            .foregroundStyle(Color(red: 0.8, green: 0.25, blue: 0.2))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .foregroundStyle(AppTheme.StatusColors.declined)
+            .padding(.horizontal, AppTheme.Spacing.l)
+            .padding(.vertical, AppTheme.Spacing.m)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(red: 0.8, green: 0.25, blue: 0.2).opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .background(AppTheme.StatusColors.declinedBackground)
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
             .transition(.opacity.combined(with: .scale(scale: 0.95)))
         }
     }
@@ -305,15 +269,15 @@ struct VolunteerLoginView: View {
                         .tint(.white)
                 } else {
                     Text("Sign In")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(AppTheme.Typography.bodyMedium)
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 52)
+            .frame(height: AppTheme.ButtonHeight.large)
         }
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(viewModel.isFormValid ? Color("ThemeColor") : Color("ThemeColor").opacity(0.4))
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                .fill(viewModel.isFormValid ? AppTheme.themeColor : AppTheme.themeColor.opacity(0.4))
         )
         .foregroundStyle(.white)
         .disabled(!viewModel.isFormValid || viewModel.isLoading)
@@ -324,8 +288,8 @@ struct VolunteerLoginView: View {
 
     private var helpText: some View {
         Text("Need help? Ask your department overseer")
-            .font(.footnote)
-            .foregroundStyle(textSecondary)
+            .font(AppTheme.Typography.caption)
+            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             .multilineTextAlignment(.center)
     }
 }

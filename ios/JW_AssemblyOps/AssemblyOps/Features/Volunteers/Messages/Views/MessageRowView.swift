@@ -7,79 +7,90 @@
 
 // MARK: - Message Row View
 //
-// List row component for displaying a single message preview.
+// Card component for displaying a single message preview.
 //
 // Features:
-//   - Blue dot indicator for unread messages
+//   - Unread dot indicator
 //   - Icon based on recipient type (person/group/megaphone)
 //   - Subject with bold styling for unread
 //   - Sender name and timestamp
 //   - Body preview (2 lines)
-//
-// Dependencies:
-//   - Message: Data model
 //
 // Used by: MessagesView
 
 import SwiftUI
 
 struct MessageRowView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let message: Message
-    
+
     var body: some View {
-        HStack(spacing: 12) {
-            // Unread indicator
-            Circle()
-                .fill(message.isRead ? Color.clear : Color.blue)
-                .frame(width: 10, height: 10)
-            
-            // Message type icon
-            Image(systemName: message.recipientType.icon)
-                .font(.title3)
-                .foregroundStyle(message.isRead ? .secondary : .primary)
-                .frame(width: 30)
-            
+        HStack(spacing: AppTheme.Spacing.m) {
+            // Recipient type icon with colored circle
+            ZStack {
+                Circle()
+                    .fill(recipientColor.opacity(0.15))
+                    .frame(width: 44, height: 44)
+
+                Image(systemName: message.recipientType.icon)
+                    .font(.system(size: 18))
+                    .foregroundStyle(recipientColor)
+            }
+
             // Content
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 HStack {
                     Text(message.displaySubject)
-                        .font(.headline)
-                        .fontWeight(message.isRead ? .regular : .semibold)
+                        .font(message.isRead ? AppTheme.Typography.subheadline : AppTheme.Typography.headline)
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
-                    
+
                     Spacer()
-                    
+
                     Text(message.formattedDate)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 }
-                
+
                 if let sender = message.senderName {
-                    Text("From: \(sender)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Text(sender)
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 }
-                
+
                 Text(message.body)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                     .lineLimit(2)
             }
-            
-            // Chevron
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+
+            // Unread indicator
+            if !message.isRead {
+                Circle()
+                    .fill(AppTheme.StatusColors.info)
+                    .frame(width: 10, height: 10)
+            }
         }
-        .padding(.vertical, 8)
-        .contentShape(Rectangle())
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    private var recipientColor: Color {
+        switch message.recipientType {
+        case .volunteer: return AppTheme.themeColor
+        case .department: return .blue
+        case .event: return .purple
+        }
     }
 }
 
 #Preview {
-    List {
+    VStack(spacing: AppTheme.Spacing.m) {
         MessageRowView(message: .preview)
         MessageRowView(message: .previewRead)
         MessageRowView(message: .previewDepartment)
     }
+    .screenPadding()
+    .themedBackground(scheme: .light)
 }

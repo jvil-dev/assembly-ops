@@ -73,7 +73,7 @@ struct JoinEventView: View {
 
             // Code input
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "key.fill")
                         .foregroundStyle(AppTheme.themeColor)
                     Text("Join Code")
@@ -148,7 +148,7 @@ struct JoinEventView: View {
             // Event info card
             if let event = viewModel.joinedEvent {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.s) {
                         Image(systemName: "calendar.circle.fill")
                             .foregroundStyle(AppTheme.themeColor)
                         Text("Event Details")
@@ -211,7 +211,7 @@ struct JoinEventView: View {
 
     private var departmentClaimSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "square.grid.2x2.fill")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("Claim Your Department")

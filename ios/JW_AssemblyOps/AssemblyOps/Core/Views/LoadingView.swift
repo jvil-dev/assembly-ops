@@ -11,24 +11,26 @@
 // Displays centered spinner with optional description text.
 //
 // Properties:
-//   - message: Text displayed below spinner (default: "Loading...")
-//
-// Used by: AssignmentsListView.swift (while fetching data)
+//   - message: Text displayed below spinner (default: localized "Loading...")
 
 import SwiftUI
 
 struct LoadingView: View {
-    var message: String = "Loading..."
-    
+    @Environment(\.colorScheme) var colorScheme
+
+    var message: String = "common.loading".localized
+
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.l) {
             ProgressView()
                 .scaleEffect(1.2)
+                .tint(AppTheme.themeColor)
             Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .themedBackground(scheme: colorScheme)
     }
 }
 

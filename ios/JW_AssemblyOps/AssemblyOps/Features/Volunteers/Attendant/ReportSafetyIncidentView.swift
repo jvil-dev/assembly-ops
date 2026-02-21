@@ -28,6 +28,7 @@ struct ReportSafetyIncidentView: View {
     @State private var customLocation = ""
     @State private var useCustomLocation = false
     @State private var didReport = false
+    @State private var showError = false
 
     /// Resolved location string for the API
     private var resolvedLocation: String? {
@@ -87,9 +88,13 @@ struct ReportSafetyIncidentView: View {
                 }
             }
             .alert("attendant.incidents.report.success".localized, isPresented: $didReport) {
-                Button("common.ok".localized) { dismiss() }
+                Button("common.ok".localized) {
+                    HapticManager.shared.success()
+                    dismiss()
+                }
             }
-            .alert("common.error".localized, isPresented: .constant(viewModel.error != nil)) {
+            .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
+            .alert("common.error".localized, isPresented: $showError) {
                 Button("common.ok".localized) { viewModel.error = nil }
             } message: {
                 Text(viewModel.error ?? "")
@@ -133,7 +138,7 @@ struct ReportSafetyIncidentView: View {
                                 ? AppTheme.themeColor.opacity(0.1)
                                 : AppTheme.cardBackgroundSecondary(for: colorScheme)
                         )
-                        .cornerRadius(AppTheme.CornerRadius.small)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                     }
                     .buttonStyle(.plain)
                 }
@@ -236,7 +241,7 @@ struct ReportSafetyIncidentView: View {
                                 ? AppTheme.themeColor.opacity(0.1)
                                 : AppTheme.cardBackgroundSecondary(for: colorScheme)
                         )
-                        .cornerRadius(AppTheme.CornerRadius.small)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                     }
                     .buttonStyle(.plain)
                 }
@@ -262,7 +267,7 @@ struct ReportSafetyIncidentView: View {
                             ? AppTheme.themeColor.opacity(0.1)
                             : AppTheme.cardBackgroundSecondary(for: colorScheme)
                     )
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                 }
                 .buttonStyle(.plain)
 

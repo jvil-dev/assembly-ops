@@ -29,7 +29,7 @@ struct ResolveIncidentSheet: View {
                 VStack(spacing: AppTheme.Spacing.xl) {
                     // Incident details (read-only)
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                        HStack(spacing: 8) {
+                        HStack(spacing: AppTheme.Spacing.s) {
                             Image(systemName: incident.type.icon)
                                 .foregroundStyle(AppTheme.StatusColors.warning)
                             Text(incident.type.displayName)
@@ -74,7 +74,7 @@ struct ResolveIncidentSheet: View {
                             .frame(minHeight: 100)
                             .padding(AppTheme.Spacing.s)
                             .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                            .cornerRadius(AppTheme.CornerRadius.small)
+                            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                     }
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
                 }

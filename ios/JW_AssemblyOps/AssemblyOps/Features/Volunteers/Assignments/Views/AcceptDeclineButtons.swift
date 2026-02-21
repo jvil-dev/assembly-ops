@@ -46,7 +46,7 @@ struct AcceptDeclineButtons: View {
     // MARK: - Deadline Warning
 
     private func deadlineWarning(text: String) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: "clock.fill")
                 .font(.system(size: 14))
                 .foregroundStyle(AppTheme.StatusColors.warning)
@@ -83,7 +83,7 @@ struct AcceptDeclineButtons: View {
             HapticManager.shared.lightTap()
             onDecline()
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 if isDeclining {
                     ProgressView()
                         .tint(AppTheme.StatusColors.declined)
@@ -109,7 +109,7 @@ struct AcceptDeclineButtons: View {
             HapticManager.shared.mediumTap()
             onAccept()
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 if isAccepting {
                     ProgressView()
                         .tint(.white)

@@ -100,7 +100,7 @@ struct DeclineReasonSheet: View {
             onConfirm()
             dismiss()
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 if isConfirming {
                     ProgressView()
                         .tint(.white)

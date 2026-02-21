@@ -145,7 +145,7 @@ struct HomeView: View {
                     .foregroundStyle(.primary)
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 if let deptType = appState.currentVolunteer?.departmentType {
                     Circle()
                         .fill(DepartmentColor.color(for: deptType))
@@ -214,18 +214,18 @@ struct HomeView: View {
     private func nextUpNowState(assignment: Assignment) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // NOW badge
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Circle()
-                    .fill(.green)
+                    .fill(AppTheme.StatusColors.accepted)
                     .frame(width: 10, height: 10)
                     .overlay(
                         Circle()
-                            .fill(.green.opacity(0.3))
+                            .fill(AppTheme.StatusColors.accepted.opacity(0.3))
                             .frame(width: 20, height: 20)
                     )
                 Text("home.nextUp.now".localized)
                     .font(AppTheme.Typography.captionBold)
-                    .foregroundStyle(.green)
+                    .foregroundStyle(AppTheme.StatusColors.accepted)
             }
 
             // Assignment info
@@ -274,8 +274,8 @@ struct HomeView: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, AppTheme.Spacing.m)
-                .background(.green)
-                .cornerRadius(AppTheme.CornerRadius.button)
+                .background(AppTheme.StatusColors.accepted)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
             }
             .buttonStyle(.plain)
             .disabled(isCheckingIn)
@@ -285,7 +285,7 @@ struct HomeView: View {
         .themedCard(scheme: colorScheme)
         .overlay(
             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
-                .strokeBorder(.green.opacity(0.3), lineWidth: 1)
+                .strokeBorder(AppTheme.StatusColors.accepted.opacity(0.3), lineWidth: 1)
         )
     }
 
@@ -295,7 +295,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
                 // Header
                 HStack {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.s) {
                         Image(systemName: "clock.badge")
                             .foregroundStyle(AppTheme.themeColor)
                         Text("home.nextUp".localized)
@@ -360,14 +360,14 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, AppTheme.Spacing.m)
                         .background(AppTheme.themeColor)
-                        .cornerRadius(AppTheme.CornerRadius.button)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
                     }
                     .buttonStyle(.plain)
                     .disabled(isCheckingIn)
                 } else {
                     HStack {
                         Spacer()
-                        HStack(spacing: 4) {
+                        HStack(spacing: AppTheme.Spacing.xs) {
                             Text("home.nextUp.viewDetails".localized)
                                 .font(AppTheme.Typography.caption)
                             Image(systemName: "chevron.right")
@@ -437,7 +437,7 @@ struct HomeView: View {
     private var todaySummaryCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "chart.bar.fill")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("home.summary".localized)
@@ -446,7 +446,7 @@ struct HomeView: View {
             }
 
             // Stats row
-            HStack(spacing: 4) {
+            HStack(spacing: AppTheme.Spacing.xs) {
                 Text(String(format: "home.summary.count".localized, viewModel.todayTotal))
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(.primary)
@@ -492,15 +492,15 @@ struct HomeView: View {
     private func assignmentStatusIcon(for assignment: Assignment) -> some View {
         if assignment.isCheckedIn {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+                .foregroundStyle(AppTheme.StatusColors.accepted)
                 .font(.system(size: 16))
         } else if assignment.isCheckedOut {
             Image(systemName: "checkmark.seal.fill")
-                .foregroundStyle(.blue)
+                .foregroundStyle(AppTheme.StatusColors.info)
                 .font(.system(size: 16))
         } else if assignment.canCheckIn {
             Image(systemName: "circle.dashed")
-                .foregroundStyle(.orange)
+                .foregroundStyle(AppTheme.StatusColors.pending)
                 .font(.system(size: 16))
         } else {
             Image(systemName: "clock")
@@ -523,11 +523,11 @@ struct HomeView: View {
 
     private func assignmentStatusColor(for assignment: Assignment) -> Color {
         if assignment.isCheckedIn {
-            return .green
+            return AppTheme.StatusColors.accepted
         } else if assignment.isCheckedOut {
-            return .blue
+            return AppTheme.StatusColors.info
         } else if assignment.canCheckIn {
-            return .orange
+            return AppTheme.StatusColors.pending
         } else {
             return AppTheme.textTertiary(for: colorScheme)
         }
@@ -556,7 +556,7 @@ struct HomeView: View {
 
                         Spacer()
 
-                        HStack(spacing: 4) {
+                        HStack(spacing: AppTheme.Spacing.xs) {
                             Text("home.actions.respond".localized)
                                 .font(AppTheme.Typography.caption)
                             Image(systemName: "chevron.right")
@@ -591,7 +591,7 @@ struct HomeView: View {
 
                         Spacer()
 
-                        HStack(spacing: 4) {
+                        HStack(spacing: AppTheme.Spacing.xs) {
                             Text("home.actions.read".localized)
                                 .font(AppTheme.Typography.caption)
                             Image(systemName: "chevron.right")
@@ -616,10 +616,10 @@ struct HomeView: View {
                 showReportIncident = true
                 HapticManager.shared.lightTap()
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 16))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(AppTheme.StatusColors.warning)
                     Text("attendant.home.reportIncident".localized)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(.primary)
@@ -627,7 +627,7 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity)
                 .padding(AppTheme.Spacing.m)
                 .background(AppTheme.cardBackground(for: colorScheme))
-                .cornerRadius(AppTheme.CornerRadius.small)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                 .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
             }
             .buttonStyle(.plain)
@@ -636,10 +636,10 @@ struct HomeView: View {
                 showReportLostPerson = true
                 HapticManager.shared.lightTap()
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "person.crop.circle.badge.questionmark")
                         .font(.system(size: 16))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(AppTheme.StatusColors.declined)
                     Text("attendant.home.reportLostPerson".localized)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(.primary)
@@ -647,7 +647,7 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity)
                 .padding(AppTheme.Spacing.m)
                 .background(AppTheme.cardBackground(for: colorScheme))
-                .cornerRadius(AppTheme.CornerRadius.small)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                 .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
             }
             .buttonStyle(.plain)

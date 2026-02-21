@@ -74,7 +74,7 @@ struct AttendanceCountBreakdownView: View {
 
     private var sessionPicker: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "calendar")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("attendant.attendance.session".localized.uppercased())
@@ -101,7 +101,7 @@ struct AttendanceCountBreakdownView: View {
                                         : AppTheme.cardBackgroundSecondary(for: colorScheme)
                                 )
                                 .foregroundStyle(selectedSessionId == summary.sessionId ? .white : .primary)
-                                .cornerRadius(AppTheme.CornerRadius.button)
+                                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
                         }
                         .buttonStyle(.plain)
                     }
@@ -116,7 +116,7 @@ struct AttendanceCountBreakdownView: View {
 
     private func totalCard(_ summary: SessionAttendanceSummaryItem) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "number")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("attendant.attendance.total".localized.uppercased())
@@ -153,7 +153,7 @@ struct AttendanceCountBreakdownView: View {
             }
 
             HStack(spacing: AppTheme.Spacing.l) {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.xs) {
                     Image(systemName: "person.fill")
                         .font(.system(size: 10))
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -162,7 +162,7 @@ struct AttendanceCountBreakdownView: View {
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 }
 
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.xs) {
                     Image(systemName: "clock")
                         .font(.system(size: 10))
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))

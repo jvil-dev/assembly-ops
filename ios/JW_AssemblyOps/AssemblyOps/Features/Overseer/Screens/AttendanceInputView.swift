@@ -31,6 +31,8 @@ struct AttendanceInputView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) var dismiss
     @State private var hasAppeared = false
+    @State private var showError = false
+    @State private var showSuccess = false
 
     // No sessions parameter needed — loaded via viewModel.sessionSummaries
     // EventAttendanceSummary query returns ALL sessions (even those with 0 counts)
@@ -69,8 +71,9 @@ struct AttendanceInputView: View {
                 Task { await viewModel.loadSessionCounts(sessionId: sessionId) }
             }
         }
-        .alert("Success", isPresented: .constant(viewModel.successMessage != nil)) {
-            Button("OK") {
+        .onChange(of: viewModel.successMessage) { _, newValue in showSuccess = newValue != nil }
+        .alert("common.success".localized, isPresented: $showSuccess) {
+            Button("common.ok".localized) {
                 HapticManager.shared.lightTap()
                 viewModel.successMessage = nil
             }
@@ -79,8 +82,9 @@ struct AttendanceInputView: View {
                 Text(message)
             }
         }
-        .alert("Error", isPresented: .constant(viewModel.error != nil)) {
-            Button("OK") {
+        .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
+        .alert("common.error".localized, isPresented: $showError) {
+            Button("common.ok".localized) {
                 HapticManager.shared.lightTap()
                 viewModel.error = nil
             }
@@ -100,7 +104,7 @@ struct AttendanceInputView: View {
     private var sessionPickerCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Section header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "calendar")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("SESSION")
@@ -131,7 +135,7 @@ struct AttendanceInputView: View {
                     HStack {
                         if let selectedId = viewModel.selectedSessionId,
                            let selected = viewModel.sessionSummaries.first(where: { $0.sessionId == selectedId }) {
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                                 Text(selected.sessionName)
                                     .font(AppTheme.Typography.body)
                                     .foregroundStyle(Color.primary)
@@ -151,7 +155,7 @@ struct AttendanceInputView: View {
                     }
                     .padding(AppTheme.Spacing.m)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                 }
             }
         }
@@ -163,7 +167,7 @@ struct AttendanceInputView: View {
     private var countInputCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Section header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "number")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("COUNT DETAILS")
@@ -175,7 +179,7 @@ struct AttendanceInputView: View {
             sectionPickerField
 
             // Count input
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text("Count *")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
@@ -187,11 +191,11 @@ struct AttendanceInputView: View {
                 .pickerStyle(.wheel)
                 .frame(height: 120)
                 .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                .cornerRadius(AppTheme.CornerRadius.small)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
             }
 
             // Notes field (optional)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text("Notes (optional)")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
@@ -199,7 +203,7 @@ struct AttendanceInputView: View {
                     .textFieldStyle(.plain)
                     .padding(AppTheme.Spacing.m)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
             }
 
             // Submit button
@@ -225,7 +229,7 @@ struct AttendanceInputView: View {
                 .background(viewModel.selectedSessionId != nil && viewModel.count > 0
                     ? AppTheme.themeColor
                     : AppTheme.textSecondary(for: colorScheme))
-                .cornerRadius(AppTheme.CornerRadius.button)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
             }
             .disabled(viewModel.selectedSessionId == nil || viewModel.count == 0 || viewModel.isSaving)
         }
@@ -236,7 +240,7 @@ struct AttendanceInputView: View {
     // MARK: - Section Picker Field
     @ViewBuilder
     private var sectionPickerField: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
             Text("attendance.section".localized)
                 .font(AppTheme.Typography.caption)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
@@ -294,7 +298,7 @@ struct AttendanceInputView: View {
                     }
                     .padding(AppTheme.Spacing.m)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                 }
             } else {
                 // Fallback: free-text (when no posts exist or "Other" selected)
@@ -303,7 +307,7 @@ struct AttendanceInputView: View {
                         .textFieldStyle(.plain)
                         .padding(AppTheme.Spacing.m)
                         .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                        .cornerRadius(AppTheme.CornerRadius.small)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
 
                     if viewModel.useCustomSection {
                         Button {
@@ -350,7 +354,7 @@ struct AttendanceInputView: View {
     private var existingCountsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Section header
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "list.bullet")
                     .foregroundStyle(AppTheme.themeColor)
                 Text("EXISTING COUNTS")
@@ -386,7 +390,7 @@ private struct AttendanceSectionRow: View {
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.m) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 if let section = count.section {
                     Text(section)
                         .font(AppTheme.Typography.headline)
@@ -416,7 +420,7 @@ private struct AttendanceSectionRow: View {
         }
         .padding(AppTheme.Spacing.m)
         .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-        .cornerRadius(AppTheme.CornerRadius.small)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
     }
 }
 

@@ -85,7 +85,7 @@ private struct GroupMemberRow: View {
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text(member.fullName)
                     .font(AppTheme.Typography.subheadline)
                     .fontWeight(.medium)
@@ -98,7 +98,7 @@ private struct GroupMemberRow: View {
             Spacer()
 
             if member.isCheckedIn {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.xs) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
                     if let time = member.checkInTime {
@@ -122,7 +122,7 @@ private struct GroupMemberRow: View {
                             .padding(.vertical, 6)
                             .background(AppTheme.themeColor)
                             .foregroundColor(.white)
-                            .cornerRadius(6)
+                            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.badge))
                     }
                 }
                 .disabled(isCheckingIn)
