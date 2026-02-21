@@ -31,6 +31,7 @@ extension AssemblyOpsAPI {
       switch typename {
       case "Admin": return AssemblyOpsAPI.Objects.Admin
       case "AttendanceCount": return AssemblyOpsAPI.Objects.AttendanceCount
+      case "AttendantMeeting": return AssemblyOpsAPI.Objects.AttendantMeeting
       case "AuthPayload": return AssemblyOpsAPI.Objects.AuthPayload
       case "CaptainGroup": return AssemblyOpsAPI.Objects.CaptainGroup
       case "CheckIn": return AssemblyOpsAPI.Objects.CheckIn
@@ -49,20 +50,23 @@ extension AssemblyOpsAPI {
       case "EventAdmin": return AssemblyOpsAPI.Objects.EventAdmin
       case "EventTemplate": return AssemblyOpsAPI.Objects.EventTemplate
       case "EventVolunteer": return AssemblyOpsAPI.Objects.EventVolunteer
+      case "EventVolunteerAuthPayload": return AssemblyOpsAPI.Objects.EventVolunteerAuthPayload
       case "EventVolunteerCredentials": return AssemblyOpsAPI.Objects.EventVolunteerCredentials
+      case "LostPersonAlert": return AssemblyOpsAPI.Objects.LostPersonAlert
       case "MarkAllReadResult": return AssemblyOpsAPI.Objects.MarkAllReadResult
+      case "MeetingAttendance": return AssemblyOpsAPI.Objects.MeetingAttendance
       case "Message": return AssemblyOpsAPI.Objects.Message
       case "Mutation": return AssemblyOpsAPI.Objects.Mutation
       case "OAuthAuthPayload": return AssemblyOpsAPI.Objects.OAuthAuthPayload
       case "Post": return AssemblyOpsAPI.Objects.Post
       case "Query": return AssemblyOpsAPI.Objects.Query
       case "Role": return AssemblyOpsAPI.Objects.Role
+      case "SafetyIncident": return AssemblyOpsAPI.Objects.SafetyIncident
       case "ScheduleAssignment": return AssemblyOpsAPI.Objects.ScheduleAssignment
       case "Session": return AssemblyOpsAPI.Objects.Session
       case "SessionAttendanceSummary": return AssemblyOpsAPI.Objects.SessionAttendanceSummary
       case "TokenPayload": return AssemblyOpsAPI.Objects.TokenPayload
       case "Volunteer": return AssemblyOpsAPI.Objects.Volunteer
-      case "VolunteerAuthPayload": return AssemblyOpsAPI.Objects.VolunteerAuthPayload
       case "VolunteerCredentials": return AssemblyOpsAPI.Objects.VolunteerCredentials
       case "VolunteerProfile": return AssemblyOpsAPI.Objects.VolunteerProfile
       default: return nil

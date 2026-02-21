@@ -1,0 +1,28 @@
+query LostPersonAlerts($eventId: ID!, $resolved: Boolean) {
+  lostPersonAlerts(eventId: $eventId, resolved: $resolved) {
+    id
+    personName
+    age
+    description
+    lastSeenLocation
+    lastSeenTime
+    contactName
+    contactPhone
+    reportedBy {
+      id
+      volunteerProfile {
+        firstName
+        lastName
+      }
+    }
+    resolved
+    resolvedAt
+    resolvedBy {
+      id
+      firstName
+      lastName
+    }
+    resolutionNotes
+    createdAt
+  }
+}

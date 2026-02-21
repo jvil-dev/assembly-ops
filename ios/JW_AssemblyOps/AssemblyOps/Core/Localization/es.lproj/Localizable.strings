@@ -18,6 +18,7 @@
 "common.remove" = "Quitar";
 "common.copy" = "Copiar";
 "common.share" = "Compartir";
+"common.ok" = "OK";
 
 // MARK: - Auth
 "auth.login" = "Iniciar Sesión";
@@ -57,10 +58,40 @@
 "assignmentStatus.declined" = "Rechazada";
 "assignmentStatus.autoDeclined" = "Auto-Rechazada";
 
+// MARK: - Asignación
+"assignment.forceAssign.toggle" = "Asignar Directamente";
+"assignment.forceAssign.subtitle" = "Omite la aceptación — el voluntario queda asignado de inmediato";
+"assignment.status.pending" = "En espera de aceptación";
+
 // MARK: - Check-In Status
 "checkInStatus.checkedIn" = "Registrado";
 "checkInStatus.checkedOut" = "Salida";
 "checkInStatus.noShow" = "No Se Presentó";
+
+// MARK: - Inicio (Dashboard)
+"home.welcome" = "Bienvenido, %@!";
+"home.nextUp" = "SIGUIENTE";
+"home.nextUp.now" = "AHORA";
+"home.nextUp.checkOut" = "Salir";
+"home.nextUp.checkIn" = "Registrarse";
+"home.nextUp.allDone" = "¡Ya terminaste por hoy!";
+"home.nextUp.nextDate" = "Próxima: %@";
+"home.nextUp.noAssignments" = "Sin asignaciones aún";
+"home.nextUp.noAssignments.subtitle" = "Tu superintendente te asignará pronto.";
+"home.nextUp.viewDetails" = "Ver Detalles";
+"home.summary" = "RESUMEN DE HOY";
+"home.summary.count" = "%d asignaciones";
+"home.summary.completed" = "%d completadas";
+"home.summary.checkedIn" = "Registrado";
+"home.summary.done" = "Completada";
+"home.summary.ready" = "Listo para registrarse";
+"home.summary.upcoming" = "Próxima";
+"home.actions.pending" = "%d asignaciones pendientes";
+"home.actions.pendingOne" = "1 asignación pendiente";
+"home.actions.unread" = "%d mensajes sin leer";
+"home.actions.unreadOne" = "1 mensaje sin leer";
+"home.actions.respond" = "Responder";
+"home.actions.read" = "Leer";
 
 // MARK: - Tabs
 "tab.home" = "Inicio";
@@ -70,6 +101,7 @@
 "tab.dashboard" = "Panel";
 "tab.volunteers" = "Voluntarios";
 "tab.assignments" = "Asignaciones";
+"tab.sections" = "Secciones";
 
 // MARK: - Volunteer
 "volunteer.add" = "Agregar Voluntario";
@@ -106,6 +138,8 @@
 "attendance.session" = "Sesión";
 "attendance.section" = "Sección (opcional)";
 "attendance.section.placeholder" = "ej., Planta Principal, Balcón";
+"attendance.section.select" = "Seleccionar Sección";
+"attendance.section.other" = "Otro";
 "attendance.count" = "Conteo";
 "attendance.notes" = "Notas (opcional)";
 "attendance.total" = "Total";
@@ -159,9 +193,226 @@
 "post.description" = "Descripción";
 "post.location" = "Ubicación";
 "post.capacity" = "Capacidad";
+"post.category" = "Categoría (ej., Asientos, Puertas)";
+"post.single" = "Individual";
+"post.bulkAdd" = "Crear en Lote";
+"post.bulkSettings" = "Configuración de Lote";
+"post.bulkPrefix" = "Prefijo (ej., S, D, E)";
+"post.bulkStartNumber" = "Inicio #";
+"post.bulkCount" = "Cantidad";
+"post.bulkPreview" = "Vista Previa";
+"post.postsTotal" = "puestos en total";
 "post.created" = "Puesto Creado";
 "post.createdMessage" = "El puesto '%@' ha sido creado.";
+"post.bulkCreatedMessage" = "Se han creado %@ puestos.";
+"post.otherCategory" = "Otros";
 "post.examples" = "Ejemplos";
+
+// Sugerencias
+"suggestion.addNew" = "Agregar '%@'";
+
+// MARK: - Departamento de Acomodadores
+"attendant.dashboard.title" = "Departamento de Acomodadores";
+
+// Puestos de Acomodadores
+"attendant.posts.title" = "Mis Puestos";
+
+// Incidentes de Seguridad
+"attendant.incidents.title" = "Incidentes de Seguridad";
+"attendant.incidents.report" = "Reportar Incidente";
+"attendant.incidents.report.success" = "Incidente reportado exitosamente";
+"attendant.incidents.type" = "Tipo de Incidente";
+"attendant.incidents.description" = "Descripción";
+"attendant.incidents.location" = "Ubicación";
+"attendant.incidents.resolved" = "Resuelto";
+"attendant.incidents.resolve" = "Resolver Incidente";
+"attendant.incidents.notes" = "Notas de Resolución";
+"attendant.incidents.empty" = "No hay incidentes reportados";
+"attendant.incidents.showResolved" = "Mostrar Resueltos";
+"attendant.incidents.unresolved" = "sin resolver";
+"attendant.incidents.type.buildingDefect" = "Defecto del Edificio";
+"attendant.incidents.type.wetFloor" = "Piso Mojado";
+"attendant.incidents.type.unsafeCondition" = "Condición Insegura";
+"attendant.incidents.type.medicalEmergency" = "Emergencia Médica";
+"attendant.incidents.type.disruptiveIndividual" = "Individuo Perturbador";
+"attendant.incidents.type.other" = "Otro";
+"attendant.incidents.description.placeholder" = "Describa lo que sucedió, lo que observó, etc.";
+"attendant.incidents.section.incidentType" = "Tipo de Incidente";
+"attendant.incidents.section.details" = "Detalles";
+"attendant.incidents.section.location" = "Ubicación";
+
+// Alertas de Personas Extraviadas
+"attendant.lostPerson.title" = "Alertas de Personas Extraviadas";
+"attendant.lostPerson.create" = "Reportar Persona Extraviada";
+"attendant.lostPerson.report.success" = "Alerta creada exitosamente";
+"attendant.lostPerson.personName" = "Nombre de la Persona";
+"attendant.lostPerson.age" = "Edad";
+"attendant.lostPerson.description" = "Descripción";
+"attendant.lostPerson.lastSeen" = "Última Ubicación Vista";
+"attendant.lostPerson.lastSeenTime" = "Última Vez Vista";
+"attendant.lostPerson.contactName" = "Nombre de Contacto";
+"attendant.lostPerson.contactPhone" = "Teléfono de Contacto";
+"attendant.lostPerson.resolve" = "Resolver Alerta";
+"attendant.lostPerson.resolutionNotes" = "Notas de Resolución";
+"attendant.lostPerson.empty" = "No hay alertas de personas extraviadas";
+"attendant.lostPerson.active" = "Activo";
+"attendant.lostPerson.description.placeholder" = "Describa la apariencia de la persona, su vestimenta, etc.";
+"attendant.lostPerson.includeTime" = "Incluir hora de la última vez vista";
+"attendant.lostPerson.section.personDetails" = "Datos de la Persona";
+"attendant.lostPerson.section.lastSeen" = "Última Vez Vista";
+"attendant.lostPerson.section.contactInfo" = "Información de Contacto";
+
+// Reuniones
+"attendant.meetings.title" = "Reuniones Previas";
+"attendant.meetings.create" = "Crear Reunión";
+"attendant.meetings.session" = "Sesión";
+"attendant.meetings.date" = "Fecha de Reunión";
+"attendant.meetings.time" = "Hora de Reunión";
+"attendant.meetings.notes" = "Notas";
+"attendant.meetings.attendees" = "Asistentes";
+"attendant.meetings.empty" = "No hay reuniones registradas";
+"attendant.meetings.showAttendees" = "Mostrar asistentes";
+"attendant.meetings.hideAttendees" = "Ocultar asistentes";
+"attendant.meetings.createdBy" = "Creado por %@";
+
+// Envío de Conteo de Asistencia
+"attendant.count.title" = "Enviar Conteo";
+"attendant.count.post" = "Puesto";
+"attendant.count.session" = "Sesión";
+"attendant.count.count" = "Conteo de Asistencia";
+"attendant.count.submit" = "Enviar Conteo";
+"attendant.count.success" = "Conteo enviado exitosamente";
+
+
+// Asignaciones de Acomodadores
+"attendant.assign.noVolunteers" = "No se encontraron voluntarios";
+
+// Selección Múltiple de Reuniones
+"attendant.meetings.selected" = "seleccionados";
+"attendant.meetings.selectAll" = "Seleccionar Todos";
+"attendant.meetings.deselectAll" = "Deseleccionar Todos";
+
+// Vistas de Voluntarios Acomodadores
+"attendant.volunteer.noPosts" = "No hay puestos asignados";
+
+// Tarjetas de Inicio del Acomodador
+"attendant.home.posts" = "Mis Seccion";
+"attendant.home.meetings" = "Próximas Reuniones";
+"attendant.home.quickActions" = "Acciones Rápidas";
+"attendant.home.reportIncident" = "Reportar Incidente";
+"attendant.home.reportLostPerson" = "Reportar Persona Extraviada";
+"attendant.home.noPosts" = "No hay puestos asignados aún";
+"attendant.home.noMeetings" = "No hay próximas reuniones";
+
+// Tarjetas de Detalle del Acomodador
+"attendant.detail.submitCount" = "Enviar Conteo de Asistencia";
+
+"attendant.incidents.location.other" = "Otro";
+"attendant.incidents.location.select" = "Seleccionar Ubicación";
+"attendant.incidents.location.custom" = "Ubicación Personalizada";
+"attendant.incidents.location.loading" = "Cargando ubicaciones...";
+"attendant.volunteer.reportedBy" = "Reportado por %@";
+
+// Acomodadores - Nuevos tipos de incidentes
+"attendant.incidents.type.bombThreat" = "Amenaza de Bomba";
+"attendant.incidents.type.violentIndividual" = "Individuo Violento";
+"attendant.incidents.type.severeWeather" = "Clima Severo";
+"attendant.incidents.type.activeShooter" = "Tirador Activo";
+
+// Acomodadores - Desglose de asistencia
+"attendant.attendance.title" = "Conteos de Asistencia";
+"attendant.attendance.viewCounts" = "Ver Desglose de Conteos";
+"attendant.attendance.session" = "Sesión";
+"attendant.attendance.total" = "Conteo Total";
+"attendant.attendance.sections" = "secciones";
+"attendant.attendance.general" = "General";
+"attendant.attendance.empty" = "No hay datos de asistencia disponibles";
+"attendant.attendance.noCounts" = "No hay conteos enviados para esta sesión";
+
+// Acomodadores - Reuniones del voluntario
+"attendant.meetings.myTitle" = "Mis Reuniones";
+"attendant.meetings.noNotes" = "Sin notas para esta reunión";
+"attendant.meetings.noMeetings" = "No hay reuniones asignadas";
+
+// MARK: - Información para Acomodadores (CO-23 Referencia Rápida)
+"attendant.info.title" = "Recordatorios para Acomodadores";
+"attendant.info.subtitle" = "Referencia rápida de las instrucciones para acomodadores";
+"attendant.info.source" = "Basado en CO-23-S 1/24";
+
+// Títulos de secciones
+"attendant.info.section.conduct" = "Conducta General y Preparación";
+"attendant.info.section.entrances" = "Entradas y Asientos";
+"attendant.info.section.counting" = "Conteo de Asistencia";
+"attendant.info.section.distractions" = "Manejo de Distracciones";
+"attendant.info.section.safety" = "Seguridad y Emergencias";
+"attendant.info.section.lostPersons" = "Personas Extraviadas y Amenazas";
+"attendant.info.section.facilities" = "Escaleras, Plataforma y Bautismo";
+"attendant.info.section.disruptions" = "Alteraciones y Violencia";
+
+// Conducta y Preparación
+"attendant.info.conduct.exemplary" = "Sea ejemplar en conducta espiritual — muestre amabilidad, disposición y hospitalidad en todo momento";
+"attendant.info.conduct.alert" = "Manténgase alerta y atento — nunca se vuelva indiferente";
+"attendant.info.conduct.meeting" = "Asista a la reunión de acomodadores antes de que se abran las puertas el primer día";
+"attendant.info.conduct.position15min" = "Esté en su puesto asignado al menos 15 minutos antes de que se abran las puertas";
+"attendant.info.conduct.badge" = "Siempre use su tarjeta de identificación de acomodador mientras esté en servicio";
+"attendant.info.conduct.stayAssigned" = "Permanezca en su asignación hasta que sea relevado o reemplazado";
+
+// Entradas y Asientos
+"attendant.info.entrances.elderly8am" = "8:00 AM — Personas mayores y enfermas (con un acompañante) pueden entrar";
+"attendant.info.entrances.general815" = "8:15 AM — Comienza la admisión general";
+"attendant.info.entrances.checkExits" = "Revise todas las puertas de salida diariamente — deben estar desbloqueadas y sin obstrucciones";
+"attendant.info.entrances.doorsNotPropped" = "No deje abiertas las puertas exteriores en edificios con clima controlado";
+"attendant.info.entrances.noSeatSaving" = "No se permite guardar asientos durante la noche ni antes de que se abran las puertas cada día";
+"attendant.info.entrances.seatSavingRules" = "Después de las 8:00 AM, solo se pueden guardar asientos para familiares, compañeros de viaje y estudiantes bíblicos";
+"attendant.info.entrances.strollers" = "No se permiten cochecitos ni sillas plegables en las áreas regulares de asientos";
+"attendant.info.entrances.seatLatecomers" = "Tome la iniciativa para sentar a los que llegan tarde — use señales con las manos entre los acomodadores";
+"attendant.info.entrances.assistElders" = "Ayude a personas mayores, discapacitadas y familias con niños pequeños a encontrar asientos apropiados";
+
+// Conteo de Asistencia
+"attendant.info.counting.informed" = "Se le informará de los momentos específicos para tomar el conteo de asistencia";
+"attendant.info.counting.noDistraction" = "Tome el conteo sin causar distracciones innecesarias";
+"attendant.info.counting.countAll" = "Cuente a todos los adultos y niños pequeños que estén escuchando y beneficiándose del programa";
+
+// Manejo de Distracciones
+"attendant.info.distractions.sources" = "Esté atento a: personas conversando, llegadas tardías, teléfonos celulares, niños inquietos, personas en áreas remotas";
+"attendant.info.distractions.kindly" = "Maneje las distracciones de manera amorosa y amable";
+"attendant.info.distractions.remote" = "Sugiera amablemente que las personas reunidas en áreas remotas regresen a sus asientos";
+
+// Seguridad y Emergencias
+"attendant.info.safety.watch" = "Esté atento a: defectos del edificio, pisos mojados, objetos en los pasillos, sillas inseguras, barandas sueltas";
+"attendant.info.safety.wetFloors" = "Dirija a las personas alrededor de las áreas mojadas e informe al Departamento de Limpieza";
+"attendant.info.safety.railings" = "En instalaciones de varios niveles, evite que los niños se sienten cerca de las barandas donde podrían caer";
+"attendant.info.safety.upperLevels" = "No se incline sobre las barandas ni coloque objetos en las repisas de los niveles superiores";
+"attendant.info.safety.nonmedical" = "Emergencia no médica: contacte inmediatamente al superintendente de acomodadores";
+"attendant.info.safety.flashlight" = "Cada acomodador debe llevar una linterna para fallas de electricidad";
+"attendant.info.safety.medical" = "Emergencia médica: contacte a Primeros Auxilios inmediatamente — ellos llamarán a los servicios de emergencia";
+"attendant.info.safety.reportInfo" = "Al reportar una emergencia, proporcione: tipo/alcance, ubicación, su nombre y número de teléfono";
+
+// Personas Extraviadas y Amenazas
+"attendant.info.lost.bringToLF" = "Lleve a las personas extraviadas (especialmente niños) al Departamento de Objetos Perdidos";
+"attendant.info.lost.notifyOverseer" = "Notifique inmediatamente al superintendente de acomodadores sobre cualquier persona extraviada";
+"attendant.info.lost.missingPerson" = "Si se reporta una persona desaparecida, informe al superintendente y obtenga detalles de identificación y una foto";
+"attendant.info.lost.bombThreat" = "Tome TODAS las amenazas de bomba en serio — informe inmediatamente al superintendente de acomodadores";
+"attendant.info.lost.noBombAlarm" = "NO active la alarma de incendios durante una amenaza de bomba";
+
+// Escaleras, Plataforma y Bautismo
+"attendant.info.facilities.escalators" = "Las escaleras mecánicas y los ascensores nunca deben dejarse sin vigilancia cuando están en uso";
+"attendant.info.facilities.escalatorStop" = "Sepa cómo detener de emergencia las escaleras mecánicas en su ubicación";
+"attendant.info.facilities.assistElderly" = "Ayude a personas mayores y niños pequeños con el uso cuidadoso de escaleras mecánicas y ascensores";
+"attendant.info.facilities.stageAccess" = "Siempre controle el acceso a la plataforma — solo personas autorizadas detrás del escenario";
+"attendant.info.facilities.noPhotos" = "No se permite fotografía o grabación de video no autorizada en, frente a, o detrás de la plataforma";
+"attendant.info.facilities.baptism" = "Durante el bautismo, guíe a los candidatos a los vestidores y controle la multitud alrededor de la piscina";
+
+// Alteraciones y Violencia
+"attendant.info.disruptions.twoApproach" = "Dos acomodadores deben acercarse juntos a un individuo sospechoso o problemático";
+"attendant.info.disruptions.apostates" = "Si hay apóstatas manifestándose afuera, anime a los asistentes a no interactuar con ellos";
+"attendant.info.disruptions.calmFirst" = "Intente calmar a una persona agitada — hable con ella fuera del auditorio, lejos de los demás";
+"attendant.info.disruptions.askToLeave" = "Si el comportamiento perturbador persiste, pida a la persona que se retire y advierta que se llamará a la policía";
+"attendant.info.disruptions.noForce" = "Generalmente NO use fuerza física para remover a un individuo problemático";
+"attendant.info.disruptions.avoidDenyDefend" = "Amenaza activa: siga 'Evitar, Negar, Defender' — escape primero, bloquee segundo, pelee solo como último recurso";
+"attendant.info.disruptions.callPolice" = "Llame a la policía inmediatamente en una situación violenta — cualquiera puede llamar, no espere";
+"attendant.info.disruptions.lockDoors" = "Cierre con llave y bloquee las puertas para proteger al mayor número de asistentes";
+"attendant.info.disruptions.noWeapons" = "Los acomodadores NO tienen permiso de portar armas";
 
 // Idioma
 "language.select" = "Seleccionar Idioma";

@@ -7,49 +7,48 @@
 
 // MARK: - Assignments View (Overseer)
 //
-// Coverage matrix view for overseers to manage volunteer scheduling.
-// Uses the app's design system with warm background and refined cells.
+// Session-based navigation for overseers to manage volunteer scheduling.
+// Shows sessions grouped by date; tap a session to see posts and assignments.
 //
 // Features:
-//   - Warm gradient background
-//   - Scrollable grid: Posts (rows) x Sessions (columns)
-//   - Themed coverage cells with status colors
-//   - Filter menu: Show all, gaps only, or filled only
-//   - Tap cell to open SlotDetailSheet for assignment management
-//   - Pull-to-refresh for coverage data
-//   - Entrance animations
+//   - Warm gradient background with entrance animations
+//   - Sessions grouped by date with sticky headers
+//   - Session cards showing name and assignment count
+//   - Tap session → navigate to SessionDetailView
+//   - Create Session + Create Post via toolbar menu
+//   - Pull-to-refresh
 //
-// Components:
-//   - matrixContent: LazyVGrid displaying the coverage matrix
-//   - headerRow: Session name headers in themed cards
-//   - postRow: Post name + slot cells for each session
-//   - emptyState: Styled empty state when no coverage data exists
-//
+// Navigation:
+//   Level 1: Session list (this view)
+//   Level 2: SessionDetailView (posts for a session)
+//   Level 3: SlotDetailSheet (assign volunteers to a post+session)
 
 import SwiftUI
+import Apollo
 
 struct AssignmentsView: View {
-    @StateObject private var viewModel = CoverageMatrixViewModel()
     @ObservedObject private var sessionState = OverseerSessionState.shared
     @Environment(\.colorScheme) var colorScheme
 
-    @State private var selectedSlot: CoverageSlot?
+    @State private var sessions: [EventSessionItem] = []
+    @State private var isLoading = false
+    @State private var error: String?
     @State private var hasAppeared = false
+    @State private var showCreateSession = false
 
     var body: some View {
         NavigationStack {
             ZStack {
-                // Warm background
                 AppTheme.backgroundGradient(for: colorScheme)
                     .ignoresSafeArea()
 
                 Group {
-                    if viewModel.isLoading {
-                        LoadingView(message: "Loading coverage...")
-                    } else if viewModel.slots.isEmpty {
+                    if isLoading && sessions.isEmpty {
+                        LoadingView(message: "Loading sessions...")
+                    } else if sessions.isEmpty {
                         emptyState
                     } else {
-                        matrixContent
+                        sessionList
                     }
                 }
             }
@@ -57,25 +56,15 @@ struct AssignmentsView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Button {
-                            viewModel.filter = .all
-                        } label: {
-                            Label("Show All", systemImage: viewModel.filter == .all ? "checkmark" : "")
-                        }
+                        if sessionState.isEventOverseer {
+                            Button {
+                                showCreateSession = true
+                            } label: {
+                                Label("session.create".localized, systemImage: "calendar.badge.plus")
+                            }
 
-                        Button {
-                            viewModel.filter = .gaps
-                        } label: {
-                            Label("Gaps Only", systemImage: viewModel.filter == .gaps ? "checkmark" : "")
+                            Divider()
                         }
-
-                        Button {
-                            viewModel.filter = .filled
-                        } label: {
-                            Label("Filled Only", systemImage: viewModel.filter == .filled ? "checkmark" : "")
-                        }
-
-                        Divider()
 
                         NavigationLink {
                             DeclinedAssignmentsView()
@@ -83,15 +72,15 @@ struct AssignmentsView: View {
                             Label("Declined Assignments", systemImage: "xmark.circle")
                         }
                     } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
             }
-            .sheet(item: $selectedSlot) { slot in
-                SlotDetailSheet(slot: slot, viewModel: viewModel)
+            .sheet(isPresented: $showCreateSession) {
+                CreateSessionSheet()
             }
             .refreshable {
-                await viewModel.loadCoverage()
+                await loadSessions()
             }
             .onAppear {
                 withAnimation(AppTheme.entranceAnimation) {
@@ -100,92 +89,120 @@ struct AssignmentsView: View {
             }
         }
         .task {
-            if let departmentId = sessionState.selectedDepartment?.id {
-                viewModel.departmentId = departmentId
-                await viewModel.loadCoverage()
+            if sessions.isEmpty, let eventId = sessionState.selectedEvent?.id {
+                await loadSessions()
             }
         }
     }
 
-    // MARK: - Matrix Content
+    // MARK: - Session List
 
-    private var matrixContent: some View {
-        ScrollView([.horizontal, .vertical]) {
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                // Header row
-                headerRow
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
-
-                // Data rows
-                ForEach(Array(viewModel.posts.enumerated()), id: \.element.id) { index, post in
-                    postRow(post)
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index) * 0.02)
-                }
-            }
-            .padding(AppTheme.Spacing.screenEdge)
-        }
-    }
-
-    // MARK: - Header Row
-
-    private var headerRow: some View {
-        HStack(spacing: AppTheme.Spacing.xs) {
-            // Post column header
-            Text("Post")
-                .font(AppTheme.Typography.captionBold)
-                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                .frame(width: 120, alignment: .leading)
-                .padding(.vertical, AppTheme.Spacing.s)
-                .padding(.horizontal, AppTheme.Spacing.s)
-
-            // Session headers
-            ForEach(viewModel.sessions, id: \.id) { session in
-                VStack(spacing: 2) {
-                    Text(session.name)
-                        .font(AppTheme.Typography.captionBold)
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-
-                    Text(formatTime(session.startTime))
-                        .font(AppTheme.Typography.captionSmall)
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                }
-                .frame(width: 80)
-                .padding(.vertical, AppTheme.Spacing.s)
-                .background(AppTheme.cardBackground(for: colorScheme))
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-            }
-        }
-    }
-
-    // MARK: - Post Row
-
-    @ViewBuilder
-    private func postRow(_ post: CoveragePost) -> some View {
-        HStack(spacing: AppTheme.Spacing.xs) {
-            // Post name
-            Text(post.name)
-                .font(AppTheme.Typography.subheadline)
-                .foregroundStyle(.primary)
-                .lineLimit(2)
-                .frame(width: 120, alignment: .leading)
-                .padding(.vertical, AppTheme.Spacing.s)
-                .padding(.horizontal, AppTheme.Spacing.s)
-                .background(AppTheme.cardBackground(for: colorScheme))
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-
-            // Coverage cells
-            ForEach(viewModel.sessions, id: \.id) { session in
-                if let slot = viewModel.slot(for: post.id, session: session.id) {
-                    CoverageCell(slot: slot, colorScheme: colorScheme) {
-                        selectedSlot = slot
+    private var sessionList: some View {
+        ScrollView {
+            LazyVStack(spacing: AppTheme.Spacing.l, pinnedViews: .sectionHeaders) {
+                ForEach(Array(groupedSessions.enumerated()), id: \.element.date) { groupIndex, group in
+                    Section {
+                        ForEach(Array(group.sessions.enumerated()), id: \.element.id) { index, session in
+                            NavigationLink {
+                                SessionDetailView(session: session)
+                            } label: {
+                                sessionCard(session)
+                            }
+                            .buttonStyle(.plain)
+                            .entranceAnimation(
+                                hasAppeared: hasAppeared,
+                                delay: Double(groupIndex) * 0.05 + Double(index) * 0.03
+                            )
+                        }
+                    } header: {
+                        dateHeader(for: group.date)
                     }
-                } else {
-                    Color.clear
-                        .frame(width: 80, height: 56)
                 }
             }
+            .screenPadding()
+            .padding(.top, AppTheme.Spacing.l)
+            .padding(.bottom, AppTheme.Spacing.xxl)
         }
+    }
+
+    // MARK: - Session Card
+
+    private func sessionCard(_ session: EventSessionItem) -> some View {
+        HStack(spacing: AppTheme.Spacing.l) {
+            // Session icon
+            ZStack {
+                Circle()
+                    .fill(AppTheme.themeColor.opacity(0.12))
+                    .frame(width: 44, height: 44)
+
+                Image(systemName: sessionIcon(for: session.name))
+                    .font(.system(size: 20))
+                    .foregroundStyle(AppTheme.themeColor)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(session.name)
+                    .font(AppTheme.Typography.headline)
+                    .foregroundStyle(.primary)
+
+                HStack(spacing: AppTheme.Spacing.s) {
+                    Label("\(session.assignmentCount) assignments", systemImage: "person.2")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Date Header
+
+    private func dateHeader(for date: Date) -> some View {
+        HStack {
+            if Calendar.current.isDateInToday(date) {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color.orange)
+                        .frame(width: 8, height: 8)
+                    Text("Today")
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(.primary)
+                }
+                Text("• \(date.formatted(date: .abbreviated, time: .omitted))")
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            } else if Calendar.current.isDateInTomorrow(date) {
+                Text("Tomorrow")
+                    .font(AppTheme.Typography.headline)
+                    .foregroundStyle(.primary)
+                Text("• \(date.formatted(date: .abbreviated, time: .omitted))")
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            } else {
+                Text(date.formatted(date: .complete, time: .omitted))
+                    .font(AppTheme.Typography.headline)
+                    .foregroundStyle(.primary)
+            }
+            Spacer()
+        }
+        .padding(.vertical, AppTheme.Spacing.s)
+        .padding(.horizontal, AppTheme.Spacing.xs)
+    }
+
+    // MARK: - Helpers
+
+    private func sessionIcon(for name: String) -> String {
+        let lower = name.lowercased()
+        if lower.contains("morning") { return "sun.max.fill" }
+        if lower.contains("noon") { return "sun.min.fill" }
+        return "sun.haze.fill"
     }
 
     // MARK: - Empty State
@@ -194,18 +211,27 @@ struct AssignmentsView: View {
         VStack(spacing: AppTheme.Spacing.l) {
             Spacer()
 
-            Image(systemName: "tablecells")
+            Image(systemName: "calendar.badge.clock")
                 .font(.system(size: 48))
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
 
-            Text("No Assignments Data")
+            Text("No Sessions Yet")
                 .font(AppTheme.Typography.headline)
                 .foregroundStyle(.primary)
 
-            Text("Create posts and sessions first")
+            Text("Sessions are created automatically when an event is activated. You can also create custom sessions.")
                 .font(AppTheme.Typography.subheadline)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 .multilineTextAlignment(.center)
+
+            Button {
+                showCreateSession = true
+            } label: {
+                Label("Create Session", systemImage: "plus.circle")
+                    .font(AppTheme.Typography.bodyMedium)
+            }
+            .buttonStyle(.bordered)
+            .tint(AppTheme.themeColor)
 
             Spacer()
         }
@@ -213,78 +239,65 @@ struct AssignmentsView: View {
         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
     }
 
-    // MARK: - Helpers
+    // MARK: - Data
 
-    private func formatTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: date)
-    }
-}
-
-// MARK: - Coverage Cell
-
-struct CoverageCell: View {
-    let slot: CoverageSlot
-    let colorScheme: ColorScheme
-    let onTap: () -> Void
-
-    private var statusColor: Color {
-        if slot.isFilled {
-            return AppTheme.StatusColors.accepted
-        } else if slot.filled > 0 {
-            return AppTheme.StatusColors.warning
-        } else {
-            return AppTheme.StatusColors.declined
+    private var groupedSessions: [(date: Date, sessions: [EventSessionItem])] {
+        let grouped = Dictionary(grouping: sessions) { session in
+            Calendar.current.startOfDay(for: session.date)
         }
+        return grouped
+            .map { (date: $0.key, sessions: $0.value.sorted { $0.startTime < $1.startTime }) }
+            .sorted { $0.date < $1.date }
     }
 
-    private var backgroundColor: Color {
-        if slot.isFilled {
-            return AppTheme.StatusColors.acceptedBackground
-        } else if slot.filled > 0 {
-            return AppTheme.StatusColors.warningBackground
-        } else {
-            return AppTheme.StatusColors.declinedBackground
-        }
-    }
+    private func loadSessions() async {
+        guard let eventId = sessionState.selectedEvent?.id else { return }
 
-    var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 4) {
-                // Fill ratio
-                Text("\(slot.filled)/\(slot.capacity)")
-                    .font(AppTheme.Typography.headline)
-                    .foregroundStyle(statusColor)
+        isLoading = true
+        error = nil
 
-                // First volunteer name
-                if !slot.assignments.isEmpty {
-                    Text(slot.assignments.first?.volunteer.lastName ?? "")
-                        .font(AppTheme.Typography.captionSmall)
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        .lineLimit(1)
-                }
-            }
-            .frame(width: 80, height: 56)
-            .background(backgroundColor)
-            .overlay(
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
-                    .strokeBorder(statusColor.opacity(0.3), lineWidth: 1)
+        do {
+            let result = try await NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.EventSessionsQuery(eventId: eventId),
+                cachePolicy: .fetchIgnoringCacheData
             )
-            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+
+            guard let data = result.data?.sessions else {
+                error = "Failed to load sessions"
+                isLoading = false
+                return
+            }
+
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let fallback = ISO8601DateFormatter()
+
+            sessions = data.map { session in
+                EventSessionItem(
+                    id: session.id,
+                    name: session.name,
+                    date: formatter.date(from: session.date) ?? fallback.date(from: session.date) ?? Date(),
+                    startTime: formatter.date(from: session.startTime) ?? fallback.date(from: session.startTime) ?? Date(),
+                    assignmentCount: session.assignmentCount
+                )
+            }
+
+        } catch {
+            self.error = "Network error: \(error.localizedDescription)"
         }
-        .buttonStyle(CoverageCellButtonStyle())
+
+        isLoading = false
     }
 }
 
-// MARK: - Coverage Cell Button Style
+// MARK: - Event Session Item
 
-struct CoverageCellButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
+struct EventSessionItem: Identifiable {
+    let id: String
+    let name: String
+    let date: Date
+    let startTime: Date
+    let assignmentCount: Int
 }
 
 #Preview {

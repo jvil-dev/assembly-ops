@@ -1,0 +1,13 @@
+mutation ReportSafetyIncident($input: ReportSafetyIncidentInput!) {
+  reportSafetyIncident(input: $input) {
+    id
+    type
+    description
+    location
+    post {
+      id
+      name
+    }
+    createdAt
+  }
+}

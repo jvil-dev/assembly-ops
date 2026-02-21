@@ -25,8 +25,8 @@ import SwiftUI
 struct AssignmentDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel: AssignmentDetailViewModel
-
     let assignment: Assignment
     let onUpdate: () -> Void
 
@@ -38,6 +38,10 @@ struct AssignmentDetailView: View {
         self.assignment = assignment
         self.onUpdate = onUpdate
         _viewModel = StateObject(wrappedValue: AssignmentDetailViewModel(assignment: assignment))
+    }
+
+    private var isAttendantAccepted: Bool {
+        assignment.isAccepted && assignment.departmentType == "ATTENDANT"
     }
 
     var body: some View {
@@ -63,10 +67,16 @@ struct AssignmentDetailView: View {
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
                 }
 
+                // Attendant sections (accepted attendant assignments only)
+                if isAttendantAccepted {
+                    attendantSectionsCard
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+                }
+
                 // Captain group (if captain)
                 if assignment.isCaptain && assignment.isAccepted {
                     captainGroupCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
                 }
             }
             .screenPadding()
@@ -224,6 +234,50 @@ struct AssignmentDetailView: View {
         .themedCard(scheme: colorScheme)
     }
 
+    // MARK: - Attendant Post Actions Card
+
+    private var attendantSectionsCard: some View {
+        let postItem = AttendantPostItem(
+            id: assignment.postId,
+            name: assignment.postName,
+            location: assignment.postLocation,
+            category: "",
+            sortOrder: 0
+        )
+        return NavigationLink(destination: SubmitSectionCountView(post: postItem)) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+                HStack(spacing: 8) {
+                    Image(systemName: "number.square")
+                        .foregroundStyle(AppTheme.themeColor)
+                    Text("attendant.detail.submitCount".localized)
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(AppTheme.themeColor)
+                }
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(assignment.postName)
+                            .font(AppTheme.Typography.bodyMedium)
+                            .foregroundStyle(.primary)
+                        if let location = assignment.postLocation {
+                            Text(location)
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        }
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardPadding()
+            .themedCard(scheme: colorScheme)
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Captain Group Card
 
     private var captainGroupCard: some View {
@@ -285,18 +339,21 @@ private struct DetailRow: View {
     NavigationStack {
         AssignmentDetailView(assignment: .preview)
     }
+    .environmentObject(AppState.shared)
 }
 
 #Preview("Pending") {
     NavigationStack {
         AssignmentDetailView(assignment: .previewPending)
     }
+    .environmentObject(AppState.shared)
 }
 
 #Preview("Captain") {
     NavigationStack {
         AssignmentDetailView(assignment: .previewCaptain)
     }
+    .environmentObject(AppState.shared)
 }
 
 #Preview("Dark Mode") {
@@ -304,4 +361,5 @@ private struct DetailRow: View {
         AssignmentDetailView(assignment: .previewPending)
     }
     .preferredColorScheme(.dark)
+    .environmentObject(AppState.shared)
 }

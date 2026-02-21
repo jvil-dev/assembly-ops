@@ -4,7 +4,7 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI {
-  struct LoginVolunteerInput: InputObject {
+  struct LoginEventVolunteerInput: InputObject {
     private(set) var __data: InputDict
 
     init(_ data: InputDict) {

@@ -118,7 +118,7 @@ struct CreateVolunteerSheet: View {
 
     private var requiredFieldsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            sectionHeader(icon: "person.fill", title: "Required")
+            SectionHeaderLabel(icon: "person.fill", title: "Required")
 
             VStack(spacing: AppTheme.Spacing.m) {
                 themedTextField("First Name", text: $firstName)
@@ -181,7 +181,7 @@ struct CreateVolunteerSheet: View {
 
     private var optionalFieldsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            sectionHeader(icon: "info.circle.fill", title: "Optional")
+            SectionHeaderLabel(icon: "info.circle.fill", title: "Optional")
 
             VStack(spacing: AppTheme.Spacing.m) {
                 themedTextField("Phone", text: $phone, keyboardType: .phonePad)
@@ -196,7 +196,7 @@ struct CreateVolunteerSheet: View {
 
     private var appointmentCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            sectionHeader(icon: "person.badge.shield.checkmark.fill", title: "Appointment")
+            SectionHeaderLabel(icon: "person.badge.shield.checkmark.fill", title: "Appointment")
 
             Picker("Appointment", selection: $appointment) {
                 Text("Publisher").tag("PUBLISHER")
@@ -213,9 +213,9 @@ struct CreateVolunteerSheet: View {
 
     private var notesCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            sectionHeader(icon: "note.text", title: "Notes")
+            SectionHeaderLabel(icon: "note.text", title: "Notes")
 
-            TextField("Add notes (optional)", text: $notes, axis: .vertical)
+            TextField("", text: $notes, axis: .vertical)
                 .lineLimit(3...6)
                 .padding(AppTheme.Spacing.m)
                 .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
@@ -227,28 +227,23 @@ struct CreateVolunteerSheet: View {
 
     // MARK: - Helper Views
 
-    private func sectionHeader(icon: String, title: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .foregroundStyle(AppTheme.themeColor)
-            Text(title)
-                .font(AppTheme.Typography.caption)
-                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-        }
-    }
-
     private func themedTextField(
-        _ placeholder: String,
+        _ label: String,
         text: Binding<String>,
         keyboardType: UIKeyboardType = .default,
         autocapitalization: TextInputAutocapitalization = .words
     ) -> some View {
-        TextField(placeholder, text: text)
-            .keyboardType(keyboardType)
-            .textInputAutocapitalization(autocapitalization)
-            .padding(AppTheme.Spacing.m)
-            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+            Text(label)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            TextField("", text: text)
+                .keyboardType(keyboardType)
+                .textInputAutocapitalization(autocapitalization)
+                .padding(AppTheme.Spacing.m)
+                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+        }
     }
 
     // MARK: - Actions

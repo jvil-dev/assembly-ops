@@ -116,6 +116,26 @@ extension AttendanceCountItem {
     }
 }
 
+// MARK: - Attendant Post (for section picker)
+
+struct AttendantPostItem: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let location: String?
+    let category: String?
+    let sortOrder: Int
+}
+
+extension AttendantPostItem {
+    init(from data: AssemblyOpsAPI.AttendantPostsQuery.Data.Post) {
+        self.id = data.id
+        self.name = data.name
+        self.location = data.location
+        self.category = data.category
+        self.sortOrder = data.sortOrder
+    }
+}
+
 extension SessionAttendanceSummaryItem {
     init?(from graphQL: AssemblyOpsAPI.EventAttendanceSummaryQuery.Data.EventAttendanceSummary) {
         let session = graphQL.session

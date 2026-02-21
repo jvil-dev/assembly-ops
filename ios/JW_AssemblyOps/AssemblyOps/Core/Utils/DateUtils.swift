@@ -24,4 +24,18 @@ enum DateUtils {
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
+    
+    /// Parse an ISO8601 date string into a Date object
+    /// - Parameter dateString: ISO8601 formatted date string
+    /// - Returns: Date object if parsing succeeds, nil otherwise
+    static func parseISO8601(_ dateString: String) -> Date? {
+        return isoFormatter.date(from: dateString)
+    }
+
+    /// Format a date as a relative time string (e.g., "2h ago", "3d ago")
+    static func timeAgo(from date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
 }

@@ -26,7 +26,7 @@
 
 import Foundation
 
-struct CoverageSlot: Identifiable {
+struct CoverageSlot: Identifiable, Equatable {
     var id: String { "\(postId)-\(sessionId)" }
     let postId: String
     let sessionId: String
@@ -36,21 +36,39 @@ struct CoverageSlot: Identifiable {
     let filled: Int
     let capacity: Int
     let isFilled: Bool
+
+    var pendingCount: Int { assignments.filter { $0.isPending }.count }
+
+    static func == (lhs: CoverageSlot, rhs: CoverageSlot) -> Bool {
+        lhs.postId == rhs.postId &&
+        lhs.sessionId == rhs.sessionId &&
+        lhs.postName == rhs.postName &&
+        lhs.sessionName == rhs.sessionName &&
+        lhs.assignments == rhs.assignments &&
+        lhs.filled == rhs.filled &&
+        lhs.capacity == rhs.capacity &&
+        lhs.isFilled == rhs.isFilled
+    }
 }
 
-struct CoverageAssignment: Identifiable {
+struct CoverageAssignment: Identifiable, Equatable {
     let id: String
     let volunteer: CoverageVolunteer
     let checkIn: CoverageCheckInInfo?
+    let status: AssignmentStatus
+    let forceAssigned: Bool
+
+    var isPending: Bool { status == .pending }
+    var isAccepted: Bool { status == .accepted }
 }
 
-struct CoverageVolunteer {
+struct CoverageVolunteer: Equatable {
     let id: String
     let firstName: String
     let lastName: String
 }
 
-struct CoverageCheckInInfo {
+struct CoverageCheckInInfo: Equatable {
     let id: String
     let checkInTime: Date
 }
@@ -59,6 +77,9 @@ struct CoveragePost: Identifiable {
     let id: String
     let name: String
     let capacity: Int
+    let category: String?
+    let location: String?
+    let sortOrder: Int
 }
 
 struct CoverageSession: Identifiable {

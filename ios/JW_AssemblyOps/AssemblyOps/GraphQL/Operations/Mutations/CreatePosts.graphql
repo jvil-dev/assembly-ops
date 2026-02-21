@@ -5,6 +5,8 @@ mutation CreatePosts($input: CreatePostsInput!) {
         description
         location
         capacity
+        category
+        sortOrder
         createdAt
     }
 }

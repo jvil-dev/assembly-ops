@@ -25,15 +25,9 @@ struct AssignmentCardView: View {
     @Environment(\.colorScheme) var colorScheme
 
     let assignment: Assignment
-    var onTap: (() -> Void)? = nil
 
     var body: some View {
-        Button {
-            onTap?()
-        } label: {
-            cardContent
-        }
-        .buttonStyle(.plain)
+        cardContent
     }
 
     private var cardContent: some View {

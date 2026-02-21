@@ -67,37 +67,42 @@ final class VolunteerLoginViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        let input = AssemblyOpsAPI.LoginVolunteerInput(
+        let input = AssemblyOpsAPI.LoginEventVolunteerInput(
             volunteerId: fullVolunteerId,
             token: token.trimmingCharacters(in: .whitespaces)
         )
-        
+
         NetworkClient.shared.apollo.perform(
             mutation: AssemblyOpsAPI.LoginVolunteerMutation(input: input)
         ) { [weak self] result in
             Task { @MainActor in
                 switch result {
                 case .success(let graphQLResult):
-                    if let data = graphQLResult.data?.loginVolunteer {
-                         let volunteer = VolunteerInfo(
-                             id: data.volunteer.id,
-                             volunteerId: data.volunteer.volunteerId,
-                             firstName: data.volunteer.firstName,
-                             lastName: data.volunteer.lastName,
-                             fullName: data.volunteer.fullName,
-                             congregation: data.volunteer.congregation,
-                             eventName: data.volunteer.event.name,
-                             eventVenue: data.volunteer.event.venue,
-                             eventTheme: data.volunteer.event.template.theme,
-                             departmentName: data.volunteer.department?.name
-                         )
-                         self?.appState.didLoginAsVolunteer(
-                             volunteer: volunteer,
-                             accessToken: data.accessToken,
-                             refreshToken: data.refreshToken,
-                             expiresIn: data.expiresIn
-                         )
-                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                    if let data = graphQLResult.data?.loginEventVolunteer {
+                        let ev = data.eventVolunteer
+                        let profile = ev.volunteerProfile
+                        let volunteer = VolunteerInfo(
+                            id: ev.id,
+                            volunteerId: ev.volunteerId,
+                            firstName: profile.firstName,
+                            lastName: profile.lastName,
+                            fullName: "\(profile.firstName) \(profile.lastName)",
+                            congregation: profile.congregation.name,
+                            eventId: ev.event.id,
+                            eventName: ev.event.name,
+                            eventVenue: ev.event.venue,
+                            eventTheme: ev.event.template.theme,
+                            departmentId: ev.department?.id,
+                            departmentName: ev.department?.name,
+                            departmentType: ev.department?.departmentType.rawValue
+                        )
+                        self?.appState.didLoginAsVolunteer(
+                            volunteer: volunteer,
+                            accessToken: data.accessToken,
+                            refreshToken: data.refreshToken,
+                            expiresIn: data.expiresIn
+                        )
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
                         self?.errorMessage = errors.first?.localizedDescription ?? "Login failed"
                     }
                 case .failure(let error):
