@@ -4,6 +4,9 @@ query DepartmentCoverage($departmentId: ID!) {
       id
       name
       capacity
+      category
+      location
+      sortOrder
     }
     session {
       id
@@ -23,6 +26,8 @@ query DepartmentCoverage($departmentId: ID!) {
         id
         checkInTime
       }
+      status
+      forceAssigned
     }
     filled
     capacity

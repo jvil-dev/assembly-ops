@@ -433,6 +433,7 @@ extension Assignment {
 
       static func == (lhs: Assignment, rhs: Assignment) -> Bool {
           lhs.id == rhs.id &&
+          lhs.status == rhs.status &&
           lhs.checkInStatus == rhs.checkInStatus &&
           lhs.checkInTime == rhs.checkInTime &&
           lhs.checkOutTime == rhs.checkOutTime

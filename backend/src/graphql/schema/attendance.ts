@@ -30,6 +30,7 @@ const attendanceTypeDefs = `#graphql
   input SubmitAttendanceCountInput {
     sessionId: ID!
     section: String
+    postId: ID
     count: Int!
     notes: String
   }

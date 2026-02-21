@@ -91,23 +91,61 @@ export class VolunteerService {
     const tokenHash = await hashToken(token);
     const encryptedToken = encryptToken(token);
 
-    // Create volunteer
-    const volunteer = await this.prisma.volunteer.create({
-      data: {
-        volunteerId,
-        tokenHash,
-        encryptedToken,
-        firstName: validated.firstName,
-        lastName: validated.lastName,
-        email: validated.email,
-        phone: validated.phone,
-        congregation: validated.congregation,
-        appointmentStatus: validated.appointmentStatus,
-        notes: validated.notes,
-        eventId,
-        departmentId: departmentId || validated.departmentId,
-        roleId: validated.roleId,
-      },
+    const deptId = departmentId || validated.departmentId;
+
+    // Create volunteer (legacy) + VolunteerProfile + EventVolunteer in transaction
+    const volunteer = await this.prisma.$transaction(async (tx) => {
+      // Legacy Volunteer record
+      const vol = await tx.volunteer.create({
+        data: {
+          volunteerId,
+          tokenHash,
+          encryptedToken,
+          firstName: validated.firstName,
+          lastName: validated.lastName,
+          email: validated.email,
+          phone: validated.phone,
+          congregation: validated.congregation,
+          appointmentStatus: validated.appointmentStatus,
+          notes: validated.notes,
+          eventId,
+          departmentId: deptId,
+          roleId: validated.roleId,
+        },
+      });
+
+      // Find or create Congregation for VolunteerProfile
+      const congregationRecord = await this.findOrCreateCongregation(
+        tx, validated.congregation, event.template.circuitId
+      );
+
+      // VolunteerProfile (persistent across events)
+      const profile = await tx.volunteerProfile.create({
+        data: {
+          firstName: validated.firstName,
+          lastName: validated.lastName,
+          email: validated.email,
+          phone: validated.phone,
+          appointmentStatus: validated.appointmentStatus || 'PUBLISHER',
+          notes: validated.notes,
+          congregationId: congregationRecord.id,
+        },
+      });
+
+      // EventVolunteer (per-event instance, same credentials)
+      await tx.eventVolunteer.create({
+        data: {
+          volunteerId,
+          tokenHash,
+          token,
+          volunteerProfileId: profile.id,
+          eventId,
+          departmentId: deptId,
+          roleId: validated.roleId,
+        },
+      });
+
+      return vol;
     });
 
     return {
@@ -149,23 +187,56 @@ export class VolunteerService {
       const volToken = generateToken();
       const volTokenHash = await hashToken(volToken);
       const volEncryptedToken = encryptToken(volToken);
+      const deptId = volunteerInput.departmentId || defaultDepartmentId;
 
-      const volunteer = await this.prisma.volunteer.create({
-        data: {
-          volunteerId: volId,
-          tokenHash: volTokenHash,
-          encryptedToken: volEncryptedToken,
-          firstName: volunteerInput.firstName,
-          lastName: volunteerInput.lastName,
-          email: volunteerInput.email,
-          phone: volunteerInput.phone,
-          congregation: volunteerInput.congregation,
-          appointmentStatus: volunteerInput.appointmentStatus,
-          notes: volunteerInput.notes,
-          eventId,
-          departmentId: volunteerInput.departmentId || defaultDepartmentId,
-          roleId: volunteerInput.roleId,
-        },
+      const volunteer = await this.prisma.$transaction(async (tx) => {
+        const vol = await tx.volunteer.create({
+          data: {
+            volunteerId: volId,
+            tokenHash: volTokenHash,
+            encryptedToken: volEncryptedToken,
+            firstName: volunteerInput.firstName,
+            lastName: volunteerInput.lastName,
+            email: volunteerInput.email,
+            phone: volunteerInput.phone,
+            congregation: volunteerInput.congregation,
+            appointmentStatus: volunteerInput.appointmentStatus,
+            notes: volunteerInput.notes,
+            eventId,
+            departmentId: deptId,
+            roleId: volunteerInput.roleId,
+          },
+        });
+
+        const congregationRecord = await this.findOrCreateCongregation(
+          tx, volunteerInput.congregation, event.template.circuitId
+        );
+
+        const profile = await tx.volunteerProfile.create({
+          data: {
+            firstName: volunteerInput.firstName,
+            lastName: volunteerInput.lastName,
+            email: volunteerInput.email,
+            phone: volunteerInput.phone,
+            appointmentStatus: volunteerInput.appointmentStatus || 'PUBLISHER',
+            notes: volunteerInput.notes,
+            congregationId: congregationRecord.id,
+          },
+        });
+
+        await tx.eventVolunteer.create({
+          data: {
+            volunteerId: volId,
+            tokenHash: volTokenHash,
+            token: volToken,
+            volunteerProfileId: profile.id,
+            eventId,
+            departmentId: deptId,
+            roleId: volunteerInput.roleId,
+          },
+        });
+
+        return vol;
       });
 
       createdVolunteers.push({
@@ -361,5 +432,44 @@ export class VolunteerService {
     }
 
     return decryptToken(volunteer.encryptedToken);
+  }
+
+  /**
+   * Find or create a Congregation record for VolunteerProfile.
+   * Uses congregation name + circuitId. If circuit is unknown, creates with defaults.
+   */
+  private async findOrCreateCongregation(
+    tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
+    congregationName: string,
+    circuitId?: string | null
+  ) {
+    // Try to find existing congregation by name within the circuit
+    if (circuitId) {
+      const existing = await tx.congregation.findFirst({
+        where: { name: congregationName, circuitId },
+      });
+      if (existing) return existing;
+    }
+
+    // Find or create a default circuit if none provided
+    let resolvedCircuitId = circuitId;
+    if (!resolvedCircuitId) {
+      const defaultCircuit = await tx.circuit.upsert({
+        where: { code: 'UNKNOWN' },
+        update: {},
+        create: { code: 'UNKNOWN', region: 'Unknown' },
+      });
+      resolvedCircuitId = defaultCircuit.id;
+    }
+
+    // Create new congregation
+    return tx.congregation.create({
+      data: {
+        name: congregationName,
+        city: 'Unknown',
+        state: 'Unknown',
+        circuitId: resolvedCircuitId,
+      },
+    });
   }
 }

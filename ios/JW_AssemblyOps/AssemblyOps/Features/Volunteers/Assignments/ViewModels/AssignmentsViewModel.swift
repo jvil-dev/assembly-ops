@@ -109,9 +109,9 @@ final class AssignmentsViewModel: ObservableObject {
 
     /// Fetch assignments from API
     func fetchAssignments() {
-          isLoading = true
-          errorMessage = nil
-        
+        isLoading = true
+        errorMessage = nil
+
         // If offline, try cache first
         if !networkMonitor.isConnected {
             if let cached = cache.load() {
@@ -122,14 +122,18 @@ final class AssignmentsViewModel: ObservableObject {
                 return
             }
         }
-        
+
         // Try network fetch
         Task {
+            defer {
+                isLoading = false
+                hasLoaded = true
+            }
             do {
                 let fetched = try await AssignmentsService.shared.fetchAssignments()
                 assignments = fetched
                 isUsingCache = false
-                
+
                 // Cache for offline use
                 cache.save(fetched)
             } catch {
@@ -141,15 +145,11 @@ final class AssignmentsViewModel: ObservableObject {
                 } else {
                     errorMessage = "Unable to load assignments. Check your connection"
                 }
-                isLoading = false
-                hasLoaded = true
             }
-        } 
-        isLoading = false
-        hasLoaded = true
-      }
+        }
+    }
 
-      func refresh() {
-          fetchAssignments()
-      }
+    func refresh() {
+        fetchAssignments()
+    }
 }

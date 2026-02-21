@@ -1,0 +1,28 @@
+query MyAttendantMeetings($eventId: ID!) {
+  myAttendantMeetings(eventId: $eventId) {
+    id
+    session {
+      id
+      name
+      date
+    }
+    meetingDate
+    notes
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+    attendees {
+      id
+      eventVolunteer {
+        id
+        volunteerProfile {
+          firstName
+          lastName
+        }
+      }
+    }
+    createdAt
+  }
+}

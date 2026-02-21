@@ -60,6 +60,8 @@ struct AttendanceInputView: View {
             if let eventId = sessionState.selectedEvent?.id {
                 await viewModel.loadEventSummary(eventId: eventId)
             }
+            // Load Attendant department posts for section picker
+            await viewModel.loadAttendantPosts(departments: sessionState.departments)
         }
         .onChange(of: viewModel.selectedSessionId) { _, sessionId in
             // When session selection changes, load counts for that session
@@ -169,29 +171,23 @@ struct AttendanceInputView: View {
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
 
-            // Section name field (optional)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Section (optional)")
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                TextField("e.g., Main Floor, Balcony", text: $viewModel.sectionName)
-                    .textFieldStyle(.plain)
-                    .padding(AppTheme.Spacing.m)
-                    .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
-            }
+            // Section picker (populated from Attendant posts) or free-text fallback
+            sectionPickerField
 
             // Count input
             VStack(alignment: .leading, spacing: 4) {
                 Text("Count *")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                TextField("Enter count", text: $viewModel.countText)
-                    .textFieldStyle(.plain)
-                    .keyboardType(.numberPad)
-                    .padding(AppTheme.Spacing.m)
-                    .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                    .cornerRadius(AppTheme.CornerRadius.small)
+                Picker("", selection: $viewModel.count) {
+                    ForEach(0...500, id: \.self) { value in
+                        Text("\(value)").tag(value)
+                    }
+                }
+                .pickerStyle(.wheel)
+                .frame(height: 120)
+                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                .cornerRadius(AppTheme.CornerRadius.small)
             }
 
             // Notes field (optional)
@@ -199,7 +195,7 @@ struct AttendanceInputView: View {
                 Text("Notes (optional)")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                TextField("Any additional details", text: $viewModel.notes)
+                TextField("", text: $viewModel.notes)
                     .textFieldStyle(.plain)
                     .padding(AppTheme.Spacing.m)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
@@ -226,15 +222,128 @@ struct AttendanceInputView: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, AppTheme.Spacing.m)
-                .background(viewModel.selectedSessionId != nil && !viewModel.countText.isEmpty
+                .background(viewModel.selectedSessionId != nil && viewModel.count > 0
                     ? AppTheme.themeColor
                     : AppTheme.textSecondary(for: colorScheme))
                 .cornerRadius(AppTheme.CornerRadius.button)
             }
-            .disabled(viewModel.selectedSessionId == nil || viewModel.countText.isEmpty || viewModel.isSaving)
+            .disabled(viewModel.selectedSessionId == nil || viewModel.count == 0 || viewModel.isSaving)
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Section Picker Field
+    @ViewBuilder
+    private var sectionPickerField: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("attendance.section".localized)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+            if !viewModel.attendantPosts.isEmpty && !viewModel.useCustomSection {
+                // Post-based picker
+                let categories = orderedCategories
+                Menu {
+                    if categories.count > 1 {
+                        // Group by category
+                        ForEach(categories, id: \.self) { category in
+                            Section(category) {
+                                ForEach(viewModel.attendantPosts.filter { ($0.category ?? "attendance.section.other".localized) == category }) { post in
+                                    postButton(post)
+                                }
+                            }
+                        }
+                    } else {
+                        // Flat list
+                        ForEach(viewModel.attendantPosts) { post in
+                            postButton(post)
+                        }
+                    }
+
+                    Divider()
+
+                    Button {
+                        HapticManager.shared.lightTap()
+                        viewModel.useCustomSection = true
+                    } label: {
+                        Label("attendance.section.other".localized, systemImage: "pencil")
+                    }
+                } label: {
+                    HStack {
+                        if let post = viewModel.selectedPost {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(post.name)
+                                    .font(AppTheme.Typography.body)
+                                    .foregroundStyle(Color.primary)
+                                if let location = post.location {
+                                    Text(location)
+                                        .font(AppTheme.Typography.caption)
+                                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                                }
+                            }
+                        } else {
+                            Text("attendance.section.select".localized)
+                                .font(AppTheme.Typography.body)
+                                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    }
+                    .padding(AppTheme.Spacing.m)
+                    .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    .cornerRadius(AppTheme.CornerRadius.small)
+                }
+            } else {
+                // Fallback: free-text (when no posts exist or "Other" selected)
+                HStack {
+                    TextField("attendance.section.placeholder".localized, text: $viewModel.sectionName)
+                        .textFieldStyle(.plain)
+                        .padding(AppTheme.Spacing.m)
+                        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                        .cornerRadius(AppTheme.CornerRadius.small)
+
+                    if viewModel.useCustomSection {
+                        Button {
+                            HapticManager.shared.lightTap()
+                            viewModel.useCustomSection = false
+                            viewModel.sectionName = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func postButton(_ post: AttendantPostItem) -> some View {
+        Button {
+            HapticManager.shared.lightTap()
+            viewModel.selectedPost = post
+        } label: {
+            if let location = post.location {
+                Text("\(post.name) (\(location))")
+            } else {
+                Text(post.name)
+            }
+        }
+    }
+
+    /// Categories in display order, preserving sort order from backend
+    private var orderedCategories: [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for post in viewModel.attendantPosts {
+            let cat = post.category ?? "attendance.section.other".localized
+            if seen.insert(cat).inserted {
+                result.append(cat)
+            }
+        }
+        return result
     }
 
     // MARK: - Existing Counts Card

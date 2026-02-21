@@ -7,41 +7,18 @@
 
 // MARK: - Create Session Sheet
 //
-// Modal sheet for creating new event sessions (time blocks).
-// Sessions represent specific time periods during which volunteers serve.
+// Modal sheet for creating additional custom sessions beyond the auto-created ones.
+// Default Morning/Afternoon sessions are auto-created when an event is activated.
+// This sheet is for custom sessions like "Lunch Break Coverage" or "Move-In Day".
 //
 // Features:
-//   - Event type-specific session templates (RC, CA, Special)
 //   - Session name input field
 //   - Date picker for session date
 //   - Start and end time pickers (scroll wheels)
 //   - Form validation (name and times required)
 //   - Creates session in current event context
-//   - Success/error handling with alerts
-//
-// Navigation:
-//   - Presented as sheet from event management screens
-//   - Dismisses after successful creation
 
 import SwiftUI
-
-// Template data structure
-struct SessionTemplate: Identifiable {
-    let id = UUID()
-    let title: String
-    let subtitle: String
-    let startHr: Int
-    let startMin: Int
-    let endHr: Int
-    let endMin: Int
-    let eventType: EventTemplateType
-}
-
-enum EventTemplateType {
-    case circuitAssembly
-    case regionalConvention
-    case specialConvention
-}
 
 struct CreateSessionSheet: View {
     @StateObject private var viewModel = SessionsViewModel()
@@ -60,7 +37,7 @@ struct CreateSessionSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppTheme.Spacing.xl) {
-                    templateCard
+                    infoCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
                     detailsCard
@@ -115,152 +92,46 @@ struct CreateSessionSheet: View {
         }
     }
 
-    // MARK: - Template Card
+    // MARK: - Info Card
 
-    private var templateCard: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            sectionHeader(icon: "list.bullet.rectangle", title: "SESSION TEMPLATES")
+    private var infoCard: some View {
+        HStack(spacing: AppTheme.Spacing.m) {
+            Image(systemName: "info.circle.fill")
+                .font(.system(size: 20))
+                .foregroundStyle(AppTheme.themeColor)
 
-            VStack(spacing: AppTheme.Spacing.s) {
-                // Show templates filtered by event type
-                ForEach(filteredTemplates) { template in
-                    templateButton(
-                        title: template.title,
-                        subtitle: template.subtitle,
-                        startHr: template.startHr,
-                        startMin: template.startMin,
-                        endHr: template.endHr,
-                        endMin: template.endMin
-                    )
-                }
-            }
+            Text("Morning and Afternoon sessions are created automatically. Use this to create additional custom sessions.")
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
-    }
-
-    // Filter templates based on current event type
-    private var filteredTemplates: [SessionTemplate] {
-        guard let eventType = sessionState.selectedEvent?.eventType else {
-            return allTemplates // Show all if no event selected (shouldn't happen)
-        }
-
-        switch eventType {
-        case "CIRCUIT_ASSEMBLY":
-            return allTemplates.filter { $0.eventType == .circuitAssembly }
-        case "REGIONAL_CONVENTION":
-            return allTemplates.filter { $0.eventType == .regionalConvention }
-        case "SPECIAL_CONVENTION":
-            return allTemplates.filter { $0.eventType == .specialConvention }
-        default:
-            return allTemplates
-        }
-    }
-
-    // All available templates
-    private var allTemplates: [SessionTemplate] {
-        [
-            // Regional Convention templates (3-day event, Friday-Sunday)
-            SessionTemplate(
-                title: "Regional Convention - Morning",
-                subtitle: "9:20 AM - 12:10 PM",
-                startHr: 9, startMin: 20,
-                endHr: 12, endMin: 10,
-                eventType: .regionalConvention
-            ),
-            SessionTemplate(
-                title: "Regional Convention - Afternoon",
-                subtitle: "1:40 PM - 4:40 PM",
-                startHr: 13, startMin: 40,
-                endHr: 16, endMin: 40,
-                eventType: .regionalConvention
-            ),
-            // Circuit Assembly templates (1-day event)
-            SessionTemplate(
-                title: "Circuit Assembly - Morning",
-                subtitle: "9:20 AM - 12:00 PM",
-                startHr: 9, startMin: 20,
-                endHr: 12, endMin: 0,
-                eventType: .circuitAssembly
-            ),
-            SessionTemplate(
-                title: "Circuit Assembly - Afternoon",
-                subtitle: "1:30 PM - 4:00 PM",
-                startHr: 13, startMin: 30,
-                endHr: 16, endMin: 0,
-                eventType: .circuitAssembly
-            ),
-            // Special Convention templates (same as Regional)
-            SessionTemplate(
-                title: "Special Convention - Morning",
-                subtitle: "9:20 AM - 12:10 PM",
-                startHr: 9, startMin: 20,
-                endHr: 12, endMin: 10,
-                eventType: .specialConvention
-            ),
-            SessionTemplate(
-                title: "Special Convention - Afternoon",
-                subtitle: "1:40 PM - 4:40 PM",
-                startHr: 13, startMin: 40,
-                endHr: 16, endMin: 40,
-                eventType: .specialConvention
-            )
-        ]
-    }
-
-    private func templateButton(title: String, subtitle: String, startHr: Int, startMin: Int, endHr: Int, endMin: Int) -> some View {
-        Button {
-            HapticManager.shared.lightTap()
-            startHour = startHr
-            startMinute = startMin
-            endHour = endHr
-            endMinute = endMin
-
-            // Auto-fill name if empty
-            if viewModel.name.isEmpty {
-                viewModel.name = title
-            }
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(AppTheme.textPrimary(for: colorScheme))
-                    Text(subtitle)
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-            }
-            .padding(AppTheme.Spacing.m)
-            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-        }
     }
 
     // MARK: - Details Card
 
     private var detailsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            sectionHeader(icon: "calendar", title: "SESSION DETAILS")
+            SectionHeaderLabel(icon: "calendar", title: "SESSION DETAILS")
 
             VStack(spacing: AppTheme.Spacing.m) {
                 themedTextField("session.name".localized, text: $viewModel.name)
 
-                DatePicker(
-                    "session.date".localized,
-                    selection: $viewModel.selectedDate,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.compact)
-                .padding(AppTheme.Spacing.m)
-                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                    Text("session.date".localized)
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    DatePicker(
+                        "",
+                        selection: $viewModel.selectedDate,
+                        displayedComponents: .date
+                    )
+                    .labelsHidden()
+                    .datePickerStyle(.compact)
+                    .padding(AppTheme.Spacing.m)
+                    .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                }
             }
         }
         .cardPadding()
@@ -271,7 +142,7 @@ struct CreateSessionSheet: View {
 
     private var timeCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            sectionHeader(icon: "clock", title: "TIME RANGE")
+            SectionHeaderLabel(icon: "clock", title: "TIME RANGE")
 
             HStack(spacing: AppTheme.Spacing.l) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -351,24 +222,19 @@ struct CreateSessionSheet: View {
 
     // MARK: - Helpers
 
-    private func sectionHeader(icon: String, title: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .foregroundStyle(AppTheme.themeColor)
-            Text(title)
-                .font(AppTheme.Typography.caption)
-                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-        }
-    }
-
     private func themedTextField(
-        _ placeholder: String,
+        _ label: String,
         text: Binding<String>
     ) -> some View {
-        TextField(placeholder, text: text)
-            .padding(AppTheme.Spacing.m)
-            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+            Text(label)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            TextField("", text: text)
+                .padding(AppTheme.Spacing.m)
+                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+        }
     }
 
     private func updateTimes() {

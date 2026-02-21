@@ -39,6 +39,7 @@ import { oauthResolvers } from './oauth.js';
 import circuitResolvers from './circuit.js';
 import congregationResolvers from './congregation.js';
 import volunteerProfileResolvers from './volunteerProfile.js';
+import attendantResolvers from './attendant.js';
 
 const baseResolvers = {
   DateTime: DateTimeResolver,
@@ -82,10 +83,10 @@ const resolvers = {
     ...messageResolvers.Query,
     ...eventNoteResolvers.Query,
     ...attendanceResolvers.Query,
-    ...authResolvers.Query,
     ...circuitResolvers.Query,
     ...congregationResolvers.Query,
     ...volunteerProfileResolvers.Query,
+    ...attendantResolvers.Query,
   },
 
   Mutation: {
@@ -100,9 +101,9 @@ const resolvers = {
     ...messageResolvers.Mutation,
     ...eventNoteResolvers.Mutation,
     ...attendanceResolvers.Mutation,
-    ...authResolvers.Mutation,
     ...oauthResolvers.Mutation,
     ...volunteerProfileResolvers.Mutation,
+    ...attendantResolvers.Mutation,
   },
 
   Admin: authResolvers.Admin,

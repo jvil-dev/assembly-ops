@@ -26,6 +26,7 @@ export const submitAttendanceCountSchema = z.object({
     .max(50, 'Section name too long')
     .nullish()
     .transform((v: string | null | undefined) => v?.trim() || null),
+  postId: z.string().min(1).optional(),
   count: z.number().int().min(0, 'Count must be non-negative'),
   notes: z
     .string()

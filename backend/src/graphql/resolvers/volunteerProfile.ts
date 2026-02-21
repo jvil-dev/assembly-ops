@@ -471,12 +471,14 @@ const volunteerProfileResolvers = {
     volunteerProfile: async (ev: EventVolunteer, _args: unknown, context: Context) => {
       return context.prisma.volunteerProfile.findUnique({
         where: { id: ev.volunteerProfileId },
+        include: { congregation: true },
       });
     },
 
     event: async (ev: EventVolunteer, _args: unknown, context: Context) => {
       return context.prisma.event.findUnique({
         where: { id: ev.eventId },
+        include: { template: true },
       });
     },
 

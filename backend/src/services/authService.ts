@@ -241,6 +241,10 @@ export class AuthService {
     eventVolunteer: {
       id: string;
       volunteerId: string;
+      volunteerProfileId: string;
+      eventId: string;
+      departmentId: string | null;
+      roleId: string | null;
       volunteerProfile: {
         id: string;
         firstName: string;
@@ -275,7 +279,7 @@ export class AuthService {
           },
         },
         department: {
-          select: { id: true, name: true },
+          select: { id: true, name: true, departmentType: true },
         },
       },
     });
@@ -307,6 +311,10 @@ export class AuthService {
       eventVolunteer: {
         id: eventVolunteer.id,
         volunteerId: eventVolunteer.volunteerId,
+        volunteerProfileId: eventVolunteer.volunteerProfileId,
+        eventId: eventVolunteer.eventId,
+        departmentId: eventVolunteer.departmentId,
+        roleId: eventVolunteer.roleId,
         volunteerProfile: eventVolunteer.volunteerProfile,
         event: eventVolunteer.event,
         department: eventVolunteer.department,

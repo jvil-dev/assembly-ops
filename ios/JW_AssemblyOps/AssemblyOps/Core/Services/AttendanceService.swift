@@ -93,13 +93,38 @@ final class AttendanceService {
         }
     }
 
+    /// Fetch posts for a department (used to populate section picker for Attendant dept)
+    func fetchAttendantPosts(departmentId: String) async throws -> [AttendantPostItem] {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.AttendantPostsQuery(departmentId: departmentId),
+                cachePolicy: .fetchIgnoringCacheData
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.posts {
+                        let posts = data.map { AttendantPostItem(from: $0) }
+                        continuation.resume(returning: posts)
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendanceError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendanceError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
     // MARK: - Mutations
 
-    /// Submit attendance count for a session/section (upserts on same session+section)
-    func submitAttendanceCount(sessionId: String, section: String?, count: Int, notes: String?) async throws -> AttendanceCountItem {
+    /// Submit attendance count for a session/post (upserts on same session+section)
+    func submitAttendanceCount(sessionId: String, section: String?, postId: String? = nil, count: Int, notes: String?) async throws -> AttendanceCountItem {
         let input = AssemblyOpsAPI.SubmitAttendanceCountInput(
             sessionId: sessionId,
-            section: section.map { .some($0) } ?? .none,  // GraphQLNullable pattern
+            section: section.map { .some($0) } ?? .none,
+            postId: postId.map { .some($0) } ?? .none,
             count: count,
             notes: notes.map { .some($0) } ?? .none
         )

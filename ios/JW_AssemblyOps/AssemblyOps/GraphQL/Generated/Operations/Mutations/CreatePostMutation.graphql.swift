@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "CreatePost"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation CreatePost($departmentId: ID!, $input: CreatePostInput!) { createPost(departmentId: $departmentId, input: $input) { __typename id name description location capacity createdAt } }"#
+        #"mutation CreatePost($departmentId: ID!, $input: CreatePostInput!) { createPost(departmentId: $departmentId, input: $input) { __typename id name description location capacity category sortOrder createdAt } }"#
       ))
 
     public var departmentId: ID
@@ -59,6 +59,8 @@ extension AssemblyOpsAPI {
           .field("description", String?.self),
           .field("location", String?.self),
           .field("capacity", Int.self),
+          .field("category", String?.self),
+          .field("sortOrder", Int.self),
           .field("createdAt", AssemblyOpsAPI.DateTime.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -70,6 +72,8 @@ extension AssemblyOpsAPI {
         var description: String? { __data["description"] }
         var location: String? { __data["location"] }
         var capacity: Int { __data["capacity"] }
+        var category: String? { __data["category"] }
+        var sortOrder: Int { __data["sortOrder"] }
         var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }
       }
     }

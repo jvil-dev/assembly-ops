@@ -33,6 +33,7 @@
  */
 import { PrismaClient, EventRole, DepartmentType } from '@prisma/client';
 import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '../utils/errors.js';
+import { timeStringToDate } from '../utils/time.js';
 import {
   activateEventSchema,
   joinEventSchema,
@@ -119,6 +120,46 @@ export class EventService {
         },
       },
     });
+
+    // Auto-create default sessions based on event type
+    const dayCount = Math.round(
+      (template.endDate.getTime() - template.startDate.getTime()) / (1000 * 60 * 60 * 24)
+    ) + 1;
+
+    for (let d = 0; d < dayCount; d++) {
+      const date = new Date(template.startDate);
+      date.setDate(date.getDate() + d);
+
+      await this.prisma.session.create({
+        data: {
+          name: 'Morning',
+          date,
+          startTime: timeStringToDate('09:20'),
+          endTime: timeStringToDate('12:00'),
+          eventId: event.id,
+        },
+      });
+
+      await this.prisma.session.create({
+        data: {
+          name: 'Noon',
+          date,
+          startTime: timeStringToDate('12:00'),
+          endTime: timeStringToDate('13:30'),
+          eventId: event.id,
+        },
+      });
+
+      await this.prisma.session.create({
+        data: {
+          name: 'Afternoon',
+          date,
+          startTime: timeStringToDate('13:30'),
+          endTime: timeStringToDate('16:00'),
+          eventId: event.id,
+        },
+      });
+    }
 
     return event;
   }

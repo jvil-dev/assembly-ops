@@ -22,6 +22,7 @@
 //   - Pending assignment badge on Schedule tab
 //   - Badge refresh tied to app scene phase (active/background)
 //   - iOS 26 glass tab bar styling with theme color tint
+//   - Programmatic tab selection for cross-tab navigation from HomeView
 //
 // Dependencies:
 //   - AppState: Injected via EnvironmentObject
@@ -31,41 +32,51 @@
 
 import SwiftUI
 
+/// Tab identifiers for programmatic tab switching
+enum VolunteerTab: Int {
+    case home, schedule, messages, profile
+}
+
 struct VolunteerTabView: View {
     @EnvironmentObject private var appState: AppState
     @ObservedObject private var messageBadgeManager = UnreadBadgeManager.shared
     @ObservedObject private var pendingBadgeManager = PendingBadgeManager.shared
     @Environment(\.scenePhase) private var scenePhase
+    @State private var selectedTab: VolunteerTab = .home
 
     var body: some View {
         VStack(spacing: 0) {
             OfflineBanner()
                 .animation(.easeInOut, value: NetworkMonitor.shared.isConnected)
 
-            TabView {
-                HomeView()
+            TabView(selection: $selectedTab) {
+                HomeView(switchToTab: { selectedTab = $0 })
                     .tabItem {
-                        Label("Home", systemImage: "house")
+                        Label("tab.home".localized, systemImage: "house")
                     }
+                    .tag(VolunteerTab.home)
 
                 AssignmentsListView()
                     .tabItem {
-                        Label("Schedule", systemImage: "calendar")
+                        Label("tab.schedule".localized, systemImage: "calendar")
                     }
                     .badge(pendingBadgeManager.pendingCount)
+                    .tag(VolunteerTab.schedule)
 
                 MessagesView()
                     .tabItem {
-                        Label("Messages", systemImage: "envelope")
+                        Label("tab.messages".localized, systemImage: "envelope")
                     }
                     .badge(messageBadgeManager.unreadCount)
+                    .tag(VolunteerTab.messages)
 
                 ProfileView()
                     .tabItem {
-                        Label("Profile", systemImage: "person")
+                        Label("tab.profile".localized, systemImage: "person")
                     }
+                    .tag(VolunteerTab.profile)
             }
-            .tint(AppTheme.themeColor) // Theme color for tab bar and glass effect on iOS 26
+            .tint(AppTheme.themeColor)
             .onChange(of: scenePhase) {
                 _, newPhase in
                 switch newPhase {

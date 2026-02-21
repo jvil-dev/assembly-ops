@@ -1,12 +1,18 @@
-mutation LoginVolunteer($input: LoginVolunteerInput!) {
-  loginVolunteer(input: $input) {
-    volunteer {
+mutation LoginVolunteer($input: LoginEventVolunteerInput!) {
+  loginEventVolunteer(input: $input) {
+    eventVolunteer {
       id
       volunteerId
-      firstName
-      lastName
-      fullName
-      congregation
+      volunteerProfile {
+        firstName
+        lastName
+        email
+        phone
+        appointmentStatus
+        congregation {
+          name
+        }
+      }
       event {
         id
         name
@@ -20,6 +26,7 @@ mutation LoginVolunteer($input: LoginVolunteerInput!) {
       department {
         id
         name
+        departmentType
       }
     }
     accessToken

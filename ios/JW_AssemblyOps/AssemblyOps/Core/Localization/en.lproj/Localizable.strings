@@ -18,6 +18,7 @@
 "common.remove" = "Remove";
 "common.copy" = "Copy";
 "common.share" = "Share";
+"common.ok" = "OK";
 
 // MARK: - Auth
 "auth.login" = "Sign In";
@@ -57,10 +58,40 @@
 "assignmentStatus.declined" = "Declined";
 "assignmentStatus.autoDeclined" = "Auto-Declined";
 
+// MARK: - Assignment Picker
+"assignment.forceAssign.toggle" = "Force Assign";
+"assignment.forceAssign.subtitle" = "Skips acceptance — volunteer is assigned immediately";
+"assignment.status.pending" = "Awaiting acceptance";
+
 // MARK: - Check-In Status
 "checkInStatus.checkedIn" = "Checked In";
 "checkInStatus.checkedOut" = "Checked Out";
 "checkInStatus.noShow" = "No Show";
+
+// MARK: - Home Dashboard
+"home.welcome" = "Welcome, %@!";
+"home.nextUp" = "NEXT UP";
+"home.nextUp.now" = "NOW";
+"home.nextUp.checkOut" = "Check Out";
+"home.nextUp.checkIn" = "Check In";
+"home.nextUp.allDone" = "You're all done for today!";
+"home.nextUp.nextDate" = "Next: %@";
+"home.nextUp.noAssignments" = "No assignments yet";
+"home.nextUp.noAssignments.subtitle" = "Your overseer will assign you soon.";
+"home.nextUp.viewDetails" = "View Details";
+"home.summary" = "TODAY'S SUMMARY";
+"home.summary.count" = "%d assignments";
+"home.summary.completed" = "%d completed";
+"home.summary.checkedIn" = "Checked In";
+"home.summary.done" = "Completed";
+"home.summary.ready" = "Ready to check in";
+"home.summary.upcoming" = "Upcoming";
+"home.actions.pending" = "%d pending assignments";
+"home.actions.pendingOne" = "1 pending assignment";
+"home.actions.unread" = "%d unread messages";
+"home.actions.unreadOne" = "1 unread message";
+"home.actions.respond" = "Respond";
+"home.actions.read" = "Read";
 
 // MARK: - Tabs
 "tab.home" = "Home";
@@ -70,6 +101,7 @@
 "tab.dashboard" = "Dashboard";
 "tab.volunteers" = "Volunteers";
 "tab.assignments" = "Assignments";
+"tab.sections" = "Sections";
 
 // MARK: - Volunteer
 "volunteer.add" = "Add Volunteer";
@@ -106,6 +138,8 @@
 "attendance.session" = "Session";
 "attendance.section" = "Section (optional)";
 "attendance.section.placeholder" = "e.g., Main Floor, Balcony";
+"attendance.section.select" = "Select Section";
+"attendance.section.other" = "Other";
 "attendance.count" = "Count";
 "attendance.notes" = "Notes (optional)";
 "attendance.total" = "Total";
@@ -159,9 +193,226 @@
 "post.description" = "Description";
 "post.location" = "Location";
 "post.capacity" = "Capacity";
+"post.category" = "Category (e.g., Seating, Doors)";
+"post.single" = "Single";
+"post.bulkAdd" = "Bulk Add";
+"post.bulkSettings" = "Bulk Settings";
+"post.bulkPrefix" = "Prefix (e.g., S, D, E)";
+"post.bulkStartNumber" = "Start #";
+"post.bulkCount" = "Count";
+"post.bulkPreview" = "Preview";
+"post.postsTotal" = "posts total";
 "post.created" = "Post Created";
 "post.createdMessage" = "Post '%@' has been created.";
+"post.bulkCreatedMessage" = "%@ posts have been created.";
+"post.otherCategory" = "Other";
 "post.examples" = "Examples";
+
+// Suggestions
+"suggestion.addNew" = "Add '%@'";
+
+// MARK: - Attendant Department
+"attendant.dashboard.title" = "Attendant Department";
+
+// Attendant Posts
+"attendant.posts.title" = "My Posts";
+
+// Safety Incidents
+"attendant.incidents.title" = "Safety Incidents";
+"attendant.incidents.report" = "Report Incident";
+"attendant.incidents.report.success" = "Incident reported successfully";
+"attendant.incidents.type" = "Incident Type";
+"attendant.incidents.description" = "Description";
+"attendant.incidents.location" = "Location";
+"attendant.incidents.resolved" = "Resolved";
+"attendant.incidents.resolve" = "Resolve Incident";
+"attendant.incidents.notes" = "Resolution Notes";
+"attendant.incidents.empty" = "No incidents reported";
+"attendant.incidents.showResolved" = "Show Resolved";
+"attendant.incidents.unresolved" = "unresolved";
+"attendant.incidents.type.buildingDefect" = "Building Defect";
+"attendant.incidents.type.wetFloor" = "Wet Floor";
+"attendant.incidents.type.unsafeCondition" = "Unsafe Condition";
+"attendant.incidents.type.medicalEmergency" = "Medical Emergency";
+"attendant.incidents.type.disruptiveIndividual" = "Disruptive Individual";
+"attendant.incidents.type.other" = "Other";
+"attendant.incidents.description.placeholder" = "Describe what happened, what you observed, etc.";
+"attendant.incidents.section.incidentType" = "Incident Type";
+"attendant.incidents.section.details" = "Details";
+"attendant.incidents.section.location" = "Location";
+
+// Lost Person Alerts
+"attendant.lostPerson.title" = "Lost Person Alerts";
+"attendant.lostPerson.create" = "Report Lost Person";
+"attendant.lostPerson.report.success" = "Alert created successfully";
+"attendant.lostPerson.personName" = "Person Name";
+"attendant.lostPerson.age" = "Age";
+"attendant.lostPerson.description" = "Description";
+"attendant.lostPerson.lastSeen" = "Last Seen Location";
+"attendant.lostPerson.lastSeenTime" = "Last Seen Time";
+"attendant.lostPerson.contactName" = "Contact Name";
+"attendant.lostPerson.contactPhone" = "Contact Phone";
+"attendant.lostPerson.resolve" = "Resolve Alert";
+"attendant.lostPerson.resolutionNotes" = "Resolution Notes";
+"attendant.lostPerson.empty" = "No lost person alerts";
+"attendant.lostPerson.active" = "Active";
+"attendant.lostPerson.description.placeholder" = "Describe what the person looks like, what they're wearing, etc.";
+"attendant.lostPerson.includeTime" = "Include last seen time";
+"attendant.lostPerson.section.personDetails" = "Person Details";
+"attendant.lostPerson.section.lastSeen" = "Last Seen";
+"attendant.lostPerson.section.contactInfo" = "Contact Info";
+
+// Meetings
+"attendant.meetings.title" = "Pre-Event Meetings";
+"attendant.meetings.create" = "Create Meeting";
+"attendant.meetings.session" = "Session";
+"attendant.meetings.date" = "Meeting Date";
+"attendant.meetings.time" = "Meeting Time";
+"attendant.meetings.notes" = "Notes";
+"attendant.meetings.attendees" = "Attendees";
+"attendant.meetings.empty" = "No meetings recorded";
+"attendant.meetings.showAttendees" = "Show attendees";
+"attendant.meetings.hideAttendees" = "Hide attendees";
+"attendant.meetings.createdBy" = "Created by %@";
+
+// Attendance Count Submission
+"attendant.count.title" = "Submit Count";
+"attendant.count.post" = "Post";
+"attendant.count.session" = "Session";
+"attendant.count.count" = "Attendance Count";
+"attendant.count.submit" = "Submit Count";
+"attendant.count.success" = "Count submitted successfully";
+
+
+// Attendant Assignments
+"attendant.assign.noVolunteers" = "No volunteers found";
+
+// Attendant Meeting Multi-Select
+"attendant.meetings.selected" = "selected";
+"attendant.meetings.selectAll" = "Select All";
+"attendant.meetings.deselectAll" = "Deselect All";
+
+// Attendant Volunteer Views
+"attendant.volunteer.noPosts" = "No posts assigned";
+
+// Attendant Home Cards
+"attendant.home.posts" = "My Section";
+"attendant.home.meetings" = "Upcoming Meetings";
+"attendant.home.quickActions" = "Quick Actions";
+"attendant.home.reportIncident" = "Report Incident";
+"attendant.home.reportLostPerson" = "Report Lost Person";
+"attendant.home.noPosts" = "No posts assigned yet";
+"attendant.home.noMeetings" = "No upcoming meetings";
+
+// Attendant Detail Cards
+"attendant.detail.submitCount" = "Submit Attendance Count";
+
+"attendant.incidents.location.other" = "Other";
+"attendant.incidents.location.select" = "Select Location";
+"attendant.incidents.location.custom" = "Custom Location";
+"attendant.incidents.location.loading" = "Loading locations...";
+"attendant.volunteer.reportedBy" = "Reported by %@";
+
+// Attendant - New incident types
+"attendant.incidents.type.bombThreat" = "Bomb Threat";
+"attendant.incidents.type.violentIndividual" = "Violent Individual";
+"attendant.incidents.type.severeWeather" = "Severe Weather";
+"attendant.incidents.type.activeShooter" = "Active Shooter";
+
+// Attendant - Attendance count breakdown
+"attendant.attendance.title" = "Attendance Counts";
+"attendant.attendance.viewCounts" = "View Count Breakdown";
+"attendant.attendance.session" = "Session";
+"attendant.attendance.total" = "Total Count";
+"attendant.attendance.sections" = "sections";
+"attendant.attendance.general" = "General";
+"attendant.attendance.empty" = "No attendance data available";
+"attendant.attendance.noCounts" = "No counts submitted for this session";
+
+// Attendant - Volunteer meetings
+"attendant.meetings.myTitle" = "My Meetings";
+"attendant.meetings.noNotes" = "No notes for this meeting";
+"attendant.meetings.noMeetings" = "No meetings assigned";
+
+// MARK: - Attendant Info (CO-23 Quick Reference)
+"attendant.info.title" = "Attendant Reminders";
+"attendant.info.subtitle" = "Quick reference from the attendant instructions";
+"attendant.info.source" = "Based on CO-23-E 1/24";
+
+// Section titles
+"attendant.info.section.conduct" = "General Conduct & Preparation";
+"attendant.info.section.entrances" = "Entrances & Seating";
+"attendant.info.section.counting" = "Attendance Counting";
+"attendant.info.section.distractions" = "Handling Distractions";
+"attendant.info.section.safety" = "Safety & Emergencies";
+"attendant.info.section.lostPersons" = "Lost Persons & Threats";
+"attendant.info.section.facilities" = "Escalators, Stage & Baptism";
+"attendant.info.section.disruptions" = "Disruptions & Violence";
+
+// Conduct & Preparation
+"attendant.info.conduct.exemplary" = "Be exemplary in spiritual conduct — show kindness, helpfulness, and hospitality at all times";
+"attendant.info.conduct.alert" = "Remain alert and attentive — never become complacent";
+"attendant.info.conduct.meeting" = "Attend the attendant meeting before doors open on the first day";
+"attendant.info.conduct.position15min" = "Be at your assigned position at least 15 minutes before doors open";
+"attendant.info.conduct.badge" = "Always wear your attendant badge card while on duty";
+"attendant.info.conduct.stayAssigned" = "Remain at your assignment until you are relieved or replaced";
+
+// Entrances & Seating
+"attendant.info.entrances.elderly8am" = "8:00 AM — Elderly and infirm (with one caregiver) may enter";
+"attendant.info.entrances.general815" = "8:15 AM — General admission begins";
+"attendant.info.entrances.checkExits" = "Check all exit doors daily — they must be unlocked and unobstructed";
+"attendant.info.entrances.doorsNotPropped" = "Do not prop open exterior doors in climate-controlled buildings";
+"attendant.info.entrances.noSeatSaving" = "No overnight seat-saving or saving seats before doors open each day";
+"attendant.info.entrances.seatSavingRules" = "After 8:00 AM, seats may only be saved for family, travel companions, and Bible students";
+"attendant.info.entrances.strollers" = "Baby strollers and lawn chairs are not allowed in regular seating areas";
+"attendant.info.entrances.seatLatecomers" = "Take initiative to seat latecomers — use hand signals between entry and seating attendants";
+"attendant.info.entrances.assistElders" = "Assist elderly, disabled, and families with small children to find appropriate seating";
+
+// Attendance Counting
+"attendant.info.counting.informed" = "You will be informed of the specific times to take the attendance count";
+"attendant.info.counting.noDistraction" = "Take the count without causing unnecessary distraction";
+"attendant.info.counting.countAll" = "Count all adults and young children who are listening and benefiting from the program";
+
+// Handling Distractions
+"attendant.info.distractions.sources" = "Watch for: attendees talking, latecomers, cell phones, disruptive children, people in remote areas";
+"attendant.info.distractions.kindly" = "Address distractions in a loving, kind manner";
+"attendant.info.distractions.remote" = "Kindly suggest that people congregating in remote areas return to their seats";
+
+// Safety & Emergencies
+"attendant.info.safety.watch" = "Watch for: building defects, wet floors, objects in aisles, unsafe chairs, loose handrails";
+"attendant.info.safety.wetFloors" = "Direct people around wet areas and report them to the Cleaning Department";
+"attendant.info.safety.railings" = "In multilevel facilities, prevent children from sitting near railings where they could fall";
+"attendant.info.safety.upperLevels" = "Do not lean over railings or place items on upper-level ledges";
+"attendant.info.safety.nonmedical" = "Non-medical emergency: immediately contact the attendant overseer";
+"attendant.info.safety.flashlight" = "Each attendant should carry a flashlight for power failures";
+"attendant.info.safety.medical" = "Medical emergency: contact First Aid immediately — they will call emergency services if needed";
+"attendant.info.safety.reportInfo" = "When reporting an emergency, provide: type/scope, location, your name and phone number";
+
+// Lost Persons & Threats
+"attendant.info.lost.bringToLF" = "Bring lost persons (especially children) to the Lost & Found / Checkroom Department";
+"attendant.info.lost.notifyOverseer" = "Immediately notify the attendant overseer of any lost person";
+"attendant.info.lost.missingPerson" = "If someone is reported missing, inform the overseer and obtain identifying details and a photo";
+"attendant.info.lost.bombThreat" = "Take ALL bomb threats seriously — immediately inform the attendant overseer";
+"attendant.info.lost.noBombAlarm" = "DO NOT activate the fire alarm during a bomb threat";
+
+// Escalators, Stage & Baptism
+"attendant.info.facilities.escalators" = "Escalators and elevators should never be left unattended when in use";
+"attendant.info.facilities.escalatorStop" = "Know how to emergency-stop escalators at your location";
+"attendant.info.facilities.assistElderly" = "Assist elderly and young ones with careful use of escalators and elevators";
+"attendant.info.facilities.stageAccess" = "Always control access to the stage — only authorized persons allowed backstage";
+"attendant.info.facilities.noPhotos" = "No unauthorized photography or video recording on, in front of, or behind the stage";
+"attendant.info.facilities.baptism" = "During baptism, lead candidates to dressing rooms and provide crowd control around the pool";
+
+// Disruptions & Violence
+"attendant.info.disruptions.twoApproach" = "Two attendants should approach and greet a suspicious or disruptive individual together";
+"attendant.info.disruptions.apostates" = "If apostate demonstrators are outside, encourage attendees not to interact with them";
+"attendant.info.disruptions.calmFirst" = "Attempt to calm an agitated person — speak with them outside the auditorium, away from others";
+"attendant.info.disruptions.askToLeave" = "If disruptive behavior persists, ask the person to leave and warn that police will be contacted";
+"attendant.info.disruptions.noForce" = "Generally do NOT use physical force to remove a disruptive individual";
+"attendant.info.disruptions.avoidDenyDefend" = "Active threat: follow 'Avoid, Deny, Defend' — escape first, barricade second, fight only as last resort";
+"attendant.info.disruptions.callPolice" = "Call police immediately in a violent situation — anyone may call, do not wait";
+"attendant.info.disruptions.lockDoors" = "Lock and barricade doors to protect the largest number of attendees";
+"attendant.info.disruptions.noWeapons" = "Attendants are NOT permitted to carry weapons";
 
 // Language
 "language.select" = "Select Language";

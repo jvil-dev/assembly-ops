@@ -115,10 +115,13 @@ final class AppState: ObservableObject {
                             lastName: profile.lastName,
                             fullName: profile.fullName,
                             congregation: profile.congregation,
+                            eventId: profile.event.id,
                             eventName: profile.event.name,
                             eventVenue: profile.event.venue,
                             eventTheme: nil,
-                            departmentName: profile.department?.name
+                            departmentId: profile.department?.id,
+                            departmentName: profile.department?.name,
+                            departmentType: profile.department?.departmentType.rawValue
                         )
                         self?.isLoggedIn = true
                     } else {
@@ -212,6 +215,8 @@ final class AppState: ObservableObject {
                             refreshToken: data.refreshToken,
                             expiresIn: data.expiresIn
                         )
+                        // Recreate Apollo client with new auth headers
+                        NetworkClient.shared.resetClient()
                         // Fetch profile after refresh (populates currentOverseer/currentVolunteer
                         // and checks needsProfileSetup/needsEventSetup)
                         self?.fetchUserProfile()
@@ -287,10 +292,13 @@ struct VolunteerInfo: Identifiable {
     let lastName: String
     let fullName: String
     let congregation: String
+    let eventId: String
     let eventName: String?
     let eventVenue: String?
     let eventTheme: String?
+    let departmentId: String?
     let departmentName: String?
+    let departmentType: String?
 }
 
 /// Overseer info stored in app state

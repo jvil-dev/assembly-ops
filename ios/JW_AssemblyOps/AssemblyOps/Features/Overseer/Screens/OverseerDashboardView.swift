@@ -37,8 +37,6 @@ struct OverseerDashboardView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var showEventPicker = false
     @State private var showDepartmentPicker = false
-    @State private var showCreateSession = false
-    @State private var showCreatePost = false
     @State private var hasAppeared = false
 
     var body: some View {
@@ -55,50 +53,22 @@ struct OverseerDashboardView: View {
                 }
 
                 if let event = sessionState.selectedEvent {
-                    dashboardContent(for: event)
+                    if sessionState.selectedDepartment?.departmentType == "ATTENDANT" {
+                        AttendantDashboardView()
+                    } else {
+                        dashboardContent(for: event)
+                    }
                 } else {
                     selectEventPrompt
                 }
             }
             .themedBackground(scheme: colorScheme)
             .navigationTitle("Dashboard")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Menu {
-                        // Session creation (APP_ADMIN only)
-                        if sessionState.isEventOverseer {
-                            Button {
-                                showCreateSession = true
-                            } label: {
-                                Label("session.create".localized, systemImage: "calendar.badge.plus")
-                            }
-                        }
-
-                        // Post creation (any admin with department)
-                        if sessionState.selectedDepartment != nil {
-                            Button {
-                                showCreatePost = true
-                            } label: {
-                                Label("post.create".localized, systemImage: "mappin.circle.fill")
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .disabled(sessionState.selectedEvent == nil)
-                }
-            }
             .sheet(isPresented: $showEventPicker) {
                 EventPickerSheet()
             }
             .sheet(isPresented: $showDepartmentPicker) {
                 DepartmentPickerSheet()
-            }
-            .sheet(isPresented: $showCreateSession) {
-                CreateSessionSheet()
-            }
-            .sheet(isPresented: $showCreatePost) {
-                CreatePostSheet()
             }
             .onAppear {
                 withAnimation(AppTheme.entranceAnimation) {
@@ -334,6 +304,7 @@ struct OverseerDashboardView: View {
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
+
     }
 }
 

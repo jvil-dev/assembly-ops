@@ -4,8 +4,8 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI.Objects {
-  static let VolunteerAuthPayload = ApolloAPI.Object(
-    typename: "VolunteerAuthPayload",
+  static let EventVolunteerAuthPayload = ApolloAPI.Object(
+    typename: "EventVolunteerAuthPayload",
     implementedInterfaces: [],
     keyFields: nil
   )

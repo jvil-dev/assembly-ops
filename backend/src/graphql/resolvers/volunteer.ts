@@ -65,8 +65,46 @@ const volunteerResolvers = {
 
     myVolunteerProfile: async (_parent: unknown, _args: unknown, context: Context) => {
       requireVolunteer(context);
+
+      // Try legacy Volunteer first (old auth: context.volunteer.id = Volunteer.id)
       const volunteerService = new VolunteerService(context.prisma);
-      return volunteerService.getVolunteer(context.volunteer.id);
+      const volunteer = await volunteerService.getVolunteer(context.volunteer.id);
+      if (volunteer) return volunteer;
+
+      // Fallback: new auth (context.volunteer.id = EventVolunteer.id)
+      const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
+        where: { id: context.volunteer.id },
+        include: {
+          volunteerProfile: { include: { congregation: true } },
+          event: { include: { template: true } },
+          department: true,
+          role: true,
+        },
+      });
+
+      if (!eventVolunteer) return null;
+
+      // Map EventVolunteer to Volunteer-compatible shape for GraphQL
+      const profile = eventVolunteer.volunteerProfile;
+      return {
+        id: eventVolunteer.id,
+        volunteerId: eventVolunteer.volunteerId,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email,
+        phone: profile.phone,
+        congregation: profile.congregation?.name || '',
+        appointmentStatus: profile.appointmentStatus,
+        notes: profile.notes,
+        eventId: eventVolunteer.eventId,
+        event: eventVolunteer.event,
+        department: eventVolunteer.department,
+        departmentId: eventVolunteer.departmentId,
+        role: eventVolunteer.role,
+        roleId: eventVolunteer.roleId,
+        assignments: [],
+        createdAt: eventVolunteer.createdAt,
+      };
     },
 
     volunteerToken: async (_parent: unknown, { id }: { id: string }, context: Context) => {

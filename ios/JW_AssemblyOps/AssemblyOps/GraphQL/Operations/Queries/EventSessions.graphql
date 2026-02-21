@@ -1,0 +1,10 @@
+query EventSessions($eventId: ID!) {
+  sessions(eventId: $eventId) {
+    id
+    name
+    date
+    startTime
+    endTime
+    assignmentCount
+  }
+}

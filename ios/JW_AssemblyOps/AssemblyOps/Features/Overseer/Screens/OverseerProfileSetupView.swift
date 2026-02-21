@@ -278,12 +278,17 @@ struct OverseerProfileSetupView: View {
 
     // MARK: - Helpers
 
-    private func profileTextField(_ placeholder: String, text: Binding<String>) -> some View {
-        TextField(placeholder, text: text)
-            .font(AppTheme.Typography.body)
-            .padding(AppTheme.Spacing.m)
-            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+    private func profileTextField(_ label: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+            Text(label)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            TextField("", text: text)
+                .font(AppTheme.Typography.body)
+                .padding(AppTheme.Spacing.m)
+                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+        }
     }
 
     private func infoRow(label: String, value: String) -> some View {

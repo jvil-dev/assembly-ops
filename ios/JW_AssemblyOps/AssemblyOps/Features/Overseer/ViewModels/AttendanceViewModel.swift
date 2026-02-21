@@ -41,14 +41,40 @@ final class AttendanceViewModel: ObservableObject {
     // Input form state
     @Published var selectedSessionId: String?
     @Published var sectionName: String = ""
-    @Published var countText: String = ""
+    @Published var count: Int = 0
     @Published var notes: String = ""
+
+    // Section picker state (populated from Attendant department posts)
+    @Published var attendantPosts: [AttendantPostItem] = []
+    @Published var selectedPost: AttendantPostItem?
+    @Published var useCustomSection: Bool = false
 
     var eventTotal: Int {
         sessionSummaries.reduce(0) { $0 + $1.totalCount }
     }
 
+    /// Returns the section name to submit based on picker or custom input
+    var effectiveSectionName: String? {
+        if useCustomSection {
+            return sectionName.isEmpty ? nil : sectionName
+        }
+        return selectedPost?.name
+    }
+
     // MARK: - Queries
+
+    /// Load Attendant department posts for the section picker
+    func loadAttendantPosts(departments: [DepartmentSummary]) async {
+        guard let attendantDept = departments.first(where: { $0.departmentType == "ATTENDANT" }) else {
+            return
+        }
+        do {
+            attendantPosts = try await AttendanceService.shared.fetchAttendantPosts(departmentId: attendantDept.id)
+        } catch {
+            // Non-fatal: fall back to free-text if posts fail to load
+            print("[AttendanceVM] Failed to load attendant posts: \(error)")
+        }
+    }
 
     func loadEventSummary(eventId: String) async {
         isLoading = true
@@ -75,22 +101,23 @@ final class AttendanceViewModel: ObservableObject {
     // MARK: - Mutations
 
     func submitCount() async {
-        guard let sessionId = selectedSessionId,
-              let count = Int(countText), count >= 0 else { return }
+        guard let sessionId = selectedSessionId, count >= 0 else { return }
         isSaving = true
         error = nil
         defer { isSaving = false }
         do {
-            let section = sectionName.isEmpty ? nil : sectionName
+            let section = effectiveSectionName
             let noteText = notes.isEmpty ? nil : notes
             _ = try await AttendanceService.shared.submitAttendanceCount(
                 sessionId: sessionId, section: section, count: count, notes: noteText
             )
             HapticManager.shared.success()
-            successMessage = "Count submitted"
+            successMessage = "attendance.submitted".localized
             // Reset form
-            countText = ""
+            count = 0
             sectionName = ""
+            selectedPost = nil
+            useCustomSection = false
             notes = ""
             // Reload
             await loadSessionCounts(sessionId: sessionId)

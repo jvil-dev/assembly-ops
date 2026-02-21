@@ -477,20 +477,21 @@ describe('Assignment Acceptance Operations', () => {
               session { id name }
               filled
               capacity
-              assignments { id }
+              assignments { id status }
             }
           }`,
           variables: { departmentId },
         });
 
       expect(response.body.errors).toBeUndefined();
-      // Verify coverage only counts ACCEPTED assignments
-      // PENDING assignments should not appear in filled count
+      // Verify coverage returns ACCEPTED + PENDING assignments
+      // but filled only counts ACCEPTED
       const slots = response.body.data.departmentCoverage;
       expect(Array.isArray(slots)).toBe(true);
-      // Each slot's filled count should match the assignments array length
-      slots.forEach((slot: { filled: number; assignments: unknown[] }) => {
-        expect(slot.filled).toBe(slot.assignments.length);
+      // Each slot's filled count should match ACCEPTED assignments only
+      slots.forEach((slot: { filled: number; assignments: { id: string; status: string }[] }) => {
+        const acceptedCount = slot.assignments.filter((a) => a.status === 'ACCEPTED').length;
+        expect(slot.filled).toBe(acceptedCount);
       });
     });
   });

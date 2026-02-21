@@ -1,0 +1,20 @@
+mutation ForceAssignment($input: ForceAssignmentInput!) {
+  forceAssignment(input: $input) {
+    id
+    status
+    forceAssigned
+    volunteer {
+      id
+      firstName
+      lastName
+    }
+    post {
+      id
+      name
+    }
+    session {
+      id
+      name
+    }
+  }
+}

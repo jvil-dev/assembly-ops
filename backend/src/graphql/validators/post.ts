@@ -37,6 +37,12 @@ export const createPostSchema = z.object({
     .nullish()
     .transform((v: string | null | undefined) => v?.trim() || null),
   capacity: z.number().int().min(1, 'Capacity must be at least 1').default(1),
+  category: z
+    .string()
+    .max(50, 'Category name too long')
+    .nullish()
+    .transform((v: string | null | undefined) => v?.trim() || null),
+  sortOrder: z.number().int().min(0, 'Sort order must be non-negative').default(0),
 });
 
 export const createPostsSchema = z.object({
@@ -60,6 +66,12 @@ export const updatePostSchema = z.object({
     .nullish()
     .transform((v: string | null | undefined) => v?.trim() || null),
   capacity: z.number().int().min(1, 'Capacity must be at least 1').optional(),
+  category: z
+    .string()
+    .max(50, 'Category name too long')
+    .nullish()
+    .transform((v: string | null | undefined) => v?.trim() || null),
+  sortOrder: z.number().int().min(0, 'Sort order must be non-negative').optional(),
 });
 
 export type CreatePostInput = z.infer<typeof createPostSchema>;

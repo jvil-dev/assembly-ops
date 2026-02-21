@@ -81,7 +81,7 @@ struct JoinEventView: View {
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 }
 
-                TextField("Enter code (e.g. ABC123)", text: $viewModel.joinCode)
+                TextField("", text: $viewModel.joinCode)
                     .font(.system(.title3, design: .monospaced))
                     .textInputAutocapitalization(.characters)
                     .autocorrectionDisabled()

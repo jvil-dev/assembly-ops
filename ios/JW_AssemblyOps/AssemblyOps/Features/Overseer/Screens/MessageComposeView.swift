@@ -235,7 +235,7 @@ struct MessageComposeView: View {
                 Text("Subject (optional)")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                TextField("Enter subject...", text: $viewModel.subject)
+                TextField("", text: $viewModel.subject)
                     .textFieldStyle(.plain)
                     .padding(AppTheme.Spacing.m)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))

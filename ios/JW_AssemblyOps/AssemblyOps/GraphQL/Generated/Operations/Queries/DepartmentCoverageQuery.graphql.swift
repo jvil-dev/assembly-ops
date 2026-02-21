@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "DepartmentCoverage"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query DepartmentCoverage($departmentId: ID!) { departmentCoverage(departmentId: $departmentId) { __typename post { __typename id name capacity } session { __typename id name date startTime endTime } assignments { __typename id volunteer { __typename id firstName lastName } checkIn { __typename id checkInTime } } filled capacity isFilled } }"#
+        #"query DepartmentCoverage($departmentId: ID!) { departmentCoverage(departmentId: $departmentId) { __typename post { __typename id name capacity category location sortOrder } session { __typename id name date startTime endTime } assignments { __typename id volunteer { __typename id firstName lastName } checkIn { __typename id checkInTime } status forceAssigned } filled capacity isFilled } }"#
       ))
 
     public var departmentId: ID
@@ -74,6 +74,9 @@ extension AssemblyOpsAPI {
             .field("id", AssemblyOpsAPI.ID.self),
             .field("name", String.self),
             .field("capacity", Int.self),
+            .field("category", String?.self),
+            .field("location", String?.self),
+            .field("sortOrder", Int.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             DepartmentCoverageQuery.Data.DepartmentCoverage.Post.self
@@ -82,6 +85,9 @@ extension AssemblyOpsAPI {
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var name: String { __data["name"] }
           var capacity: Int { __data["capacity"] }
+          var category: String? { __data["category"] }
+          var location: String? { __data["location"] }
+          var sortOrder: Int { __data["sortOrder"] }
         }
 
         /// DepartmentCoverage.Session
@@ -124,6 +130,8 @@ extension AssemblyOpsAPI {
             .field("id", AssemblyOpsAPI.ID.self),
             .field("volunteer", Volunteer.self),
             .field("checkIn", CheckIn?.self),
+            .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
+            .field("forceAssigned", Bool.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             DepartmentCoverageQuery.Data.DepartmentCoverage.Assignment.self
@@ -132,6 +140,8 @@ extension AssemblyOpsAPI {
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var volunteer: Volunteer { __data["volunteer"] }
           var checkIn: CheckIn? { __data["checkIn"] }
+          var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
+          var forceAssigned: Bool { __data["forceAssigned"] }
 
           /// DepartmentCoverage.Assignment.Volunteer
           ///

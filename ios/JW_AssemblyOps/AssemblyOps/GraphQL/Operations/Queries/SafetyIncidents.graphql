@@ -1,0 +1,28 @@
+query SafetyIncidents($eventId: ID!, $resolved: Boolean) {
+  safetyIncidents(eventId: $eventId, resolved: $resolved) {
+    id
+    type
+    description
+    location
+    post {
+      id
+      name
+    }
+    reportedBy {
+      id
+      volunteerProfile {
+        firstName
+        lastName
+      }
+    }
+    resolved
+    resolvedAt
+    resolvedBy {
+      id
+      firstName
+      lastName
+    }
+    resolutionNotes
+    createdAt
+  }
+}

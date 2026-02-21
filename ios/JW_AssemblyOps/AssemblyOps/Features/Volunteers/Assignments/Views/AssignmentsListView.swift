@@ -31,14 +31,14 @@
 //   - Assignment: Data model (extended with Hashable for navigation)
 //   - HapticManager: Haptic feedback on filter toggle
 //
-// Used by: MainTabView.swift (Schedule tab)
+// Used by: VolunteerTabView (Schedule tab)
 
 import SwiftUI
 
 struct AssignmentsListView: View {
     @StateObject private var viewModel = AssignmentsViewModel()
     @State private var showTodayOnly = false
-    
+
     var body: some View {
         NavigationStack {
             Group {
@@ -70,7 +70,7 @@ struct AssignmentsListView: View {
             }
         }
     }
-    
+
     private var filterButton: some View {
         Button {
             showTodayOnly.toggle()
@@ -82,7 +82,7 @@ struct AssignmentsListView: View {
             )
         }
     }
-    
+
     private var filteredGroupedAssignments: [(date: Date, assignments: [Assignment])] {
         if showTodayOnly {
             let today = viewModel.groupedAssignments.filter { group in
@@ -92,13 +92,13 @@ struct AssignmentsListView: View {
         }
         return viewModel.groupedAssignments
     }
-    
+
     private var assignmentsList: some View {
         VStack(spacing: 0) {
             if viewModel.isUsingCache {
                 cacheIndicator
             }
-            
+
             ScrollView {
                 LazyVStack(spacing: 16, pinnedViews: .sectionHeaders) {
                     if showTodayOnly && filteredGroupedAssignments.isEmpty {
@@ -122,11 +122,13 @@ struct AssignmentsListView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationDestination(for: Assignment.self) { assignment in
-                AssignmentDetailView(assignment: assignment)
+                AssignmentDetailView(assignment: assignment) {
+                    viewModel.refresh()
+                }
             }
         }
     }
-    
+
     private var cacheIndicator: some View {
         HStack(spacing: 6) {
             Image(systemName: "clock.arrow.circlePath")
@@ -142,21 +144,21 @@ struct AssignmentsListView: View {
         .frame(maxWidth: .infinity)
         .background(Color(.secondarySystemBackground))
     }
-    
+
     private var noTodayAssignmentsView: some View {
         VStack(spacing: 16) {
             Image(systemName: "sun.max")
                 .font(.system(size: 50))
                 .foregroundStyle(.secondary)
-            
+
             Text("No Assignments Today")
                 .font(.headline)
-            
+
             Text("You don't have any assignments scheduled for today.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            
+
             Button("Show All Assignments") {
                 showTodayOnly = false
             }
@@ -164,7 +166,9 @@ struct AssignmentsListView: View {
         }
         .padding(.top, 60)
     }
-    
+
+    // MARK: - Date Headers
+
     private func dateHeader(for date: Date) -> some View {
         HStack {
             if Calendar.current.isDateInToday(date) {

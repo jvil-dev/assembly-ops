@@ -89,7 +89,10 @@ final class CoverageMatrixViewModel: ObservableObject {
                     postsDict[post.id] = CoveragePost(
                         id: post.id,
                         name: post.name,
-                        capacity: post.capacity
+                        capacity: post.capacity,
+                        category: post.category,
+                        location: post.location,
+                        sortOrder: post.sortOrder
                     )
                 }
 
@@ -119,7 +122,9 @@ final class CoverageMatrixViewModel: ObservableObject {
                                 id: checkIn.id,
                                 checkInTime: parseDate(checkIn.checkInTime) ?? Date()
                             )
-                        }
+                        },
+                        status: mapStatus(assignment.status),
+                        forceAssigned: assignment.forceAssigned
                     )
                 }
 
@@ -136,8 +141,14 @@ final class CoverageMatrixViewModel: ObservableObject {
                 mappedSlots.append(coverageSlot)
             }
 
-            // Sort posts alphabetically
-            posts = postsDict.values.sorted { $0.name < $1.name }
+            // Sort posts by category → sortOrder → name
+            posts = postsDict.values.sorted {
+                let cat0 = $0.category ?? ""
+                let cat1 = $1.category ?? ""
+                if cat0 != cat1 { return cat0 < cat1 }
+                if $0.sortOrder != $1.sortOrder { return $0.sortOrder < $1.sortOrder }
+                return $0.name < $1.name
+            }
 
             // Sort sessions by date/time
             sessions = sessionsDict.values.sorted { $0.startTime < $1.startTime }
@@ -155,6 +166,19 @@ final class CoverageMatrixViewModel: ObservableObject {
         slots.first { $0.postId == postId && $0.sessionId == sessionId }
     }
 
+    /// All slots for a specific session
+    func slots(for sessionId: String) -> [CoverageSlot] {
+        let sessionSlots = slots.filter { $0.sessionId == sessionId }
+        switch filter {
+        case .all:
+            return sessionSlots
+        case .gaps:
+            return sessionSlots.filter { !$0.isFilled }
+        case .filled:
+            return sessionSlots.filter { $0.isFilled }
+        }
+    }
+
     var filteredSlots: [CoverageSlot] {
         switch filter {
         case .all:
@@ -166,6 +190,20 @@ final class CoverageMatrixViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Suggestions
+
+    var existingCategories: [String] {
+        Array(Set(posts.compactMap { $0.category?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }))
+            .sorted()
+    }
+
+    var existingLocations: [String] {
+        Array(Set(posts.compactMap { $0.location?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }))
+            .sorted()
+    }
+
     // MARK: - Helpers
 
     private func parseDate(_ dateString: String) -> Date? {
@@ -175,5 +213,15 @@ final class CoverageMatrixViewModel: ObservableObject {
         // Try without fractional seconds
         let fallbackFormatter = ISO8601DateFormatter()
         return fallbackFormatter.date(from: dateString)
+    }
+
+    private func mapStatus(_ raw: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>) -> AssignmentStatus {
+        switch raw.value {
+        case .pending: return .pending
+        case .accepted: return .accepted
+        case .declined: return .declined
+        case .autoDeclined: return .autoDeclined
+        case .none: return .pending
+        }
     }
 }
