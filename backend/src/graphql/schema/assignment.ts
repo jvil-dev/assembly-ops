@@ -9,7 +9,7 @@
  *
  * Types:
  *   - ScheduleAssignment: Extended with status, isCaptain, respondedAt, etc.
- *   - CoverageSlot: One cell in the posts × sessions grid (ACCEPTED only)
+ *   - CoverageSlot: One cell in the posts × sessions grid (ACCEPTED + PENDING)
  *   - CoveragePost/Session/Volunteer/CheckIn: Lightweight types for matrix
  *
  * Queries:
@@ -61,6 +61,9 @@ const assignmentTypeDefs = `#graphql
     id: ID!
     name: String!
     capacity: Int!
+    category: String
+    location: String
+    sortOrder: Int!
   }
 
   type CoverageSession {
@@ -75,6 +78,8 @@ const assignmentTypeDefs = `#graphql
     id: ID!
     volunteer: CoverageVolunteer!
     checkIn: CoverageCheckIn
+    status: AssignmentStatus!
+    forceAssigned: Boolean!
   }
 
   type CoverageVolunteer {

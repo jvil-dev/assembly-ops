@@ -34,6 +34,7 @@ import { oauthTypeDefs } from './oauth.js';
 import { circuitTypeDefs } from './circuit.js';
 import { congregationTypeDefs } from './congregation.js';
 import { volunteerProfileTypeDefs } from './volunteerProfile.js';
+import { attendantTypeDefs } from './attendant.js';
 
 const baseTypeDefs = `#graphql
   scalar DateTime
@@ -70,6 +71,7 @@ const typeDefs = [
   circuitTypeDefs,
   congregationTypeDefs,
   volunteerProfileTypeDefs,
+  attendantTypeDefs,
 ];
 
 export default typeDefs;

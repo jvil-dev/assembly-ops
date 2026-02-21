@@ -58,6 +58,8 @@ export class PostService {
         description: validated.description,
         location: validated.location,
         capacity: validated.capacity,
+        category: validated.category,
+        sortOrder: validated.sortOrder,
         departmentId,
       },
     });
@@ -89,6 +91,8 @@ export class PostService {
           description: postInput.description,
           location: postInput.location,
           capacity: postInput.capacity,
+          category: postInput.category,
+          sortOrder: postInput.sortOrder,
           departmentId,
         },
       });
@@ -121,6 +125,8 @@ export class PostService {
         description: validated.description,
         location: validated.location,
         capacity: validated.capacity,
+        category: validated.category,
+        sortOrder: validated.sortOrder,
       },
     });
   }
@@ -167,7 +173,7 @@ export class PostService {
           select: { assignments: true },
         },
       },
-      orderBy: { name: 'asc' },
+      orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
     });
   }
 
@@ -184,7 +190,7 @@ export class PostService {
           select: { assignments: true },
         },
       },
-      orderBy: [{ department: { name: 'asc' } }, { name: 'asc' }],
+      orderBy: [{ department: { name: 'asc' } }, { category: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
     });
   }
 

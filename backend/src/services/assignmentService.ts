@@ -29,7 +29,7 @@
  *
  * Coverage Matrix:
  *   Used by department overseers to visualize scheduling gaps.
- *   Only counts ACCEPTED assignments as "filled" slots.
+ *   Includes ACCEPTED + PENDING assignments. Only ACCEPTED count as "filled" slots.
  *   Returns a flat array of CoverageSlots, each representing one post-session cell.
  *
  * Business Rules:
@@ -72,6 +72,9 @@ export interface CoverageSlot {
     id: string;
     name: string;
     capacity: number;
+    category: string | null;
+    location: string | null;
+    sortOrder: number;
   };
   session: {
     id: string;
@@ -91,6 +94,8 @@ export interface CoverageSlot {
       id: string;
       checkInTime: Date;
     } | null;
+    status: string;
+    forceAssigned: boolean;
   }>;
   filled: number;
   capacity: number;
@@ -99,6 +104,37 @@ export interface CoverageSlot {
 
 export class AssignmentService {
   constructor(private prisma: PrismaClient) {}
+
+  /**
+   * Check if a context volunteer ID (old Volunteer.id or new EventVolunteer.id)
+   * owns a given assignment. Bridges both models via the shared login ID.
+   */
+  private async isAssignmentOwner(
+    assignment: { volunteerId: string | null; eventVolunteerId: string | null },
+    contextVolunteerId: string
+  ): Promise<boolean> {
+    // Direct match on either FK
+    if (assignment.volunteerId === contextVolunteerId || assignment.eventVolunteerId === contextVolunteerId) {
+      return true;
+    }
+
+    // Bridge: if caller is an EventVolunteer, check if old volunteerId matches
+    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
+      where: { id: contextVolunteerId },
+      select: { volunteerId: true },
+    });
+    if (eventVolunteer) {
+      const oldVolunteer = await this.prisma.volunteer.findUnique({
+        where: { volunteerId: eventVolunteer.volunteerId },
+        select: { id: true },
+      });
+      if (oldVolunteer && assignment.volunteerId === oldVolunteer.id) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   /**
    * Create a single assignment
@@ -114,7 +150,7 @@ export class AssignmentService {
     const [volunteer, post, session] = await Promise.all([
       this.prisma.volunteer.findUnique({
         where: { id: volunteerId },
-        select: { id: true, eventId: true, firstName: true, lastName: true },
+        select: { id: true, volunteerId: true, eventId: true, firstName: true, lastName: true },
       }),
       this.prisma.post.findUnique({
         where: { id: postId },
@@ -166,9 +202,16 @@ export class AssignmentService {
       );
     }
 
+    // Bridge: find the corresponding EventVolunteer via shared login ID
+    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
+      where: { volunteerId: volunteer.volunteerId },
+      select: { id: true },
+    });
+
     return this.prisma.scheduleAssignment.create({
       data: {
         volunteerId,
+        eventVolunteerId: eventVolunteer?.id,
         postId,
         sessionId,
       },
@@ -350,12 +393,36 @@ export class AssignmentService {
   }
 
   /**
-   * Get assignments for a specific volunteer
+   * Get assignments for a specific volunteer.
+   * Handles both old Volunteer.id and new EventVolunteer.id by bridging
+   * via the shared volunteerId (login ID like "CA-XXXXX").
    */
-  async getVolunteerAssignments(volunteerId: string, status?: string) {
+  async getVolunteerAssignments(contextVolunteerId: string, status?: string) {
+    // Build OR condition to match by old volunteerId OR new eventVolunteerId
+    const volunteerConditions: { volunteerId?: string; eventVolunteerId?: string }[] = [
+      { volunteerId: contextVolunteerId },
+      { eventVolunteerId: contextVolunteerId },
+    ];
+
+    // Also bridge: if caller is an EventVolunteer, find the old Volunteer record
+    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
+      where: { id: contextVolunteerId },
+      select: { volunteerId: true },
+    });
+    if (eventVolunteer) {
+      // Find old Volunteer by the shared login ID
+      const oldVolunteer = await this.prisma.volunteer.findUnique({
+        where: { volunteerId: eventVolunteer.volunteerId },
+        select: { id: true },
+      });
+      if (oldVolunteer) {
+        volunteerConditions.push({ volunteerId: oldVolunteer.id });
+      }
+    }
+
     return this.prisma.scheduleAssignment.findMany({
       where: {
-        volunteerId,
+        OR: volunteerConditions,
         ...(status && { status: status as 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'AUTO_DECLINED' }),
       },
       include: {
@@ -405,7 +472,7 @@ export class AssignmentService {
     // Get all posts in the department
     const posts = await this.prisma.post.findMany({
       where: { departmentId },
-      orderBy: { name: 'asc' },
+      orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
     });
 
     if (posts.length === 0) {
@@ -432,11 +499,11 @@ export class AssignmentService {
       return [];
     }
 
-    // Get all assignments for these posts
+    // Get all ACCEPTED + PENDING assignments for these posts
     const assignments = await this.prisma.scheduleAssignment.findMany({
       where: {
         postId: { in: posts.map((p) => p.id) },
-        status: 'ACCEPTED',
+        status: { in: ['ACCEPTED', 'PENDING'] },
       },
       include: {
         volunteer: {
@@ -457,11 +524,18 @@ export class AssignmentService {
           (a) => a.postId === post.id && a.sessionId === session.id
         );
 
+        const acceptedCount = slotAssignments.filter(
+          (a) => a.status === 'ACCEPTED'
+        ).length;
+
         coverageSlots.push({
           post: {
             id: post.id,
             name: post.name,
             capacity: post.capacity,
+            category: post.category,
+            location: post.location,
+            sortOrder: post.sortOrder,
           },
           session: {
             id: session.id,
@@ -474,10 +548,12 @@ export class AssignmentService {
             id: a.id,
             volunteer: a.volunteer,
             checkIn: a.checkIn,
+            status: a.status,
+            forceAssigned: a.forceAssigned,
           })),
-          filled: slotAssignments.length,
+          filled: acceptedCount,
           capacity: post.capacity,
-          isFilled: slotAssignments.length >= post.capacity,
+          isFilled: acceptedCount >= post.capacity,
         });
       }
     }
@@ -515,7 +591,7 @@ export class AssignmentService {
    * Accept an assignment (volunteer action)
    */
   async acceptAssignment(
-    volunteerId: string,
+    contextVolunteerId: string,
     input: AcceptAssignmentInput
   ): Promise<ScheduleAssignment> {
     const result = acceptAssignmentSchema.safeParse(input);
@@ -531,7 +607,9 @@ export class AssignmentService {
       throw new NotFoundError('Assignment');
     }
 
-    if (assignment.volunteerId !== volunteerId) {
+    // Check ownership: context ID could be old Volunteer.id or new EventVolunteer.id
+    const isOwner = await this.isAssignmentOwner(assignment, contextVolunteerId);
+    if (!isOwner) {
       throw new AuthorizationError('This assignment does not belong to you');
     }
 
@@ -557,7 +635,7 @@ export class AssignmentService {
    * Decline an assignment (volunteer action)
    */
   async declineAssignment(
-    volunteerId: string,
+    contextVolunteerId: string,
     input: DeclineAssignmentInput
   ): Promise<ScheduleAssignment> {
     const result = declineAssignmentSchema.safeParse(input);
@@ -573,7 +651,9 @@ export class AssignmentService {
       throw new NotFoundError('Assignment');
     }
 
-    if (assignment.volunteerId !== volunteerId) {
+    // Check ownership: context ID could be old Volunteer.id or new EventVolunteer.id
+    const isOwner = await this.isAssignmentOwner(assignment, contextVolunteerId);
+    if (!isOwner) {
       throw new AuthorizationError('This assignment does not belong to you');
     }
 
@@ -614,6 +694,7 @@ export class AssignmentService {
     // Verify volunteer exists
     const volunteer = await this.prisma.volunteer.findUnique({
       where: { id: volunteerId },
+      select: { id: true, volunteerId: true },
     });
     if (!volunteer) {
       throw new NotFoundError('Volunteer');
@@ -635,6 +716,12 @@ export class AssignmentService {
       throw new NotFoundError('Session');
     }
 
+    // Bridge: find the corresponding EventVolunteer via shared login ID
+    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
+      where: { volunteerId: volunteer.volunteerId },
+      select: { id: true },
+    });
+
     // Check if assignment already exists
     const existing = await this.prisma.scheduleAssignment.findUnique({
       where: {
@@ -643,7 +730,7 @@ export class AssignmentService {
     });
 
     if (existing) {
-      // Update existing assignment to force-accepted
+      // Update existing assignment to force-accepted, also link eventVolunteerId if missing
       return this.prisma.scheduleAssignment.update({
         where: { id: existing.id },
         data: {
@@ -652,6 +739,7 @@ export class AssignmentService {
           forceAssigned: true,
           isCaptain: isCaptain ?? existing.isCaptain,
           respondedAt: new Date(),
+          ...(eventVolunteer && !existing.eventVolunteerId && { eventVolunteerId: eventVolunteer.id }),
         },
         include: {
           volunteer: true,
@@ -665,6 +753,7 @@ export class AssignmentService {
     return this.prisma.scheduleAssignment.create({
       data: {
         volunteerId,
+        eventVolunteerId: eventVolunteer?.id,
         postId,
         sessionId,
         status: 'ACCEPTED',

@@ -82,6 +82,19 @@ export async function createContext({
             departmentId: volunteer.departmentId || undefined,
           };
         }
+      } else if (payload.type === 'eventVolunteer') {
+        const eventVolunteer = await prisma.eventVolunteer.findUnique({
+          where: { id: payload.sub },
+          select: { id: true, eventId: true, departmentId: true },
+        });
+
+        if (eventVolunteer) {
+          context.volunteer = {
+            id: eventVolunteer.id,
+            eventId: eventVolunteer.eventId,
+            departmentId: eventVolunteer.departmentId || undefined,
+          };
+        }
       }
     } catch {
       // Invalid token - continue without auth context

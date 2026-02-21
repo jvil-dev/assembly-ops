@@ -27,8 +27,8 @@
  * Called by: ../graphql/resolvers/attendance.ts
  */
 
-import { PrismaClient, AttendanceCount } from '@prisma/client';
-import { NotFoundError, ValidationError } from '../utils/errors.js';
+import { PrismaClient, AttendanceCount, EventRole } from '@prisma/client';
+import { NotFoundError, ValidationError, AuthorizationError } from '../utils/errors.js';
 import {
   SubmitAttendanceCountInput,
   UpdateAttendanceCountInput,
@@ -87,6 +87,97 @@ export class AttendanceService {
         submittedBy: true,
       },
     });
+  }
+
+  /**
+   * Submit attendance count as an attendant volunteer (post-scoped).
+   * Requires postId and verifies volunteer has an ACCEPTED assignment on that post.
+   */
+  async submitVolunteerAttendanceCount(
+    eventVolunteerId: string,
+    input: SubmitAttendanceCountInput
+  ): Promise<AttendanceCount> {
+    const result = submitAttendanceCountSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+
+    const { sessionId, postId, count, notes } = result.data;
+
+    if (!postId) {
+      throw new ValidationError('postId is required for volunteer count submission');
+    }
+
+    // Verify session exists
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+    });
+    if (!session) {
+      throw new NotFoundError('Session');
+    }
+
+    // Verify volunteer has an ACCEPTED assignment on this post
+    const assignment = await this.prisma.scheduleAssignment.findFirst({
+      where: {
+        eventVolunteerId,
+        postId,
+        status: 'ACCEPTED',
+      },
+    });
+
+    if (!assignment) {
+      throw new AuthorizationError('You do not have an accepted assignment on this post');
+    }
+
+    // Get post name to use as the section label
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId },
+      select: { name: true },
+    });
+
+    // Upsert using the post name as the section label
+    return this.prisma.attendanceCount.upsert({
+      where: {
+        sessionId_section: {
+          sessionId,
+          section: post?.name ?? '',
+        },
+      },
+      create: {
+        sessionId,
+        section: post?.name,
+        postId,
+        count,
+        notes,
+        submittedById: (await this.getSubmittingAdminId(session.eventId)),
+      },
+      update: {
+        count,
+        notes,
+        postId,
+      },
+      include: {
+        session: true,
+        submittedBy: true,
+      },
+    });
+  }
+
+  /**
+   * Get the event overseer admin ID for volunteer-submitted counts.
+   * AttendanceCount.submittedById is a required FK to Admin, so we use the event overseer.
+   */
+  private async getSubmittingAdminId(eventId: string): Promise<string> {
+    const eventAdmin = await this.prisma.eventAdmin.findFirst({
+      where: { eventId, role: EventRole.APP_ADMIN },
+      select: { adminId: true },
+    });
+
+    if (!eventAdmin) {
+      throw new NotFoundError('Event overseer');
+    }
+
+    return eventAdmin.adminId;
   }
 
   /**

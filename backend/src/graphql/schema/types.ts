@@ -181,6 +181,8 @@ const types = `#graphql
     description: String
     location: String
     capacity: Int!
+    category: String
+    sortOrder: Int!
     department: Department!
     assignments: [ScheduleAssignment!]!
     assignmentCount: Int!

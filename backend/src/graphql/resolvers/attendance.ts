@@ -28,7 +28,8 @@
 import { AttendanceCount } from '@prisma/client';
 import { Context } from '../context.js';
 import { AttendanceService } from '../../services/attendanceService.js';
-import { requireAdmin, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireEventAccess } from '../guards/auth.js';
+import { AuthorizationError } from '../../utils/errors.js';
 import {
   SubmitAttendanceCountInput,
   UpdateAttendanceCountInput,
@@ -99,8 +100,30 @@ const attendanceResolvers = {
       { input }: { input: SubmitAttendanceCountInput },
       context: Context
     ) => {
-      requireAdmin(context);
+      requireAuth(context);
       const attendanceService = new AttendanceService(context.prisma);
+
+      // Volunteer path: attendant-only, section-scoped
+      if (context.volunteer) {
+        const eventId = await attendanceService.getSessionEventId(input.sessionId);
+
+        const eventVolunteer = await context.prisma.eventVolunteer.findFirst({
+          where: {
+            volunteerProfileId: context.volunteer.id,
+            eventId,
+          },
+          include: { department: true },
+        });
+
+        if (!eventVolunteer || eventVolunteer.department?.departmentType !== 'ATTENDANT') {
+          throw new AuthorizationError('Only attendant volunteers can submit counts');
+        }
+
+        return attendanceService.submitVolunteerAttendanceCount(eventVolunteer.id, input);
+      }
+
+      // Admin path: existing behavior
+      requireAdmin(context);
       const eventId = await attendanceService.getSessionEventId(input.sessionId);
       await requireEventAccess(context, eventId);
 

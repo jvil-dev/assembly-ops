@@ -27,6 +27,8 @@ const postTypeDefs = `#graphql
     description: String
     location: String
     capacity: Int
+    category: String
+    sortOrder: Int
   }
 
   input CreatePostsInput {
@@ -39,6 +41,8 @@ const postTypeDefs = `#graphql
     description: String
     location: String
     capacity: Int
+    category: String
+    sortOrder: Int
   }
 
   # ============================================
