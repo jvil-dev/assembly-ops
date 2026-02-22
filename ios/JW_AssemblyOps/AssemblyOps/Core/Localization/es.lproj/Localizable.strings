@@ -329,6 +329,15 @@
 "attendant.attendance.empty" = "No hay datos de asistencia disponibles";
 "attendant.attendance.noCounts" = "No hay conteos enviados para esta sesión";
 
+// Acomodadores - Feed de preocupaciones (vista del voluntario)
+"attendant.concerns.report" = "Reportar una preocupación";
+"attendant.concerns.title" = "Preocupaciones";
+"attendant.concerns.empty" = "No se han reportado preocupaciones";
+"attendant.concerns.reportedBy" = "Reportado por";
+"attendant.concerns.elapsed" = "transcurrido";
+"attendant.concerns.totalTime" = "tiempo total";
+"attendant.lostPerson.contact" = "Contacto";
+
 // Acomodadores - Reuniones del voluntario
 "attendant.meetings.myTitle" = "Mis Reuniones";
 "attendant.meetings.noNotes" = "Sin notas para esta reunión";

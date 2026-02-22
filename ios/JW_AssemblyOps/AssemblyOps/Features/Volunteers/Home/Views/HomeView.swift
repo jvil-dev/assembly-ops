@@ -32,6 +32,7 @@
 //   - AttendantVolunteerViewModel: Meetings data for attendant report sheets
 
 import SwiftUI
+import Combine
 
 struct HomeView: View {
     @EnvironmentObject private var appState: AppState
@@ -46,6 +47,9 @@ struct HomeView: View {
     @State private var showAttendantInfo = false
     @State private var attendantPosts: [AttendantPostItem] = []
     @State private var isCheckingIn = false
+    @State private var now = Date()
+
+    private let concernsTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     /// Closure to switch the parent tab view to a specific tab
     var switchToTab: ((VolunteerTab) -> Void)?
@@ -82,9 +86,9 @@ struct HomeView: View {
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
                     }
 
-                    // 5. Attendant Quick Actions (only for attendant dept)
+                    // 5. Attendant section (only for attendant dept)
                     if isAttendant {
-                        attendantQuickActionsRow
+                        attendantCard
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.20)
                     }
                 }
@@ -115,13 +119,22 @@ struct HomeView: View {
                 await viewModel.loadAssignments()
                 if isAttendant {
                     await loadAttendantPosts()
+                    if let eventId = appState.currentVolunteer?.eventId {
+                        await attendantVM.loadConcerns(eventId: eventId)
+                    }
                 }
             }
             .refreshable {
                 await viewModel.refresh()
                 if isAttendant {
                     await loadAttendantPosts()
+                    if let eventId = appState.currentVolunteer?.eventId {
+                        await attendantVM.loadConcerns(eventId: eventId)
+                    }
                 }
+            }
+            .onReceive(concernsTimer) { date in
+                if isAttendant { now = date }
             }
             .sheet(isPresented: $showReportIncident) {
                 ReportSafetyIncidentView(posts: attendantPosts)
@@ -608,50 +621,184 @@ struct HomeView: View {
         .themedCard(scheme: colorScheme)
     }
 
-    // MARK: - Attendant Quick Actions
+    // MARK: - Attendant Card
 
-    private var attendantQuickActionsRow: some View {
-        HStack(spacing: AppTheme.Spacing.m) {
-            Button {
-                showReportIncident = true
-                HapticManager.shared.lightTap()
-            } label: {
-                HStack(spacing: AppTheme.Spacing.s) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 16))
+    private var attendantCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.l) {
+            // Section header
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "shield.fill")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("attendant.concerns.report".localized)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            // Report buttons
+            HStack(spacing: AppTheme.Spacing.m) {
+                Button {
+                    showReportIncident = true
+                    HapticManager.shared.lightTap()
+                } label: {
+                    Label("attendant.home.reportIncident".localized, systemImage: "exclamationmark.triangle.fill")
+                        .font(AppTheme.Typography.subheadline)
+                        .fontWeight(.semibold)
                         .foregroundStyle(AppTheme.StatusColors.warning)
-                    Text("attendant.home.reportIncident".localized)
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppTheme.Spacing.m)
+                        .background(AppTheme.StatusColors.warning.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
                 }
-                .frame(maxWidth: .infinity)
-                .padding(AppTheme.Spacing.m)
-                .background(AppTheme.cardBackground(for: colorScheme))
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-                .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
-            }
-            .buttonStyle(.plain)
+                .buttonStyle(.plain)
 
-            Button {
-                showReportLostPerson = true
-                HapticManager.shared.lightTap()
-            } label: {
-                HStack(spacing: AppTheme.Spacing.s) {
-                    Image(systemName: "person.crop.circle.badge.questionmark")
-                        .font(.system(size: 16))
+                Button {
+                    showReportLostPerson = true
+                    HapticManager.shared.lightTap()
+                } label: {
+                    Label("attendant.home.reportLostPerson".localized, systemImage: "person.crop.circle.badge.questionmark")
+                        .font(AppTheme.Typography.subheadline)
+                        .fontWeight(.semibold)
                         .foregroundStyle(AppTheme.StatusColors.declined)
-                    Text("attendant.home.reportLostPerson".localized)
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppTheme.Spacing.m)
+                        .background(AppTheme.StatusColors.declined.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
                 }
-                .frame(maxWidth: .infinity)
-                .padding(AppTheme.Spacing.m)
-                .background(AppTheme.cardBackground(for: colorScheme))
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-                .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+
+            Divider()
+
+            // Concerns feed header
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "exclamationmark.bubble")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("attendant.concerns.title".localized)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+                let unresolvedCount = attendantVM.concerns.filter { !$0.isResolved }.count
+                if unresolvedCount > 0 {
+                    Text("\(unresolvedCount)")
+                        .font(AppTheme.Typography.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(AppTheme.StatusColors.declined)
+                        .clipShape(Capsule())
+                }
+            }
+
+            if attendantVM.isLoading && attendantVM.concerns.isEmpty {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppTheme.Spacing.m)
+            } else if attendantVM.concerns.isEmpty {
+                Text("attendant.concerns.empty".localized)
+                    .font(AppTheme.Typography.body)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, AppTheme.Spacing.s)
+            } else {
+                ForEach(attendantVM.concerns) { concern in
+                    NavigationLink(destination: VolunteerConcernDetailView(concern: concern)) {
+                        concernRow(concern)
+                    }
+                    .buttonStyle(.plain)
+
+                    if concern.id != attendantVM.concerns.last?.id {
+                        Divider()
+                    }
+                }
+            }
         }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    @ViewBuilder
+    private func concernRow(_ concern: ConcernItem) -> some View {
+        switch concern {
+        case .incident(let incident):
+            homeConcernRow(
+                icon: incident.type.icon,
+                iconColor: incident.resolved ? AppTheme.StatusColors.accepted : AppTheme.StatusColors.warning,
+                title: incident.type.displayName,
+                subtitle: incident.description,
+                location: incident.location ?? incident.postName,
+                resolved: incident.resolved,
+                activeColor: AppTheme.StatusColors.warning,
+                timestamp: DateUtils.timeAgo(from: incident.createdAt),
+                elapsedTimer: nil
+            )
+        case .alert(let alert):
+            homeConcernRow(
+                icon: "person.crop.circle.badge.questionmark",
+                iconColor: alert.resolved ? AppTheme.StatusColors.accepted : AppTheme.StatusColors.declined,
+                title: alert.personName,
+                subtitle: alert.description,
+                location: alert.lastSeenLocation,
+                resolved: alert.resolved,
+                activeColor: AppTheme.StatusColors.declined,
+                timestamp: DateUtils.timeAgo(from: alert.createdAt),
+                elapsedTimer: DateUtils.elapsedString(from: alert.createdAt, to: alert.resolvedAt ?? now)
+            )
+        }
+    }
+
+    private func homeConcernRow(
+        icon: String, iconColor: Color, title: String, subtitle: String,
+        location: String?, resolved: Bool, activeColor: Color,
+        timestamp: String, elapsedTimer: String?
+    ) -> some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+            HStack(alignment: .top) {
+                Image(systemName: icon)
+                    .foregroundStyle(iconColor)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(AppTheme.Typography.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        .lineLimit(2)
+                }
+                Spacer()
+                if resolved {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(AppTheme.StatusColors.accepted)
+                        .font(.system(size: 14))
+                } else {
+                    Circle()
+                        .fill(activeColor)
+                        .frame(width: 8, height: 8)
+                        .padding(.top, 4)
+                }
+            }
+
+            HStack {
+                if let location {
+                    Label(location, systemImage: "mappin")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
+                Spacer()
+                if let elapsed = elapsedTimer {
+                    Label(elapsed, systemImage: "timer")
+                        .font(AppTheme.Typography.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(activeColor)
+                } else {
+                    Text(timestamp)
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
+            }
+        }
+        .padding(.vertical, AppTheme.Spacing.xs)
     }
 
     // MARK: - Data Loading

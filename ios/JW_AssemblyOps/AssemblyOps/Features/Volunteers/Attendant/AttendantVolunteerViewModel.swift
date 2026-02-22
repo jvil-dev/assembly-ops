@@ -12,11 +12,14 @@
 //
 // Published Properties:
 //   - myMeetings: Volunteer's attendant meetings
+//   - incidents: All safety incidents for the event
+//   - alerts: All lost person alerts for the event
 //   - isLoading / isSaving: Loading states
 //   - error: Feedback state
 //
 // Methods:
 //   - loadMyMeetings(eventId:): Fetch attendant meetings
+//   - loadConcerns(eventId:): Fetch incidents + alerts in parallel
 //   - reportIncident(...): Report a safety incident
 //   - reportLostPerson(...): Report a lost person
 //   - submitPostCount(...): Submit attendance count for a post
@@ -29,9 +32,29 @@ import Combine
 @MainActor
 final class AttendantVolunteerViewModel: ObservableObject {
     @Published var myMeetings: [AttendantMeetingItem] = []
+    @Published var incidents: [SafetyIncidentItem] = []
+    @Published var alerts: [LostPersonAlertItem] = []
     @Published var isLoading = false
     @Published var isSaving = false
     @Published var error: String?
+
+    var concerns: [ConcernItem] {
+        (incidents.map { .incident($0) } + alerts.map { .alert($0) })
+            .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    func loadConcerns(eventId: String) async {
+        isLoading = true
+        error = nil
+        defer { isLoading = false }
+        do {
+            async let fetchedIncidents = AttendantService.shared.fetchSafetyIncidents(eventId: eventId, resolved: nil)
+            async let fetchedAlerts = AttendantService.shared.fetchLostPersonAlerts(eventId: eventId, resolved: nil)
+            (incidents, alerts) = try await (fetchedIncidents, fetchedAlerts)
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
 
     func loadMyMeetings(eventId: String) async {
         isLoading = true

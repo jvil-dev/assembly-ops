@@ -329,6 +329,15 @@
 "attendant.attendance.empty" = "No attendance data available";
 "attendant.attendance.noCounts" = "No counts submitted for this session";
 
+// Attendant - Concerns feed (volunteer view)
+"attendant.concerns.report" = "Report a Concern";
+"attendant.concerns.title" = "Concerns";
+"attendant.concerns.empty" = "No concerns reported";
+"attendant.concerns.reportedBy" = "Reported By";
+"attendant.concerns.elapsed" = "elapsed";
+"attendant.concerns.totalTime" = "total time";
+"attendant.lostPerson.contact" = "Contact";
+
 // Attendant - Volunteer meetings
 "attendant.meetings.myTitle" = "My Meetings";
 "attendant.meetings.noNotes" = "No notes for this meeting";
