@@ -117,6 +117,30 @@ final class AttendanceService {
         }
     }
 
+    /// Fetch sessions for an event — accessible with volunteer or admin token
+    func fetchVolunteerSessions(eventId: String) async throws -> [VolunteerSessionItem] {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.VolunteerSessionsForEventQuery(eventId: eventId),
+                cachePolicy: .fetchIgnoringCacheData
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.volunteerSessionsForEvent {
+                        let items = data.compactMap { VolunteerSessionItem(from: $0) }
+                        continuation.resume(returning: items)
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendanceError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendanceError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
     // MARK: - Mutations
 
     /// Submit attendance count for a session/post (upserts on same session+section)

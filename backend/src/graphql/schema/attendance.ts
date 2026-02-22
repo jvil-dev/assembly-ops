@@ -71,6 +71,7 @@ const attendanceTypeDefs = `#graphql
     sessionTotalAttendance(sessionId: ID!): Int!
     eventAttendanceCounts(eventId: ID!): [AttendanceCount!]!
     eventAttendanceSummary(eventId: ID!): [SessionAttendanceSummary!]!
+    volunteerSessionsForEvent(eventId: ID!): [Session!]!
   }
 
   extend type Mutation {

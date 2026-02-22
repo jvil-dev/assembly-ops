@@ -116,6 +116,30 @@ extension AttendanceCountItem {
     }
 }
 
+// MARK: - Volunteer Session (lightweight, accessible without admin token)
+
+struct VolunteerSessionItem: Identifiable {
+    let id: String
+    let name: String
+    let date: Date
+    let startTime: Date
+    let endTime: Date
+}
+
+extension VolunteerSessionItem {
+    init?(from graphQL: AssemblyOpsAPI.VolunteerSessionsForEventQuery.Data.VolunteerSessionsForEvent) {
+        let fmt = DateUtils.isoFormatter
+        guard let d = fmt.date(from: graphQL.date),
+              let s = fmt.date(from: graphQL.startTime),
+              let e = fmt.date(from: graphQL.endTime) else { return nil }
+        self.id = graphQL.id
+        self.name = graphQL.name
+        self.date = d
+        self.startTime = s
+        self.endTime = e
+    }
+}
+
 // MARK: - Attendant Post (for section picker)
 
 struct AttendantPostItem: Identifiable, Hashable {
