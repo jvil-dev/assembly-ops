@@ -44,12 +44,18 @@ export class MessageService {
     // Verify volunteer exists and get their eventId
     const volunteer = await this.prisma.volunteer.findUnique({
       where: { id: volunteerId },
-      select: { id: true, eventId: true },
+      select: { id: true, volunteerId: true, eventId: true },
     });
 
     if (!volunteer) {
       throw new NotFoundError('Volunteer');
     }
+
+    // Resolve matching EventVolunteer so messages are visible under the new auth model
+    const eventVolunteer = await this.prisma.eventVolunteer.findFirst({
+      where: { volunteerId: volunteer.volunteerId, eventId: volunteer.eventId },
+      select: { id: true },
+    });
 
     return this.prisma.message.create({
       data: {
@@ -60,6 +66,7 @@ export class MessageService {
         eventId: volunteer.eventId,
         senderId,
         volunteerId,
+        eventVolunteerId: eventVolunteer?.id ?? null,
       },
       include: {
         sender: true,
@@ -87,7 +94,7 @@ export class MessageService {
     const department = await this.prisma.department.findUnique({
       where: { id: departmentId },
       include: {
-        volunteers: { select: { id: true } },
+        volunteers: { select: { id: true, volunteerId: true } },
         event: { select: { id: true } },
       },
     });
@@ -99,6 +106,13 @@ export class MessageService {
     if (department.volunteers.length === 0) {
       return [];
     }
+
+    // Build a lookup map from human-readable volunteerId → EventVolunteer.id
+    const eventVolunteers = await this.prisma.eventVolunteer.findMany({
+      where: { departmentId },
+      select: { id: true, volunteerId: true },
+    });
+    const evMap = new Map(eventVolunteers.map((ev) => [ev.volunteerId, ev.id]));
 
     // Create a message for each volunteer in the department
     const messages = await this.prisma.$transaction(
@@ -112,6 +126,7 @@ export class MessageService {
             eventId: department.event.id,
             senderId,
             volunteerId: volunteer.id,
+            eventVolunteerId: evMap.get(volunteer.volunteerId) ?? null,
           },
           include: {
             sender: true,
@@ -140,7 +155,7 @@ export class MessageService {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
       include: {
-        volunteers: { select: { id: true } },
+        volunteers: { select: { id: true, volunteerId: true } },
       },
     });
 
@@ -151,6 +166,13 @@ export class MessageService {
     if (event.volunteers.length === 0) {
       return [];
     }
+
+    // Build a lookup map from human-readable volunteerId → EventVolunteer.id
+    const eventVolunteers = await this.prisma.eventVolunteer.findMany({
+      where: { eventId },
+      select: { id: true, volunteerId: true },
+    });
+    const evMap = new Map(eventVolunteers.map((ev) => [ev.volunteerId, ev.id]));
 
     // Create a message for each volunteer in the event
     const messages = await this.prisma.$transaction(
@@ -164,6 +186,7 @@ export class MessageService {
             eventId,
             senderId,
             volunteerId: volunteer.id,
+            eventVolunteerId: evMap.get(volunteer.volunteerId) ?? null,
           },
           include: {
             sender: true,
@@ -186,7 +209,9 @@ export class MessageService {
     limit = 50,
     offset = 0
   ) {
-    const where: Prisma.MessageWhereInput = { volunteerId };
+    const where: Prisma.MessageWhereInput = {
+      OR: [{ volunteerId }, { eventVolunteerId: volunteerId }],
+    };
 
     if (filter?.isRead !== undefined) {
       where.isRead = filter.isRead;
@@ -214,7 +239,7 @@ export class MessageService {
   async getUnreadCount(volunteerId: string): Promise<number> {
     return this.prisma.message.count({
       where: {
-        volunteerId,
+        OR: [{ volunteerId }, { eventVolunteerId: volunteerId }],
         isRead: false,
       },
     });
@@ -232,7 +257,7 @@ export class MessageService {
       throw new NotFoundError('Message');
     }
 
-    if (message.volunteerId !== volunteerId) {
+    if (message.volunteerId !== volunteerId && message.eventVolunteerId !== volunteerId) {
       throw new AuthorizationError('This message does not belong to you');
     }
 
@@ -266,7 +291,7 @@ export class MessageService {
   async markAllAsRead(volunteerId: string): Promise<number> {
     const result = await this.prisma.message.updateMany({
       where: {
-        volunteerId,
+        OR: [{ volunteerId }, { eventVolunteerId: volunteerId }],
         isRead: false,
       },
       data: {
