@@ -42,6 +42,8 @@ class VolunteerDetailViewModel: ObservableObject {
     @Published var isLoadingToken = false
     @Published var isRegenerating = false
     @Published var regeneratedCredentials: RegeneratedCredentials?
+    @Published var didUpdate = false
+    @Published var didDelete = false
 
     private let volunteerId: String
     var onRemoved: (() -> Void)?
@@ -108,6 +110,54 @@ class VolunteerDetailViewModel: ObservableObject {
                 token = data.token
                 HapticManager.shared.success()
             }
+        } catch {
+            errorMessage = error.localizedDescription
+            HapticManager.shared.error()
+        }
+    }
+
+    func updateVolunteer(input: AssemblyOpsAPI.UpdateVolunteerInput) async {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            let result = try await NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.UpdateVolunteerMutation(id: volunteerId, input: input)
+            )
+
+            if let errors = result.errors, !errors.isEmpty {
+                errorMessage = errors.first?.message ?? "Failed to update volunteer"
+                HapticManager.shared.error()
+                return
+            }
+
+            if result.data?.updateVolunteer != nil {
+                didUpdate = true
+                HapticManager.shared.success()
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+            HapticManager.shared.error()
+        }
+    }
+
+    func deleteVolunteer() async {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            let result = try await NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.DeleteVolunteerMutation(id: volunteerId)
+            )
+
+            if let errors = result.errors, !errors.isEmpty {
+                errorMessage = errors.first?.message ?? "Failed to delete volunteer"
+                HapticManager.shared.error()
+                return
+            }
+
+            didDelete = true
+            HapticManager.shared.success()
         } catch {
             errorMessage = error.localizedDescription
             HapticManager.shared.error()

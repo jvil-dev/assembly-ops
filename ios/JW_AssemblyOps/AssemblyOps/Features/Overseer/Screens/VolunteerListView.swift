@@ -38,6 +38,8 @@ struct VolunteerListView: View {
     @State private var showCreateVolunteer = false
     @State private var selectedTab: VolunteerTab = .myDepartment
     @State private var hasAppeared = false
+    @State private var volunteerToDelete: VolunteerListItem?
+    @State private var showDeleteConfirmation = false
 
     enum VolunteerTab: String, CaseIterable {
         case myDepartment = "My Department"
@@ -153,19 +155,61 @@ struct VolunteerListView: View {
     // MARK: - Volunteer List
 
     private var volunteerList: some View {
-        ScrollView {
-            LazyVStack(spacing: AppTheme.Spacing.m) {
-                ForEach(Array(displayedVolunteers.enumerated()), id: \.element.id) { index, volunteer in
-                    NavigationLink(destination: VolunteerDetailView(volunteer: volunteer, isEditable: isEditable)) {
-                        VolunteerRowView(volunteer: volunteer, showDepartment: selectedTab == .allVolunteers)
+        List {
+            ForEach(Array(displayedVolunteers.enumerated()), id: \.element.id) { index, volunteer in
+                NavigationLink(destination: VolunteerDetailView(volunteer: volunteer, isEditable: isEditable)) {
+                    VolunteerRowView(volunteer: volunteer, showDepartment: selectedTab == .allVolunteers, showChevron: false)
+                }
+                .buttonStyle(.plain)
+                .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index) * 0.02)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(
+                    top: AppTheme.Spacing.s / 2,
+                    leading: AppTheme.Spacing.screenEdge,
+                    bottom: AppTheme.Spacing.s / 2,
+                    trailing: AppTheme.Spacing.screenEdge
+                ))
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    if isEditable {
+                        Button(role: .destructive) {
+                            volunteerToDelete = volunteer
+                            showDeleteConfirmation = true
+                            HapticManager.shared.lightTap()
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                        .tint(AppTheme.StatusColors.declined)
                     }
-                    .buttonStyle(.plain)
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index) * 0.02)
                 }
             }
-            .screenPadding()
-            .padding(.top, AppTheme.Spacing.s)
-            .padding(.bottom, AppTheme.Spacing.xxl)
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .confirmationDialog(
+            "Delete Volunteer",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                if let volunteer = volunteerToDelete {
+                    Task {
+                        let success = await viewModel.deleteVolunteer(id: volunteer.id)
+                        if success {
+                            HapticManager.shared.success()
+                        } else {
+                            HapticManager.shared.error()
+                        }
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                volunteerToDelete = nil
+            }
+        } message: {
+            if let volunteer = volunteerToDelete {
+                Text("Are you sure you want to permanently delete \(volunteer.fullName)? This will also remove all their assignments and check-in records.")
+            }
         }
     }
 
@@ -203,6 +247,7 @@ struct VolunteerRowView: View {
 
     let volunteer: VolunteerListItem
     var showDepartment: Bool = false
+    var showChevron: Bool = true
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.m) {
@@ -246,10 +291,12 @@ struct VolunteerRowView: View {
 
             Spacer()
 
-            // Chevron
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            // Chevron (hidden when inside List+NavigationLink which provides its own)
+            if showChevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
