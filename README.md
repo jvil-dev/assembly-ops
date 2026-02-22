@@ -12,21 +12,22 @@ AssemblyOps streamlines this by providing a unified platform for event schedulin
 
 ## Tech Stack
 
-| Layer          | Technology                                   |
-| -------------- | -------------------------------------------- |
-| API            | Node.js, Express, Apollo Server, GraphQL     |
-| Database       | PostgreSQL with Prisma ORM                   |
-| Auth           | JWT (access + refresh tokens)                |
-| Validation     | Zod runtime schemas                          |
-| Infrastructure | AWS ECS Fargate, Supabase (managed Postgres) |
-| CI/CD          | GitHub Actions                               |
+| Layer          | Technology                                         |
+| -------------- | -------------------------------------------------- |
+| iOS App        | Swift, SwiftUI, Apollo iOS (GraphQL client)        |
+| API            | Node.js, Express, Apollo Server, GraphQL           |
+| Database       | PostgreSQL with Prisma ORM                         |
+| Auth           | JWT (access + refresh tokens), OAuth (Google/Apple)|
+| Validation     | Zod runtime schemas                                |
+| Infrastructure | AWS ECS Fargate, Supabase (managed Postgres)       |
+| CI/CD          | GitHub Actions                                     |
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        Clients                              │
-│              (iOS App, Admin Dashboard)                     │
+│              iOS App (SwiftUI + Apollo iOS)                 │
 └─────────────────────┬───────────────────────────────────────┘
                       │
                       ▼
@@ -67,6 +68,7 @@ Accounts, Attendant, Audio/Video, Baptism, Cleaning, First Aid, Information & Vo
 
 ```
 AssemblyOps/
+├── ios/               # iOS app (SwiftUI + Apollo iOS)
 ├── backend/           # Node.js GraphQL API
 ├── docs/              # Architecture & development docs
 └── .github/           # CI/CD workflows
@@ -74,20 +76,23 @@ AssemblyOps/
 
 ## Getting Started
 
-See [backend/README.md](./backend/README.md) for setup instructions.
+- **Backend:** See [backend/README.md](./backend/README.md) for API setup instructions.
+- **iOS:** Open `ios/JW_AssemblyOps/AssemblyOps.xcodeproj` in Xcode. Run `./apollo-ios-cli generate` to regenerate GraphQL code after schema changes.
 
 ## Development Status
 
-**Current Phase:** Backend Scheduling (Posts, Sessions, Assignments)
+**Current Phase:** Phase 7 — TestFlight & Beta Prep
 
-| Phase                       | Status      |
-| --------------------------- | ----------- |
-| Phase 0: DevOps Setup       | ✅ Complete |
-| Phase 1: Backend Core       | ✅ Complete |
-| Phase 2: Backend Scheduling | In Progress |
-| Phase 3: iOS App            | Not Started |
-| Phase 4: Backend Operations | Not Started |
-| Phase 5: Admin Dashboard    | Not Started |
+| Phase                              | Status         |
+| ---------------------------------- | -------------- |
+| Phase 0: DevOps Setup              | ✅ Complete    |
+| Phase 1: Backend Core              | ✅ Complete    |
+| Phase 2: Backend Scheduling        | ✅ Complete    |
+| Phase 3: iOS App (Volunteer-facing)| ✅ Complete    |
+| Phase 4: Backend Operations        | ✅ Complete    |
+| Phase 5: Assignment Acceptance & Captain Role | ✅ Complete |
+| Phase 6: iOS Overseer Features     | ✅ Complete    |
+| Phase 7: TestFlight & Beta Prep    | ⬜ In Progress |
 
 ## License
 
