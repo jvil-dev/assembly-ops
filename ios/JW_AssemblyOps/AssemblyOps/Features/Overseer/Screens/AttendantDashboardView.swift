@@ -35,38 +35,40 @@ struct AttendantDashboardView: View {
     @State private var isInitialLoading = true
 
     var body: some View {
-        if isInitialLoading {
-            LoadingView(message: "attendant.dashboard.title".localized)
+        Group {
+            if isInitialLoading {
+                LoadingView(message: "attendant.dashboard.title".localized)
+                    .themedBackground(scheme: colorScheme)
+            } else {
+                ScrollView {
+                    VStack(spacing: AppTheme.Spacing.xl) {
+                        incidentsCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+
+                        alertsCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+
+                        attendanceCountsCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+
+                        meetingsCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+                    }
+                    .screenPadding()
+                    .padding(.top, AppTheme.Spacing.l)
+                    .padding(.bottom, AppTheme.Spacing.xxl)
+                }
                 .themedBackground(scheme: colorScheme)
-        } else {
-        ScrollView {
-            VStack(spacing: AppTheme.Spacing.xl) {
-                incidentsCard
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
-
-                alertsCard
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
-
-                attendanceCountsCard
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
-
-                meetingsCard
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+                .navigationTitle("attendant.dashboard.title".localized)
+                .refreshable { await loadAllData() }
+                .onAppear {
+                    withAnimation(AppTheme.entranceAnimation) {
+                        hasAppeared = true
+                    }
+                }
             }
-            .screenPadding()
-            .padding(.top, AppTheme.Spacing.l)
-            .padding(.bottom, AppTheme.Spacing.xxl)
         }
-        .themedBackground(scheme: colorScheme)
-        .navigationTitle("attendant.dashboard.title".localized)
-        .refreshable { await loadAllData() }
         .task { await loadAllData() }
-        .onAppear {
-            withAnimation(AppTheme.entranceAnimation) {
-                hasAppeared = true
-            }
-        }
-        }
     }
 
     // MARK: - Incidents Card
