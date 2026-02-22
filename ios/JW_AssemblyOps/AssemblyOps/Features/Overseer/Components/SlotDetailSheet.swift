@@ -29,6 +29,8 @@ struct SlotDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
 
+    @ObservedObject private var sessionState = OverseerSessionState.shared
+
     @State private var showVolunteerPicker = false
     @State private var hasAppeared = false
     @State private var assignmentToRemove: CoverageAssignment?
@@ -41,6 +43,16 @@ struct SlotDetailSheet: View {
     @State private var editCapacity = 1
     @State private var isSaving = false
     @State private var hasEdits = false
+
+    // Attendant category picker state
+    @State private var selectedMain: AttendantMainCategory? = nil
+    @State private var selectedSub: String? = nil
+    @State private var customSub: String = ""
+    @State private var showCustomSub = false
+
+    private var isAttendantDept: Bool {
+        sessionState.selectedDepartment?.departmentType == "ATTENDANT"
+    }
 
     /// Live slot from viewModel, falls back to initial snapshot
     private var slot: CoverageSlot {
@@ -132,6 +144,26 @@ struct SlotDetailSheet: View {
                     editLocation = post.location ?? ""
                     editCategory = post.category ?? ""
                     editCapacity = post.capacity
+
+                    // Pre-select Attendant category picker from stored string
+                    if isAttendantDept, let category = post.category, !category.isEmpty {
+                        for main in AttendantMainCategory.allCases {
+                            if category == main.rawValue {
+                                selectedMain = main
+                                break
+                            } else if category.hasPrefix("\(main.rawValue) - ") {
+                                selectedMain = main
+                                let sub = String(category.dropFirst("\(main.rawValue) - ".count))
+                                if main.commonSubcategories.contains(sub) {
+                                    selectedSub = sub
+                                } else {
+                                    showCustomSub = true
+                                    customSub = sub
+                                }
+                                break
+                            }
+                        }
+                    }
                 }
                 withAnimation(AppTheme.entranceAnimation) {
                     hasAppeared = true
@@ -156,20 +188,26 @@ struct SlotDetailSheet: View {
             VStack(spacing: AppTheme.Spacing.m) {
                 editableField(label: "Name", text: $editName)
                 editableField(label: "Location", text: $editLocation, placeholder: "Optional")
-                editableField(label: "Category", text: $editCategory, placeholder: "Optional")
+                if isAttendantDept {
+                    attendantCategoryPicker
+                } else {
+                    editableField(label: "Category", text: $editCategory, placeholder: "Optional")
+                }
 
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                    Text("Capacity")
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                    Picker("Capacity", selection: $editCapacity) {
-                        ForEach(1...20, id: \.self) { value in
-                            Text("\(value)").tag(value)
+                if !isAttendantDept {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                        Text("Capacity")
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        Picker("Capacity", selection: $editCapacity) {
+                            ForEach(1...20, id: \.self) { value in
+                                Text("\(value)").tag(value)
+                            }
                         }
+                        .pickerStyle(.wheel)
+                        .frame(height: 100)
+                        .onChange(of: editCapacity) { checkForEdits() }
                     }
-                    .pickerStyle(.wheel)
-                    .frame(height: 100)
-                    .onChange(of: editCapacity) { checkForEdits() }
                 }
 
                 // Session (read-only)
@@ -296,6 +334,142 @@ struct SlotDetailSheet: View {
             .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Attendant Category Picker
+
+    private var attendantCategoryPicker: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+            Text("Category")
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+            // Step 1: Main category pills (I / E / S)
+            HStack(spacing: AppTheme.Spacing.s) {
+                ForEach(AttendantMainCategory.allCases) { main in
+                    Button {
+                        if selectedMain == main {
+                            selectedMain = nil
+                            selectedSub = nil
+                            showCustomSub = false
+                            customSub = ""
+                            editCategory = ""
+                            checkForEdits()
+                        } else {
+                            selectedMain = main
+                            selectedSub = nil
+                            showCustomSub = false
+                            customSub = ""
+                            syncCategory()
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(main.code)
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                            Text(main.rawValue)
+                                .font(AppTheme.Typography.caption)
+                        }
+                        .padding(.horizontal, AppTheme.Spacing.m)
+                        .padding(.vertical, AppTheme.Spacing.s)
+                        .background(selectedMain == main
+                            ? DepartmentColor.color(for: "ATTENDANT")
+                            : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                        .foregroundStyle(selectedMain == main ? .white : AppTheme.textSecondary(for: colorScheme))
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            // Step 2: Subcategory chips (only for Exterior)
+            if let main = selectedMain, !main.commonSubcategories.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: AppTheme.Spacing.s) {
+                        ForEach(main.commonSubcategories, id: \.self) { sub in
+                            Button {
+                                selectedSub = sub
+                                showCustomSub = false
+                                customSub = ""
+                                syncCategory()
+                            } label: {
+                                Text(sub)
+                                    .font(AppTheme.Typography.caption)
+                                    .padding(.horizontal, AppTheme.Spacing.m)
+                                    .padding(.vertical, AppTheme.Spacing.s)
+                                    .background(selectedSub == sub
+                                        ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                                        : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                                    .foregroundStyle(selectedSub == sub
+                                        ? DepartmentColor.color(for: "ATTENDANT")
+                                        : AppTheme.textSecondary(for: colorScheme))
+                                    .clipShape(Capsule())
+                                    .overlay(
+                                        Capsule()
+                                            .strokeBorder(selectedSub == sub
+                                                ? DepartmentColor.color(for: "ATTENDANT")
+                                                : Color.clear, lineWidth: 1)
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        // Custom chip
+                        Button {
+                            selectedSub = nil
+                            showCustomSub = true
+                            syncCategory()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 11, weight: .semibold))
+                                Text("Custom")
+                                    .font(AppTheme.Typography.caption)
+                            }
+                            .padding(.horizontal, AppTheme.Spacing.m)
+                            .padding(.vertical, AppTheme.Spacing.s)
+                            .background(showCustomSub
+                                ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                                : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                            .foregroundStyle(showCustomSub
+                                ? DepartmentColor.color(for: "ATTENDANT")
+                                : AppTheme.textSecondary(for: colorScheme))
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .strokeBorder(showCustomSub
+                                        ? DepartmentColor.color(for: "ATTENDANT")
+                                        : Color.clear, lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                if showCustomSub {
+                    TextField("e.g. Gate, Ramp B", text: $customSub)
+                        .padding(AppTheme.Spacing.m)
+                        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                        .onChange(of: customSub) { _, _ in syncCategory() }
+                }
+            }
+        }
+    }
+
+    private func syncCategory() {
+        guard let main = selectedMain else {
+            editCategory = ""
+            checkForEdits()
+            return
+        }
+        let sub: String?
+        if showCustomSub {
+            sub = customSub.isEmpty ? nil : customSub
+        } else {
+            sub = selectedSub
+        }
+        editCategory = AttendantMainCategory.storageString(main: main, sub: sub)
+        checkForEdits()
     }
 
     // MARK: - Helpers

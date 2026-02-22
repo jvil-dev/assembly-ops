@@ -26,6 +26,7 @@ import SwiftUI
 struct CreatePostSheet: View {
     let categorySuggestions: [String]
     let locationSuggestions: [String]
+    var preselectedCategory: AttendantMainCategory? = nil
 
     @StateObject private var viewModel = PostsViewModel()
     @ObservedObject private var sessionState = OverseerSessionState.shared
@@ -33,6 +34,16 @@ struct CreatePostSheet: View {
     @Environment(\.dismiss) var dismiss
     @State private var hasAppeared = false
     @State private var isBulkMode = false
+
+    // Attendant category picker state
+    @State private var selectedMain: AttendantMainCategory? = nil
+    @State private var selectedSub: String? = nil
+    @State private var customSub: String = ""
+    @State private var showCustomSub = false
+
+    private var isAttendant: Bool {
+        sessionState.selectedDepartment?.departmentType == "ATTENDANT"
+    }
 
     var body: some View {
         NavigationStack {
@@ -103,6 +114,10 @@ struct CreatePostSheet: View {
                 }
             }
             .onAppear {
+                if let preselected = preselectedCategory {
+                    selectedMain = preselected
+                    syncCategory()
+                }
                 withAnimation(AppTheme.entranceAnimation) {
                     hasAppeared = true
                 }
@@ -141,12 +156,16 @@ struct CreatePostSheet: View {
             SectionHeaderLabel(icon: "info.circle", title: "OPTIONAL")
 
             VStack(spacing: AppTheme.Spacing.m) {
-                SuggestionTextField(
-                    placeholder: "post.category".localized,
-                    text: $viewModel.category,
-                    suggestions: categorySuggestions,
-                    colorScheme: colorScheme
-                )
+                if isAttendant {
+                    attendantCategoryPicker
+                } else {
+                    SuggestionTextField(
+                        placeholder: "post.category".localized,
+                        text: $viewModel.category,
+                        suggestions: categorySuggestions,
+                        colorScheme: colorScheme
+                    )
+                }
 
                 themedTextField("post.description".localized, text: $viewModel.description)
 
@@ -179,12 +198,16 @@ struct CreatePostSheet: View {
                         .keyboardType(.numberPad)
                 }
 
-                SuggestionTextField(
-                    placeholder: "post.category".localized,
-                    text: $viewModel.category,
-                    suggestions: categorySuggestions,
-                    colorScheme: colorScheme
-                )
+                if isAttendant {
+                    attendantCategoryPicker
+                } else {
+                    SuggestionTextField(
+                        placeholder: "post.category".localized,
+                        text: $viewModel.category,
+                        suggestions: categorySuggestions,
+                        colorScheme: colorScheme
+                    )
+                }
             }
         }
         .cardPadding()
@@ -216,6 +239,141 @@ struct CreatePostSheet: View {
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Attendant Category Picker
+
+    private var attendantCategoryPicker: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+            Text("post.category".localized)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+            // Step 1: Main category pills (I / E / S)
+            HStack(spacing: AppTheme.Spacing.s) {
+                ForEach(AttendantMainCategory.allCases) { main in
+                    Button {
+                        if selectedMain == main {
+                            selectedMain = nil
+                            selectedSub = nil
+                            showCustomSub = false
+                            customSub = ""
+                            viewModel.category = ""
+                        } else {
+                            selectedMain = main
+                            selectedSub = nil
+                            showCustomSub = false
+                            customSub = ""
+                            syncCategory()
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(main.code)
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                            Text(main.rawValue)
+                                .font(AppTheme.Typography.caption)
+                        }
+                        .padding(.horizontal, AppTheme.Spacing.m)
+                        .padding(.vertical, AppTheme.Spacing.s)
+                        .background(selectedMain == main
+                            ? DepartmentColor.color(for: "ATTENDANT")
+                            : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                        .foregroundStyle(selectedMain == main ? .white : AppTheme.textSecondary(for: colorScheme))
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            // Step 2: Subcategory chips (only for Exterior)
+            if let main = selectedMain, !main.commonSubcategories.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: AppTheme.Spacing.s) {
+                        ForEach(main.commonSubcategories, id: \.self) { sub in
+                            Button {
+                                selectedSub = sub
+                                showCustomSub = false
+                                customSub = ""
+                                syncCategory()
+                            } label: {
+                                Text(sub)
+                                    .font(AppTheme.Typography.caption)
+                                    .padding(.horizontal, AppTheme.Spacing.m)
+                                    .padding(.vertical, AppTheme.Spacing.s)
+                                    .background(selectedSub == sub
+                                        ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                                        : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                                    .foregroundStyle(selectedSub == sub
+                                        ? DepartmentColor.color(for: "ATTENDANT")
+                                        : AppTheme.textSecondary(for: colorScheme))
+                                    .clipShape(Capsule())
+                                    .overlay(
+                                        Capsule()
+                                            .strokeBorder(selectedSub == sub
+                                                ? DepartmentColor.color(for: "ATTENDANT")
+                                                : Color.clear, lineWidth: 1)
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        // Custom chip
+                        Button {
+                            selectedSub = nil
+                            showCustomSub = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 11, weight: .semibold))
+                                Text("Custom")
+                                    .font(AppTheme.Typography.caption)
+                            }
+                            .padding(.horizontal, AppTheme.Spacing.m)
+                            .padding(.vertical, AppTheme.Spacing.s)
+                            .background(showCustomSub
+                                ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                                : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                            .foregroundStyle(showCustomSub
+                                ? DepartmentColor.color(for: "ATTENDANT")
+                                : AppTheme.textSecondary(for: colorScheme))
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .strokeBorder(showCustomSub
+                                        ? DepartmentColor.color(for: "ATTENDANT")
+                                        : Color.clear, lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                // Custom subcategory text field
+                if showCustomSub {
+                    TextField("e.g. Gate, Ramp B", text: $customSub)
+                        .padding(AppTheme.Spacing.m)
+                        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                        .onChange(of: customSub) { _, value in
+                            syncCategory()
+                        }
+                }
+            }
+        }
+    }
+
+    private func syncCategory() {
+        guard let main = selectedMain else {
+            viewModel.category = ""
+            return
+        }
+        let sub: String?
+        if showCustomSub {
+            sub = customSub.isEmpty ? nil : customSub
+        } else {
+            sub = selectedSub
+        }
+        viewModel.category = AttendantMainCategory.storageString(main: main, sub: sub)
     }
 
     // MARK: - Helpers
