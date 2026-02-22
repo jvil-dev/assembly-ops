@@ -36,6 +36,7 @@ struct SessionDetailView: View {
     @State private var selectedSlot: CoverageSlot?
     @State private var hasAppeared = false
     @State private var showCreatePost = false
+    @State private var preselectedCategory: AttendantMainCategory? = nil
     @State private var postToDelete: CoveragePost?
     @State private var showDeleteConfirmation = false
     @State private var isDeleting = false
@@ -55,18 +56,39 @@ struct SessionDetailView: View {
         sessionPosts.contains { $0.category != nil }
     }
 
-    /// Posts grouped by category, preserving sort order
+    private var isAttendantDept: Bool {
+        sessionState.selectedDepartment?.departmentType == "ATTENDANT"
+    }
+
+    /// Posts grouped by category, preserving sort order.
+    /// For Attendant departments, groups are ordered I → E → S → other.
     private var groupedPosts: [(category: String, posts: [CoveragePost])] {
         let grouped = Dictionary(grouping: sessionPosts) { $0.category ?? "" }
-        return grouped.keys.sorted().map { key in
+        let sortedKeys = grouped.keys.sorted { a, b in
+            if isAttendantDept {
+                return AttendantMainCategory.sortIndex(for: a) < AttendantMainCategory.sortIndex(for: b)
+            }
+            return a < b
+        }
+        return sortedKeys.map { key in
             (category: key.isEmpty ? "post.otherCategory".localized : key, posts: grouped[key]!)
         }
+    }
+
+    /// Display label for a category section header.
+    private func categoryLabel(_ category: String) -> String {
+        if isAttendantDept {
+            return AttendantMainCategory.displayString(for: category)
+        }
+        return category
     }
 
     var body: some View {
         Group {
             if viewModel.isLoading && viewModel.slots.isEmpty {
                 LoadingView(message: "Loading posts...")
+            } else if isAttendantDept {
+                attendantPostList
             } else if sessionPosts.isEmpty {
                 emptyState
             } else {
@@ -116,11 +138,13 @@ struct SessionDetailView: View {
         .sheet(isPresented: $showCreatePost) {
             CreatePostSheet(
                 categorySuggestions: viewModel.existingCategories,
-                locationSuggestions: viewModel.existingLocations
+                locationSuggestions: viewModel.existingLocations,
+                preselectedCategory: preselectedCategory
             )
         }
         .onChange(of: showCreatePost) { _, isPresented in
             if !isPresented {
+                preselectedCategory = nil
                 Task { await viewModel.loadCoverage() }
             }
         }
@@ -183,7 +207,7 @@ struct SessionDetailView: View {
                             postRow(post: post, animationIndex: animationIndex)
                         }
                     } header: {
-                        Text(group.category)
+                        Text(categoryLabel(group.category))
                             .font(AppTheme.Typography.caption)
                             .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                             .textCase(nil)
@@ -203,6 +227,108 @@ struct SessionDetailView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+    }
+
+    // MARK: - Attendant Post List (always shows I / E / S buckets)
+
+    private var attendantPostList: some View {
+        List {
+            // Session summary
+            summaryCard
+                .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(
+                    top: AppTheme.Spacing.l,
+                    leading: AppTheme.Spacing.screenEdge,
+                    bottom: AppTheme.Spacing.s,
+                    trailing: AppTheme.Spacing.screenEdge
+                ))
+
+            ForEach(Array(AttendantMainCategory.allCases.enumerated()), id: \.element.id) { groupIndex, main in
+                let postsInCategory = sessionPosts.filter {
+                    ($0.category ?? "") == main.rawValue ||
+                    ($0.category ?? "").hasPrefix("\(main.rawValue) -")
+                }
+
+                Section {
+                    if postsInCategory.isEmpty {
+                        // Placeholder card
+                        attendantPlaceholderRow(for: main, animationIndex: groupIndex)
+                    } else {
+                        ForEach(Array(postsInCategory.enumerated()), id: \.element.id) { postIndex, post in
+                            let animationIndex = groupIndex * 10 + postIndex + 1
+                            postRow(post: post, animationIndex: animationIndex)
+                        }
+                    }
+                } header: {
+                    Text(AttendantMainCategory.displayString(for: main.rawValue))
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                        .textCase(nil)
+                        .listRowInsets(EdgeInsets(
+                            top: AppTheme.Spacing.m,
+                            leading: AppTheme.Spacing.screenEdge,
+                            bottom: AppTheme.Spacing.xs,
+                            trailing: AppTheme.Spacing.screenEdge
+                        ))
+                }
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+    }
+
+    private func attendantPlaceholderRow(for category: AttendantMainCategory, animationIndex: Int) -> some View {
+        Button {
+            preselectedCategory = category
+            showCreatePost = true
+            HapticManager.shared.lightTap()
+        } label: {
+            HStack(spacing: AppTheme.Spacing.m) {
+                ZStack {
+                    Circle()
+                        .fill(DepartmentColor.color(for: "ATTENDANT").opacity(0.1))
+                        .frame(width: 36, height: 36)
+                    Text(category.code)
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("No \(category.rawValue) posts yet")
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    Text("Tap to add the first \(category.rawValue) post")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
+
+                Spacer()
+
+                Image(systemName: "plus.circle")
+                    .font(.system(size: 20))
+                    .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+            }
+            .cardPadding()
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
+                    .strokeBorder(
+                        DepartmentColor.color(for: "ATTENDANT").opacity(0.3),
+                        style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .entranceAnimation(hasAppeared: hasAppeared, delay: Double(animationIndex) * 0.05)
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(
+            top: AppTheme.Spacing.s / 2,
+            leading: AppTheme.Spacing.screenEdge,
+            bottom: AppTheme.Spacing.s / 2,
+            trailing: AppTheme.Spacing.screenEdge
+        ))
     }
 
     private func postRow(post: CoveragePost, animationIndex: Int) -> some View {

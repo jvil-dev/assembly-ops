@@ -237,14 +237,7 @@ struct AssignmentDetailView: View {
     // MARK: - Attendant Post Actions Card
 
     private var attendantSectionsCard: some View {
-        let postItem = AttendantPostItem(
-            id: assignment.postId,
-            name: assignment.postName,
-            location: assignment.postLocation,
-            category: "",
-            sortOrder: 0
-        )
-        return NavigationLink(destination: SubmitSectionCountView(post: postItem)) {
+        NavigationLink(destination: AttendanceInputView()) {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
                 HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "number.square")

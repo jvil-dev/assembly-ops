@@ -196,6 +196,29 @@ final class VolunteersViewModel: ObservableObject {
         }
     }
 
+    /// Delete a volunteer permanently
+    func deleteVolunteer(id: String) async -> Bool {
+        do {
+            let result = try await NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.DeleteVolunteerMutation(id: id)
+            )
+
+            if let errors = result.errors, !errors.isEmpty {
+                self.error = errors.first?.message ?? "Failed to delete volunteer"
+                return false
+            }
+
+            // Remove from local arrays
+            departmentVolunteers.removeAll { $0.id == id }
+            allVolunteers.removeAll { $0.id == id }
+            volunteers.removeAll { $0.id == id }
+            return true
+        } catch {
+            self.error = "Failed to delete volunteer: \(error.localizedDescription)"
+            return false
+        }
+    }
+
     // MARK: - Helpers
 
     private func mapToVolunteerListItem(_ volunteer: AssemblyOpsAPI.VolunteersQuery.Data.Volunteer) -> VolunteerListItem {

@@ -43,7 +43,12 @@ struct MessagesView: View {
                         await viewModel.refresh()
                     }
                 } else if viewModel.isEmpty {
-                    EmptyMessagesView(showUnreadOnly: viewModel.showUnreadOnly)
+                    ScrollView {
+                        EmptyMessagesView(showUnreadOnly: viewModel.showUnreadOnly)
+                    }
+                    .refreshable {
+                        await viewModel.refresh()
+                    }
                 } else {
                     messagesList
                 }
@@ -59,9 +64,6 @@ struct MessagesView: View {
                         markAllReadButton
                     }
                 }
-            }
-            .refreshable {
-                await viewModel.refresh()
             }
             .task {
                 if !viewModel.hasLoaded {
@@ -118,6 +120,9 @@ struct MessagesView: View {
             .screenPadding()
             .padding(.top, AppTheme.Spacing.l)
             .padding(.bottom, AppTheme.Spacing.xxl)
+        }
+        .refreshable {
+            await viewModel.refresh()
         }
         .themedBackground(scheme: colorScheme)
         .navigationDestination(for: Message.self) { message in

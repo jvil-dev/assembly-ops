@@ -92,6 +92,18 @@ const attendanceResolvers = {
       const attendanceService = new AttendanceService(context.prisma);
       return attendanceService.getEventAttendanceSummary(eventId);
     },
+
+    volunteerSessionsForEvent: async (
+      _parent: unknown,
+      { eventId }: { eventId: string },
+      context: Context
+    ) => {
+      requireAuth(context);
+      return context.prisma.session.findMany({
+        where: { eventId },
+        orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+      });
+    },
   },
 
   Mutation: {

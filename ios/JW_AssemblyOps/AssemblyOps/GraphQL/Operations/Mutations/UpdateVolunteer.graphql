@@ -1,0 +1,23 @@
+mutation UpdateVolunteer($id: ID!, $input: UpdateVolunteerInput!) {
+    updateVolunteer(id: $id, input: $input) {
+        id
+        volunteerId
+        firstName
+        lastName
+        fullName
+        congregation
+        phone
+        email
+        appointmentStatus
+        notes
+        department {
+            id
+            name
+            departmentType
+        }
+        role {
+            id
+            name
+        }
+    }
+}

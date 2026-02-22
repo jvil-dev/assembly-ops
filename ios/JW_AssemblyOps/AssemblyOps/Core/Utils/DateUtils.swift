@@ -38,4 +38,16 @@ enum DateUtils {
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: Date())
     }
+
+    /// Format elapsed time between two dates (e.g., "14m", "1h 23m", "2d 4h")
+    /// Used for lost person alerts to show urgency of open cases.
+    static func elapsedString(from start: Date, to end: Date = Date()) -> String {
+        let seconds = Int(end.timeIntervalSince(start))
+        let minutes = seconds / 60
+        let hours = minutes / 60
+        let days = hours / 24
+        if days > 0 { return "\(days)d \(hours % 24)h" }
+        if hours > 0 { return "\(hours)h \(minutes % 60)m" }
+        return "\(max(1, minutes))m"
+    }
 }

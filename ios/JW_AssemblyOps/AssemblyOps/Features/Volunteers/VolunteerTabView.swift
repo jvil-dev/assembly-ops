@@ -44,6 +44,13 @@ struct VolunteerTabView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: VolunteerTab = .home
 
+    private var tabTintColor: Color {
+        if let deptType = appState.currentVolunteer?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             OfflineBanner()
@@ -76,7 +83,7 @@ struct VolunteerTabView: View {
                     }
                     .tag(VolunteerTab.profile)
             }
-            .tint(AppTheme.themeColor)
+            .tint(tabTintColor)
             .onChange(of: scenePhase) {
                 _, newPhase in
                 switch newPhase {

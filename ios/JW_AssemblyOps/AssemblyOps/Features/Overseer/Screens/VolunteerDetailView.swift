@@ -40,8 +40,10 @@ struct VolunteerDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel: VolunteerDetailViewModel
+    @State private var showRemoveConfirmation = false
     @State private var showDeleteConfirmation = false
     @State private var showRegenerateConfirmation = false
+    @State private var showEditSheet = false
     @State private var showToken = false
     @State private var hasAppeared = false
     @State private var showCopiedToast = false
@@ -76,10 +78,13 @@ struct VolunteerDetailView: View {
                 credentialsCard
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
 
-                // Remove button (editable only)
+                // Action buttons (editable only)
                 if isEditable {
-                    removeButton
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
+                    VStack(spacing: AppTheme.Spacing.m) {
+                        removeButton
+                        deleteButton
+                    }
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
                 }
             }
             .screenPadding()
@@ -94,9 +99,12 @@ struct VolunteerDetailView: View {
                 hasAppeared = true
             }
         }
+        .sheet(isPresented: $showEditSheet) {
+            EditVolunteerSheet(volunteer: volunteer, viewModel: viewModel)
+        }
         .confirmationDialog(
-            "Remove Volunteer",
-            isPresented: $showDeleteConfirmation,
+            "Remove from Department",
+            isPresented: $showRemoveConfirmation,
             titleVisibility: .visible
         ) {
             Button("Remove", role: .destructive) {
@@ -109,6 +117,25 @@ struct VolunteerDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Are you sure you want to remove \(volunteer.fullName) from your department?")
+        }
+        .confirmationDialog(
+            "Delete Volunteer",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Permanently", role: .destructive) {
+                Task {
+                    await viewModel.deleteVolunteer()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to permanently delete \(volunteer.fullName)? This will remove all their assignments and check-in records. This action cannot be undone.")
+        }
+        .onChange(of: viewModel.didDelete) { _, didDelete in
+            if didDelete {
+                dismiss()
+            }
         }
         .confirmationDialog(
             "Regenerate Credentials",
@@ -151,46 +178,69 @@ struct VolunteerDetailView: View {
     // MARK: - Profile Header
 
     private var profileHeader: some View {
-        VStack(spacing: AppTheme.Spacing.l) {
-            // Avatar with initials
-            ZStack {
-                Circle()
-                    .fill(departmentColor.opacity(0.15))
-                    .frame(width: 88, height: 88)
-
-                Circle()
-                    .strokeBorder(departmentColor.opacity(0.3), lineWidth: 2)
-                    .frame(width: 88, height: 88)
-
-                Text(volunteer.initials)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundStyle(departmentColor)
+        Button {
+            if isEditable {
+                showEditSheet = true
+                HapticManager.shared.lightTap()
             }
+        } label: {
+            VStack(spacing: AppTheme.Spacing.l) {
+                // Avatar with initials (edit badge when editable)
+                ZStack(alignment: .bottomTrailing) {
+                    ZStack {
+                        Circle()
+                            .fill(departmentColor.opacity(0.15))
+                            .frame(width: 88, height: 88)
 
-            VStack(spacing: AppTheme.Spacing.xs) {
-                Text(volunteer.fullName)
-                    .font(AppTheme.Typography.title)
-                    .foregroundStyle(.primary)
+                        Circle()
+                            .strokeBorder(departmentColor.opacity(0.3), lineWidth: 2)
+                            .frame(width: 88, height: 88)
 
-                Text(volunteer.congregation)
-                    .font(AppTheme.Typography.subheadline)
-                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        Text(volunteer.initials)
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundStyle(departmentColor)
+                    }
 
-                if let appointment = volunteer.appointmentStatus {
-                    Text(formatAppointment(appointment))
-                        .font(AppTheme.Typography.captionBold)
+                    if isEditable {
+                        Circle()
+                            .fill(departmentColor)
+                            .frame(width: 24, height: 24)
+                            .overlay(
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.white)
+                            )
+                            .offset(x: 2, y: 2)
+                    }
+                }
+
+                VStack(spacing: AppTheme.Spacing.xs) {
+                    Text(volunteer.fullName)
+                        .font(AppTheme.Typography.title)
+                        .foregroundStyle(.primary)
+
+                    Text(volunteer.congregation)
+                        .font(AppTheme.Typography.subheadline)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                        .clipShape(Capsule())
+
+                    if let appointment = volunteer.appointmentStatus {
+                        Text(formatAppointment(appointment))
+                            .font(AppTheme.Typography.captionBold)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                            .clipShape(Capsule())
+                    }
                 }
             }
+            .frame(maxWidth: .infinity)
+            .cardPadding()
+            .padding(.vertical, AppTheme.Spacing.s)
+            .themedCard(scheme: colorScheme)
         }
-        .frame(maxWidth: .infinity)
-        .cardPadding()
-        .padding(.vertical, AppTheme.Spacing.s)
-        .themedCard(scheme: colorScheme)
+        .buttonStyle(.plain)
+        .disabled(!isEditable)
     }
 
     // MARK: - Department Card
@@ -395,7 +445,7 @@ struct VolunteerDetailView: View {
 
     private var removeButton: some View {
         Button {
-            showDeleteConfirmation = true
+            showRemoveConfirmation = true
         } label: {
             HStack(spacing: AppTheme.Spacing.s) {
                 if viewModel.isLoading {
@@ -404,6 +454,38 @@ struct VolunteerDetailView: View {
                 } else {
                     Image(systemName: "person.badge.minus")
                     Text("Remove from Department")
+                }
+            }
+            .font(AppTheme.Typography.headline)
+            .frame(maxWidth: .infinity)
+            .frame(height: AppTheme.ButtonHeight.medium)
+            .foregroundStyle(AppTheme.StatusColors.declined)
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                    .fill(AppTheme.StatusColors.declinedBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                    .strokeBorder(AppTheme.StatusColors.declined.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isLoading)
+    }
+
+    // MARK: - Delete Button
+
+    private var deleteButton: some View {
+        Button {
+            showDeleteConfirmation = true
+        } label: {
+            HStack(spacing: AppTheme.Spacing.s) {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .tint(AppTheme.StatusColors.declined)
+                } else {
+                    Image(systemName: "trash")
+                    Text("Delete Volunteer")
                 }
             }
             .font(AppTheme.Typography.headline)

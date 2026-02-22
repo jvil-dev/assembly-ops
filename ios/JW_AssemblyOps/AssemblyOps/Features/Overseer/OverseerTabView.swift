@@ -26,6 +26,14 @@ import SwiftUI
 
 struct OverseerTabView: View {
     @EnvironmentObject private var appState: AppState
+    @ObservedObject private var sessionState = OverseerSessionState.shared
+
+    private var tabTintColor: Color {
+        if let dept = sessionState.selectedDepartment {
+            return DepartmentColor.color(for: dept.departmentType)
+        }
+        return AppTheme.themeColor
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -47,7 +55,7 @@ struct OverseerTabView: View {
                     .tabItem {
                         Label("Assignments", systemImage: "tablecells")
                     }
-                
+
                 OverseerMessagesView()
                     .tabItem {
                         Label("Messages", systemImage: "envelope")
@@ -58,7 +66,7 @@ struct OverseerTabView: View {
                         Label("Profile", systemImage: "person")
                     }
             }
-            .tint(AppTheme.themeColor)
+            .tint(tabTintColor)
         }
     }
 }

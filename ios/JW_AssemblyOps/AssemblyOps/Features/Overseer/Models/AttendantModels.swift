@@ -261,3 +261,31 @@ extension MeetingAttendeeItem {
         self.volunteerName = "\(profile.firstName) \(profile.lastName)"
     }
 }
+
+// MARK: - Concern Item (unified feed for volunteer view)
+
+enum ConcernItem: Identifiable {
+    case incident(SafetyIncidentItem)
+    case alert(LostPersonAlertItem)
+
+    var id: String {
+        switch self {
+        case .incident(let i): return "i-\(i.id)"
+        case .alert(let a): return "a-\(a.id)"
+        }
+    }
+
+    var createdAt: Date {
+        switch self {
+        case .incident(let i): return i.createdAt
+        case .alert(let a): return a.createdAt
+        }
+    }
+
+    var isResolved: Bool {
+        switch self {
+        case .incident(let i): return i.resolved
+        case .alert(let a): return a.resolved
+        }
+    }
+}

@@ -33,6 +33,7 @@ struct OverseerProfileView: View {
     @Environment(\.colorScheme) var colorScheme
 
     @State private var showLogoutConfirmation = false
+    @State private var showEditProfile = false
     @State private var hasAppeared = false
 
     var body: some View {
@@ -42,6 +43,7 @@ struct OverseerProfileView: View {
                     // Profile header
                     profileHeader
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+                        .frame(maxWidth: .infinity)
 
                     // Current event card
                     if sessionState.selectedEvent != nil {
@@ -79,6 +81,9 @@ struct OverseerProfileView: View {
             }
             .themedBackground(scheme: colorScheme)
             .navigationTitle("profile.title".localized)
+            .sheet(isPresented: $showEditProfile) {
+                EditOverseerProfileSheet()
+            }
             .onAppear {
                 withAnimation(AppTheme.entranceAnimation) {
                     hasAppeared = true
@@ -124,49 +129,68 @@ struct OverseerProfileView: View {
     // MARK: - Profile Header
 
     private var profileHeader: some View {
-        VStack(spacing: AppTheme.Spacing.l) {
-            // Avatar with initials
-            if let overseer = appState.currentOverseer {
-                ZStack {
-                    Circle()
-                        .fill(AppTheme.themeColor.opacity(0.15))
-                        .frame(width: 88, height: 88)
+        Button {
+            showEditProfile = true
+            HapticManager.shared.lightTap()
+        } label: {
+            VStack(spacing: AppTheme.Spacing.l) {
+                // Avatar with initials
+                if let overseer = appState.currentOverseer {
+                    ZStack(alignment: .bottomTrailing) {
+                        ZStack {
+                            Circle()
+                                .fill(AppTheme.themeColor.opacity(0.15))
+                                .frame(width: 88, height: 88)
 
-                    Circle()
-                        .strokeBorder(AppTheme.themeColor.opacity(0.3), lineWidth: 2)
-                        .frame(width: 88, height: 88)
+                            Circle()
+                                .strokeBorder(AppTheme.themeColor.opacity(0.3), lineWidth: 2)
+                                .frame(width: 88, height: 88)
 
-                    Text(overseer.initials)
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundStyle(AppTheme.themeColor)
-                }
+                            Text(overseer.initials)
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .foregroundStyle(AppTheme.themeColor)
+                        }
 
-                VStack(spacing: AppTheme.Spacing.xs) {
-                    Text(overseer.fullName)
-                        .font(AppTheme.Typography.title)
-                        .foregroundStyle(.primary)
+                        // Edit badge
+                        Circle()
+                            .fill(AppTheme.themeColor)
+                            .frame(width: 24, height: 24)
+                            .overlay(
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.white)
+                            )
+                            .offset(x: 2, y: 2)
+                    }
 
-                    Text(overseer.email)
-                        .font(AppTheme.Typography.subheadline)
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    VStack(spacing: AppTheme.Spacing.xs) {
+                        Text(overseer.fullName)
+                            .font(AppTheme.Typography.title)
+                            .foregroundStyle(.primary)
 
-                    // Role badge
-                    Text(sessionState.isEventOverseer
-                        ? NSLocalizedString("role.app_admin", comment: "")
-                        : NSLocalizedString("role.department_overseer", comment: ""))
-                        .font(AppTheme.Typography.captionBold)
-                        .foregroundStyle(AppTheme.themeColor)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(AppTheme.themeColor.opacity(0.1))
-                        .clipShape(Capsule())
+                        Text(overseer.email)
+                            .font(AppTheme.Typography.subheadline)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+                        // Role badge
+                        Text(sessionState.isEventOverseer
+                            ? NSLocalizedString("role.app_admin", comment: "")
+                            : NSLocalizedString("role.department_overseer", comment: ""))
+                            .font(AppTheme.Typography.captionBold)
+                            .foregroundStyle(AppTheme.themeColor)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(AppTheme.themeColor.opacity(0.1))
+                            .clipShape(Capsule())
+                    }
                 }
             }
+            .frame(maxWidth: .infinity)
+            .cardPadding()
+            .padding(.vertical, AppTheme.Spacing.s)
+            .themedCard(scheme: colorScheme)
         }
-        .frame(maxWidth: .infinity)
-        .cardPadding()
-        .padding(.vertical, AppTheme.Spacing.s)
-        .themedCard(scheme: colorScheme)
+        .buttonStyle(.plain)
     }
 
     // MARK: - Event Card

@@ -27,7 +27,7 @@
  */
 import { Context } from '../context.js';
 import { AttendantService } from '../../services/attendantService.js';
-import { requireAdmin, requireVolunteer, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireVolunteer, requireEventAccess } from '../guards/auth.js';
 import {
   ReportSafetyIncidentInput,
   CreateLostPersonAlertInput,
@@ -88,8 +88,13 @@ const attendantResolvers = {
       { eventId, resolved }: { eventId: string; resolved?: boolean },
       context: Context
     ) => {
-      requireAdmin(context);
-      await requireEventAccess(context, eventId);
+      requireAuth(context);
+      if (context.volunteer) {
+        await resolveAttendantVolunteer(context, eventId);
+      } else {
+        requireAdmin(context);
+        await requireEventAccess(context, eventId);
+      }
 
       const attendantService = new AttendantService(context.prisma);
       return attendantService.getSafetyIncidents(eventId, resolved);
@@ -100,8 +105,13 @@ const attendantResolvers = {
       { eventId, resolved }: { eventId: string; resolved?: boolean },
       context: Context
     ) => {
-      requireAdmin(context);
-      await requireEventAccess(context, eventId);
+      requireAuth(context);
+      if (context.volunteer) {
+        await resolveAttendantVolunteer(context, eventId);
+      } else {
+        requireAdmin(context);
+        await requireEventAccess(context, eventId);
+      }
 
       const attendantService = new AttendantService(context.prisma);
       return attendantService.getLostPersonAlerts(eventId, resolved);
