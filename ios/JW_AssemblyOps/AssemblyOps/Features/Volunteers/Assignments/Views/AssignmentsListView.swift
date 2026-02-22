@@ -51,7 +51,12 @@ struct AssignmentsListView: View {
                         viewModel.refresh()
                     }
                 } else if viewModel.isEmpty {
-                    EmptyAssignmentsView()
+                    ScrollView {
+                        EmptyAssignmentsView()
+                    }
+                    .refreshable {
+                        viewModel.refresh()
+                    }
                 } else {
                     assignmentsList
                 }
@@ -61,9 +66,6 @@ struct AssignmentsListView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     filterButton
                 }
-            }
-            .refreshable {
-                viewModel.refresh()
             }
             .task {
                 if !viewModel.hasLoaded {
@@ -138,6 +140,9 @@ struct AssignmentsListView: View {
                 .screenPadding()
                 .padding(.top, AppTheme.Spacing.l)
                 .padding(.bottom, AppTheme.Spacing.xxl)
+            }
+            .refreshable {
+                viewModel.refresh()
             }
             .themedBackground(scheme: colorScheme)
             .navigationDestination(for: Assignment.self) { assignment in
