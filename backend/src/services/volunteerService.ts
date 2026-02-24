@@ -34,6 +34,7 @@
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError, ValidationError, AuthenticationError } from '../utils/errors.js';
 import { generateEventVolunteerId, generateToken, hashToken, encryptToken, decryptToken } from '../utils/credentials.js';
+import { encryptField } from '../utils/encryption.js';
 import { verifyPassword } from '../utils/password.js';
 import { generateTokens, TokenPair } from '../utils/jwt.js';
 import { TokenService } from './tokenService.js';
@@ -137,7 +138,7 @@ export class VolunteerService {
         data: {
           volunteerId,
           tokenHash,
-          token,
+          encryptedToken: encryptField(token),
           volunteerProfileId: profile.id,
           eventId,
           departmentId: deptId,
@@ -228,7 +229,7 @@ export class VolunteerService {
           data: {
             volunteerId: volId,
             tokenHash: volTokenHash,
-            token: volToken,
+            encryptedToken: encryptField(volToken),
             volunteerProfileId: profile.id,
             eventId,
             departmentId: deptId,

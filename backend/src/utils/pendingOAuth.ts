@@ -1,7 +1,9 @@
 import jwt from 'jsonwebtoken';
 import { AuthProvider } from '@prisma/client';
 
-const SECRET = process.env.JWT_SECRET!;
+// Use JWT_REFRESH_SECRET for key separation — pending OAuth tokens
+// cannot be confused with access tokens even if one key is compromised.
+const SECRET = process.env.JWT_REFRESH_SECRET!;
 
 interface PendingOAuthPayload {
   provider: AuthProvider;
@@ -16,13 +18,13 @@ export function generatePendingOAuthToken(payload: PendingOAuthPayload): string 
       purpose: 'pending_oauth',
     },
     SECRET,
-    { expiresIn: '15m' }
+    { algorithm: 'HS256', expiresIn: '15m' }
   );
 }
 
 export function verifyPendingOAuthToken(token: string): PendingOAuthPayload | null {
   try {
-    const payload = jwt.verify(token, SECRET) as jwt.JwtPayload & {
+    const payload = jwt.verify(token, SECRET, { algorithms: ['HS256'] }) as jwt.JwtPayload & {
       purpose?: string;
       provider?: AuthProvider;
       providerId?: string;

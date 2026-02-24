@@ -25,8 +25,11 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import prisma from './config/database.js';
 import { createApolloServer } from './graphql/index.js';
+import { validateJwtSecrets } from './utils/jwt.js';
+import { validateEncryptionKey } from './utils/encryption.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -36,8 +39,59 @@ app.use(
     contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
   })
 );
-app.use(cors());
+// CORS: restrict to environment-based allowlist
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:4000')
+  .split(',')
+  .map((o) => o.trim());
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, health checks)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+  })
+);
 app.use(express.json());
+
+// Rate limiting on auth-related GraphQL operations
+const AUTH_OPERATIONS = new Set([
+  'LoginAdmin',
+  'RegisterAdmin',
+  'LoginVolunteer',
+  'RefreshToken',
+  'LoginWithGoogle',
+  'LoginWithApple',
+]);
+
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    const operationName = req.body?.operationName;
+    return !operationName || !AUTH_OPERATIONS.has(operationName);
+  },
+  message: { errors: [{ message: 'Too many authentication attempts, please try again later' }] },
+});
+
+app.use('/graphql', authRateLimiter);
+
+// General rate limiter: 100 requests per minute per IP
+const generalRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { errors: [{ message: 'Too many requests, please try again later' }] },
+});
+
+app.use('/graphql', generalRateLimiter);
 
 app.get('/health', async (_req, res) => {
   try {
@@ -67,6 +121,8 @@ process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
 async function start() {
+  validateJwtSecrets();
+  validateEncryptionKey();
   const httpServer = await createApolloServer(app);
 
   httpServer.listen(PORT, () => {

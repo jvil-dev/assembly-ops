@@ -147,6 +147,7 @@ const authResolvers = {
       { refreshToken }: { refreshToken: string },
       context: Context
     ) => {
+      requireAdmin(context);
       const authService = new AuthService(context.prisma);
       await authService.logout(refreshToken);
 

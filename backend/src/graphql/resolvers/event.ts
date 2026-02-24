@@ -32,7 +32,7 @@
  */
 import { Context } from '../context.js';
 import { EventService } from '../../services/eventService.js';
-import { requireAdmin, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireEventAccess } from '../guards/auth.js';
 import { Event, EventTemplate, EventAdmin, Department, DepartmentType } from '@prisma/client';
 
 // All 12 department types
@@ -58,6 +58,7 @@ const eventResolvers = {
       { serviceYear }: { serviceYear?: number },
       context: Context
     ): Promise<EventTemplate[]> => {
+      requireAuth(context);
       const eventService = new EventService(context.prisma);
       return eventService.getEventTemplates(serviceYear);
     },

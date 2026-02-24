@@ -230,7 +230,7 @@ model EventVolunteer {
   id                 String               @id @default(cuid())
   volunteerId        String               @unique // "CA-XXXXX" or "RC-XXXXXX"
   tokenHash          String // bcrypt hash for auth
-  token              String
+  encryptedToken     String // AES-256-GCM encrypted token for overseer retrieval
   volunteerProfileId String
   eventId            String
   departmentId       String?
@@ -260,14 +260,14 @@ model EventVolunteer {
 }
 
 model LostPersonAlert {
-  id               String         @id @default(cuid())
-  personName       String
-  age              Int?
-  description      String
-  lastSeenLocation String?
-  lastSeenTime     DateTime?
-  contactName      String
-  contactPhone     String?
+  id                     String         @id @default(cuid())
+  encryptedPersonName    String // AES-256-GCM encrypted
+  age                    Int?
+  description            String
+  lastSeenLocation       String?
+  lastSeenTime           DateTime?
+  encryptedContactName   String // AES-256-GCM encrypted
+  encryptedContactPhone  String? // AES-256-GCM encrypted
   reportedBy       EventVolunteer @relation(fields: [reportedById], references: [id])
   reportedById     String
   event            Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
@@ -369,10 +369,10 @@ model ConversationParticipant {
 }
 
 model OAuthConnection {
-  id         String       @id @default(cuid())
-  provider   AuthProvider
-  providerId String
-  email      String?
+  id              String       @id @default(cuid())
+  provider        AuthProvider
+  providerId      String
+  encryptedEmail  String? // AES-256-GCM encrypted
   adminId    String
   createdAt  DateTime     @default(now())
   admin      Admin        @relation(fields: [adminId], references: [id], onDelete: Cascade)

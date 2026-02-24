@@ -28,6 +28,7 @@
 import { Context } from '../context.js';
 import { AttendantService } from '../../services/attendantService.js';
 import { requireAdmin, requireAuth, requireVolunteer, requireEventAccess } from '../guards/auth.js';
+import { decryptField } from '../../utils/encryption.js';
 import {
   ReportSafetyIncidentInput,
   CreateLostPersonAlertInput,
@@ -236,6 +237,20 @@ const attendantResolvers = {
       await requireEventAccess(context, eventId);
 
       return attendantService.deleteMeeting(id);
+    },
+  },
+
+  // Type resolvers: decrypt PII fields for GraphQL responses
+  LostPersonAlert: {
+    personName: (parent: Record<string, unknown>) => {
+      return decryptField(parent.encryptedPersonName as string);
+    },
+    contactName: (parent: Record<string, unknown>) => {
+      return decryptField(parent.encryptedContactName as string);
+    },
+    contactPhone: (parent: Record<string, unknown>) => {
+      const encrypted = parent.encryptedContactPhone as string | null;
+      return encrypted ? decryptField(encrypted) : null;
     },
   },
 };

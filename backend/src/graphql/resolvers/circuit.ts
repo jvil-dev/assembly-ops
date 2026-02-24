@@ -16,6 +16,7 @@
  */
 import { Context } from '../context.js';
 import { Circuit } from '@prisma/client';
+import { requireAuth } from '../guards/auth.js';
 
 const circuitResolvers = {
   Query: {
@@ -24,6 +25,7 @@ const circuitResolvers = {
       args: { region?: string; language?: string },
       context: Context
     ): Promise<Circuit[]> => {
+      requireAuth(context);
       return context.prisma.circuit.findMany({
         where: {
           ...(args.region && { region: args.region }),
@@ -38,6 +40,7 @@ const circuitResolvers = {
       { id }: { id: string },
       context: Context
     ): Promise<Circuit | null> => {
+      requireAuth(context);
       return context.prisma.circuit.findUnique({
         where: { id },
       });
@@ -48,6 +51,7 @@ const circuitResolvers = {
       { code }: { code: string },
       context: Context
     ): Promise<Circuit | null> => {
+      requireAuth(context);
       return context.prisma.circuit.findUnique({
         where: { code },
       });

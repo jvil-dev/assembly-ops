@@ -36,6 +36,7 @@
 import { Context } from '../context.js';
 import { MessageService, SenderIdentity } from '../../services/messageService.js';
 import { requireAdmin, requireAuth, requireEventAccess } from '../guards/auth.js';
+import { AuthorizationError } from '../../utils/errors.js';
 import {
   SendMessageInput,
   SendDepartmentMessageInput,
@@ -66,8 +67,23 @@ const messageResolvers = {
   Query: {
     message: async (_parent: unknown, { id }: { id: string }, context: Context) => {
       requireAuth(context);
+      const identity = resolveSenderIdentity(context);
       const messageService = new MessageService(context.prisma);
-      return messageService.getMessage(id);
+      const msg = await messageService.getMessage(id);
+      if (!msg) return null;
+
+      // Check ownership: sender, direct recipient, or broadcast recipient
+      const isSender =
+        (msg.senderAdminId && msg.senderAdminId === identity.senderId) ||
+        (msg.senderVolId && msg.senderVolId === identity.senderId);
+      const isRecipient = msg.recipientId === identity.senderId;
+      const isBroadcast = msg.recipientType === 'EVENT' || msg.recipientType === 'DEPARTMENT';
+
+      if (!isSender && !isRecipient && !isBroadcast) {
+        throw new AuthorizationError('You do not have access to this message');
+      }
+
+      return msg;
     },
 
     sentMessages: async (

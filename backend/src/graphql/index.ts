@@ -21,9 +21,9 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import depthLimit from 'graphql-depth-limit';
 import express from 'express';
 import http from 'http';
-import cors from 'cors';
 import typeDefs from './schema/index.js';
 import resolvers from './resolvers/index.js';
 import { createContext, Context } from './context.js';
@@ -34,6 +34,7 @@ export async function createApolloServer(app: express.Application) {
   const server = new ApolloServer<Context>({
     typeDefs,
     resolvers,
+    validationRules: [depthLimit(10)],
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
     introspection: process.env.NODE_ENV !== 'production',
   });
@@ -42,7 +43,6 @@ export async function createApolloServer(app: express.Application) {
 
   app.use(
     '/graphql',
-    cors<cors.CorsRequest>(),
     express.json(),
     expressMiddleware(server, {
       context: createContext,

@@ -70,6 +70,7 @@ describe('Event Operations', () => {
     it('should return list of templates', async () => {
       const response = await request(app)
         .post('/graphql')
+        .set('Authorization', `Bearer ${accessToken}`)
         .send({
           query: `
             query {

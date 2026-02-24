@@ -30,6 +30,8 @@ import { Context } from '../context.js';
 import { VolunteerProfile, EventVolunteer } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { generateEventVolunteerId, generateToken, hashToken } from '../../utils/credentials.js';
+import { encryptField } from '../../utils/encryption.js';
+import { requireAdmin, requireEventAccess } from '../guards/auth.js';
 
 // Input types
 export interface CreateVolunteerProfileInput {
@@ -102,6 +104,7 @@ const volunteerProfileResolvers = {
       args: { congregationId?: string },
       context: Context
     ): Promise<VolunteerProfile[]> => {
+      requireAdmin(context);
       return context.prisma.volunteerProfile.findMany({
         where: args.congregationId ? { congregationId: args.congregationId } : {},
         orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
@@ -113,6 +116,7 @@ const volunteerProfileResolvers = {
       { circuitId }: { circuitId: string },
       context: Context
     ): Promise<VolunteerProfile[]> => {
+      requireAdmin(context);
       return context.prisma.volunteerProfile.findMany({
         where: {
           congregation: { circuitId },
@@ -126,6 +130,7 @@ const volunteerProfileResolvers = {
       args: { query: string; circuitId?: string },
       context: Context
     ): Promise<VolunteerProfile[]> => {
+      requireAdmin(context);
       const searchTerms = args.query.toLowerCase().split(' ');
 
       return context.prisma.volunteerProfile.findMany({
@@ -161,6 +166,7 @@ const volunteerProfileResolvers = {
       { id }: { id: string },
       context: Context
     ): Promise<VolunteerProfile | null> => {
+      requireAdmin(context);
       return context.prisma.volunteerProfile.findUnique({
         where: { id },
       });
@@ -171,6 +177,13 @@ const volunteerProfileResolvers = {
       { id }: { id: string },
       context: Context
     ): Promise<EventVolunteer | null> => {
+      requireAdmin(context);
+      const ev = await context.prisma.eventVolunteer.findUnique({
+        where: { id },
+        select: { id: true, eventId: true },
+      });
+      if (!ev) return null;
+      await requireEventAccess(context, ev.eventId);
       return context.prisma.eventVolunteer.findUnique({
         where: { id },
       });
@@ -181,6 +194,13 @@ const volunteerProfileResolvers = {
       { volunteerId }: { volunteerId: string },
       context: Context
     ): Promise<EventVolunteer | null> => {
+      requireAdmin(context);
+      const ev = await context.prisma.eventVolunteer.findUnique({
+        where: { volunteerId },
+        select: { id: true, eventId: true },
+      });
+      if (!ev) return null;
+      await requireEventAccess(context, ev.eventId);
       return context.prisma.eventVolunteer.findUnique({
         where: { volunteerId },
       });
@@ -193,6 +213,7 @@ const volunteerProfileResolvers = {
       { input }: { input: CreateVolunteerProfileInput },
       context: Context
     ): Promise<VolunteerProfile> => {
+      requireAdmin(context);
       return context.prisma.volunteerProfile.create({
         data: {
           firstName: input.firstName,
@@ -211,6 +232,7 @@ const volunteerProfileResolvers = {
       { id, input }: { id: string; input: UpdateVolunteerProfileInput },
       context: Context
     ): Promise<VolunteerProfile> => {
+      requireAdmin(context);
       return context.prisma.volunteerProfile.update({
         where: { id },
         data: input,
@@ -222,6 +244,7 @@ const volunteerProfileResolvers = {
       { id }: { id: string },
       context: Context
     ): Promise<boolean> => {
+      requireAdmin(context);
       // Check if profile has any event volunteers
       const eventVolunteers = await context.prisma.eventVolunteer.findMany({
         where: { volunteerProfileId: id },
@@ -245,6 +268,8 @@ const volunteerProfileResolvers = {
       { input }: { input: AddVolunteerToEventInput },
       context: Context
     ) => {
+      requireAdmin(context);
+      await requireEventAccess(context, input.eventId);
       const { volunteerProfileId, eventId, departmentId, roleId } = input;
 
       // Check if already added to this event
@@ -285,7 +310,7 @@ const volunteerProfileResolvers = {
         data: {
           volunteerId,
           tokenHash,
-          token, // Store plaintext for overseer retrieval
+          encryptedToken: encryptField(token),
           volunteerProfileId,
           eventId,
           departmentId,
@@ -318,6 +343,8 @@ const volunteerProfileResolvers = {
       { input }: { input: CreateAndAddVolunteerInput },
       context: Context
     ) => {
+      requireAdmin(context);
+      await requireEventAccess(context, input.eventId);
       const {
         firstName,
         lastName,
@@ -367,7 +394,7 @@ const volunteerProfileResolvers = {
           data: {
             volunteerId,
             tokenHash,
-            token,
+            encryptedToken: encryptField(token),
             volunteerProfileId: profile.id,
             eventId,
             departmentId,
@@ -402,6 +429,17 @@ const volunteerProfileResolvers = {
       { eventVolunteerId }: { eventVolunteerId: string },
       context: Context
     ): Promise<boolean> => {
+      requireAdmin(context);
+      const ev = await context.prisma.eventVolunteer.findUnique({
+        where: { id: eventVolunteerId },
+        select: { eventId: true },
+      });
+      if (!ev) {
+        throw new GraphQLError('Event volunteer not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+      await requireEventAccess(context, ev.eventId);
       // Check for active assignments
       const assignments = await context.prisma.scheduleAssignment.findMany({
         where: { eventVolunteerId },
@@ -425,12 +463,23 @@ const volunteerProfileResolvers = {
       { eventVolunteerId }: { eventVolunteerId: string },
       context: Context
     ) => {
+      requireAdmin(context);
+      const evRecord = await context.prisma.eventVolunteer.findUnique({
+        where: { id: eventVolunteerId },
+        select: { eventId: true },
+      });
+      if (!evRecord) {
+        throw new GraphQLError('Event volunteer not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+      await requireEventAccess(context, evRecord.eventId);
       const token = generateToken();
       const tokenHash = await hashToken(token);
 
       const eventVolunteer = await context.prisma.eventVolunteer.update({
         where: { id: eventVolunteerId },
-        data: { tokenHash, token },
+        data: { tokenHash, encryptedToken: encryptField(token) },
         include: {
           volunteerProfile: true,
           event: { include: { template: true } },

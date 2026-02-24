@@ -69,9 +69,12 @@ describe('Assignment Operations', () => {
     accessToken = registerRes.body.data.registerAdmin.accessToken;
 
     // Get template and activate event
-    const templatesRes = await request(app).post('/graphql').send({
-      query: `query { eventTemplates(serviceYear: 2026) { id } }`,
-    });
+    const templatesRes = await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        query: `query { eventTemplates(serviceYear: 2026) { id } }`,
+      });
 
     if (templatesRes.body.data.eventTemplates.length > 0) {
       const templateId = templatesRes.body.data.eventTemplates[0].id;
