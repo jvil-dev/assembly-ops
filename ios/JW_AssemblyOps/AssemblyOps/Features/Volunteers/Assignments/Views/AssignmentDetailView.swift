@@ -27,12 +27,15 @@ struct AssignmentDetailView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel: AssignmentDetailViewModel
+    @StateObject private var attendantVM = AttendantVolunteerViewModel()
     let assignment: Assignment
     let onUpdate: () -> Void
 
     @State private var showDeclineSheet = false
     @State private var declineReason = ""
     @State private var hasAppeared = false
+    @State private var areaGroup: AreaGroupItem?
+    @State private var isLoadingAreaGroup = false
 
     init(assignment: Assignment, onUpdate: @escaping () -> Void = {}) {
         self.assignment = assignment
@@ -42,6 +45,14 @@ struct AssignmentDetailView: View {
 
     private var isAttendantAccepted: Bool {
         assignment.isAccepted && assignment.departmentType == "ATTENDANT"
+    }
+
+    private var isAttendantCaptain: Bool {
+        assignment.isCaptain && assignment.isAccepted && assignment.departmentType == "ATTENDANT"
+    }
+
+    private var isSeatingPost: Bool {
+        assignment.postCategory?.hasPrefix("Seating") == true
     }
 
     var body: some View {
@@ -71,12 +82,30 @@ struct AssignmentDetailView: View {
                 if isAttendantAccepted {
                     attendantSectionsCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+
+                    // Attendance count history
+                    if !attendantVM.postCountHistory.isEmpty {
+                        attendanceHistoryCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.18)
+                    }
+
+                    // Seating status toggle (seating posts only)
+                    if isSeatingPost {
+                        seatingSectionStatusCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.19)
+                    }
                 }
 
                 // Captain group (if captain)
                 if assignment.isCaptain && assignment.isAccepted {
                     captainGroupCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
+                }
+
+                // Post incident summary (Attendant captains only)
+                if isAttendantCaptain {
+                    postIncidentSummaryCard
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
                 }
             }
             .screenPadding()
@@ -89,6 +118,19 @@ struct AssignmentDetailView: View {
         .onAppear {
             withAnimation(AppTheme.entranceAnimation) {
                 hasAppeared = true
+            }
+        }
+        .task {
+            if isAttendantAccepted {
+                await attendantVM.loadPostCountHistory(postId: assignment.postId)
+                if isSeatingPost {
+                    await attendantVM.loadPostSessionStatuses(sessionId: assignment.sessionId)
+                }
+            }
+            if isAttendantCaptain, let eventId = appState.currentVolunteer?.eventId {
+                async let concerns: () = attendantVM.loadConcerns(eventId: eventId)
+                async let areaGroupLoad: () = loadAreaGroup()
+                _ = await (concerns, areaGroupLoad)
             }
         }
         .sheet(isPresented: $showDeclineSheet) {
@@ -209,9 +251,7 @@ struct AssignmentDetailView: View {
 
     private var checkInCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            Text("Attendance")
-                .font(AppTheme.Typography.headline)
-                .foregroundStyle(AppTheme.themeColor)
+            SectionHeaderLabel(icon: "clock.badge.checkmark", title: "assignment.checkIn".localized)
 
             CheckInButton(
                 assignment: assignment,
@@ -236,39 +276,258 @@ struct AssignmentDetailView: View {
 
     // MARK: - Attendant Post Actions Card
 
-    private var attendantSectionsCard: some View {
-        NavigationLink(destination: AttendanceInputView()) {
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                HStack(spacing: AppTheme.Spacing.s) {
-                    Image(systemName: "number.square")
-                        .foregroundStyle(AppTheme.themeColor)
-                    Text("attendant.detail.submitCount".localized)
-                        .font(AppTheme.Typography.headline)
-                        .foregroundStyle(AppTheme.themeColor)
-                }
+    @State private var attendanceCount: Int = 0
+    @State private var attendanceNotes: String = ""
+    @State private var showCountSubmitted = false
+    @State private var showAttendanceError = false
 
-                HStack {
-                    VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                        Text(assignment.postName)
-                            .font(AppTheme.Typography.bodyMedium)
-                            .foregroundStyle(.primary)
-                        if let location = assignment.postLocation {
-                            Text(location)
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        }
+    private var attendantSectionsCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            SectionHeaderLabel(icon: "number.square", title: "attendant.detail.submitCount".localized)
+
+            // Post info
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "mappin")
+                    .font(.system(size: 14))
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(assignment.postName)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(.primary)
+                    if let location = assignment.postLocation {
+                        Text(location)
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                     }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                }
+                Spacer()
+                Text(assignment.sessionName)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            }
+
+            // Count picker
+            Picker("", selection: $attendanceCount) {
+                ForEach(0...500, id: \.self) { value in
+                    Text("\(value)").tag(value)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .cardPadding()
-            .themedCard(scheme: colorScheme)
+            .pickerStyle(.wheel)
+            .frame(height: 120)
+            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+
+            // Notes (optional)
+            TextField("attendant.attendance.notes.placeholder".localized, text: $attendanceNotes)
+                .font(AppTheme.Typography.body)
+                .padding(AppTheme.Spacing.m)
+                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+
+            // Submit button
+            Button {
+                Task {
+                    await attendantVM.submitPostCount(
+                        postId: assignment.postId,
+                        postName: assignment.postName,
+                        sessionId: assignment.sessionId,
+                        count: attendanceCount,
+                        notes: attendanceNotes.isEmpty ? nil : attendanceNotes
+                    )
+                    if attendantVM.error == nil {
+                        showCountSubmitted = true
+                        await attendantVM.loadPostCountHistory(postId: assignment.postId)
+                    }
+                }
+            } label: {
+                HStack(spacing: AppTheme.Spacing.s) {
+                    if attendantVM.isSaving {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                        Text("attendant.attendance.submit".localized)
+                    }
+                }
+                .font(AppTheme.Typography.bodyMedium)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppTheme.Spacing.m)
+                .background(attendanceCount > 0 ? AppTheme.themeColor : AppTheme.textTertiary(for: colorScheme))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
+            }
+            .buttonStyle(.plain)
+            .disabled(attendanceCount == 0 || attendantVM.isSaving)
         }
-        .buttonStyle(.plain)
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+        .alert("attendant.attendance.submitted".localized, isPresented: $showCountSubmitted) {
+            Button("common.ok".localized) {
+                attendanceCount = 0
+                attendanceNotes = ""
+            }
+        }
+        .onChange(of: attendantVM.error) { _, newValue in showAttendanceError = newValue != nil }
+        .alert("common.error".localized, isPresented: $showAttendanceError) {
+            Button("common.ok".localized) { attendantVM.error = nil }
+        } message: {
+            Text(attendantVM.error ?? "")
+        }
+    }
+
+    // MARK: - Attendance History Card
+
+    private var attendanceHistoryCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            SectionHeaderLabel(icon: "clock.arrow.circlepath", title: "assignment.attendance.history".localized)
+
+            ForEach(attendantVM.postCountHistory) { entry in
+                HStack(spacing: AppTheme.Spacing.m) {
+                    Text("\(entry.count)")
+                        .font(AppTheme.Typography.title)
+                        .foregroundStyle(AppTheme.themeColor)
+                        .frame(width: 50, alignment: .leading)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(entry.sessionName)
+                            .font(AppTheme.Typography.subheadline)
+                            .foregroundStyle(.primary)
+                        Text(entry.updatedAt, style: .relative)
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    }
+
+                    Spacer()
+
+                    if let notes = entry.notes, !notes.isEmpty {
+                        Image(systemName: "note.text")
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    }
+                }
+                .padding(.vertical, AppTheme.Spacing.xs)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Seating Section Status Card
+
+    private var currentSectionStatus: SeatingSectionStatusItem {
+        attendantVM.postSessionStatuses
+            .first(where: { $0.postId == assignment.postId && $0.sessionId == assignment.sessionId })?
+            .status ?? .open
+    }
+
+    private var seatingSectionStatusCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            SectionHeaderLabel(icon: "chair.lounge", title: "attendant.seating.title".localized)
+
+            Text("attendant.seating.subtitle".localized)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+            HStack(spacing: AppTheme.Spacing.s) {
+                ForEach(SeatingSectionStatusItem.allCases, id: \.rawValue) { status in
+                    Button {
+                        Task {
+                            await attendantVM.updateSectionStatus(
+                                postId: assignment.postId,
+                                sessionId: assignment.sessionId,
+                                status: status
+                            )
+                        }
+                        HapticManager.shared.lightTap()
+                    } label: {
+                        HStack(spacing: AppTheme.Spacing.xs) {
+                            Image(systemName: status.icon)
+                            Text(status.displayName)
+                        }
+                        .font(AppTheme.Typography.subheadline)
+                        .fontWeight(currentSectionStatus == status ? .semibold : .regular)
+                        .foregroundStyle(currentSectionStatus == status ? .white : status.color)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppTheme.Spacing.m)
+                        .background(currentSectionStatus == status ? status.color : status.color.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(attendantVM.isSaving)
+                }
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Post Incident Summary Card (Attendant Captains)
+
+    private var postIncidentSummaryCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "exclamationmark.triangle")
+                    .foregroundStyle(AppTheme.StatusColors.warning)
+                Text("attendant.captain.postIncidents.title".localized.uppercased())
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            let unresolvedIncidents: [SafetyIncidentItem] = {
+                if let group = areaGroup {
+                    let postIds = Set(group.members.map { $0.postId })
+                    return attendantVM.unresolvedIncidents(forPostIds: postIds)
+                }
+                return attendantVM.unresolvedIncidents(for: assignment.postId)
+            }()
+
+            if unresolvedIncidents.isEmpty {
+                HStack(spacing: AppTheme.Spacing.s) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(AppTheme.StatusColors.accepted)
+                    Text("attendant.captain.postIncidents.allClear".localized)
+                        .font(AppTheme.Typography.body)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                }
+            } else {
+                ForEach(unresolvedIncidents.prefix(3)) { incident in
+                    NavigationLink(destination: VolunteerConcernDetailView(concern: .incident(incident))) {
+                        incidentSummaryRow(incident)
+                    }
+                    .buttonStyle(.plain)
+                }
+                if unresolvedIncidents.count > 3 {
+                    Text("+ \(unresolvedIncidents.count - 3) more")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    private func incidentSummaryRow(_ incident: SafetyIncidentItem) -> some View {
+        HStack(spacing: AppTheme.Spacing.s) {
+            Image(systemName: incident.type.icon)
+                .foregroundStyle(AppTheme.StatusColors.warning)
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(incident.type.displayName)
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(.primary)
+                Text(incident.description)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    .lineLimit(2)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                .font(.caption)
+        }
     }
 
     // MARK: - Captain Group Card
@@ -283,15 +542,33 @@ struct AssignmentDetailView: View {
                     .foregroundStyle(AppTheme.themeColor)
             }
 
-            CaptainGroupView(
-                postId: assignment.postId,
-                sessionId: assignment.sessionId,
-                onCheckIn: onUpdate
-            )
+            if isAttendantCaptain {
+                AreaCaptainGroupContent(
+                    group: areaGroup,
+                    isLoading: isLoadingAreaGroup,
+                    onCheckIn: onUpdate
+                )
+            } else {
+                CaptainGroupView(
+                    postId: assignment.postId,
+                    sessionId: assignment.sessionId,
+                    onCheckIn: onUpdate
+                )
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Load Area Group
+
+    private func loadAreaGroup() async {
+        isLoadingAreaGroup = true
+        if let groups = try? await AreaService.shared.fetchMyAreaGroups() {
+            areaGroup = groups.first { $0.sessionId == assignment.sessionId }
+        }
+        isLoadingAreaGroup = false
     }
 }
 

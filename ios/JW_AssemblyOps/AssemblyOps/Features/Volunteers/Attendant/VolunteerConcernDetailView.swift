@@ -271,7 +271,8 @@ struct VolunteerConcernDetailView: View {
                     .background(AppTheme.StatusColors.acceptedBackground)
                     .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
             } else {
-                Text("ACTIVE")
+                Text("attendant.concerns.status.active".localized)
+                    .textCase(.uppercase)
                     .font(AppTheme.Typography.caption)
                     .fontWeight(.semibold)
                     .foregroundStyle(activeColor)
@@ -319,6 +320,7 @@ struct VolunteerConcernDetailView: View {
             type: .wetFloor,
             description: "Wet floor near entrance B",
             location: "Entrance B",
+            postId: "post-3",
             postName: "Post 3",
             reportedByName: "John Doe",
             resolved: false,

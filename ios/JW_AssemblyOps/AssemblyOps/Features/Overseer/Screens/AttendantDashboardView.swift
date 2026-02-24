@@ -33,6 +33,16 @@ struct AttendantDashboardView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
     @State private var isInitialLoading = true
+    @State private var walkThroughCompletions: [WalkThroughCompletionItem] = []
+    @State private var facilityLocations: [FacilityLocationItem] = []
+    @State private var showCreateFacility = false
+
+    private var accentColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
+    }
 
     var body: some View {
         Group {
@@ -53,6 +63,12 @@ struct AttendantDashboardView: View {
 
                         meetingsCard
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+
+                        walkThroughStatusCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
+
+                        facilityGuideCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
                     }
                     .screenPadding()
                     .padding(.top, AppTheme.Spacing.l)
@@ -78,7 +94,7 @@ struct AttendantDashboardView: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
                 HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "exclamationmark.triangle")
-                        .foregroundStyle(incidentVM.unresolvedCount > 0 ? AppTheme.StatusColors.warning : AppTheme.themeColor)
+                        .foregroundStyle(incidentVM.unresolvedCount > 0 ? AppTheme.StatusColors.warning : accentColor)
                     Text("attendant.incidents.title".localized.uppercased())
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -113,7 +129,7 @@ struct AttendantDashboardView: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
                 HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "person.crop.circle.badge.questionmark")
-                        .foregroundStyle(alertVM.unresolvedCount > 0 ? AppTheme.StatusColors.declined : AppTheme.themeColor)
+                        .foregroundStyle(alertVM.unresolvedCount > 0 ? AppTheme.StatusColors.declined : accentColor)
                     Text("attendant.lostPerson.title".localized.uppercased())
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -148,7 +164,7 @@ struct AttendantDashboardView: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
                 HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "number.square")
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(accentColor)
                     Text("attendant.attendance.title".localized.uppercased())
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -177,7 +193,7 @@ struct AttendantDashboardView: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
                 HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "person.3.sequence")
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(accentColor)
                     Text("attendant.meetings.title".localized.uppercased())
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -199,6 +215,118 @@ struct AttendantDashboardView: View {
         .buttonStyle(.plain)
     }
 
+    // MARK: - Walk-Through Status Card
+
+    private var walkThroughStatusCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "checklist")
+                    .foregroundStyle(accentColor)
+                Text("attendant.walkthrough.status.title".localized.uppercased())
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            if walkThroughCompletions.isEmpty {
+                Text("attendant.walkthrough.status.none".localized)
+                    .font(AppTheme.Typography.headline)
+                    .foregroundStyle(.primary)
+            } else {
+                ForEach(walkThroughCompletions) { completion in
+                    HStack(spacing: AppTheme.Spacing.s) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(AppTheme.StatusColors.accepted)
+                            .frame(width: 20)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(completion.volunteerName ?? "attendant.walkthrough.status.unknown".localized)
+                                .font(AppTheme.Typography.subheadline)
+                                .foregroundStyle(.primary)
+                            Text("\(completion.sessionName) • \(completion.completedAt, style: .relative)")
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                        }
+                        Spacer()
+                        Text("\(completion.itemCount) \("attendant.walkthrough.status.items".localized)")
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    }
+                }
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Facility Guide Card
+
+    private var facilityGuideCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "building.2")
+                    .foregroundStyle(accentColor)
+                Text("attendant.facility.title".localized.uppercased())
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                Spacer()
+                Button {
+                    showCreateFacility = true
+                    HapticManager.shared.lightTap()
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundStyle(accentColor)
+                }
+            }
+
+            if facilityLocations.isEmpty {
+                Text("attendant.facility.empty".localized)
+                    .font(AppTheme.Typography.body)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            } else {
+                ForEach(facilityLocations) { facility in
+                    HStack(spacing: AppTheme.Spacing.s) {
+                        Image(systemName: "mappin.circle.fill")
+                            .foregroundStyle(accentColor)
+                            .frame(width: 20)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(facility.name)
+                                .font(AppTheme.Typography.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.primary)
+                            Text(facility.location)
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                            if let desc = facility.description {
+                                Text(desc)
+                                    .font(AppTheme.Typography.caption)
+                                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                            }
+                        }
+                        Spacer()
+                        Button {
+                            Task {
+                                try? await AttendantService.shared.deleteFacilityLocation(id: facility.id)
+                                facilityLocations.removeAll { $0.id == facility.id }
+                            }
+                        } label: {
+                            Image(systemName: "trash")
+                                .font(.caption)
+                                .foregroundStyle(AppTheme.StatusColors.declined)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, AppTheme.Spacing.xs)
+                }
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+        .sheet(isPresented: $showCreateFacility) {
+            CreateFacilityLocationSheet { newFacility in
+                facilityLocations.append(newFacility)
+            }
+        }
+    }
+
     // MARK: - Data Loading
 
     private func loadAllData() async {
@@ -210,6 +338,13 @@ struct AttendantDashboardView: View {
         async let a: () = alertVM.loadAlerts(eventId: eventId)
         async let m: () = meetingVM.loadMeetings(eventId: eventId)
         _ = await (i, a, m)
+
+        // Load walk-through completions and facility locations
+        async let w = AttendantService.shared.fetchWalkThroughCompletions(eventId: eventId, sessionId: nil)
+        async let f = AttendantService.shared.fetchFacilityLocations(eventId: eventId)
+        walkThroughCompletions = (try? await w) ?? []
+        facilityLocations = (try? await f) ?? []
+
         isInitialLoading = false
     }
 }

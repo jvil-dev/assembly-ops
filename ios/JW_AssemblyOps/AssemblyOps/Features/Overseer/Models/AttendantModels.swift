@@ -24,6 +24,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 // MARK: - Safety Incident Type
 
@@ -77,6 +78,7 @@ struct SafetyIncidentItem: Identifiable {
     let type: SafetyIncidentTypeItem
     let description: String
     let location: String?
+    let postId: String?
     let postName: String?
     let reportedByName: String
     let resolved: Bool
@@ -93,6 +95,7 @@ extension SafetyIncidentItem {
         self.type = incidentType
         self.description = data.description
         self.location = data.location
+        self.postId = data.post?.id
         self.postName = data.post?.name
         let profile = data.reportedBy.volunteerProfile
         self.reportedByName = "\(profile.firstName) \(profile.lastName)"
@@ -113,6 +116,7 @@ extension SafetyIncidentItem {
         self.type = incidentType
         self.description = data.description
         self.location = data.location
+        self.postId = data.post?.id
         self.postName = data.post?.name
         self.reportedByName = ""
         self.resolved = false
@@ -259,6 +263,128 @@ extension MeetingAttendeeItem {
         self.volunteerId = data.eventVolunteer.id
         let profile = data.eventVolunteer.volunteerProfile
         self.volunteerName = "\(profile.firstName) \(profile.lastName)"
+    }
+}
+
+// MARK: - Walk-Through Completion
+
+struct WalkThroughCompletionItem: Identifiable {
+    let id: String
+    let sessionId: String
+    let sessionName: String
+    let completedAt: Date
+    let itemCount: Int
+    let notes: String?
+    let volunteerName: String?
+}
+
+extension WalkThroughCompletionItem {
+    init?(fromMy data: AssemblyOpsAPI.MyWalkThroughCompletionsQuery.Data.MyWalkThroughCompletion) {
+        self.id = data.id
+        self.sessionId = data.session.id
+        self.sessionName = data.session.name
+        self.completedAt = DateUtils.parseISO8601(data.completedAt) ?? Date()
+        self.itemCount = data.itemCount
+        self.notes = data.notes
+        self.volunteerName = nil
+    }
+
+    init?(fromAdmin data: AssemblyOpsAPI.WalkThroughCompletionsQuery.Data.WalkThroughCompletion) {
+        self.id = data.id
+        self.sessionId = data.session.id
+        self.sessionName = data.session.name
+        self.completedAt = DateUtils.parseISO8601(data.completedAt) ?? Date()
+        self.itemCount = data.itemCount
+        self.notes = data.notes
+        let profile = data.eventVolunteer.volunteerProfile
+        self.volunteerName = "\(profile.firstName) \(profile.lastName)"
+    }
+}
+
+// MARK: - Post Session Status
+
+enum SeatingSectionStatusItem: String, CaseIterable {
+    case open = "OPEN"
+    case filling = "FILLING"
+    case full = "FULL"
+
+    var displayName: String {
+        switch self {
+        case .open: return "attendant.seating.status.open".localized
+        case .filling: return "attendant.seating.status.filling".localized
+        case .full: return "attendant.seating.status.full".localized
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .open: return "checkmark.circle"
+        case .filling: return "circle.lefthalf.filled"
+        case .full: return "xmark.circle"
+        }
+    }
+
+    var color: SwiftUI.Color {
+        switch self {
+        case .open: return AppTheme.StatusColors.accepted
+        case .filling: return AppTheme.StatusColors.pending
+        case .full: return AppTheme.StatusColors.declined
+        }
+    }
+}
+
+struct PostSessionStatusItem: Identifiable {
+    let id: String
+    let postId: String
+    let postName: String
+    let postLocation: String?
+    let postCategory: String?
+    let sessionId: String
+    let sessionName: String
+    var status: SeatingSectionStatusItem
+    let updatedAt: Date
+}
+
+extension PostSessionStatusItem {
+    init?(from data: AssemblyOpsAPI.PostSessionStatusesQuery.Data.PostSessionStatus) {
+        guard let statusItem = SeatingSectionStatusItem(rawValue: data.status.rawValue) else { return nil }
+        self.id = data.id
+        self.postId = data.post.id
+        self.postName = data.post.name
+        self.postLocation = data.post.location
+        self.postCategory = data.post.category
+        self.sessionId = data.session.id
+        self.sessionName = data.session.name
+        self.status = statusItem
+        self.updatedAt = DateUtils.parseISO8601(data.updatedAt) ?? Date()
+    }
+}
+
+// MARK: - Facility Location
+
+struct FacilityLocationItem: Identifiable {
+    let id: String
+    let name: String
+    let location: String
+    let description: String?
+    let sortOrder: Int
+}
+
+extension FacilityLocationItem {
+    init(from data: AssemblyOpsAPI.FacilityLocationsQuery.Data.FacilityLocation) {
+        self.id = data.id
+        self.name = data.name
+        self.location = data.location
+        self.description = data.description
+        self.sortOrder = data.sortOrder
+    }
+
+    init(fromCreate data: AssemblyOpsAPI.CreateFacilityLocationMutation.Data.CreateFacilityLocation) {
+        self.id = data.id
+        self.name = data.name
+        self.location = data.location
+        self.description = data.description
+        self.sortOrder = data.sortOrder
     }
 }
 
