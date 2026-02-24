@@ -66,8 +66,10 @@ describe('Check-In Operations', () => {
     adminToken = registerRes.body.data.registerAdmin.accessToken;
 
     // Get event template
-    const templatesRes = await graphqlRequest(
-      `query { eventTemplates(serviceYear: 2026) { id } }`
+    const templatesRes = await authRequest(
+      `query { eventTemplates(serviceYear: 2026) { id } }`,
+      {},
+      adminToken
     );
 
     if (!templatesRes.body.data?.eventTemplates?.length) {

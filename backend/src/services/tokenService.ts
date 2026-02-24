@@ -28,6 +28,7 @@
  *
  * Called by: AuthService, VolunteerService
  */
+import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import { generateTokens, verifyRefreshToken, TokenPair } from '../utils/jwt.js';
 
@@ -35,6 +36,10 @@ const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 export class TokenService {
   constructor(private prisma: PrismaClient) {}
+
+  private hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
 
   async createRefreshToken(
     token: string,
@@ -46,7 +51,7 @@ export class TokenService {
 
     await this.prisma.refreshToken.create({
       data: {
-        token,
+        token: this.hashToken(token),
         expiresAt,
         adminId: userType === 'admin' ? userId : null,
         volunteerId: userType === 'volunteer' ? userId : null,
@@ -57,7 +62,7 @@ export class TokenService {
 
   async revokeRefreshToken(token: string): Promise<void> {
     await this.prisma.refreshToken.updateMany({
-      where: { token },
+      where: { token: this.hashToken(token) },
       data: { revoked: true },
     });
   }
@@ -106,7 +111,7 @@ export class TokenService {
     email?: string
   ): Promise<TokenPair | null> {
     const storedToken = await this.prisma.refreshToken.findUnique({
-      where: { token: oldToken },
+      where: { token: this.hashToken(oldToken) },
     });
 
     if (!storedToken) {
@@ -147,7 +152,7 @@ export class TokenService {
       const payload = verifyRefreshToken(token);
 
       const storedToken = await this.prisma.refreshToken.findUnique({
-        where: { token },
+        where: { token: this.hashToken(token) },
       });
 
       if (!storedToken || storedToken.revoked || storedToken.expiresAt < new Date()) {

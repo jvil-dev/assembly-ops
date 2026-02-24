@@ -58,6 +58,7 @@ describe('Assignment Acceptance Operations', () => {
     // Setup event, department, volunteer, post, session
     const templatesRes = await request(app)
       .post('/graphql')
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ query: `query { eventTemplates(serviceYear: 2026) { id } }` });
 
     if (templatesRes.body.data.eventTemplates.length > 0) {

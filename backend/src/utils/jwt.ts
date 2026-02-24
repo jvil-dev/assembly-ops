@@ -88,13 +88,29 @@ export function generateTokens(payload: {
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload {
-  const payload = jwt.verify(token, JWT_SECRET) as AccessTokenPayload;
+  const payload = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as AccessTokenPayload;
   return payload;
 }
 
 export function verifyRefreshToken(token: string): RefreshTokenPayload {
-  const payload = jwt.verify(token, JWT_REFRESH_SECRET) as RefreshTokenPayload;
+  const payload = jwt.verify(token, JWT_REFRESH_SECRET, { algorithms: ['HS256'] }) as RefreshTokenPayload;
   return payload;
+}
+
+export function validateJwtSecrets(): void {
+  const secrets = [
+    { name: 'JWT_SECRET', value: process.env.JWT_SECRET },
+    { name: 'JWT_REFRESH_SECRET', value: process.env.JWT_REFRESH_SECRET },
+  ];
+
+  for (const { name, value } of secrets) {
+    if (!value) {
+      throw new Error(`${name} environment variable is required`);
+    }
+    if (value.length < 32) {
+      throw new Error(`${name} must be at least 32 characters`);
+    }
+  }
 }
 
 export function extractTokenFromHeader(authHeader?: string): string | null {

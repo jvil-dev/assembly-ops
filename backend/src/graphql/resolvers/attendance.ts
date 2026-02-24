@@ -40,6 +40,8 @@ const attendanceResolvers = {
     attendanceCount: async (_parent: unknown, { id }: { id: string }, context: Context) => {
       requireAdmin(context);
       const attendanceService = new AttendanceService(context.prisma);
+      const eventId = await attendanceService.getAttendanceCountEventId(id);
+      await requireEventAccess(context, eventId);
       return attendanceService.getAttendanceCount(id);
     },
 
@@ -99,6 +101,13 @@ const attendanceResolvers = {
       context: Context
     ) => {
       requireAuth(context);
+      if (context.volunteer) {
+        if (context.volunteer.eventId !== eventId) {
+          throw new AuthorizationError('You do not have access to this event');
+        }
+      } else {
+        await requireEventAccess(context, eventId);
+      }
       return context.prisma.session.findMany({
         where: { eventId },
         orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
@@ -111,6 +120,21 @@ const attendanceResolvers = {
       context: Context
     ) => {
       requireAuth(context);
+      const post = await context.prisma.post.findUnique({
+        where: { id: postId },
+        select: { department: { select: { eventId: true } } },
+      });
+      if (!post) {
+        throw new AuthorizationError('Post not found');
+      }
+      const eventId = post.department.eventId;
+      if (context.volunteer) {
+        if (context.volunteer.eventId !== eventId) {
+          throw new AuthorizationError('You do not have access to this event');
+        }
+      } else {
+        await requireEventAccess(context, eventId);
+      }
       return context.prisma.attendanceCount.findMany({
         where: { postId },
         include: { session: true },

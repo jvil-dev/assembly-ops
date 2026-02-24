@@ -32,6 +32,7 @@
  * Used by: ./index.ts (resolver composition)
  */
 import { ScheduleAssignment } from '@prisma/client';
+import { GraphQLError } from 'graphql';
 import { Context } from '../context.js';
 import { AssignmentService } from '../../services/assignmentService.js';
 import { requireAdmin, requireVolunteer, requireEventAccess } from '../guards/auth.js';
@@ -192,6 +193,13 @@ const assignmentResolvers = {
       context: Context
     ) => {
       requireAdmin(context);
+      const dept = await context.prisma.department.findUnique({
+        where: { id: departmentId },
+        select: { eventId: true },
+      });
+      if (dept) {
+        await requireEventAccess(context, dept.eventId);
+      }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.getDepartmentCoverage(departmentId);
     },
@@ -202,6 +210,13 @@ const assignmentResolvers = {
       context: Context
     ) => {
       requireAdmin(context);
+      const dept = await context.prisma.department.findUnique({
+        where: { id: departmentId },
+        select: { eventId: true },
+      });
+      if (dept) {
+        await requireEventAccess(context, dept.eventId);
+      }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.getDepartmentCoverageGaps(departmentId);
     },
@@ -258,16 +273,31 @@ const assignmentResolvers = {
       requireAdmin(context);
       const assignmentService = new AssignmentService(context.prisma);
 
-      // Verify event access for first input (assumes all are same event)
-      if (inputs.length > 0) {
-        const session = await context.prisma.session.findUnique({
-          where: { id: inputs[0].sessionId },
-          select: { eventId: true },
-        });
-        if (session) {
-          await requireEventAccess(context, session.eventId);
-        }
+      if (inputs.length === 0) {
+        return [];
       }
+
+      // Collect all unique session IDs and validate they exist and belong to the same event
+      const sessionIds = [...new Set(inputs.map((i) => i.sessionId))];
+      const sessions = await context.prisma.session.findMany({
+        where: { id: { in: sessionIds } },
+        select: { id: true, eventId: true },
+      });
+
+      if (sessions.length !== sessionIds.length) {
+        throw new GraphQLError('One or more session IDs are invalid', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const eventIds = [...new Set(sessions.map((s) => s.eventId))];
+      if (eventIds.length > 1) {
+        throw new GraphQLError('All assignments must belong to the same event', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      await requireEventAccess(context, eventIds[0]);
 
       return assignmentService.createAssignments({ assignments: inputs });
     },

@@ -4,6 +4,7 @@ import { generateTokens } from '../utils/jwt.js';
 import { AuthenticationError } from '../utils/errors.js';
 import { verifyGoogleToken, verifyAppleToken } from '../utils/oauthVerifiers.js';
 import { generatePendingOAuthToken, verifyPendingOAuthToken } from '../utils/pendingOAuth.js';
+import { encryptField } from '../utils/encryption.js';
 
 export class OAuthService {
   private tokenService: TokenService;
@@ -53,7 +54,7 @@ export class OAuthService {
         data: {
           provider,
           providerId: userInfo.providerId,
-          email: userInfo.email,
+          encryptedEmail: encryptField(userInfo.email),
           adminId: existingAdmin.id,
         },
       });
@@ -97,7 +98,7 @@ export class OAuthService {
         data: {
           provider: pending.provider,
           providerId: pending.providerId,
-          email: pending.email,
+          encryptedEmail: encryptField(pending.email),
           adminId: newAdmin.id,
         },
       });

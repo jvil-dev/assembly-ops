@@ -47,7 +47,7 @@ export function generateEventVolunteerId(prefix: 'CA' | 'RC'): string {
   let suffix = '';
 
   for (let i = 0; i < 6; i++) {
-    suffix += ID_CHARS.charAt(Math.floor(Math.random() * ID_CHARS.length));
+    suffix += ID_CHARS.charAt(crypto.randomInt(ID_CHARS.length));
   }
 
   return `${prefix}-${suffix}`;
@@ -61,7 +61,7 @@ export function generateEventVolunteerId(prefix: 'CA' | 'RC'): string {
 export function generateToken(): string {
   let token = '';
   for (let i = 0; i < 8; i++) {
-    token += ID_CHARS.charAt(Math.floor(Math.random() * ID_CHARS.length));
+    token += ID_CHARS.charAt(crypto.randomInt(ID_CHARS.length));
   }
   return token;
 }
@@ -81,52 +81,24 @@ export async function verifyToken(token: string, hash: string): Promise<boolean>
 }
 
 // ============================================
-// TOKEN ENCRYPTION (AES-256-GCM)
+// TOKEN ENCRYPTION (delegates to encryption.ts)
 // ============================================
-
-const ALGORITHM = 'aes-256-gcm' as const;
-const IV_LENGTH = 12;
-const AUTH_TAG_LENGTH = 16;
-
-function getEncryptionKey(): Buffer {
-  const keyHex = process.env.VOLUNTEER_TOKEN_KEY;
-  if (!keyHex || keyHex.length !== 64) {
-    throw new Error('VOLUNTEER_TOKEN_KEY must be set as a 64-character hex string');
-  }
-  return Buffer.from(keyHex, 'hex');
-}
+import { encryptField, decryptField } from './encryption.js';
 
 /**
  * Encrypt a volunteer token using AES-256-GCM
- * Returns base64 string: [IV (12 bytes)][authTag (16 bytes)][ciphertext]
+ * @deprecated Use encryptField() from encryption.ts directly
  */
 export function encryptToken(plainToken: string): string {
-  const key = getEncryptionKey();
-  const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
-
-  const encrypted = Buffer.concat([cipher.update(plainToken, 'utf8'), cipher.final()]);
-  const authTag = cipher.getAuthTag();
-
-  return Buffer.concat([iv, authTag, encrypted]).toString('base64');
+  return encryptField(plainToken);
 }
 
 /**
  * Decrypt an AES-256-GCM encrypted token
- * Input: base64 string from encryptToken()
+ * @deprecated Use decryptField() from encryption.ts directly
  */
 export function decryptToken(encryptedToken: string): string {
-  const key = getEncryptionKey();
-  const data = Buffer.from(encryptedToken, 'base64');
-
-  const iv = data.subarray(0, IV_LENGTH);
-  const authTag = data.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
-  const ciphertext = data.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
-
-  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
-  decipher.setAuthTag(authTag);
-
-  return decipher.update(ciphertext, undefined, 'utf8') + decipher.final('utf8');
+  return decryptField(encryptedToken);
 }
 
 // ============================================
@@ -141,7 +113,7 @@ export function decryptToken(encryptedToken: string): string {
 export function generateVolunteerId(): string {
   let id = '';
   for (let i = 0; i < 6; i++) {
-    id += ID_CHARS.charAt(Math.floor(Math.random() * ID_CHARS.length));
+    id += ID_CHARS.charAt(crypto.randomInt(ID_CHARS.length));
   }
   return `VOL-${id}`;
 }

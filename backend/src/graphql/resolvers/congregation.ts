@@ -16,6 +16,7 @@
  */
 import { Context } from '../context.js';
 import { Congregation } from '@prisma/client';
+import { requireAuth } from '../guards/auth.js';
 
 const congregationResolvers = {
   Query: {
@@ -24,6 +25,7 @@ const congregationResolvers = {
       args: { state: string; language?: string },
       context: Context
     ): Promise<Congregation[]> => {
+      requireAuth(context);
       return context.prisma.congregation.findMany({
         where: {
           state: args.state,
@@ -38,6 +40,7 @@ const congregationResolvers = {
       { circuitId }: { circuitId: string },
       context: Context
     ): Promise<Congregation[]> => {
+      requireAuth(context);
       return context.prisma.congregation.findMany({
         where: { circuitId },
         orderBy: { name: 'asc' },
@@ -49,6 +52,7 @@ const congregationResolvers = {
       { id }: { id: string },
       context: Context
     ): Promise<Congregation | null> => {
+      requireAuth(context);
       return context.prisma.congregation.findUnique({
         where: { id },
       });

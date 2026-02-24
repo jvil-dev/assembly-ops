@@ -22,6 +22,7 @@
  *
  * Called by: ../graphql/resolvers/attendant.ts
  */
+import { encryptField } from '../utils/encryption.js';
 import {
   PrismaClient,
   SafetyIncident,
@@ -114,10 +115,20 @@ export class AttendantService {
       throw new ValidationError(result.error.issues[0].message);
     }
 
+    const validated = result.data;
     return this.prisma.lostPersonAlert.create({
       data: {
-        ...result.data,
-        lastSeenTime: result.data.lastSeenTime ? new Date(result.data.lastSeenTime) : undefined,
+        encryptedPersonName: encryptField(validated.personName),
+        encryptedContactName: encryptField(validated.contactName),
+        encryptedContactPhone: validated.contactPhone
+          ? encryptField(validated.contactPhone)
+          : undefined,
+        age: validated.age,
+        description: validated.description,
+        lastSeenLocation: validated.lastSeenLocation,
+        lastSeenTime: validated.lastSeenTime ? new Date(validated.lastSeenTime) : undefined,
+        sessionId: validated.sessionId,
+        eventId: validated.eventId,
         reportedById,
       },
       include: { reportedBy: true },

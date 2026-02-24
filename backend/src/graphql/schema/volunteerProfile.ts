@@ -16,7 +16,6 @@ export const volunteerProfileTypeDefs = `#graphql
   type EventVolunteer {
     id: ID!
     volunteerId: String!
-    token: String!
     volunteerProfile: VolunteerProfile!
     event: Event!
     department: Department
