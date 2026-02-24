@@ -54,7 +54,7 @@ export class PostService {
 
     // If areaId is provided, auto-derive category from the area
     let category = validated.category;
-    let areaId = validated.areaId;
+    const areaId = validated.areaId;
 
     if (areaId) {
       const area = await this.prisma.area.findUnique({
@@ -107,7 +107,7 @@ export class PostService {
 
     for (const postInput of posts) {
       let category = postInput.category;
-      let areaId = postInput.areaId ?? null;
+      const areaId = postInput.areaId ?? null;
 
       if (areaId) {
         const area = await this.prisma.area.findUnique({
