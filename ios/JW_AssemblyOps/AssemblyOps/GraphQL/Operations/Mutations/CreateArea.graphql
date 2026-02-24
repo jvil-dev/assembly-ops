@@ -1,0 +1,10 @@
+mutation CreateArea($departmentId: ID!, $input: CreateAreaInput!) {
+    createArea(departmentId: $departmentId, input: $input) {
+        id
+        name
+        description
+        category
+        sortOrder
+        postCount
+    }
+}

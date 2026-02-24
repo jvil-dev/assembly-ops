@@ -1,0 +1,9 @@
+mutation CreateFacilityLocation($input: CreateFacilityLocationInput!) {
+  createFacilityLocation(input: $input) {
+    id
+    name
+    location
+    description
+    sortOrder
+  }
+}

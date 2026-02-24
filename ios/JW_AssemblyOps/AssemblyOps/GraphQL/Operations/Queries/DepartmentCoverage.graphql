@@ -7,6 +7,8 @@ query DepartmentCoverage($departmentId: ID!) {
       category
       location
       sortOrder
+      areaId
+      areaName
     }
     session {
       id

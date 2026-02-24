@@ -1,0 +1,48 @@
+query MyAreaGroups {
+    myAreaGroups {
+        area {
+            id
+            name
+            description
+            category
+        }
+        captain {
+            id
+            session {
+                id
+                name
+                date
+                startTime
+                endTime
+            }
+            eventVolunteer {
+                id
+                volunteerId
+                volunteerProfile {
+                    firstName
+                    lastName
+                }
+            }
+        }
+        members {
+            postName
+            postId
+            assignment {
+                id
+                status
+                volunteer {
+                    id
+                    firstName
+                    lastName
+                    congregation
+                    phone
+                }
+                checkIn {
+                    id
+                    status
+                    checkInTime
+                }
+            }
+        }
+    }
+}

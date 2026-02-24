@@ -1,0 +1,12 @@
+mutation SubmitWalkThroughCompletion($input: SubmitWalkThroughCompletionInput!) {
+  submitWalkThroughCompletion(input: $input) {
+    id
+    session {
+      id
+      name
+    }
+    completedAt
+    itemCount
+    notes
+  }
+}

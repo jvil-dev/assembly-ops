@@ -12,6 +12,11 @@ query MyAssignments {
       name
       location
       capacity
+      category
+      area {
+        id
+        name
+      }
       department {
         id
         name
