@@ -63,13 +63,18 @@ final class AttendanceViewModel: ObservableObject {
 
     // MARK: - Queries
 
-    /// Load Attendant department posts for the section picker
+    /// Load Attendant department posts for the section picker (overseer path)
     func loadAttendantPosts(departments: [DepartmentSummary]) async {
         guard let attendantDept = departments.first(where: { $0.departmentType == "ATTENDANT" }) else {
             return
         }
+        await loadAttendantPosts(departmentId: attendantDept.id)
+    }
+
+    /// Load Attendant department posts by departmentId directly (volunteer path)
+    func loadAttendantPosts(departmentId: String) async {
         do {
-            attendantPosts = try await AttendanceService.shared.fetchAttendantPosts(departmentId: attendantDept.id)
+            attendantPosts = try await AttendanceService.shared.fetchAttendantPosts(departmentId: departmentId)
         } catch {
             // Non-fatal: fall back to free-text if posts fail to load
             print("[AttendanceVM] Failed to load attendant posts: \(error)")
@@ -109,7 +114,7 @@ final class AttendanceViewModel: ObservableObject {
             let section = effectiveSectionName
             let noteText = notes.isEmpty ? nil : notes
             _ = try await AttendanceService.shared.submitAttendanceCount(
-                sessionId: sessionId, section: section, count: count, notes: noteText
+                sessionId: sessionId, section: section, postId: selectedPost?.id, count: count, notes: noteText
             )
             HapticManager.shared.success()
             successMessage = "attendance.submitted".localized

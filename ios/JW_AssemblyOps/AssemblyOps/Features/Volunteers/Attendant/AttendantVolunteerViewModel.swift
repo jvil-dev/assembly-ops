@@ -34,9 +34,21 @@ final class AttendantVolunteerViewModel: ObservableObject {
     @Published var myMeetings: [AttendantMeetingItem] = []
     @Published var incidents: [SafetyIncidentItem] = []
     @Published var alerts: [LostPersonAlertItem] = []
+    @Published var postCountHistory: [PostAttendanceHistoryItem] = []
+    @Published var myWalkThroughCompletions: [WalkThroughCompletionItem] = []
+    @Published var postSessionStatuses: [PostSessionStatusItem] = []
+    @Published var facilityLocations: [FacilityLocationItem] = []
     @Published var isLoading = false
     @Published var isSaving = false
     @Published var error: String?
+
+    func unresolvedIncidents(for postId: String) -> [SafetyIncidentItem] {
+        incidents.filter { $0.postId == postId && !$0.resolved }
+    }
+
+    func unresolvedIncidents(forPostIds postIds: Set<String>) -> [SafetyIncidentItem] {
+        incidents.filter { postIds.contains($0.postId ?? "") && !$0.resolved }
+    }
 
     var concerns: [ConcernItem] {
         (incidents.map { .incident($0) } + alerts.map { .alert($0) })
@@ -103,6 +115,15 @@ final class AttendantVolunteerViewModel: ObservableObject {
         }
     }
 
+    func loadPostCountHistory(postId: String) async {
+        do {
+            postCountHistory = try await AttendanceService.shared.fetchPostAttendanceCounts(postId: postId)
+        } catch {
+            // Non-fatal: history is supplementary
+            print("[AttendantVM] Failed to load post count history: \(error)")
+        }
+    }
+
     func submitPostCount(postId: String, postName: String, sessionId: String, count: Int, notes: String?) async {
         isSaving = true
         error = nil
@@ -115,6 +136,75 @@ final class AttendantVolunteerViewModel: ObservableObject {
         } catch {
             self.error = error.localizedDescription
             HapticManager.shared.error()
+        }
+    }
+
+    // MARK: - Walk-Through Completions
+
+    func submitWalkThrough(eventId: String, sessionId: String, itemCount: Int, notes: String?) async {
+        isSaving = true
+        error = nil
+        defer { isSaving = false }
+        do {
+            let completion = try await AttendantService.shared.submitWalkThroughCompletion(
+                eventId: eventId, sessionId: sessionId, itemCount: itemCount, notes: notes
+            )
+            myWalkThroughCompletions.insert(completion, at: 0)
+            HapticManager.shared.success()
+        } catch {
+            self.error = error.localizedDescription
+            HapticManager.shared.error()
+        }
+    }
+
+    func loadMyWalkThroughCompletions() async {
+        do {
+            myWalkThroughCompletions = try await AttendantService.shared.fetchMyWalkThroughCompletions()
+        } catch {
+            print("[AttendantVM] Failed to load walk-through completions: \(error)")
+        }
+    }
+
+    func hasCompletedWalkThrough(for sessionId: String) -> Bool {
+        myWalkThroughCompletions.contains { $0.sessionId == sessionId }
+    }
+
+    // MARK: - Post Session Status
+
+    func loadPostSessionStatuses(sessionId: String) async {
+        do {
+            postSessionStatuses = try await AttendantService.shared.fetchPostSessionStatuses(sessionId: sessionId)
+        } catch {
+            print("[AttendantVM] Failed to load post session statuses: \(error)")
+        }
+    }
+
+    func updateSectionStatus(postId: String, sessionId: String, status: SeatingSectionStatusItem) async {
+        isSaving = true
+        error = nil
+        defer { isSaving = false }
+        do {
+            try await AttendantService.shared.updatePostSessionStatus(
+                postId: postId, sessionId: sessionId, status: status.rawValue
+            )
+            // Update local state
+            if let index = postSessionStatuses.firstIndex(where: { $0.postId == postId && $0.sessionId == sessionId }) {
+                postSessionStatuses[index].status = status
+            }
+            HapticManager.shared.success()
+        } catch {
+            self.error = error.localizedDescription
+            HapticManager.shared.error()
+        }
+    }
+
+    // MARK: - Facility Locations
+
+    func loadFacilityLocations(eventId: String) async {
+        do {
+            facilityLocations = try await AttendantService.shared.fetchFacilityLocations(eventId: eventId)
+        } catch {
+            print("[AttendantVM] Failed to load facility locations: \(error)")
         }
     }
 }

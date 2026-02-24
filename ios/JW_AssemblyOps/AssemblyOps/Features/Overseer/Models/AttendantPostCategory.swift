@@ -70,4 +70,13 @@ enum AttendantMainCategory: String, CaseIterable, Identifiable {
         }
         return AttendantMainCategory.allCases.count
     }
+
+    /// Parses a stored category string back to its AttendantMainCategory case.
+    /// e.g. "Exterior - Doors" → .exterior, "Seating" → .seating, "Unknown" → nil
+    static func mainCategory(from storageString: String) -> AttendantMainCategory? {
+        if storageString.hasPrefix("Interior") { return .interior }
+        if storageString.hasPrefix("Exterior") { return .exterior }
+        if storageString.hasPrefix("Seating")  { return .seating }
+        return nil
+    }
 }

@@ -141,6 +141,30 @@ final class AttendanceService {
         }
     }
 
+    /// Fetch attendance count history for a specific post
+    func fetchPostAttendanceCounts(postId: String) async throws -> [PostAttendanceHistoryItem] {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.PostAttendanceCountsQuery(postId: postId),
+                cachePolicy: .fetchIgnoringCacheData
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.postAttendanceCounts {
+                        let items = data.compactMap { PostAttendanceHistoryItem(from: $0) }
+                        continuation.resume(returning: items)
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendanceError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendanceError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
     // MARK: - Mutations
 
     /// Submit attendance count for a session/post (upserts on same session+section)

@@ -88,6 +88,11 @@ const volunteerTypeDefs = `#graphql
     roleId: ID
   }
 
+  input UpdateMyProfileInput {
+    phone: String
+    email: String
+  }
+
   input LoginVolunteerInput {
     volunteerId: String!
     token: String!
@@ -102,6 +107,7 @@ const volunteerTypeDefs = `#graphql
     volunteers(eventId: ID!, departmentId: ID): [Volunteer!]!
     myVolunteerProfile: Volunteer
     volunteerToken(id: ID!): String!
+    roles(eventId: ID!): [Role!]!
   }
 
   extend type Mutation {
@@ -111,6 +117,7 @@ const volunteerTypeDefs = `#graphql
     deleteVolunteer(id: ID!): Boolean!
     regenerateVolunteerCredentials(id: ID!): VolunteerCredentials!
     loginVolunteer(input: LoginVolunteerInput!): VolunteerAuthPayload!
+    updateMyProfile(input: UpdateMyProfileInput!): Volunteer!
   }
 `;
 

@@ -140,6 +140,30 @@ extension VolunteerSessionItem {
     }
 }
 
+// MARK: - Post Attendance History (volunteer view)
+
+struct PostAttendanceHistoryItem: Identifiable {
+    let id: String
+    let count: Int
+    let section: String?
+    let notes: String?
+    let sessionName: String
+    let updatedAt: Date
+}
+
+extension PostAttendanceHistoryItem {
+    init?(from graphQL: AssemblyOpsAPI.PostAttendanceCountsQuery.Data.PostAttendanceCount) {
+        let fmt = DateUtils.isoFormatter
+        guard let updated = fmt.date(from: graphQL.updatedAt) else { return nil }
+        self.id = graphQL.id
+        self.count = graphQL.count
+        self.section = graphQL.section
+        self.notes = graphQL.notes
+        self.sessionName = graphQL.session.name
+        self.updatedAt = updated
+    }
+}
+
 // MARK: - Attendant Post (for section picker)
 
 struct AttendantPostItem: Identifiable, Hashable {

@@ -20,6 +20,7 @@ struct AttendanceCountBreakdownView: View {
     @State private var isLoading = false
     @State private var summaries: [SessionAttendanceSummaryItem] = []
     @State private var selectedSessionId: String?
+    @State private var groupByCategory: Bool = false
     @State private var error: String?
 
     private var selectedSummary: SessionAttendanceSummaryItem? {
@@ -43,9 +44,37 @@ struct AttendanceCountBreakdownView: View {
                         totalCard(summary)
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
 
+                        if sessionState.selectedDepartment?.departmentType == "ATTENDANT" {
+                            Toggle("attendant.count.groupByCategory".localized, isOn: $groupByCategory)
+                                .font(AppTheme.Typography.caption)
+                                .padding(.horizontal, AppTheme.Spacing.screenEdge)
+                                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.08)
+                        }
+
                         if summary.sectionCounts.isEmpty {
                             noCountsState
                                 .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+                        } else if groupByCategory {
+                            let groups = groupedCounts(for: summary.sectionCounts)
+                            ForEach(Array(groups.enumerated()), id: \.offset) { groupIndex, group in
+                                VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+                                    HStack {
+                                        SectionHeaderLabel(icon: "square.grid.2x2", title: group.label)
+                                        Spacer()
+                                        Text("\(group.subtotal)")
+                                            .font(AppTheme.Typography.headline)
+                                            .fontWeight(.bold)
+                                            .foregroundStyle(AppTheme.themeColor)
+                                    }
+                                    .padding(.horizontal, AppTheme.Spacing.screenEdge)
+                                    .entranceAnimation(hasAppeared: hasAppeared, delay: Double(groupIndex) * 0.05 + 0.1)
+
+                                    ForEach(Array(group.items.enumerated()), id: \.element.id) { itemIndex, count in
+                                        sectionCountCard(count)
+                                            .entranceAnimation(hasAppeared: hasAppeared, delay: Double(groupIndex * 10 + itemIndex) * 0.02 + 0.12)
+                                    }
+                                }
+                            }
                         } else {
                             ForEach(Array(summary.sectionCounts.enumerated()), id: \.element.id) { index, count in
                                 sectionCountCard(count)
@@ -66,6 +95,10 @@ struct AttendanceCountBreakdownView: View {
         .onAppear {
             withAnimation(AppTheme.entranceAnimation) {
                 hasAppeared = true
+            }
+            // Only set default on first appearance — don't override user's toggle choice on re-appear
+            if summaries.isEmpty {
+                groupByCategory = sessionState.selectedDepartment?.departmentType == "ATTENDANT"
             }
         }
     }
@@ -209,6 +242,40 @@ struct AttendanceCountBreakdownView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, AppTheme.Spacing.xl)
+    }
+
+    // MARK: - Category Grouping
+
+    private struct CountGroup {
+        let label: String
+        let subtotal: Int
+        let items: [AttendanceCountItem]
+    }
+
+    private func groupedCounts(for counts: [AttendanceCountItem]) -> [CountGroup] {
+        var result: [CountGroup] = []
+
+        for category in AttendantMainCategory.allCases {
+            let items = counts.filter {
+                let section = $0.section ?? ""
+                return AttendantMainCategory.mainCategory(from: section) == category
+            }
+            guard !items.isEmpty else { continue }
+            let subtotal = items.reduce(0) { $0 + $1.count }
+            let label = AttendantMainCategory.displayString(for: category.rawValue)
+            result.append(CountGroup(label: label, subtotal: subtotal, items: items))
+        }
+
+        // Other / unrecognized categories
+        let otherItems = counts.filter {
+            AttendantMainCategory.mainCategory(from: $0.section ?? "") == nil
+        }
+        if !otherItems.isEmpty {
+            let subtotal = otherItems.reduce(0) { $0 + $1.count }
+            result.append(CountGroup(label: "Other", subtotal: subtotal, items: otherItems))
+        }
+
+        return result
     }
 
     // MARK: - Data Loading

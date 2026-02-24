@@ -1,0 +1,15 @@
+mutation SetCaptain($input: SetCaptainInput!) {
+    setCaptain(input: $input) {
+        id
+        isCaptain
+        status
+        post {
+            id
+            name
+        }
+        session {
+            id
+            name
+        }
+    }
+}

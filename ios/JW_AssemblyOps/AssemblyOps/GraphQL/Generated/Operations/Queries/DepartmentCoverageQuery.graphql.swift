@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "DepartmentCoverage"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query DepartmentCoverage($departmentId: ID!) { departmentCoverage(departmentId: $departmentId) { __typename post { __typename id name capacity category location sortOrder } session { __typename id name date startTime endTime } assignments { __typename id volunteer { __typename id firstName lastName } checkIn { __typename id checkInTime } status forceAssigned } filled capacity isFilled } }"#
+        #"query DepartmentCoverage($departmentId: ID!) { departmentCoverage(departmentId: $departmentId) { __typename post { __typename id name capacity category location sortOrder areaId areaName } session { __typename id name date startTime endTime } assignments { __typename id volunteer { __typename id firstName lastName } checkIn { __typename id checkInTime } status forceAssigned } filled capacity isFilled } }"#
       ))
 
     public var departmentId: ID
@@ -77,6 +77,8 @@ extension AssemblyOpsAPI {
             .field("category", String?.self),
             .field("location", String?.self),
             .field("sortOrder", Int.self),
+            .field("areaId", AssemblyOpsAPI.ID?.self),
+            .field("areaName", String?.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             DepartmentCoverageQuery.Data.DepartmentCoverage.Post.self
@@ -88,6 +90,8 @@ extension AssemblyOpsAPI {
           var category: String? { __data["category"] }
           var location: String? { __data["location"] }
           var sortOrder: Int { __data["sortOrder"] }
+          var areaId: AssemblyOpsAPI.ID? { __data["areaId"] }
+          var areaName: String? { __data["areaName"] }
         }
 
         /// DepartmentCoverage.Session

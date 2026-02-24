@@ -88,6 +88,7 @@ final class VolunteerLoginViewModel: ObservableObject {
                             lastName: profile.lastName,
                             fullName: "\(profile.firstName) \(profile.lastName)",
                             congregation: profile.congregation.name,
+                            appointmentStatus: profile.appointmentStatus.rawValue,
                             eventId: ev.event.id,
                             eventName: ev.event.name,
                             eventVenue: ev.event.venue,

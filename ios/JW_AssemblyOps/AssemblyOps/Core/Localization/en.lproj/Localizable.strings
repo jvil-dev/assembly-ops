@@ -19,6 +19,7 @@
 "common.copy" = "Copy";
 "common.share" = "Share";
 "common.ok" = "OK";
+"common.close" = "Close";
 
 // MARK: - Auth
 "auth.login" = "Sign In";
@@ -92,6 +93,10 @@
 "home.actions.unreadOne" = "1 unread message";
 "home.actions.respond" = "Respond";
 "home.actions.read" = "Read";
+"home.role.captain" = "Captain";
+"home.role.elder" = "Elder";
+"home.role.ministerialServant" = "Ministerial Servant";
+"home.role.publisher" = "Publisher";
 
 // MARK: - Tabs
 "tab.home" = "Home";
@@ -206,10 +211,36 @@
 "post.createdMessage" = "Post '%@' has been created.";
 "post.bulkCreatedMessage" = "%@ posts have been created.";
 "post.otherCategory" = "Other";
+"post.subcategory" = "Subcategory";
 "post.examples" = "Examples";
 
 // Suggestions
 "suggestion.addNew" = "Add '%@'";
+
+// Area Management
+"area.create" = "Create Area";
+"area.category" = "CATEGORY";
+"area.selectCategory" = "Select a category";
+"area.createInCategory" = "Create Area";
+"area.createInCategoryHint" = "Add a new %@ area";
+"area.createPost" = "Create Post";
+"area.details" = "AREA DETAILS";
+"area.name" = "Area Name";
+"area.namePlaceholder" = "e.g., Main Lobby, Seating Level 1";
+"area.description" = "Description";
+"area.descriptionPlaceholder" = "Optional description for this area";
+"area.sortOrder" = "Sort Order";
+"area.captain" = "CAPTAIN";
+"area.captainAssigned" = "Captain for this session";
+"area.assignCaptain" = "Assign Captain";
+"area.changeCaptain" = "Change Captain";
+"area.removeCaptain" = "Remove Captain";
+"area.selectCaptain" = "Select Captain";
+"area.posts" = "POSTS IN AREA";
+"area.noPosts" = "No posts in this area yet";
+"area.delete" = "Delete Area";
+"area.deleteConfirm" = "Delete Area";
+"area.deleteWarning" = "This will delete the area and all its posts. Assignments to these posts will also be removed.";
 
 // MARK: - Attendant Department
 "attendant.dashboard.title" = "Attendant Department";
@@ -328,6 +359,9 @@
 "attendant.attendance.general" = "General";
 "attendant.attendance.empty" = "No attendance data available";
 "attendant.attendance.noCounts" = "No counts submitted for this session";
+"attendant.attendance.submit" = "Submit Count";
+"attendant.attendance.notes.placeholder" = "Notes (optional)";
+"attendant.attendance.submitted" = "Attendance count submitted successfully";
 
 // Attendant - Concerns feed (volunteer view)
 "attendant.concerns.report" = "Report a Concern";
@@ -336,6 +370,7 @@
 "attendant.concerns.reportedBy" = "Reported By";
 "attendant.concerns.elapsed" = "elapsed";
 "attendant.concerns.totalTime" = "total time";
+"attendant.concerns.status.active" = "Active";
 "attendant.lostPerson.contact" = "Contact";
 
 // Attendant - Volunteer meetings
@@ -423,6 +458,87 @@
 "attendant.info.disruptions.lockDoors" = "Lock and barricade doors to protect the largest number of attendees";
 "attendant.info.disruptions.noWeapons" = "Attendants are NOT permitted to carry weapons";
 
+// MARK: - Sprint 6.8 — Captain Walk-Through Checklist
+"attendant.walkthrough.title" = "Morning Walk-Through";
+"attendant.walkthrough.progress" = "%d of %d complete";
+"attendant.walkthrough.complete.button" = "Complete Walk-Through";
+"attendant.walkthrough.complete.title" = "Walk-Through Complete";
+"attendant.walkthrough.complete.message" = "All %d items confirmed for %@. Time: %@";
+"attendant.walkthrough.session.placeholder" = "Select session";
+"attendant.walkthrough.item.1" = "Suspicious packages checked — stage, underneath stage, all corridors";
+"attendant.walkthrough.item.2" = "All exit doors unlocked and unobstructed from inside";
+"attendant.walkthrough.item.3" = "Fire alarm pull stations attended";
+"attendant.walkthrough.item.4" = "Stage access controlled — attendant posted";
+"attendant.walkthrough.item.5" = "Escalator/elevator attendants in position";
+"attendant.walkthrough.item.6" = "All entrance posts staffed (15 min before doors open)";
+"attendant.walkthrough.item.7" = "Disabled/elderly entrance area clear and accessible";
+"attendant.walkthrough.item.8" = "First Aid and Lost & Found locations confirmed";
+"attendant.walkthrough.dismiss.title" = "Discard Progress?";
+"attendant.walkthrough.dismiss.message" = "%d of %d items checked. Progress will be lost.";
+"attendant.walkthrough.dismiss.confirm" = "Discard";
+
+// MARK: - Sprint 6.8 — Captain Post Incident Context
+"attendant.captain.postIncidents.title" = "Post Incidents";
+"attendant.captain.postIncidents.allClear" = "All Clear — No unresolved incidents at this post";
+
+// MARK: - Sprint 6.8 — Area Captain Group
+"attendant.captain.areaGroup.noMembers" = "No group members assigned to this area";
+"attendant.captain.areaGroup.noGroup" = "No area group found for this session";
+"attendant.location.category.other" = "Other";
+
+// MARK: - Sprint 6.8 — Attendance Count Category Grouping
+"attendant.count.groupByCategory" = "Group by Category";
+
+// MARK: - Incident Protocol Cards (CO-23 §17, §23-26)
+"attendant.protocol.subtitle" = "Review this protocol carefully before proceeding.";
+"attendant.protocol.steps" = "Required Actions";
+"attendant.protocol.acknowledge" = "I Understand";
+
+// Bomb Threat (CO-23 §17)
+"attendant.protocol.bombThreat.title" = "Bomb Threat Protocol";
+"attendant.protocol.bombThreat.step1" = "Take the threat seriously. Do NOT activate the fire alarm.";
+"attendant.protocol.bombThreat.step2" = "Immediately contact the attendant overseer or his assistant.";
+"attendant.protocol.bombThreat.step3" = "Provide as much information as possible about the individual and the reported bomb.";
+"attendant.protocol.bombThreat.step4" = "If a bomb is detonated, the fire alarm likely should be used at that point.";
+
+// Violent Individual (CO-23 §23-24)
+"attendant.protocol.violentIndividual.title" = "Disruptive / Violent Individual";
+"attendant.protocol.violentIndividual.step1" = "Do not confront the individual alone. At least two attendants should approach together.";
+"attendant.protocol.violentIndividual.step2" = "Attempt to speak with the person outside of the auditorium, away from others, and try to calm him.";
+"attendant.protocol.violentIndividual.step3" = "If the person persists in being disruptive, ask him to leave and inform the attendant overseer immediately.";
+"attendant.protocol.violentIndividual.step4" = "If the individual refuses to leave, inform him that the police will be contacted.";
+"attendant.protocol.violentIndividual.step5" = "If the individual becomes violent, see the Avoid / Deny / Defend protocol for an active shooter situation.";
+
+// Active Shooter (CO-23 §25-26)
+"attendant.protocol.activeShooter.title" = "Active Shooter — Avoid / Deny / Defend";
+"attendant.protocol.activeShooter.step1" = "AVOID: Pay attention to surroundings, have an exit plan, and quickly move away from the attacker.";
+"attendant.protocol.activeShooter.step2" = "DENY: If you cannot avoid the attacker, create barriers, turn off lights, remain out of sight and quiet.";
+"attendant.protocol.activeShooter.step3" = "DEFEND: Only as a last resort — protect yourself and others using any available means.";
+"attendant.protocol.activeShooter.step4" = "Call the police immediately. Any attendant may call — do not wait for the overseer. Advise the overseer that police have been called.";
+"attendant.protocol.activeShooter.step5" = "Direct attendees to escape routes away from the violence. If evacuation is not possible, encourage attendees to hide in locked rooms.";
+"attendant.protocol.activeShooter.step6" = "Remain calm. Instruct others to silence phones and follow police directions immediately upon their arrival.";
+
+// MARK: - Seating Section Status
+"attendant.seating.title" = "Seating Status";
+"attendant.seating.subtitle" = "Update this section's availability for entry-point attendants";
+"attendant.seating.status.open" = "Open";
+"attendant.seating.status.filling" = "Filling";
+"attendant.seating.status.full" = "Full";
+
+// MARK: - Walk-Through Status (Overseer Dashboard)
+"attendant.walkthrough.status.title" = "Walk-Through Status";
+"attendant.walkthrough.status.none" = "No walk-throughs completed yet";
+"attendant.walkthrough.status.unknown" = "Unknown";
+"attendant.walkthrough.status.items" = "items";
+
+// MARK: - Facility Guide
+"attendant.facility.title" = "Facility Guide";
+"attendant.facility.empty" = "No facility guide entries yet";
+"attendant.facility.create" = "Add Entry";
+"attendant.facility.name" = "Name";
+"attendant.facility.location" = "Location / Directions";
+"attendant.facility.description" = "Description (optional)";
+
 // MARK: - Schedule (Volunteer)
 "schedule.title" = "My Schedule";
 "schedule.filter.all" = "All";
@@ -436,8 +552,12 @@
 "assignment.section.details" = "DETAILS";
 "assignment.section.attendance" = "ATTENDANCE";
 "assignment.section.yourGroup" = "YOUR GROUP";
+"assignment.checkIn" = "Check-In";
 "assignment.checkedIn" = "Checked in";
 "assignment.readyToCheckIn" = "Ready to check in";
+"assignment.attendance.history" = "Previous Counts";
+"assignment.attendance.lastUpdated" = "Last updated";
+"assignment.attendance.noHistory" = "No counts submitted yet";
 
 // MARK: - Messages (Volunteer)
 "messages.title" = "Messages";
@@ -460,6 +580,11 @@
 "profile.logout" = "Log Out";
 "profile.logout.confirm" = "Are you sure you want to log out?";
 "profile.section.language" = "LANGUAGE";
+"profile.edit.cancel" = "Cancel";
+"profile.edit.save" = "Save";
+"profile.edit.phone" = "Phone number";
+"profile.edit.email" = "Email address";
+"profile.edit.noContact" = "Tap the pencil to add contact info";
 
 // MARK: - Overseer Profile
 "overseer.profile.section.event" = "CURRENT EVENT";

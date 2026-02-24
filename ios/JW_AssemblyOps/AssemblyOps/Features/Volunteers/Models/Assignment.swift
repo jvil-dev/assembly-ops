@@ -80,6 +80,9 @@ struct Assignment: Identifiable, Equatable {
     let postName: String
     let postLocation: String?
     let postId: String
+    let postCategory: String?
+    let areaId: String?
+    let areaName: String?
     let departmentName: String
     let departmentType: String
     let sessionName: String
@@ -207,6 +210,9 @@ extension Assignment {
         self.postName = graphQL.post.name
         self.postLocation = graphQL.post.location
         self.postId = graphQL.post.id
+        self.postCategory = graphQL.post.category
+        self.areaId = graphQL.post.area?.id
+        self.areaName = graphQL.post.area?.name
         self.departmentName = graphQL.post.department.name
         self.departmentType = graphQL.post.department.departmentType.rawValue
         self.sessionName = graphQL.session.name
@@ -255,6 +261,9 @@ extension Assignment {
             postName: "East Lobby",
             postLocation: "Building A, Floor 1",
             postId: "post-1",
+            postCategory: "Interior",
+            areaId: "area-1",
+            areaName: "East Wing",
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
             sessionName: "Saturday Morning",
@@ -280,6 +289,9 @@ extension Assignment {
             postName: "West Gate",
             postLocation: "Building C",
             postId: "post-6",
+            postCategory: "Exterior",
+            areaId: "area-2",
+            areaName: "West Gate Area",
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
             sessionName: "Saturday Morning",
@@ -305,6 +317,9 @@ extension Assignment {
             postName: "Main Entrance",
             postLocation: "Building A",
             postId: "post-7",
+            postCategory: "Exterior",
+            areaId: "area-3",
+            areaName: "Main Entrance Area",
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
             sessionName: "Saturday Morning",
@@ -330,6 +345,9 @@ extension Assignment {
             postName: "Auditorium",
             postLocation: "Main Hall",
             postId: "post-2",
+            postCategory: "Seating",
+            areaId: "area-4",
+            areaName: "Main Hall Area",
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
             sessionName: "Saturday Afternoon",
@@ -355,6 +373,9 @@ extension Assignment {
             postName: "West Lobby",
             postLocation: "Building B",
             postId: "post-3",
+            postCategory: "Interior",
+            areaId: "area-1",
+            areaName: "East Wing",
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
             sessionName: "Saturday Morning",
@@ -380,6 +401,9 @@ extension Assignment {
             postName: "Parking Lot A",
             postLocation: "North Entrance",
             postId: "post-4",
+            postCategory: nil,
+            areaId: nil,
+            areaName: nil,
             departmentName: "Parking",
             departmentType: "PARKING",
             sessionName: "Sunday Morning",
@@ -405,6 +429,9 @@ extension Assignment {
             postName: "Lot A",
             postLocation: "North Gate",
             postId: "post-5",
+            postCategory: nil,
+            areaId: nil,
+            areaName: nil,
             departmentName: "Parking",
             departmentType: "PARKING",
             sessionName: "Friday Afternoon",

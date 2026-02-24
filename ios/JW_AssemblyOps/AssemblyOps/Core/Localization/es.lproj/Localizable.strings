@@ -19,6 +19,7 @@
 "common.copy" = "Copiar";
 "common.share" = "Compartir";
 "common.ok" = "OK";
+"common.close" = "Cerrar";
 
 // MARK: - Auth
 "auth.login" = "Iniciar Sesión";
@@ -92,6 +93,10 @@
 "home.actions.unreadOne" = "1 mensaje sin leer";
 "home.actions.respond" = "Responder";
 "home.actions.read" = "Leer";
+"home.role.captain" = "Capitán";
+"home.role.elder" = "Anciano";
+"home.role.ministerialServant" = "Siervo Ministerial";
+"home.role.publisher" = "Publicador";
 
 // MARK: - Tabs
 "tab.home" = "Inicio";
@@ -206,10 +211,36 @@
 "post.createdMessage" = "El puesto '%@' ha sido creado.";
 "post.bulkCreatedMessage" = "Se han creado %@ puestos.";
 "post.otherCategory" = "Otros";
+"post.subcategory" = "Subcategoría";
 "post.examples" = "Ejemplos";
 
 // Sugerencias
 "suggestion.addNew" = "Agregar '%@'";
+
+// Gestión de Áreas
+"area.create" = "Crear Área";
+"area.category" = "CATEGORÍA";
+"area.selectCategory" = "Selecciona una categoría";
+"area.createInCategory" = "Crear Área";
+"area.createInCategoryHint" = "Agregar una nueva área de %@";
+"area.createPost" = "Crear Puesto";
+"area.details" = "DETALLES DEL ÁREA";
+"area.name" = "Nombre del Área";
+"area.namePlaceholder" = "ej., Vestíbulo Principal, Nivel de Asientos 1";
+"area.description" = "Descripción";
+"area.descriptionPlaceholder" = "Descripción opcional para esta área";
+"area.sortOrder" = "Orden";
+"area.captain" = "CAPITÁN";
+"area.captainAssigned" = "Capitán para esta sesión";
+"area.assignCaptain" = "Asignar Capitán";
+"area.changeCaptain" = "Cambiar Capitán";
+"area.removeCaptain" = "Remover Capitán";
+"area.selectCaptain" = "Seleccionar Capitán";
+"area.posts" = "PUESTOS EN EL ÁREA";
+"area.noPosts" = "Aún no hay puestos en esta área";
+"area.delete" = "Eliminar Área";
+"area.deleteConfirm" = "Eliminar Área";
+"area.deleteWarning" = "Esto eliminará el área y todos sus puestos. Las asignaciones a estos puestos también se eliminarán.";
 
 // MARK: - Departamento de Acomodadores
 "attendant.dashboard.title" = "Departamento de Acomodadores";
@@ -328,6 +359,9 @@
 "attendant.attendance.general" = "General";
 "attendant.attendance.empty" = "No hay datos de asistencia disponibles";
 "attendant.attendance.noCounts" = "No hay conteos enviados para esta sesión";
+"attendant.attendance.submit" = "Enviar Conteo";
+"attendant.attendance.notes.placeholder" = "Notas (opcional)";
+"attendant.attendance.submitted" = "Conteo de asistencia enviado exitosamente";
 
 // Acomodadores - Feed de preocupaciones (vista del voluntario)
 "attendant.concerns.report" = "Reportar una preocupación";
@@ -336,6 +370,7 @@
 "attendant.concerns.reportedBy" = "Reportado por";
 "attendant.concerns.elapsed" = "transcurrido";
 "attendant.concerns.totalTime" = "tiempo total";
+"attendant.concerns.status.active" = "Activo";
 "attendant.lostPerson.contact" = "Contacto";
 
 // Acomodadores - Reuniones del voluntario
@@ -423,6 +458,87 @@
 "attendant.info.disruptions.lockDoors" = "Cierre con llave y bloquee las puertas para proteger al mayor número de asistentes";
 "attendant.info.disruptions.noWeapons" = "Los acomodadores NO tienen permiso de portar armas";
 
+// MARK: - Sprint 6.8 — Lista de Verificación Matutina (Capitán)
+"attendant.walkthrough.title" = "Revisión Matutina";
+"attendant.walkthrough.progress" = "%d de %d completados";
+"attendant.walkthrough.complete.button" = "Completar Revisión";
+"attendant.walkthrough.complete.title" = "Revisión Completada";
+"attendant.walkthrough.complete.message" = "Los %d elementos confirmados para %@. Hora: %@";
+"attendant.walkthrough.session.placeholder" = "Seleccionar sesión";
+"attendant.walkthrough.item.1" = "Paquetes sospechosos revisados — escenario, debajo del escenario, todos los pasillos";
+"attendant.walkthrough.item.2" = "Todas las salidas desbloqueadas y sin obstáculos desde adentro";
+"attendant.walkthrough.item.3" = "Estaciones de alarma de incendio vigiladas";
+"attendant.walkthrough.item.4" = "Acceso al escenario controlado — asistente en posición";
+"attendant.walkthrough.item.5" = "Asistentes de escaleras mecánicas/elevadores en posición";
+"attendant.walkthrough.item.6" = "Todos los puestos de entrada con personal (15 min antes de abrir)";
+"attendant.walkthrough.item.7" = "Área de entrada para discapacitados/ancianos despejada y accesible";
+"attendant.walkthrough.item.8" = "Ubicaciones de Primeros Auxilios y Objetos Perdidos confirmadas";
+"attendant.walkthrough.dismiss.title" = "¿Descartar Progreso?";
+"attendant.walkthrough.dismiss.message" = "%d de %d elementos marcados. Se perderá el progreso.";
+"attendant.walkthrough.dismiss.confirm" = "Descartar";
+
+// MARK: - Sprint 6.8 — Contexto de Incidentes del Puesto (Capitán)
+"attendant.captain.postIncidents.title" = "Incidentes del Puesto";
+"attendant.captain.postIncidents.allClear" = "Todo en Orden — Sin incidentes sin resolver en este puesto";
+
+// MARK: - Sprint 6.8 — Grupo de Área del Capitán
+"attendant.captain.areaGroup.noMembers" = "No hay miembros asignados a esta área";
+"attendant.captain.areaGroup.noGroup" = "No se encontró grupo de área para esta sesión";
+"attendant.location.category.other" = "Otro";
+
+// MARK: - Sprint 6.8 — Agrupación de Conteo por Categoría
+"attendant.count.groupByCategory" = "Agrupar por Categoría";
+
+// MARK: - Tarjetas de Protocolo de Incidentes (CO-23 §17, §23-26)
+"attendant.protocol.subtitle" = "Revise este protocolo con cuidado antes de continuar.";
+"attendant.protocol.steps" = "Acciones Requeridas";
+"attendant.protocol.acknowledge" = "Entendido";
+
+// Amenaza de Bomba (CO-23 §17)
+"attendant.protocol.bombThreat.title" = "Protocolo de Amenaza de Bomba";
+"attendant.protocol.bombThreat.step1" = "Tome la amenaza en serio. NO active la alarma de incendio.";
+"attendant.protocol.bombThreat.step2" = "Contacte inmediatamente al superintendente de acomodadores o su asistente.";
+"attendant.protocol.bombThreat.step3" = "Proporcione toda la información posible sobre el individuo y la bomba reportada.";
+"attendant.protocol.bombThreat.step4" = "Si una bomba es detonada, es probable que la alarma de incendio deba ser usada en ese momento.";
+
+// Individuo Violento (CO-23 §23-24)
+"attendant.protocol.violentIndividual.title" = "Individuo Perturbador / Violento";
+"attendant.protocol.violentIndividual.step1" = "No confronte al individuo solo. Al menos dos acomodadores deben acercarse juntos.";
+"attendant.protocol.violentIndividual.step2" = "Intente hablar con la persona fuera del auditorio, lejos de otros, y trate de calmarlo.";
+"attendant.protocol.violentIndividual.step3" = "Si la persona persiste en ser perturbadora, pídale que se retire e informe al superintendente inmediatamente.";
+"attendant.protocol.violentIndividual.step4" = "Si el individuo se niega a irse, infórmele que se contactará a la policía.";
+"attendant.protocol.violentIndividual.step5" = "Si el individuo se vuelve violento, consulte el protocolo Evitar / Negar / Defender para una situación de tirador activo.";
+
+// Tirador Activo (CO-23 §25-26)
+"attendant.protocol.activeShooter.title" = "Tirador Activo — Evitar / Negar / Defender";
+"attendant.protocol.activeShooter.step1" = "EVITAR: Preste atención a su entorno, tenga un plan de salida y aléjese rápidamente del atacante.";
+"attendant.protocol.activeShooter.step2" = "NEGAR: Si no puede evitar al atacante, cree barreras, apague las luces, permanezca fuera de la vista y en silencio.";
+"attendant.protocol.activeShooter.step3" = "DEFENDER: Solo como último recurso — protéjase a sí mismo y a otros usando cualquier medio disponible.";
+"attendant.protocol.activeShooter.step4" = "Llame a la policía inmediatamente. Cualquier acomodador puede llamar — no espere al superintendente. Informe al superintendente que se ha llamado a la policía.";
+"attendant.protocol.activeShooter.step5" = "Dirija a los asistentes a rutas de escape lejos de la violencia. Si la evacuación no es posible, anime a los asistentes a esconderse en habitaciones cerradas.";
+"attendant.protocol.activeShooter.step6" = "Mantenga la calma. Instruya a otros a silenciar sus teléfonos y sigan las instrucciones de la policía inmediatamente a su llegada.";
+
+// MARK: - Estado de Sección de Asientos
+"attendant.seating.title" = "Estado de Asientos";
+"attendant.seating.subtitle" = "Actualice la disponibilidad de esta sección para los acomodadores de entrada";
+"attendant.seating.status.open" = "Abierto";
+"attendant.seating.status.filling" = "Llenando";
+"attendant.seating.status.full" = "Lleno";
+
+// MARK: - Estado de Recorrido (Panel del Superintendente)
+"attendant.walkthrough.status.title" = "Estado del Recorrido";
+"attendant.walkthrough.status.none" = "Aún no se han completado recorridos";
+"attendant.walkthrough.status.unknown" = "Desconocido";
+"attendant.walkthrough.status.items" = "elementos";
+
+// MARK: - Guía del Local
+"attendant.facility.title" = "Guía del Local";
+"attendant.facility.empty" = "Aún no hay entradas en la guía";
+"attendant.facility.create" = "Agregar Entrada";
+"attendant.facility.name" = "Nombre";
+"attendant.facility.location" = "Ubicación / Indicaciones";
+"attendant.facility.description" = "Descripción (opcional)";
+
 // MARK: - Horario (Voluntario)
 "schedule.title" = "Mi Horario";
 "schedule.filter.all" = "Todos";
@@ -436,8 +552,12 @@
 "assignment.section.details" = "DETALLES";
 "assignment.section.attendance" = "ASISTENCIA";
 "assignment.section.yourGroup" = "TU GRUPO";
+"assignment.checkIn" = "Registro";
 "assignment.checkedIn" = "Registrado";
 "assignment.readyToCheckIn" = "Listo para registrarse";
+"assignment.attendance.history" = "Conteos Anteriores";
+"assignment.attendance.lastUpdated" = "Última actualización";
+"assignment.attendance.noHistory" = "Aún no se han enviado conteos";
 
 // MARK: - Mensajes (Voluntario)
 "messages.title" = "Mensajes";
@@ -460,6 +580,11 @@
 "profile.logout" = "Cerrar Sesión";
 "profile.logout.confirm" = "¿Estás seguro de que deseas cerrar sesión?";
 "profile.section.language" = "IDIOMA";
+"profile.edit.cancel" = "Cancelar";
+"profile.edit.save" = "Guardar";
+"profile.edit.phone" = "Número de teléfono";
+"profile.edit.email" = "Correo electrónico";
+"profile.edit.noContact" = "Toca el lápiz para agregar información de contacto";
 
 // MARK: - Perfil del Superintendente
 "overseer.profile.section.event" = "EVENTO ACTUAL";

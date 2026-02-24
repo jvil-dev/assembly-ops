@@ -15,6 +15,8 @@ import SwiftUI
 
 struct ReportSafetyIncidentView: View {
     var posts: [AttendantPostItem] = []
+    var currentSessionId: String?
+    var onDidReport: (() async -> Void)?
     @StateObject private var viewModel = AttendantVolunteerViewModel()
     @EnvironmentObject private var appState: AppState
     @Environment(\.colorScheme) var colorScheme
@@ -29,6 +31,7 @@ struct ReportSafetyIncidentView: View {
     @State private var useCustomLocation = false
     @State private var didReport = false
     @State private var showError = false
+    @State private var showProtocolCard = false
 
     /// Resolved location string for the API
     private var resolvedLocation: String? {
@@ -79,9 +82,15 @@ struct ReportSafetyIncidentView: View {
                                 description: description,
                                 location: resolvedLocation,
                                 postId: selectedPostId,
-                                sessionId: nil
+                                sessionId: currentSessionId
                             )
-                            didReport = true
+                            if viewModel.error == nil {
+                                if selectedType.requiresProtocolCard {
+                                    showProtocolCard = true
+                                } else {
+                                    didReport = true
+                                }
+                            }
                         }
                     }
                     .disabled(!isFormValid || viewModel.isSaving)
@@ -90,7 +99,10 @@ struct ReportSafetyIncidentView: View {
             .alert("attendant.incidents.report.success".localized, isPresented: $didReport) {
                 Button("common.ok".localized) {
                     HapticManager.shared.success()
-                    dismiss()
+                    Task {
+                        await onDidReport?()
+                        dismiss()
+                    }
                 }
             }
             .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
@@ -102,6 +114,16 @@ struct ReportSafetyIncidentView: View {
             .onAppear {
                 withAnimation(AppTheme.entranceAnimation) {
                     hasAppeared = true
+                }
+            }
+            .fullScreenCover(isPresented: $showProtocolCard) {
+                IncidentProtocolView(incidentType: selectedType) {
+                    showProtocolCard = false
+                    HapticManager.shared.success()
+                    Task {
+                        await onDidReport?()
+                        dismiss()
+                    }
                 }
             }
         }
@@ -202,84 +224,13 @@ struct ReportSafetyIncidentView: View {
 
     // MARK: - Location Picker
 
-    @ViewBuilder
     private var locationPicker: some View {
-        if posts.isEmpty {
-            TextField("attendant.incidents.location.custom".localized, text: $customLocation)
-                .font(AppTheme.Typography.body)
-                .padding(AppTheme.Spacing.m)
-                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-        } else {
-            VStack(spacing: AppTheme.Spacing.s) {
-                ForEach(posts) { post in
-                    Button {
-                        selectedPostId = selectedPostId == post.id ? nil : post.id
-                        useCustomLocation = false
-                        HapticManager.shared.lightTap()
-                    } label: {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(post.name)
-                                    .font(AppTheme.Typography.subheadline)
-                                    .foregroundStyle(.primary)
-                                if let location = post.location {
-                                    Text(location)
-                                        .font(AppTheme.Typography.caption)
-                                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                                }
-                            }
-                            Spacer()
-                            if selectedPostId == post.id && !useCustomLocation {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(AppTheme.themeColor)
-                            }
-                        }
-                        .padding(AppTheme.Spacing.m)
-                        .background(
-                            selectedPostId == post.id && !useCustomLocation
-                                ? AppTheme.themeColor.opacity(0.1)
-                                : AppTheme.cardBackgroundSecondary(for: colorScheme)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                Button {
-                    useCustomLocation = true
-                    selectedPostId = nil
-                    HapticManager.shared.lightTap()
-                } label: {
-                    HStack {
-                        Text("attendant.incidents.location.other".localized)
-                            .font(AppTheme.Typography.subheadline)
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        if useCustomLocation {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(AppTheme.themeColor)
-                        }
-                    }
-                    .padding(AppTheme.Spacing.m)
-                    .background(
-                        useCustomLocation
-                            ? AppTheme.themeColor.opacity(0.1)
-                            : AppTheme.cardBackgroundSecondary(for: colorScheme)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-                }
-                .buttonStyle(.plain)
-
-                if useCustomLocation {
-                    TextField("attendant.incidents.location.custom".localized, text: $customLocation)
-                        .font(AppTheme.Typography.body)
-                        .padding(AppTheme.Spacing.m)
-                        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-                }
-            }
-        }
+        CategoryGroupedLocationPicker(
+            posts: posts,
+            selectedPostId: $selectedPostId,
+            useCustomLocation: $useCustomLocation,
+            customLocation: $customLocation
+        )
     }
 }
 

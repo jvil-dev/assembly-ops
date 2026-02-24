@@ -73,6 +73,19 @@ export const loginVolunteerSchema = z.object({
     .transform((v: string) => v.trim()),
 });
 
+export const updateMyProfileSchema = z.object({
+  phone: z
+    .string()
+    .nullish()
+    .transform((v: string | null | undefined) => v?.trim() || null),
+  email: z
+    .string()
+    .email('Invalid email')
+    .nullish()
+    .transform((v: string | null | undefined) => v?.toLowerCase().trim() || null),
+});
+
 export type CreateVolunteerInput = z.infer<typeof createVolunteerSchema>;
 export type CreateVolunteersInput = z.infer<typeof createVolunteersSchema>;
 export type LoginVolunteerInput = z.infer<typeof loginVolunteerSchema>;
+export type UpdateMyProfileInput = z.infer<typeof updateMyProfileSchema>;

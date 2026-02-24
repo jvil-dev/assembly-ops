@@ -33,7 +33,7 @@
 import SwiftUI
 
 struct VolunteerDetailView: View {
-    let volunteer: VolunteerListItem
+    @State private var volunteer: VolunteerListItem
     let isEditable: Bool
     var onRemoved: (() -> Void)?
 
@@ -49,7 +49,7 @@ struct VolunteerDetailView: View {
     @State private var showCopiedToast = false
 
     init(volunteer: VolunteerListItem, isEditable: Bool, onRemoved: (() -> Void)? = nil) {
-        self.volunteer = volunteer
+        _volunteer = State(initialValue: volunteer)
         self.isEditable = isEditable
         self.onRemoved = onRemoved
         _viewModel = StateObject(wrappedValue: VolunteerDetailViewModel(volunteerId: volunteer.id))
@@ -57,98 +57,37 @@ struct VolunteerDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: AppTheme.Spacing.xl) {
-                // Profile header
-                profileHeader
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
-
-                // Department card
-                if volunteer.departmentName != nil {
-                    departmentCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
-                }
-
-                // Contact card
-                if volunteer.phone != nil || volunteer.email != nil {
-                    contactCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
-                }
-
-                // Credentials card
-                credentialsCard
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
-
-                // Action buttons (editable only)
-                if isEditable {
-                    VStack(spacing: AppTheme.Spacing.m) {
-                        removeButton
-                        deleteButton
-                    }
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
-                }
-            }
-            .screenPadding()
-            .padding(.top, AppTheme.Spacing.l)
-            .padding(.bottom, AppTheme.Spacing.xxl)
+            contentView
         }
         .themedBackground(scheme: colorScheme)
         .navigationTitle(volunteer.firstName)
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            withAnimation(AppTheme.entranceAnimation) {
-                hasAppeared = true
-            }
-        }
-        .sheet(isPresented: $showEditSheet) {
-            EditVolunteerSheet(volunteer: volunteer, viewModel: viewModel)
-        }
+        .toolbar { toolbarContent }
+        .onAppear { onAppearAction() }
+        .sheet(isPresented: $showEditSheet) { EditVolunteerSheet(volunteer: volunteer, viewModel: viewModel) }
         .confirmationDialog(
             "Remove from Department",
             isPresented: $showRemoveConfirmation,
             titleVisibility: .visible
-        ) {
-            Button("Remove", role: .destructive) {
-                Task {
-                    await viewModel.removeFromDepartment()
-                    onRemoved?()
-                    dismiss()
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Are you sure you want to remove \(volunteer.fullName) from your department?")
-        }
+        ) { removeDialogButtons } message: { removeDialogMessage }
         .confirmationDialog(
             "Delete Volunteer",
             isPresented: $showDeleteConfirmation,
             titleVisibility: .visible
-        ) {
-            Button("Delete Permanently", role: .destructive) {
-                Task {
-                    await viewModel.deleteVolunteer()
-                }
+        ) { deleteDialogButtons } message: { deleteDialogMessage }
+        .onChange(of: viewModel.updateCount) { _, _ in
+            if let updated = viewModel.updatedVolunteer {
+                volunteer = updated
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Are you sure you want to permanently delete \(volunteer.fullName)? This will remove all their assignments and check-in records. This action cannot be undone.")
         }
         .onChange(of: viewModel.didDelete) { _, didDelete in
-            if didDelete {
-                dismiss()
-            }
+            if didDelete { dismiss() }
         }
         .confirmationDialog(
             "Regenerate Credentials",
             isPresented: $showRegenerateConfirmation,
             titleVisibility: .visible
-        ) {
-            Button("Regenerate", role: .destructive) {
-                Task { await viewModel.regenerateCredentials() }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This will invalidate \(volunteer.fullName)'s current login credentials. They will need new credentials to log in.")
-        }
+        ) { regenerateDialogButtons } message: { regenerateDialogMessage }
         .sheet(item: $viewModel.regeneratedCredentials) { creds in
             VolunteerCredentialsView(
                 volunteerName: volunteer.fullName,
@@ -160,19 +99,130 @@ struct VolunteerDetailView: View {
         .alert("Error", isPresented: .init(
             get: { viewModel.errorMessage != nil },
             set: { if !$0 { viewModel.errorMessage = nil } }
-        )) {
-            Button("OK", role: .cancel) {}
-        } message: {
+        )) { Button("OK", role: .cancel) {} } message: { errorAlertMessage }
+        .overlay(alignment: .bottom) { copiedToastOverlay }
+    }
+
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .confirmationAction) {
+            if isEditable {
+                Button("Edit") {
+                    showEditSheet = true
+                    HapticManager.shared.lightTap()
+                }
+                .fontWeight(.semibold)
+            }
+        }
+    }
+
+    private func onAppearAction() {
+        withAnimation(AppTheme.entranceAnimation) {
+            hasAppeared = true
+        }
+        if isEditable {
+            Task { await viewModel.loadAssignments() }
+        }
+    }
+
+    private var removeDialogButtons: some View {
+        Group {
+            Button("Remove", role: .destructive) {
+                Task {
+                    await viewModel.removeFromDepartment()
+                    onRemoved?()
+                    dismiss()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    private var removeDialogMessage: some View {
+        Text("Are you sure you want to remove \(volunteer.fullName) from your department?")
+    }
+
+    private var deleteDialogButtons: some View {
+        Group {
+            Button("Delete Permanently", role: .destructive) {
+                Task { await viewModel.deleteVolunteer() }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    private var deleteDialogMessage: some View {
+        Text("Are you sure you want to permanently delete \(volunteer.fullName)? This will remove all their assignments and check-in records. This action cannot be undone.")
+    }
+
+    private var regenerateDialogButtons: some View {
+        Group {
+            Button("Regenerate", role: .destructive) {
+                Task { await viewModel.regenerateCredentials() }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    private var regenerateDialogMessage: some View {
+        Text("This will invalidate \(volunteer.fullName)'s current login credentials. They will need new credentials to log in.")
+    }
+
+    private var errorAlertMessage: some View {
+        Group {
             if let error = viewModel.errorMessage {
                 Text(error)
             }
         }
-        .overlay(alignment: .bottom) {
+    }
+
+    private var copiedToastOverlay: some View {
+        Group {
             if showCopiedToast {
                 copiedToast
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+    }
+
+    private var contentView: some View {
+        mainContent
+    }
+
+    // Extracted to reduce type-checking complexity
+    private var mainContent: some View {
+        VStack(spacing: AppTheme.Spacing.xl) {
+            profileHeader
+                .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+
+            if volunteer.departmentName != nil {
+                departmentCard
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+            }
+
+            if isEditable && !viewModel.assignments.isEmpty {
+                assignmentsCard
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.08)
+            }
+
+            if volunteer.phone != nil || volunteer.email != nil {
+                contactCard
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+            }
+
+            credentialsCard
+                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+
+            if isEditable {
+                VStack(spacing: AppTheme.Spacing.m) {
+                    removeButton
+                    deleteButton
+                }
+                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
+            }
+        }
+        .screenPadding()
+        .padding(.top, AppTheme.Spacing.l)
+        .padding(.bottom, AppTheme.Spacing.xxl)
     }
 
     // MARK: - Profile Header
@@ -281,6 +331,60 @@ struct VolunteerDetailView: View {
                     .clipShape(Capsule())
             }
         }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Assignments Card
+
+    private var assignmentsCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "calendar.badge.checkmark")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("Assignments")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            if viewModel.isLoadingAssignments {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+            } else {
+                ForEach(Array(viewModel.assignments.enumerated()), id: \.element.id) { index, assignment in
+                    if index > 0 { Divider() }
+
+                    Toggle(isOn: Binding(
+                        get: { assignment.isCaptain },
+                        set: { newValue in
+                            Task { await viewModel.setCaptain(assignmentId: assignment.id, isCaptain: newValue) }
+                        }
+                    )) {
+                        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                            HStack(spacing: AppTheme.Spacing.xs) {
+                                Text(assignment.sessionName)
+                                    .font(AppTheme.Typography.bodyMedium)
+                                    .foregroundStyle(.primary)
+                                if assignment.isCaptain {
+                                    Image(systemName: "star.fill")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(AppTheme.themeColor)
+                                }
+                            }
+                            Text(assignment.postName)
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        }
+                    }
+                    .tint(AppTheme.themeColor)
+                    .disabled(assignment.status == "DECLINED" || assignment.status == "AUTO_DECLINED")
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .cardPadding()
         .themedCard(scheme: colorScheme)
     }
@@ -599,6 +703,7 @@ struct VolunteerDetailView: View {
                 departmentId: "dept-1",
                 departmentName: "Attendant",
                 departmentType: "ATTENDANT",
+                roleId: nil,
                 roleName: "Captain"
             ),
             isEditable: true
@@ -622,6 +727,7 @@ struct VolunteerDetailView: View {
                 departmentId: "dept-2",
                 departmentName: "Parking",
                 departmentType: "PARKING",
+                roleId: nil,
                 roleName: nil
             ),
             isEditable: false
@@ -629,3 +735,4 @@ struct VolunteerDetailView: View {
     }
     .preferredColorScheme(.dark)
 }
+

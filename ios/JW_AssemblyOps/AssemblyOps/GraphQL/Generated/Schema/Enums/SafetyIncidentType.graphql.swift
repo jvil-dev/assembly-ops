@@ -12,6 +12,8 @@ extension AssemblyOpsAPI {
     case disruptiveIndividual = "DISRUPTIVE_INDIVIDUAL"
     case bombThreat = "BOMB_THREAT"
     case violentIndividual = "VIOLENT_INDIVIDUAL"
+    case severeWeather = "SEVERE_WEATHER"
+    case activeShooter = "ACTIVE_SHOOTER"
     case other = "OTHER"
   }
 

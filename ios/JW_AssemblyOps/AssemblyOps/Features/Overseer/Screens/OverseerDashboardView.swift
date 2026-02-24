@@ -39,6 +39,13 @@ struct OverseerDashboardView: View {
     @State private var showDepartmentPicker = false
     @State private var hasAppeared = false
 
+    private var departmentAccentColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -126,7 +133,7 @@ struct OverseerDashboardView: View {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "building.2")
                     .font(.system(size: 14))
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(departmentAccentColor)
 
                 Text(sessionState.selectedDepartment?.name ?? "All Departments")
                     .font(AppTheme.Typography.subheadline)
@@ -186,24 +193,28 @@ struct OverseerDashboardView: View {
                 title: "Volunteers",
                 value: "\(sessionState.selectedDepartment?.volunteerCount ?? sessionState.selectedEvent?.volunteerCount ?? 0)",
                 icon: "person.3",
+                accentColor: departmentAccentColor,
                 colorScheme: colorScheme
             )
             StatCard(
                 title: "Assignments",
                 value: "—",
                 icon: "calendar",
+                accentColor: departmentAccentColor,
                 colorScheme: colorScheme
             )
             StatCard(
                 title: "Pending",
                 value: "—",
                 icon: "clock",
+                accentColor: departmentAccentColor,
                 colorScheme: colorScheme
             )
             StatCard(
                 title: "Coverage",
                 value: "—",
                 icon: "chart.pie",
+                accentColor: departmentAccentColor,
                 colorScheme: colorScheme
             )
         }
@@ -215,7 +226,7 @@ struct OverseerDashboardView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             Text("Assignments Overview")
                 .font(AppTheme.Typography.headline)
-                .foregroundStyle(AppTheme.themeColor)
+                .foregroundStyle(departmentAccentColor)
 
             HStack {
                 Spacer()
@@ -253,7 +264,7 @@ struct OverseerDashboardView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "number")
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(departmentAccentColor)
                 Text("ATTENDANCE")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -262,7 +273,7 @@ struct OverseerDashboardView: View {
             NavigationLink(destination: AttendanceInputView()) {
                 HStack(spacing: AppTheme.Spacing.m) {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(departmentAccentColor)
                         .frame(width: 24)
 
                     Text("Submit Count")
@@ -284,7 +295,7 @@ struct OverseerDashboardView: View {
             NavigationLink(destination: AttendanceSummaryView()) {
                 HStack(spacing: AppTheme.Spacing.m) {
                     Image(systemName: "list.bullet.clipboard")
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(departmentAccentColor)
                         .frame(width: 24)
 
                     Text("View Summary")
@@ -315,13 +326,14 @@ struct StatCard: View {
     let title: String
     let value: String
     let icon: String
+    var accentColor: Color = AppTheme.themeColor
     let colorScheme: ColorScheme
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: icon)
                 .font(.system(size: 24))
-                .foregroundStyle(AppTheme.themeColor)
+                .foregroundStyle(accentColor)
 
             Text(value)
                 .font(AppTheme.Typography.title)

@@ -184,6 +184,7 @@ const types = `#graphql
     category: String
     sortOrder: Int!
     department: Department!
+    area: Area
     assignments: [ScheduleAssignment!]!
     assignmentCount: Int!
     createdAt: DateTime!

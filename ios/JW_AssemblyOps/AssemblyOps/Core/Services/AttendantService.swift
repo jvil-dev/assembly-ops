@@ -276,6 +276,205 @@ final class AttendantService {
         }
     }
 
+    // MARK: - Walk-Through Completions
+
+    func submitWalkThroughCompletion(eventId: String, sessionId: String, itemCount: Int, notes: String?) async throws -> WalkThroughCompletionItem {
+        let input = AssemblyOpsAPI.SubmitWalkThroughCompletionInput(
+            eventId: eventId,
+            sessionId: sessionId,
+            itemCount: itemCount,
+            notes: notes.map { .some($0) } ?? .none
+        )
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.SubmitWalkThroughCompletionMutation(input: input)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.submitWalkThroughCompletion {
+                        let item = WalkThroughCompletionItem(
+                            id: data.id, sessionId: data.session.id, sessionName: data.session.name,
+                            completedAt: DateUtils.parseISO8601(data.completedAt) ?? Date(),
+                            itemCount: data.itemCount, notes: data.notes, volunteerName: nil
+                        )
+                        continuation.resume(returning: item)
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(throwing: AttendantError.serverError("Failed to submit walk-through"))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    func fetchMyWalkThroughCompletions() async throws -> [WalkThroughCompletionItem] {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.MyWalkThroughCompletionsQuery(),
+                cachePolicy: .fetchIgnoringCacheData
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.myWalkThroughCompletions {
+                        continuation.resume(returning: data.compactMap { WalkThroughCompletionItem(fromMy: $0) })
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    func fetchWalkThroughCompletions(eventId: String, sessionId: String?) async throws -> [WalkThroughCompletionItem] {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.WalkThroughCompletionsQuery(
+                    eventId: eventId, sessionId: sessionId.map { .some($0) } ?? .none
+                ),
+                cachePolicy: .fetchIgnoringCacheData
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.walkThroughCompletions {
+                        continuation.resume(returning: data.compactMap { WalkThroughCompletionItem(fromAdmin: $0) })
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    // MARK: - Post Session Status
+
+    func fetchPostSessionStatuses(sessionId: String) async throws -> [PostSessionStatusItem] {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.PostSessionStatusesQuery(sessionId: sessionId),
+                cachePolicy: .fetchIgnoringCacheData
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.postSessionStatuses {
+                        continuation.resume(returning: data.compactMap { PostSessionStatusItem(from: $0) })
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    func updatePostSessionStatus(postId: String, sessionId: String, status: String) async throws {
+        let input = AssemblyOpsAPI.UpdatePostSessionStatusInput(
+            postId: postId, sessionId: sessionId, status: .init(rawValue: status)
+        )
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.UpdatePostSessionStatusMutation(input: input)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if graphQLResult.data?.updatePostSessionStatus != nil {
+                        continuation.resume()
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(throwing: AttendantError.serverError("Failed to update status"))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    // MARK: - Facility Locations
+
+    func fetchFacilityLocations(eventId: String) async throws -> [FacilityLocationItem] {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.FacilityLocationsQuery(eventId: eventId),
+                cachePolicy: .fetchIgnoringCacheData
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.facilityLocations {
+                        continuation.resume(returning: data.map { FacilityLocationItem(from: $0) })
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    func createFacilityLocation(eventId: String, name: String, location: String, description: String?, sortOrder: Int?) async throws -> FacilityLocationItem {
+        let input = AssemblyOpsAPI.CreateFacilityLocationInput(
+            eventId: eventId, name: name, location: location,
+            description: description.map { .some($0) } ?? .none,
+            sortOrder: sortOrder.map { .some($0) } ?? .none
+        )
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.CreateFacilityLocationMutation(input: input)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.createFacilityLocation {
+                        continuation.resume(returning: FacilityLocationItem(fromCreate: data))
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(throwing: AttendantError.serverError("Failed to create location"))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    func deleteFacilityLocation(id: String) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.DeleteFacilityLocationMutation(id: id)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if graphQLResult.data?.deleteFacilityLocation != nil {
+                        continuation.resume()
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(throwing: AttendantError.serverError("Failed to delete location"))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
     // MARK: - Volunteer Meetings
 
     /// Fetch meetings the current volunteer is assigned to

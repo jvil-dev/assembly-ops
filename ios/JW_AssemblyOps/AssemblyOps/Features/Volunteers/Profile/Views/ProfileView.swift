@@ -39,6 +39,7 @@ struct ProfileView: View {
     @Environment(\.colorScheme) var colorScheme
 
     @State private var showingLogoutAlert = false
+    @State private var showError = false
     @State private var hasAppeared = false
 
     var body: some View {
@@ -75,6 +76,16 @@ struct ProfileView: View {
             } message: {
                 Text("profile.logout.confirm".localized)
             }
+            .alert("common.error".localized, isPresented: $showError) {
+                Button("common.ok".localized) { viewModel.errorMessage = nil }
+            } message: {
+                if let error = viewModel.errorMessage {
+                    Text(error)
+                }
+            }
+            .onChange(of: viewModel.errorMessage) { _, newValue in
+                showError = newValue != nil
+            }
         }
     }
 
@@ -96,11 +107,9 @@ struct ProfileView: View {
                 eventCard(volunteer: volunteer)
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
 
-                // Contact info
-                if volunteer.phone != nil || volunteer.email != nil {
-                    contactCard(volunteer: volunteer)
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
-                }
+                // Contact info (always show — users can add phone/email)
+                contactCard(volunteer: volunteer)
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
 
                 // Language selector
                 languageCard
@@ -257,18 +266,76 @@ struct ProfileView: View {
                 Text("profile.section.contact".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-            }
 
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-                if let phone = volunteer.phone {
-                    Link(destination: URL(string: "tel:\(phone.replacingOccurrences(of: " ", with: ""))")!) {
-                        infoRow(icon: "phone", text: phone)
+                Spacer()
+
+                if viewModel.isEditing {
+                    HStack(spacing: AppTheme.Spacing.m) {
+                        Button("profile.edit.cancel".localized) {
+                            viewModel.cancelEditing()
+                        }
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+                        Button {
+                            viewModel.saveProfile()
+                        } label: {
+                            if viewModel.isSaving {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                            } else {
+                                Text("profile.edit.save".localized)
+                                    .font(AppTheme.Typography.captionBold)
+                            }
+                        }
+                        .foregroundStyle(AppTheme.themeColor)
+                        .disabled(viewModel.isSaving)
+                    }
+                } else {
+                    Button {
+                        viewModel.startEditing()
+                        HapticManager.shared.lightTap()
+                    } label: {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 14))
+                            .foregroundStyle(AppTheme.themeColor)
                     }
                 }
+            }
 
-                if let email = volunteer.email {
-                    Link(destination: URL(string: "mailto:\(email)")!) {
-                        infoRow(icon: "envelope", text: email)
+            if viewModel.isEditing {
+                VStack(spacing: AppTheme.Spacing.s) {
+                    editField(
+                        icon: "phone",
+                        placeholder: "profile.edit.phone".localized,
+                        text: $viewModel.editPhone,
+                        keyboardType: .phonePad
+                    )
+                    editField(
+                        icon: "envelope",
+                        placeholder: "profile.edit.email".localized,
+                        text: $viewModel.editEmail,
+                        keyboardType: .emailAddress
+                    )
+                }
+            } else {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+                    if let phone = volunteer.phone {
+                        Link(destination: URL(string: "tel:\(phone.replacingOccurrences(of: " ", with: ""))")!) {
+                            infoRow(icon: "phone", text: phone)
+                        }
+                    }
+
+                    if let email = volunteer.email {
+                        Link(destination: URL(string: "mailto:\(email)")!) {
+                            infoRow(icon: "envelope", text: email)
+                        }
+                    }
+
+                    if volunteer.phone == nil && volunteer.email == nil {
+                        Text("profile.edit.noContact".localized)
+                            .font(AppTheme.Typography.subheadline)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                     }
                 }
             }
@@ -276,6 +343,23 @@ struct ProfileView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+
+    private func editField(icon: String, placeholder: String, text: Binding<String>, keyboardType: UIKeyboardType = .default) -> some View {
+        HStack(spacing: AppTheme.Spacing.s) {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                .frame(width: 16)
+            TextField(placeholder, text: text)
+                .font(AppTheme.Typography.subheadline)
+                .keyboardType(keyboardType)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+        }
+        .padding(AppTheme.Spacing.m)
+        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
     }
 
     // MARK: - Info Row Helper
@@ -366,9 +450,9 @@ struct ProfileView: View {
 
     private func formatAppointment(_ status: String) -> String {
         switch status.uppercased() {
-        case "ELDER": return "Elder"
-        case "MINISTERIAL_SERVANT": return "Ministerial Servant"
-        case "PUBLISHER": return "Publisher"
+        case "ELDER": return "home.role.elder".localized
+        case "MINISTERIAL_SERVANT": return "home.role.ministerialServant".localized
+        case "PUBLISHER": return "home.role.publisher".localized
         default: return status
         }
     }

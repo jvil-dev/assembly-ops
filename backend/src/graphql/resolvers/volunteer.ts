@@ -38,6 +38,8 @@ import {
   CreateVolunteerInput,
   CreateVolunteersInput,
   LoginVolunteerInput,
+  updateMyProfileSchema,
+  UpdateMyProfileInput,
 } from '../validators/volunteer.js';
 
 const volunteerResolvers = {
@@ -122,6 +124,15 @@ const volunteerResolvers = {
 
       const volunteerService = new VolunteerService(context.prisma);
       return volunteerService.getVolunteerToken(id);
+    },
+
+    roles: async (_parent: unknown, { eventId }: { eventId: string }, context: Context) => {
+      requireAdmin(context);
+      await requireEventAccess(context, eventId);
+      return context.prisma.role.findMany({
+        where: { eventId },
+        orderBy: { sortOrder: 'asc' },
+      });
     },
   },
 
@@ -246,6 +257,76 @@ const volunteerResolvers = {
         accessToken: result.tokens.accessToken,
         refreshToken: result.tokens.refreshToken,
         expiresIn: result.tokens.expiresIn,
+      };
+    },
+
+    updateMyProfile: async (
+      _parent: unknown,
+      { input }: { input: UpdateMyProfileInput },
+      context: Context
+    ) => {
+      requireVolunteer(context);
+
+      const validated = updateMyProfileSchema.parse(input);
+
+      // Try legacy Volunteer first
+      const volunteer = await context.prisma.volunteer.findUnique({
+        where: { id: context.volunteer.id },
+      });
+
+      if (volunteer) {
+        // Legacy path: update Volunteer directly
+        const volunteerService = new VolunteerService(context.prisma);
+        return volunteerService.updateVolunteer(volunteer.id, {
+          ...(validated.phone !== undefined && { phone: validated.phone }),
+          ...(validated.email !== undefined && { email: validated.email }),
+        });
+      }
+
+      // New path: context.volunteer.id = EventVolunteer.id
+      const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
+        where: { id: context.volunteer.id },
+        include: {
+          volunteerProfile: { include: { congregation: true } },
+          event: { include: { template: true } },
+          department: true,
+          role: true,
+        },
+      });
+
+      if (!eventVolunteer) {
+        throw new Error('Volunteer not found');
+      }
+
+      // Update the VolunteerProfile (shared across events)
+      const updatedProfile = await context.prisma.volunteerProfile.update({
+        where: { id: eventVolunteer.volunteerProfileId },
+        data: {
+          ...(validated.phone !== undefined && { phone: validated.phone }),
+          ...(validated.email !== undefined && { email: validated.email }),
+        },
+        include: { congregation: true },
+      });
+
+      // Return Volunteer-compatible shape
+      return {
+        id: eventVolunteer.id,
+        volunteerId: eventVolunteer.volunteerId,
+        firstName: updatedProfile.firstName,
+        lastName: updatedProfile.lastName,
+        email: updatedProfile.email,
+        phone: updatedProfile.phone,
+        congregation: updatedProfile.congregation?.name || '',
+        appointmentStatus: updatedProfile.appointmentStatus,
+        notes: updatedProfile.notes,
+        eventId: eventVolunteer.eventId,
+        event: eventVolunteer.event,
+        department: eventVolunteer.department,
+        departmentId: eventVolunteer.departmentId,
+        role: eventVolunteer.role,
+        roleId: eventVolunteer.roleId,
+        assignments: [],
+        createdAt: eventVolunteer.createdAt,
       };
     },
   },

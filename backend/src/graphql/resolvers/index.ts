@@ -40,6 +40,10 @@ import circuitResolvers from './circuit.js';
 import congregationResolvers from './congregation.js';
 import volunteerProfileResolvers from './volunteerProfile.js';
 import attendantResolvers from './attendant.js';
+import areaResolvers from './area.js';
+import walkThroughResolvers from './walkThrough.js';
+import postSessionStatusResolvers from './postSessionStatus.js';
+import facilityLocationResolvers from './facilityLocation.js';
 
 const baseResolvers = {
   DateTime: DateTimeResolver,
@@ -87,6 +91,10 @@ const resolvers = {
     ...congregationResolvers.Query,
     ...volunteerProfileResolvers.Query,
     ...attendantResolvers.Query,
+    ...areaResolvers.Query,
+    ...walkThroughResolvers.Query,
+    ...postSessionStatusResolvers.Query,
+    ...facilityLocationResolvers.Query,
   },
 
   Mutation: {
@@ -104,6 +112,10 @@ const resolvers = {
     ...oauthResolvers.Mutation,
     ...volunteerProfileResolvers.Mutation,
     ...attendantResolvers.Mutation,
+    ...areaResolvers.Mutation,
+    ...walkThroughResolvers.Mutation,
+    ...postSessionStatusResolvers.Mutation,
+    ...facilityLocationResolvers.Mutation,
   },
 
   Admin: authResolvers.Admin,
@@ -119,6 +131,7 @@ const resolvers = {
   Congregation: congregationResolvers.Congregation,
   VolunteerProfile: volunteerProfileResolvers.VolunteerProfile,
   EventVolunteer: volunteerProfileResolvers.EventVolunteer,
+  Area: areaResolvers.Area,
 };
 
 export default resolvers;

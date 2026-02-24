@@ -45,7 +45,9 @@ struct HomeView: View {
     @State private var showReportIncident = false
     @State private var showReportLostPerson = false
     @State private var showAttendantInfo = false
+    @State private var showWalkThrough = false
     @State private var attendantPosts: [AttendantPostItem] = []
+    @State private var sessions: [VolunteerSessionItem] = []
     @State private var isCheckingIn = false
     @State private var now = Date()
 
@@ -58,8 +60,23 @@ struct HomeView: View {
         appState.currentVolunteer?.departmentType == "ATTENDANT"
     }
 
+    private var isCaptain: Bool {
+        viewModel.assignments.contains { $0.isCaptain && $0.isAccepted }
+    }
+
+    private var isAttendantCaptain: Bool {
+        viewModel.assignments.contains { $0.isCaptain && $0.isAccepted && $0.departmentType == "ATTENDANT" }
+    }
+
     private var hasActionItems: Bool {
         pendingBadgeManager.pendingCount > 0 || messageBadgeManager.unreadCount > 0
+    }
+
+    private var currentSessionId: String? {
+        let now = Date()
+        return sessions.first(where: { session in
+            session.startTime <= now && session.endTime >= now
+        })?.id ?? sessions.first?.id
     }
 
     var body: some View {
@@ -90,6 +107,18 @@ struct HomeView: View {
                     if isAttendant {
                         attendantCard
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.20)
+
+                        // Seating status overview (read-only for all attendants)
+                        if !attendantVM.postSessionStatuses.isEmpty {
+                            seatingStatusCard
+                                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
+                        }
+
+                        // Facility locations
+                        if !attendantVM.facilityLocations.isEmpty {
+                            facilityLocationsCard
+                                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.30)
+                        }
                     }
                 }
                 .screenPadding()
@@ -109,6 +138,25 @@ struct HomeView: View {
                         }
                     }
                 }
+                if isAttendant && isAttendantCaptain {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            showWalkThrough = true
+                            HapticManager.shared.lightTap()
+                        } label: {
+                            ZStack(alignment: .topTrailing) {
+                                Image(systemName: "checklist")
+                                if let sid = currentSessionId, attendantVM.hasCompletedWalkThrough(for: sid) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(AppTheme.StatusColors.accepted)
+                                        .offset(x: 4, y: -4)
+                                }
+                            }
+                        }
+                        .disabled(sessions.isEmpty)
+                    }
+                }
             }
             .onAppear {
                 withAnimation(AppTheme.entranceAnimation) {
@@ -121,6 +169,14 @@ struct HomeView: View {
                     await loadAttendantPosts()
                     if let eventId = appState.currentVolunteer?.eventId {
                         await attendantVM.loadConcerns(eventId: eventId)
+                        await attendantVM.loadFacilityLocations(eventId: eventId)
+                        if let sid = currentSessionId {
+                            await attendantVM.loadPostSessionStatuses(sessionId: sid)
+                        }
+                        if isAttendantCaptain {
+                            sessions = (try? await AttendanceService.shared.fetchVolunteerSessions(eventId: eventId)) ?? []
+                            await attendantVM.loadMyWalkThroughCompletions()
+                        }
                     }
                 }
             }
@@ -130,6 +186,14 @@ struct HomeView: View {
                     await loadAttendantPosts()
                     if let eventId = appState.currentVolunteer?.eventId {
                         await attendantVM.loadConcerns(eventId: eventId)
+                        await attendantVM.loadFacilityLocations(eventId: eventId)
+                        if let sid = currentSessionId {
+                            await attendantVM.loadPostSessionStatuses(sessionId: sid)
+                        }
+                        if isAttendantCaptain {
+                            sessions = (try? await AttendanceService.shared.fetchVolunteerSessions(eventId: eventId)) ?? []
+                            await attendantVM.loadMyWalkThroughCompletions()
+                        }
                     }
                 }
             }
@@ -137,13 +201,33 @@ struct HomeView: View {
                 if isAttendant { now = date }
             }
             .sheet(isPresented: $showReportIncident) {
-                ReportSafetyIncidentView(posts: attendantPosts)
+                ReportSafetyIncidentView(
+                    posts: attendantPosts,
+                    currentSessionId: currentSessionId,
+                    onDidReport: {
+                        if let eventId = appState.currentVolunteer?.eventId {
+                            await attendantVM.loadConcerns(eventId: eventId)
+                        }
+                    }
+                )
             }
             .sheet(isPresented: $showReportLostPerson) {
-                ReportLostPersonView(posts: attendantPosts)
+                ReportLostPersonView(
+                    posts: attendantPosts,
+                    currentSessionId: currentSessionId,
+                    onDidReport: {
+                        if let eventId = appState.currentVolunteer?.eventId {
+                            await attendantVM.loadConcerns(eventId: eventId)
+                        }
+                    }
+                )
             }
             .sheet(isPresented: $showAttendantInfo) {
                 AttendantInfoView()
+            }
+            .sheet(isPresented: $showWalkThrough) {
+                WalkThroughChecklistView(attendantVM: attendantVM, sessions: sessions)
+                    .environmentObject(appState)
             }
         }
     }
@@ -169,6 +253,23 @@ struct HomeView: View {
                     Text(department)
                         .font(AppTheme.Typography.subheadline)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                }
+
+                if let appointment = appState.currentVolunteer?.appointmentStatus {
+                    Text("•")
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    Text(formatAppointment(appointment))
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                }
+
+                if isCaptain {
+                    Text("•")
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    Text("home.role.captain".localized)
+                        .font(AppTheme.Typography.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(AppTheme.themeColor)
                 }
 
                 if appState.currentVolunteer?.eventTheme != nil {
@@ -801,6 +902,100 @@ struct HomeView: View {
         .padding(.vertical, AppTheme.Spacing.xs)
     }
 
+    // MARK: - Seating Status Card (Read-Only)
+
+    private var seatingStatusCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "chair.lounge")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("attendant.seating.title".localized.uppercased())
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            ForEach(attendantVM.postSessionStatuses) { status in
+                HStack(spacing: AppTheme.Spacing.s) {
+                    Image(systemName: status.status.icon)
+                        .foregroundStyle(status.status.color)
+                        .frame(width: 20)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(status.postName)
+                            .font(AppTheme.Typography.subheadline)
+                            .foregroundStyle(.primary)
+                        if let location = status.postLocation {
+                            Text(location)
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                        }
+                    }
+                    Spacer()
+                    Text(status.status.displayName)
+                        .font(AppTheme.Typography.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(status.status.color)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(status.status.color.opacity(0.12))
+                        .clipShape(Capsule())
+                }
+                .padding(.vertical, AppTheme.Spacing.xs)
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Facility Guide Card (Read-Only)
+
+    private var facilityLocationsCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "building.2")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("attendant.facility.title".localized.uppercased())
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            ForEach(attendantVM.facilityLocations) { facility in
+                HStack(spacing: AppTheme.Spacing.s) {
+                    Image(systemName: "mappin.circle.fill")
+                        .foregroundStyle(AppTheme.themeColor)
+                        .frame(width: 20)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(facility.name)
+                            .font(AppTheme.Typography.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.primary)
+                        Text(facility.location)
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        if let desc = facility.description {
+                            Text(desc)
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                        }
+                    }
+                }
+                .padding(.vertical, AppTheme.Spacing.xs)
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Helpers
+
+    private func formatAppointment(_ status: String) -> String {
+        switch status.uppercased() {
+        case "ELDER": return "home.role.elder".localized
+        case "MINISTERIAL_SERVANT": return "home.role.ministerialServant".localized
+        case "PUBLISHER": return "home.role.publisher".localized
+        default: return status
+        }
+    }
+
     // MARK: - Data Loading
 
     /// Derive attendant posts from the volunteer's accepted assignments
@@ -809,10 +1004,15 @@ struct HomeView: View {
             let unique = Dictionary(
                 assignments
                     .filter { $0.status == .accepted && $0.departmentType == "ATTENDANT" }
-                    .map { ($0.postId, AttendantPostItem(id: $0.postId, name: $0.postName, location: $0.postLocation, category: "", sortOrder: 0)) },
+                    .map { ($0.postId, AttendantPostItem(id: $0.postId, name: $0.postName, location: $0.postLocation, category: $0.postCategory, sortOrder: 0)) },
                 uniquingKeysWith: { first, _ in first }
             )
-            attendantPosts = Array(unique.values).sorted { $0.name < $1.name }
+            attendantPosts = Array(unique.values).sorted {
+                let idx0 = AttendantMainCategory.sortIndex(for: $0.category ?? "")
+                let idx1 = AttendantMainCategory.sortIndex(for: $1.category ?? "")
+                if idx0 != idx1 { return idx0 < idx1 }
+                return $0.name < $1.name
+            }
         }
     }
 }

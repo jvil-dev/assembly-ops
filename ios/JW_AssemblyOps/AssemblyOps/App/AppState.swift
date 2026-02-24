@@ -115,6 +115,7 @@ final class AppState: ObservableObject {
                             lastName: profile.lastName,
                             fullName: profile.fullName,
                             congregation: profile.congregation,
+                            appointmentStatus: profile.appointmentStatus?.rawValue,
                             eventId: profile.event.id,
                             eventName: profile.event.name,
                             eventVenue: profile.event.venue,
@@ -292,6 +293,7 @@ struct VolunteerInfo: Identifiable {
     let lastName: String
     let fullName: String
     let congregation: String
+    let appointmentStatus: String?
     let eventId: String
     let eventName: String?
     let eventVenue: String?

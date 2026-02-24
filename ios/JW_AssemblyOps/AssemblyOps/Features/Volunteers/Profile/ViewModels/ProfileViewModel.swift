@@ -13,10 +13,16 @@
 //   - volunteer: Volunteer profile data (nil until loaded)
 //   - errorMessage: Error message if fetch fails
 //   - hasLoaded: True after first fetch attempt completes
+//   - isEditing: Whether the user is currently editing their profile
+//   - editPhone/editEmail: Editable copies of contact info
+//   - isSaving: Whether a save is in progress
 //
 // Methods:
 //   - fetchProfile(): Fetches volunteer profile from myVolunteerProfile query
 //   - refresh(): Re-fetches profile data
+//   - startEditing(): Copies current values to edit fields
+//   - cancelEditing(): Discards edit state
+//   - saveProfile(): Sends updateMyProfile mutation (phone & email only)
 //
 // Dependencies:
 //   - NetworkClient: Apollo client for GraphQL
@@ -34,6 +40,10 @@ final class ProfileViewModel: ObservableObject {
     @Published var volunteer: Volunteer?
     @Published var errorMessage: String?
     @Published var hasLoaded = false
+    @Published var isEditing = false
+    @Published var isSaving = false
+    @Published var editPhone: String = ""
+    @Published var editEmail: String = ""
 
     func fetchProfile() {
         errorMessage = nil
@@ -62,10 +72,10 @@ final class ProfileViewModel: ObservableObject {
             }
         }
     }
-    
+
     private func mapVolunteer(from data: AssemblyOpsAPI.MyVolunteerProfileQuery.Data.MyVolunteerProfile) -> Volunteer {
         let isoFormatter = DateUtils.isoFormatter
-        
+
         return Volunteer(
             id: data.id,
             volunteerId: data.volunteerId,
@@ -86,8 +96,58 @@ final class ProfileViewModel: ObservableObject {
             eventEndDate: isoFormatter.date(from: data.event.endDate)
         )
     }
-    
+
     func refresh() {
         fetchProfile()
+    }
+
+    func startEditing() {
+        editPhone = volunteer?.phone ?? ""
+        editEmail = volunteer?.email ?? ""
+        isEditing = true
+    }
+
+    func cancelEditing() {
+        isEditing = false
+        editPhone = ""
+        editEmail = ""
+    }
+
+    func saveProfile() {
+        guard isEditing else { return }
+        isSaving = true
+        errorMessage = nil
+
+        let trimmedPhone = editPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEmail = editEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let input = AssemblyOpsAPI.UpdateMyProfileInput(
+            phone: trimmedPhone.isEmpty ? .null : .some(trimmedPhone),
+            email: trimmedEmail.isEmpty ? .null : .some(trimmedEmail)
+        )
+
+        NetworkClient.shared.apollo.perform(
+            mutation: AssemblyOpsAPI.UpdateMyProfileMutation(input: input)
+        ) { [weak self] result in
+            Task { @MainActor in
+                guard let self = self else { return }
+                self.isSaving = false
+
+                switch result {
+                case .success(let graphQLResult):
+                    if let errors = graphQLResult.errors, !errors.isEmpty {
+                        self.errorMessage = errors.first?.localizedDescription ?? "Failed to update profile"
+                        HapticManager.shared.error()
+                    } else if graphQLResult.data?.updateMyProfile != nil {
+                        self.isEditing = false
+                        HapticManager.shared.success()
+                        self.fetchProfile()
+                    }
+                case .failure(let error):
+                    self.errorMessage = error.localizedDescription
+                    HapticManager.shared.error()
+                }
+            }
+        }
     }
 }
