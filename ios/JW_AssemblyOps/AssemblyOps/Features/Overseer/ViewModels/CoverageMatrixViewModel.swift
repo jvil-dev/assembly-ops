@@ -92,7 +92,9 @@ final class CoverageMatrixViewModel: ObservableObject {
                         capacity: post.capacity,
                         category: post.category,
                         location: post.location,
-                        sortOrder: post.sortOrder
+                        sortOrder: post.sortOrder,
+                        areaId: post.areaId,
+                        areaName: post.areaName
                     )
                 }
 

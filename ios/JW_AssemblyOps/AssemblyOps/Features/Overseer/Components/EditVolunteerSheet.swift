@@ -29,7 +29,6 @@ struct EditVolunteerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
     @ObservedObject var viewModel: VolunteerDetailViewModel
-    @ObservedObject private var sessionState = OverseerSessionState.shared
 
     let volunteer: VolunteerListItem
 
@@ -41,9 +40,13 @@ struct EditVolunteerSheet: View {
     @State private var notes: String
     @State private var isSubmitting = false
     @State private var errorMessage: String?
+    @State private var selectedRoleId: String?
 
+    @State private var circuits: [CircuitItem] = []
+    @State private var selectedCircuit: CircuitItem?
     @State private var congregations: [CongregationItem] = []
     @State private var selectedCongregation: CongregationItem?
+    @State private var isLoadingCircuits = false
     @State private var isLoadingCongregations = false
 
     init(volunteer: VolunteerListItem, viewModel: VolunteerDetailViewModel) {
@@ -55,12 +58,15 @@ struct EditVolunteerSheet: View {
         _email = State(initialValue: volunteer.email ?? "")
         _appointment = State(initialValue: volunteer.appointmentStatus ?? "PUBLISHER")
         _notes = State(initialValue: "")
+        _selectedRoleId = State(initialValue: volunteer.roleId)
     }
 
     private var isFormValid: Bool {
         !firstName.trimmingCharacters(in: .whitespaces).isEmpty &&
         !lastName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        selectedCongregation != nil
+        // Allow saving if a congregation is selected, OR if the volunteer already has one
+        // and the overseer hasn't picked a new circuit yet (congregation unchanged)
+        (selectedCongregation != nil || !volunteer.congregation.isEmpty)
     }
 
     var body: some View {
@@ -70,6 +76,9 @@ struct EditVolunteerSheet: View {
                     requiredFieldsCard
                     optionalFieldsCard
                     appointmentCard
+                    if !viewModel.roles.isEmpty {
+                        roleCard
+                    }
                     notesCard
                 }
                 .screenPadding()
@@ -97,6 +106,12 @@ struct EditVolunteerSheet: View {
             }
             .task {
                 await loadCongregations()
+                if AppState.shared.currentOverseer?.circuitId == nil {
+                    await loadAllCircuits()
+                }
+                if let eventId = OverseerSessionState.shared.selectedEvent?.id {
+                    await viewModel.loadRoles(eventId: eventId)
+                }
             }
             .alert("Error", isPresented: Binding(
                 get: { errorMessage != nil },
@@ -126,7 +141,53 @@ struct EditVolunteerSheet: View {
                 themedTextField("First Name", text: $firstName)
                 themedTextField("Last Name", text: $lastName)
 
+                // Circuit picker (shown when overseer has no circuitId set)
+                if AppState.shared.currentOverseer?.circuitId == nil {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+                        Text("Circuit")
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+                        if isLoadingCircuits {
+                            HStack {
+                                ProgressView()
+                                Text("Loading circuits...")
+                                    .font(AppTheme.Typography.body)
+                                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                            }
+                            .padding(AppTheme.Spacing.m)
+                        } else {
+                            Menu {
+                                ForEach(circuits) { circuit in
+                                    Button {
+                                        Task { await loadCongregationsForCircuit(circuit) }
+                                        HapticManager.shared.lightTap()
+                                    } label: {
+                                        Text(circuit.code)
+                                    }
+                                }
+                            } label: {
+                                HStack {
+                                    Text(selectedCircuit?.code ?? "Select a circuit")
+                                        .font(AppTheme.Typography.body)
+                                        .foregroundStyle(selectedCircuit != nil
+                                            ? (colorScheme == .dark ? .white : .primary)
+                                            : AppTheme.textTertiary(for: colorScheme))
+                                    Spacer()
+                                    Image(systemName: "chevron.up.chevron.down")
+                                        .font(.caption)
+                                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                                }
+                                .padding(AppTheme.Spacing.m)
+                                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                            }
+                        }
+                    }
+                }
+
                 // Congregation dropdown
+                if AppState.shared.currentOverseer?.circuitId != nil || selectedCircuit != nil {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
                     Text("Congregation")
                         .font(AppTheme.Typography.caption)
@@ -173,6 +234,7 @@ struct EditVolunteerSheet: View {
                         }
                     }
                 }
+                }
             }
         }
         .cardPadding()
@@ -209,6 +271,56 @@ struct EditVolunteerSheet: View {
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Role Card
+
+    private var roleCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            SectionHeaderLabel(icon: "person.badge.key.fill", title: "Role")
+
+            VStack(spacing: 0) {
+                roleRow(id: nil, name: "None", isLast: false)
+                ForEach(Array(viewModel.roles.enumerated()), id: \.element.id) { index, role in
+                    roleRow(id: role.id, name: role.name, isLast: index == viewModel.roles.count - 1)
+                }
+            }
+            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    private func roleRow(id: String?, name: String, isLast: Bool) -> some View {
+        Button {
+            selectedRoleId = id
+            HapticManager.shared.lightTap()
+        } label: {
+            VStack(spacing: 0) {
+                HStack {
+                    Text(name)
+                        .font(AppTheme.Typography.body)
+                        .foregroundStyle(id == nil
+                            ? AppTheme.textTertiary(for: colorScheme)
+                            : (colorScheme == .dark ? .white : .primary))
+                    Spacer()
+                    Image(systemName: selectedRoleId == id ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(selectedRoleId == id
+                            ? AppTheme.themeColor
+                            : AppTheme.textTertiary(for: colorScheme))
+                }
+                .padding(.horizontal, AppTheme.Spacing.m)
+                .padding(.vertical, AppTheme.Spacing.m)
+
+                if !isLast {
+                    Divider()
+                        .padding(.leading, AppTheme.Spacing.m)
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Notes Card
@@ -251,8 +363,37 @@ struct EditVolunteerSheet: View {
     // MARK: - Actions
 
     private func loadCongregations() async {
-        guard let circuitId = AppState.shared.currentOverseer?.circuitId else { return }
+        guard let circuitId = AppState.shared.currentOverseer?.circuitId else {
+            // No circuitId — circuit picker will be shown instead
+            return
+        }
+        await loadCongregationsForCircuitId(circuitId, preselectMatching: volunteer.congregation)
+    }
 
+    private func loadAllCircuits() async {
+        isLoadingCircuits = true
+        do {
+            let result = try await NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.CircuitsQuery(region: .none, language: .none),
+                cachePolicy: .fetchIgnoringCacheData
+            )
+            if let data = result.data?.circuits {
+                circuits = data.map { CircuitItem(id: $0.id, code: $0.code, region: $0.region, language: $0.language) }
+            }
+        } catch {
+            print("Failed to load circuits: \(error)")
+        }
+        isLoadingCircuits = false
+    }
+
+    private func loadCongregationsForCircuit(_ circuit: CircuitItem) async {
+        selectedCircuit = circuit
+        selectedCongregation = nil
+        congregations = []
+        await loadCongregationsForCircuitId(circuit.id, preselectMatching: volunteer.congregation)
+    }
+
+    private func loadCongregationsForCircuitId(_ circuitId: String, preselectMatching match: String) async {
         isLoadingCongregations = true
         do {
             let result = try await NetworkClient.shared.apollo.fetch(
@@ -271,7 +412,7 @@ struct EditVolunteerSheet: View {
                 }
                 // Pre-select the volunteer's current congregation by matching the stored string
                 selectedCongregation = congregations.first {
-                    "\($0.name) - \($0.city)" == volunteer.congregation
+                    "\($0.name) - \($0.city)" == match
                 }
             }
         } catch {
@@ -283,15 +424,6 @@ struct EditVolunteerSheet: View {
     private func saveChanges() async {
         isSubmitting = true
         HapticManager.shared.lightTap()
-
-        guard let congregation = selectedCongregation else {
-            errorMessage = "Please select a congregation."
-            HapticManager.shared.error()
-            isSubmitting = false
-            return
-        }
-
-        let congregationString = "\(congregation.name) - \(congregation.city)"
 
         let trimmedFirstName = firstName.trimmingCharacters(in: .whitespaces)
         let trimmedLastName = lastName.trimmingCharacters(in: .whitespaces)
@@ -308,8 +440,12 @@ struct EditVolunteerSheet: View {
         if trimmedLastName != volunteer.lastName {
             input.lastName = .some(trimmedLastName)
         }
-        if congregationString != volunteer.congregation {
-            input.congregation = .some(congregationString)
+        // Only update congregation if the user explicitly picked a new one
+        if let congregation = selectedCongregation {
+            let congregationString = "\(congregation.name) - \(congregation.city)"
+            if congregationString != volunteer.congregation {
+                input.congregation = .some(congregationString)
+            }
         }
 
         let originalPhone = volunteer.phone ?? ""
@@ -328,6 +464,10 @@ struct EditVolunteerSheet: View {
 
         if !trimmedNotes.isEmpty {
             input.notes = .some(trimmedNotes)
+        }
+
+        if selectedRoleId != volunteer.roleId {
+            input.roleId = selectedRoleId.map { .some($0) } ?? .null
         }
 
         await viewModel.updateVolunteer(input: input)
@@ -368,6 +508,7 @@ struct EditVolunteerSheet: View {
             departmentId: "dept-1",
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
+            roleId: nil,
             roleName: nil
         ),
         viewModel: VolunteerDetailViewModel(volunteerId: "1")

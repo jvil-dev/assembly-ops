@@ -41,6 +41,7 @@ final class VolunteersViewModel: ObservableObject {
     @Published var departmentVolunteers: [VolunteerListItem] = []
     @Published var allVolunteers: [VolunteerListItem] = []
     @Published var volunteers: [VolunteerListItem] = [] // For VolunteerPickerSheet
+    @Published var roles: [RoleItem] = []
     @Published var isLoading = false
     @Published var error: String?
 
@@ -141,6 +142,20 @@ final class VolunteersViewModel: ObservableObject {
         isLoading = false
     }
 
+    func loadRoles(eventId: String) async {
+        do {
+            let result = try await NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.EventRolesQuery(eventId: eventId),
+                cachePolicy: .fetchIgnoringCacheData
+            )
+            if let data = result.data?.roles {
+                roles = data.map { RoleItem(id: $0.id, name: $0.name, sortOrder: $0.sortOrder) }
+            }
+        } catch {
+            print("Failed to load roles: \(error)")
+        }
+    }
+
     func createVolunteer(input: CreateVolunteerInput) async -> CreatedVolunteerResult? {
         do {
             let graphQLInput = AssemblyOpsAPI.CreateVolunteerInput(
@@ -152,7 +167,7 @@ final class VolunteersViewModel: ObservableObject {
                 appointmentStatus: mapAppointmentStatus(input.appointmentStatus),
                 notes: input.notes.flatMap { .some($0) } ?? .none,
                 departmentId: .some(input.departmentId),
-                roleId: .none
+                roleId: input.roleId.map { .some($0) } ?? .none
             )
 
             let result = try await NetworkClient.shared.apollo.perform(
@@ -166,6 +181,7 @@ final class VolunteersViewModel: ObservableObject {
                 return nil
             }
 
+            let selectedRole = roles.first { $0.id == input.roleId }
             let newVolunteer = VolunteerListItem(
                 id: data.id,
                 volunteerId: data.volunteerId,
@@ -179,7 +195,8 @@ final class VolunteersViewModel: ObservableObject {
                 departmentId: input.departmentId,
                 departmentName: nil,
                 departmentType: nil,
-                roleName: nil
+                roleId: input.roleId,
+                roleName: selectedRole?.name
             )
 
             // Add to department volunteers list
@@ -235,6 +252,7 @@ final class VolunteersViewModel: ObservableObject {
             departmentId: volunteer.department?.id,
             departmentName: volunteer.department?.name,
             departmentType: volunteer.department?.departmentType.rawValue,
+            roleId: volunteer.role?.id,
             roleName: volunteer.role?.name
         )
     }
@@ -263,6 +281,7 @@ struct CreateVolunteerInput {
     let notes: String?
     let departmentId: String
     let eventId: String
+    let roleId: String?
 }
 
 struct CreatedVolunteerResult {

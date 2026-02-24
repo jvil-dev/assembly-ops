@@ -30,16 +30,27 @@ struct SessionDetailView: View {
     let session: EventSessionItem
 
     @StateObject private var viewModel = CoverageMatrixViewModel()
+    @StateObject private var areaViewModel = AreaManagementViewModel()
     @ObservedObject private var sessionState = OverseerSessionState.shared
     @Environment(\.colorScheme) var colorScheme
 
     @State private var selectedSlot: CoverageSlot?
     @State private var hasAppeared = false
     @State private var showCreatePost = false
+    @State private var showCreateArea = false
+    @State private var selectedAreaForDetail: AreaItem?
     @State private var preselectedCategory: AttendantMainCategory? = nil
     @State private var postToDelete: CoveragePost?
     @State private var showDeleteConfirmation = false
     @State private var isDeleting = false
+
+    /// Identity token that changes when either data source updates,
+    /// forcing the attendant List to re-create rather than incrementally diff.
+    private var attendantListId: String {
+        let areaIds = areaViewModel.areas.map(\.id).joined(separator: ",")
+        let postIds = sessionPosts.map(\.id).joined(separator: ",")
+        return "\(areaIds)-\(postIds)"
+    }
 
     private var sessionSlots: [CoverageSlot] {
         viewModel.slots(for: session.id)
@@ -60,19 +71,51 @@ struct SessionDetailView: View {
         sessionState.selectedDepartment?.departmentType == "ATTENDANT"
     }
 
+    /// Whether any posts are assigned to areas
+    private var hasAreas: Bool {
+        !areaViewModel.areas.isEmpty
+    }
+
+    /// Areas grouped by I/E/S category for the Attendant department.
+    /// Returns a tuple per I/E/S category with matching areas (and their posts).
+    private func areasForCategory(_ main: AttendantMainCategory) -> [(area: AreaItem, captainName: String?, posts: [CoveragePost])] {
+        areaViewModel.areas
+            .filter { $0.category == main.rawValue }
+            .map { area in
+                let postsInArea = sessionPosts.filter { $0.areaId == area.id }
+                let captain = area.captains.first { $0.sessionId == session.id }
+                return (area: area, captainName: captain?.volunteerName, posts: postsInArea)
+            }
+    }
+
     /// Posts grouped by category, preserving sort order.
-    /// For Attendant departments, groups are ordered I → E → S → other.
+    /// For non-Attendant departments (category-based grouping).
     private var groupedPosts: [(category: String, posts: [CoveragePost])] {
-        let grouped = Dictionary(grouping: sessionPosts) { $0.category ?? "" }
+        let grouped = Dictionary(grouping: sessionPosts) { post -> String in
+            return post.category ?? ""
+        }
+
         let sortedKeys = grouped.keys.sorted { a, b in
             if isAttendantDept {
                 return AttendantMainCategory.sortIndex(for: a) < AttendantMainCategory.sortIndex(for: b)
             }
             return a < b
         }
-        return sortedKeys.map { key in
-            (category: key.isEmpty ? "post.otherCategory".localized : key, posts: grouped[key]!)
+
+        let result: [(category: String, posts: [CoveragePost])] = sortedKeys.map { key in
+            let categoryName: String
+            if key.isEmpty {
+                categoryName = "post.otherCategory".localized
+            } else {
+                categoryName = key
+            }
+            guard let postsForKey = grouped[key] else {
+                return (category: categoryName, posts: [])
+            }
+            return (category: categoryName, posts: postsForKey)
         }
+
+        return result
     }
 
     /// Display label for a category section header.
@@ -84,102 +127,89 @@ struct SessionDetailView: View {
     }
 
     var body: some View {
-        Group {
-            if viewModel.isLoading && viewModel.slots.isEmpty {
-                LoadingView(message: "Loading posts...")
-            } else if isAttendantDept {
-                attendantPostList
-            } else if sessionPosts.isEmpty {
-                emptyState
-            } else {
-                postList
-            }
+        contentView
+            .themedBackground(scheme: colorScheme)
+            .navigationTitle(session.name)
+            .toolbar { toolbarContent }
+            .modifier(SessionSheetsModifier(
+                selectedSlot: $selectedSlot,
+                showCreatePost: $showCreatePost,
+                showCreateArea: $showCreateArea,
+                selectedAreaForDetail: $selectedAreaForDetail,
+                preselectedCategory: $preselectedCategory,
+                viewModel: viewModel,
+                areaViewModel: areaViewModel,
+                sessionState: sessionState,
+                session: session
+            ))
+            .modifier(SessionLifecycleModifier(
+                showCreatePost: $showCreatePost,
+                showCreateArea: $showCreateArea,
+                selectedAreaForDetail: $selectedAreaForDetail,
+                selectedSlot: $selectedSlot,
+                showDeleteConfirmation: $showDeleteConfirmation,
+                postToDelete: $postToDelete,
+                hasAppeared: $hasAppeared,
+                preselectedCategory: $preselectedCategory,
+                viewModel: viewModel,
+                areaViewModel: areaViewModel,
+                sessionState: sessionState,
+                isAttendantDept: isAttendantDept,
+                deletePost: deletePost
+            ))
+    }
+
+    @ViewBuilder
+    private var contentView: some View {
+        if viewModel.isLoading && viewModel.slots.isEmpty {
+            LoadingView(message: "Loading posts...")
+        } else if isAttendantDept {
+            attendantPostList
+        } else if sessionPosts.isEmpty {
+            emptyState
+        } else {
+            postList
         }
-        .themedBackground(scheme: colorScheme)
-        .navigationTitle(session.name)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    if sessionState.selectedDepartment != nil {
-                        Button {
-                            showCreatePost = true
-                        } label: {
-                            Label("post.create".localized, systemImage: "mappin.circle.fill")
-                        }
+    }
 
-                        Divider()
-                    }
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .primaryAction) {
+            toolbarMenu
+        }
+    }
 
-                    Button {
-                        viewModel.filter = .all
-                    } label: {
-                        Label("Show All", systemImage: viewModel.filter == .all ? "checkmark" : "")
-                    }
-
-                    Button {
-                        viewModel.filter = .gaps
-                    } label: {
-                        Label("Gaps Only", systemImage: viewModel.filter == .gaps ? "checkmark" : "")
-                    }
-
-                    Button {
-                        viewModel.filter = .filled
-                    } label: {
-                        Label("Filled Only", systemImage: viewModel.filter == .filled ? "checkmark" : "")
-                    }
+    private var toolbarMenu: some View {
+        Menu {
+            if sessionState.selectedDepartment != nil && !isAttendantDept {
+                Button {
+                    showCreatePost = true
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Label("post.create".localized, systemImage: "mappin.circle.fill")
                 }
+
+                Divider()
             }
-        }
-        .sheet(item: $selectedSlot) { slot in
-            SlotDetailSheet(initialSlot: slot, viewModel: viewModel)
-        }
-        .sheet(isPresented: $showCreatePost) {
-            CreatePostSheet(
-                categorySuggestions: viewModel.existingCategories,
-                locationSuggestions: viewModel.existingLocations,
-                preselectedCategory: preselectedCategory
-            )
-        }
-        .onChange(of: showCreatePost) { _, isPresented in
-            if !isPresented {
-                preselectedCategory = nil
-                Task { await viewModel.loadCoverage() }
+
+            Button {
+                viewModel.filter = .all
+            } label: {
+                Label("Show All", systemImage: viewModel.filter == .all ? "checkmark" : "")
             }
-        }
-        .onChange(of: selectedSlot) { _, slot in
-            if slot == nil {
-                Task { await viewModel.loadCoverage() }
+
+            Button {
+                viewModel.filter = .gaps
+            } label: {
+                Label("Gaps Only", systemImage: viewModel.filter == .gaps ? "checkmark" : "")
             }
-        }
-        .alert("Delete Post", isPresented: $showDeleteConfirmation) {
-            Button("Cancel", role: .cancel) {
-                postToDelete = nil
+
+            Button {
+                viewModel.filter = .filled
+            } label: {
+                Label("Filled Only", systemImage: viewModel.filter == .filled ? "checkmark" : "")
             }
-            Button("Delete", role: .destructive) {
-                if let post = postToDelete {
-                    Task { await deletePost(post) }
-                }
-            }
-        } message: {
-            if let post = postToDelete {
-                Text("Are you sure you want to delete \"\(post.name)\"? This will also remove all assignments for this post.")
-            }
-        }
-        .refreshable {
-            await viewModel.loadCoverage()
-        }
-        .onAppear {
-            withAnimation(AppTheme.entranceAnimation) {
-                hasAppeared = true
-            }
-        }
-        .task {
-            if let departmentId = sessionState.selectedDepartment?.id {
-                viewModel.departmentId = departmentId
-                await viewModel.loadCoverage()
-            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
         }
     }
 
@@ -229,7 +259,46 @@ struct SessionDetailView: View {
         .scrollContentBackground(.hidden)
     }
 
-    // MARK: - Attendant Post List (always shows I / E / S buckets)
+    // MARK: - Attendant Post List (I/E/S → Areas → Posts)
+
+    /// Flattened row model for stable List diffing within each I/E/S section.
+    private enum AttendantSectionRow: Identifiable {
+        case areaHeader(area: AreaItem, captainName: String?, isFirst: Bool)
+        case areaEmpty(area: AreaItem, animationIndex: Int)
+        case post(post: CoveragePost, animationIndex: Int)
+        case createArea(category: AttendantMainCategory, animationIndex: Int)
+
+        var id: String {
+            switch self {
+            case .areaHeader(let area, _, _): return "header-\(area.id)"
+            case .areaEmpty(let area, _): return "empty-\(area.id)"
+            case .post(let post, _): return "post-\(post.id)"
+            case .createArea(let category, _): return "create-\(category.rawValue)"
+            }
+        }
+    }
+
+    /// Build a flat array of identifiable rows for a given I/E/S category.
+    private func attendantRows(for main: AttendantMainCategory, catIndex: Int) -> [AttendantSectionRow] {
+        let categoryAreas = areasForCategory(main)
+        var rows: [AttendantSectionRow] = []
+
+        for (areaIndex, group) in categoryAreas.enumerated() {
+            rows.append(.areaHeader(area: group.area, captainName: group.captainName, isFirst: areaIndex == 0))
+
+            if group.posts.isEmpty {
+                rows.append(.areaEmpty(area: group.area, animationIndex: catIndex * 20 + areaIndex * 5))
+            } else {
+                for (postIndex, post) in group.posts.enumerated() {
+                    let animationIndex = catIndex * 20 + areaIndex * 5 + postIndex + 1
+                    rows.append(.post(post: post, animationIndex: animationIndex))
+                }
+            }
+        }
+
+        rows.append(.createArea(category: main, animationIndex: catIndex * 20 + categoryAreas.count * 5))
+        return rows
+    }
 
     private var attendantPostList: some View {
         List {
@@ -245,21 +314,11 @@ struct SessionDetailView: View {
                     trailing: AppTheme.Spacing.screenEdge
                 ))
 
-            ForEach(Array(AttendantMainCategory.allCases.enumerated()), id: \.element.id) { groupIndex, main in
-                let postsInCategory = sessionPosts.filter {
-                    ($0.category ?? "") == main.rawValue ||
-                    ($0.category ?? "").hasPrefix("\(main.rawValue) -")
-                }
-
+            // I/E/S category sections → flattened rows
+            ForEach(Array(AttendantMainCategory.allCases.enumerated()), id: \.element.id) { catIndex, main in
                 Section {
-                    if postsInCategory.isEmpty {
-                        // Placeholder card
-                        attendantPlaceholderRow(for: main, animationIndex: groupIndex)
-                    } else {
-                        ForEach(Array(postsInCategory.enumerated()), id: \.element.id) { postIndex, post in
-                            let animationIndex = groupIndex * 10 + postIndex + 1
-                            postRow(post: post, animationIndex: animationIndex)
-                        }
+                    ForEach(attendantRows(for: main, catIndex: catIndex)) { row in
+                        attendantSectionRow(row)
                     }
                 } header: {
                     Text(AttendantMainCategory.displayString(for: main.rawValue))
@@ -275,14 +334,75 @@ struct SessionDetailView: View {
                 }
             }
         }
+        .id(attendantListId)
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
     }
 
-    private func attendantPlaceholderRow(for category: AttendantMainCategory, animationIndex: Int) -> some View {
+    @ViewBuilder
+    private func attendantSectionRow(_ row: AttendantSectionRow) -> some View {
+        switch row {
+        case .areaHeader(let area, let captainName, let isFirst):
+            areaHeader(area: area, captainName: captainName)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(
+                    top: isFirst ? 0 : AppTheme.Spacing.s,
+                    leading: AppTheme.Spacing.screenEdge,
+                    bottom: AppTheme.Spacing.xs,
+                    trailing: AppTheme.Spacing.screenEdge
+                ))
+        case .areaEmpty(let area, let animationIndex):
+            areaEmptyPlaceholder(area: area, animationIndex: animationIndex)
+        case .post(let post, let animationIndex):
+            postRow(post: post, animationIndex: animationIndex)
+        case .createArea(let category, let animationIndex):
+            createAreaPlaceholder(for: category, animationIndex: animationIndex)
+        }
+    }
+
+    // MARK: - Area Section Header
+
+    private func areaHeader(area: AreaItem, captainName: String?) -> some View {
         Button {
-            preselectedCategory = category
-            showCreatePost = true
+            selectedAreaForDetail = area
+            HapticManager.shared.lightTap()
+        } label: {
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "rectangle.3.group")
+                    .font(.system(size: 12))
+                    .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+
+                Text(area.name)
+                    .font(AppTheme.Typography.captionBold)
+                    .foregroundStyle(.primary)
+
+                if let captainName = captainName {
+                    Text("★ \(captainName)")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.themeColor)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+        }
+        .buttonStyle(.plain)
+        .textCase(nil)
+        .listRowInsets(EdgeInsets(
+            top: AppTheme.Spacing.m,
+            leading: AppTheme.Spacing.screenEdge,
+            bottom: AppTheme.Spacing.xs,
+            trailing: AppTheme.Spacing.screenEdge
+        ))
+    }
+
+    private func areaEmptyPlaceholder(area: AreaItem, animationIndex: Int) -> some View {
+        Button {
+            selectedAreaForDetail = area
             HapticManager.shared.lightTap()
         } label: {
             HStack(spacing: AppTheme.Spacing.m) {
@@ -290,16 +410,16 @@ struct SessionDetailView: View {
                     Circle()
                         .fill(DepartmentColor.color(for: "ATTENDANT").opacity(0.1))
                         .frame(width: 36, height: 36)
-                    Text(category.code)
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                    Image(systemName: "rectangle.3.group")
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("No \(category.rawValue) posts yet")
+                    Text("area.noPosts".localized)
                         .font(AppTheme.Typography.bodyMedium)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                    Text("Tap to add the first \(category.rawValue) post")
+                    Text("area.createPost".localized)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 }
@@ -308,6 +428,59 @@ struct SessionDetailView: View {
 
                 Image(systemName: "plus.circle")
                     .font(.system(size: 20))
+                    .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+            }
+            .cardPadding()
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
+                    .strokeBorder(
+                        DepartmentColor.color(for: "ATTENDANT").opacity(0.3),
+                        style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .entranceAnimation(hasAppeared: hasAppeared, delay: Double(animationIndex) * 0.05)
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(
+            top: AppTheme.Spacing.s / 2,
+            leading: AppTheme.Spacing.screenEdge,
+            bottom: AppTheme.Spacing.s / 2,
+            trailing: AppTheme.Spacing.screenEdge
+        ))
+    }
+
+    /// "Create Area" placeholder row within each I/E/S section
+    private func createAreaPlaceholder(for category: AttendantMainCategory, animationIndex: Int) -> some View {
+        Button {
+            preselectedCategory = category
+            showCreateArea = true
+            HapticManager.shared.lightTap()
+        } label: {
+            HStack(spacing: AppTheme.Spacing.m) {
+                ZStack {
+                    Circle()
+                        .fill(DepartmentColor.color(for: "ATTENDANT").opacity(0.1))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("area.createInCategory".localized)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    Text("area.createInCategoryHint".localized(with: category.rawValue))
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
+
+                Spacer()
+
+                Image(systemName: "rectangle.3.group.fill")
+                    .font(.system(size: 16))
                     .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
             }
             .cardPadding()
@@ -553,6 +726,142 @@ struct SessionDetailView: View {
         if assignment.checkIn != nil { return AppTheme.StatusColors.accepted }
         if assignment.isPending { return AppTheme.StatusColors.pending }
         return AppTheme.themeColor
+    }
+}
+
+// MARK: - Sheets Modifier
+
+private struct SessionSheetsModifier: ViewModifier {
+    @Binding var selectedSlot: CoverageSlot?
+    @Binding var showCreatePost: Bool
+    @Binding var showCreateArea: Bool
+    @Binding var selectedAreaForDetail: AreaItem?
+    @Binding var preselectedCategory: AttendantMainCategory?
+    let viewModel: CoverageMatrixViewModel
+    let areaViewModel: AreaManagementViewModel
+    let sessionState: OverseerSessionState
+    let session: EventSessionItem
+
+    func body(content: Content) -> some View {
+        content
+            .sheet(item: $selectedSlot) { slot in
+                SlotDetailSheet(initialSlot: slot, viewModel: viewModel)
+            }
+            .sheet(isPresented: $showCreatePost) {
+                CreatePostSheet(
+                    categorySuggestions: viewModel.existingCategories,
+                    locationSuggestions: viewModel.existingLocations,
+                    preselectedCategory: preselectedCategory
+                )
+            }
+            .sheet(isPresented: $showCreateArea) {
+                if let departmentId = sessionState.selectedDepartment?.id {
+                    CreateAreaSheet(
+                        departmentId: departmentId,
+                        viewModel: areaViewModel,
+                        preselectedCategory: preselectedCategory
+                    )
+                }
+            }
+            .sheet(item: $selectedAreaForDetail) { area in
+                if let departmentId = sessionState.selectedDepartment?.id {
+                    AreaDetailSheet(
+                        area: area,
+                        session: session,
+                        departmentId: departmentId,
+                        areaViewModel: areaViewModel,
+                        coverageViewModel: viewModel
+                    )
+                }
+            }
+    }
+}
+
+// MARK: - Lifecycle Modifier
+
+private struct SessionLifecycleModifier: ViewModifier {
+    @Binding var showCreatePost: Bool
+    @Binding var showCreateArea: Bool
+    @Binding var selectedAreaForDetail: AreaItem?
+    @Binding var selectedSlot: CoverageSlot?
+    @Binding var showDeleteConfirmation: Bool
+    @Binding var postToDelete: CoveragePost?
+    @Binding var hasAppeared: Bool
+    @Binding var preselectedCategory: AttendantMainCategory?
+    let viewModel: CoverageMatrixViewModel
+    let areaViewModel: AreaManagementViewModel
+    let sessionState: OverseerSessionState
+    let isAttendantDept: Bool
+    let deletePost: (CoveragePost) async -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: showCreatePost) { _, isPresented in
+                if !isPresented {
+                    preselectedCategory = nil
+                    Task { await viewModel.loadCoverage() }
+                }
+            }
+            .onChange(of: showCreateArea) { _, isPresented in
+                if !isPresented {
+                    preselectedCategory = nil
+                    if let departmentId = sessionState.selectedDepartment?.id {
+                        Task {
+                            await areaViewModel.loadAreas(departmentId: departmentId)
+                            await viewModel.loadCoverage()
+                        }
+                    }
+                }
+            }
+            .onChange(of: selectedAreaForDetail) { _, area in
+                if area == nil {
+                    if let departmentId = sessionState.selectedDepartment?.id {
+                        Task {
+                            await areaViewModel.loadAreas(departmentId: departmentId)
+                            await viewModel.loadCoverage()
+                        }
+                    }
+                }
+            }
+            .onChange(of: selectedSlot) { _, slot in
+                if slot == nil {
+                    Task { await viewModel.loadCoverage() }
+                }
+            }
+            .alert("Delete Post", isPresented: $showDeleteConfirmation) {
+                Button("Cancel", role: .cancel) {
+                    postToDelete = nil
+                }
+                Button("Delete", role: .destructive) {
+                    if let post = postToDelete {
+                        Task { await deletePost(post) }
+                    }
+                }
+            } message: {
+                if let post = postToDelete {
+                    Text("Are you sure you want to delete \"\(post.name)\"? This will also remove all assignments for this post.")
+                }
+            }
+            .refreshable {
+                await viewModel.loadCoverage()
+                if isAttendantDept, let departmentId = sessionState.selectedDepartment?.id {
+                    await areaViewModel.loadAreas(departmentId: departmentId)
+                }
+            }
+            .onAppear {
+                withAnimation(AppTheme.entranceAnimation) {
+                    hasAppeared = true
+                }
+            }
+            .task {
+                if let departmentId = sessionState.selectedDepartment?.id {
+                    viewModel.departmentId = departmentId
+                    await viewModel.loadCoverage()
+                    if isAttendantDept {
+                        await areaViewModel.loadAreas(departmentId: departmentId)
+                    }
+                }
+            }
     }
 }
 

@@ -89,6 +89,9 @@ private struct CachedAssignment: Codable {
     let postName: String
     let postLocation: String?
     let postId: String
+    let postCategory: String?
+    let areaId: String?
+    let areaName: String?
     let departmentName: String
     let departmentType: String
     let sessionName: String
@@ -115,6 +118,9 @@ private struct CachedAssignment: Codable {
         self.postName = assignment.postName
         self.postLocation = assignment.postLocation
         self.postId = assignment.postId
+        self.postCategory = assignment.postCategory
+        self.areaId = assignment.areaId
+        self.areaName = assignment.areaName
         self.departmentName = assignment.departmentName
         self.departmentType = assignment.departmentType
         self.sessionName = assignment.sessionName
@@ -139,6 +145,9 @@ private struct CachedAssignment: Codable {
             postName: postName,
             postLocation: postLocation,
             postId: postId,
+            postCategory: postCategory,
+            areaId: areaId,
+            areaName: areaName,
             departmentName: departmentName,
             departmentType: departmentType,
             sessionName: sessionName,

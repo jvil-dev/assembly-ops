@@ -80,6 +80,8 @@ struct CoveragePost: Identifiable {
     let category: String?
     let location: String?
     let sortOrder: Int
+    let areaId: String?
+    let areaName: String?
 }
 
 struct CoverageSession: Identifiable {

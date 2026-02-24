@@ -41,5 +41,12 @@ struct VolunteerListItem: Identifiable {
     let departmentId: String?
     let departmentName: String?
     let departmentType: String?
+    let roleId: String?
     let roleName: String?
+}
+
+struct RoleItem: Identifiable {
+    let id: String
+    let name: String
+    let sortOrder: Int
 }

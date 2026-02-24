@@ -39,6 +39,9 @@ final class PostsViewModel: ObservableObject {
     @Published var capacityText: String = "1"
     @Published var category: String = ""
 
+    /// Area to assign the post to on creation (set when creating from within an area)
+    var areaId: String?
+
     // Bulk create form fields
     @Published var bulkPrefix: String = ""
     @Published var bulkStartNumber: String = "1"
@@ -79,7 +82,8 @@ final class PostsViewModel: ObservableObject {
             description: description.isEmpty ? .none : .some(description),
             location: location.isEmpty ? .none : .some(location),
             capacity: .some(capacity),
-            category: trimmedCategory.isEmpty ? .none : .some(trimmedCategory)
+            category: trimmedCategory.isEmpty ? .none : .some(trimmedCategory),
+            areaId: areaId.map { .some($0) } ?? .none
         )
 
         do {
@@ -145,7 +149,8 @@ final class PostsViewModel: ObservableObject {
                 name: "\(prefix)\(number)",
                 capacity: .some(capacity),
                 category: trimmedCategory.isEmpty ? .none : .some(trimmedCategory),
-                sortOrder: .some(number)
+                sortOrder: .some(number),
+                areaId: areaId.map { .some($0) } ?? .none
             )
         }
 

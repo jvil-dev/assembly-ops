@@ -28,6 +28,10 @@ struct CreatePostSheet: View {
     let locationSuggestions: [String]
     var preselectedCategory: AttendantMainCategory? = nil
 
+    /// When creating a post inside an area, pass the area context
+    var areaId: String? = nil
+    var areaCategory: String? = nil
+
     @StateObject private var viewModel = PostsViewModel()
     @ObservedObject private var sessionState = OverseerSessionState.shared
     @Environment(\.colorScheme) var colorScheme
@@ -44,6 +48,15 @@ struct CreatePostSheet: View {
     private var isAttendant: Bool {
         sessionState.selectedDepartment?.departmentType == "ATTENDANT"
     }
+
+    /// When inside an area, determine the main category from the area's category string
+    private var areaMainCategory: AttendantMainCategory? {
+        guard let cat = areaCategory else { return nil }
+        return AttendantMainCategory.mainCategory(from: cat)
+    }
+
+    /// Whether this sheet was opened from within an area (category derived from area)
+    private var isAreaContext: Bool { areaId != nil }
 
     var body: some View {
         NavigationStack {
@@ -114,7 +127,14 @@ struct CreatePostSheet: View {
                 }
             }
             .onAppear {
-                if let preselected = preselectedCategory {
+                // Set area context on the view model
+                viewModel.areaId = areaId
+
+                if isAreaContext, let areaCat = areaMainCategory {
+                    // Area context: set main category from area, only allow subcategory
+                    selectedMain = areaCat
+                    syncCategory()
+                } else if let preselected = preselectedCategory {
                     selectedMain = preselected
                     syncCategory()
                 }
@@ -156,9 +176,13 @@ struct CreatePostSheet: View {
             SectionHeaderLabel(icon: "info.circle", title: "OPTIONAL")
 
             VStack(spacing: AppTheme.Spacing.m) {
-                if isAttendant {
+                if isAttendant && !isAreaContext {
+                    // Full I/E/S category picker when not inside an area
                     attendantCategoryPicker
-                } else {
+                } else if isAreaContext, let areaCat = areaMainCategory, !areaCat.commonSubcategories.isEmpty {
+                    // Subcategory-only picker for Exterior areas
+                    attendantSubcategoryPicker(for: areaCat)
+                } else if !isAttendant {
                     SuggestionTextField(
                         placeholder: "post.category".localized,
                         text: $viewModel.category,
@@ -198,9 +222,11 @@ struct CreatePostSheet: View {
                         .keyboardType(.numberPad)
                 }
 
-                if isAttendant {
+                if isAttendant && !isAreaContext {
                     attendantCategoryPicker
-                } else {
+                } else if isAreaContext, let areaCat = areaMainCategory, !areaCat.commonSubcategories.isEmpty {
+                    attendantSubcategoryPicker(for: areaCat)
+                } else if !isAttendant {
                     SuggestionTextField(
                         placeholder: "post.category".localized,
                         text: $viewModel.category,
@@ -358,6 +384,86 @@ struct CreatePostSheet: View {
                             syncCategory()
                         }
                 }
+            }
+        }
+    }
+
+    /// Subcategory-only picker shown when creating a post inside an Exterior area
+    private func attendantSubcategoryPicker(for main: AttendantMainCategory) -> some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+            Text("post.subcategory".localized)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: AppTheme.Spacing.s) {
+                    ForEach(main.commonSubcategories, id: \.self) { sub in
+                        Button {
+                            selectedSub = sub
+                            showCustomSub = false
+                            customSub = ""
+                            syncCategory()
+                        } label: {
+                            Text(sub)
+                                .font(AppTheme.Typography.caption)
+                                .padding(.horizontal, AppTheme.Spacing.m)
+                                .padding(.vertical, AppTheme.Spacing.s)
+                                .background(selectedSub == sub
+                                    ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                                    : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                                .foregroundStyle(selectedSub == sub
+                                    ? DepartmentColor.color(for: "ATTENDANT")
+                                    : AppTheme.textSecondary(for: colorScheme))
+                                .clipShape(Capsule())
+                                .overlay(
+                                    Capsule()
+                                        .strokeBorder(selectedSub == sub
+                                            ? DepartmentColor.color(for: "ATTENDANT")
+                                            : Color.clear, lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    // Custom chip
+                    Button {
+                        selectedSub = nil
+                        showCustomSub = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 11, weight: .semibold))
+                            Text("Custom")
+                                .font(AppTheme.Typography.caption)
+                        }
+                        .padding(.horizontal, AppTheme.Spacing.m)
+                        .padding(.vertical, AppTheme.Spacing.s)
+                        .background(showCustomSub
+                            ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                            : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                        .foregroundStyle(showCustomSub
+                            ? DepartmentColor.color(for: "ATTENDANT")
+                            : AppTheme.textSecondary(for: colorScheme))
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(showCustomSub
+                                    ? DepartmentColor.color(for: "ATTENDANT")
+                                    : Color.clear, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if showCustomSub {
+                TextField("e.g. Gate, Ramp B", text: $customSub)
+                    .padding(AppTheme.Spacing.m)
+                    .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                    .onChange(of: customSub) { _, value in
+                        syncCategory()
+                    }
             }
         }
     }

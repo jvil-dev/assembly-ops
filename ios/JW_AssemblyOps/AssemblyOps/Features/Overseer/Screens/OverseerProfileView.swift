@@ -89,15 +89,13 @@ struct OverseerProfileView: View {
                     hasAppeared = true
                 }
             }
-            .confirmationDialog(
-                "Are you sure you want to log out?",
-                isPresented: $showLogoutConfirmation,
-                titleVisibility: .visible
-            ) {
-                Button("Log Out", role: .destructive) {
+            .alert("profile.logout".localized, isPresented: $showLogoutConfirmation) {
+                Button("common.cancel".localized, role: .cancel) {}
+                Button("profile.logout".localized, role: .destructive) {
                     appState.logout()
                 }
-                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("profile.logout.confirm".localized)
             }
         }
     }
