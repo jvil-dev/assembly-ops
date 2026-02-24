@@ -131,6 +131,7 @@ model Department {
   overseer        EventAdmin?
   notes           EventNote[]
   posts           Post[]
+  areas           Area[]
   volunteers      Volunteer[] // Keep during migration
   eventVolunteers EventVolunteer[] // NEW
 
@@ -154,9 +155,11 @@ model Event {
   sessions           Session[]
   volunteers         Volunteer[]
   eventVolunteers    EventVolunteer[]
-  safetyIncidents    SafetyIncident[]
-  lostPersonAlerts   LostPersonAlert[]
-  attendantMeetings  AttendantMeeting[]
+  safetyIncidents        SafetyIncident[]
+  lostPersonAlerts       LostPersonAlert[]
+  attendantMeetings      AttendantMeeting[]
+  walkThroughCompletions WalkThroughCompletion[]
+  facilityLocations      FacilityLocation[]
 
   @@index([joinCode])
   @@index([templateId])
@@ -240,9 +243,12 @@ model EventVolunteer {
   checkIns           CheckIn[]
   messages           Message[]
   refreshTokens      RefreshToken[]
-  safetyIncidents    SafetyIncident[]
-  lostPersonAlerts   LostPersonAlert[]
-  meetingAttendances MeetingAttendance[]
+  safetyIncidents        SafetyIncident[]
+  lostPersonAlerts       LostPersonAlert[]
+  meetingAttendances     MeetingAttendance[]
+  areaCaptains           AreaCaptain[]
+  walkThroughCompletions WalkThroughCompletion[]
+  postSessionStatuses    PostSessionStatus[]     @relation("PostSessionStatusUpdatedBy")
 
   @@unique([volunteerProfileId, eventId]) // One profile per event
   @@index([eventId])
@@ -336,14 +342,18 @@ model Post {
   category         String?
   sortOrder        Int                  @default(0)
   departmentId     String
+  areaId           String?
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
-  department       Department           @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  assignments      ScheduleAssignment[]
-  attendanceCounts AttendanceCount[]
-  incidents        SafetyIncident[]
+  department          Department           @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  area                Area?                @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  assignments         ScheduleAssignment[]
+  attendanceCounts    AttendanceCount[]
+  incidents           SafetyIncident[]
+  postSessionStatuses PostSessionStatus[]
 
   @@index([departmentId])
+  @@index([areaId])
 }
 
 model RefreshToken {
@@ -447,10 +457,13 @@ model Session {
   attendanceCounts   AttendanceCount[]
   assignments        ScheduleAssignment[]
   event              Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  safetyIncidents    SafetyIncident[]
-  lostPersonAlerts   LostPersonAlert[]
-  meetingAttendances MeetingAttendance[]
-  attendantMeetings  AttendantMeeting[]
+  safetyIncidents        SafetyIncident[]
+  lostPersonAlerts       LostPersonAlert[]
+  meetingAttendances     MeetingAttendance[]
+  attendantMeetings      AttendantMeeting[]
+  areaCaptains           AreaCaptain[]
+  walkThroughCompletions WalkThroughCompletion[]
+  postSessionStatuses    PostSessionStatus[]
 
   @@index([date])
   @@index([eventId])
@@ -501,6 +514,81 @@ model VolunteerProfile {
 
   @@index([congregationId])
   @@index([lastName, firstName])
+}
+
+model Area {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?
+  category     String?
+  sortOrder    Int           @default(0)
+  departmentId String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  department   Department    @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  posts        Post[]
+  captains     AreaCaptain[]
+
+  @@unique([departmentId, category, name])
+  @@index([departmentId])
+}
+
+model AreaCaptain {
+  id               String         @id @default(cuid())
+  areaId           String
+  sessionId        String
+  eventVolunteerId String
+  createdAt        DateTime       @default(now())
+  area             Area           @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  session          Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  eventVolunteer   EventVolunteer @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
+
+  @@unique([areaId, sessionId])
+  @@index([eventVolunteerId])
+  @@index([sessionId])
+}
+
+model WalkThroughCompletion {
+  id               String         @id @default(cuid())
+  eventId          String
+  sessionId        String
+  eventVolunteerId String
+  completedAt      DateTime       @default(now())
+  itemCount        Int
+  notes            String?
+  event            Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  session          Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  eventVolunteer   EventVolunteer @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, sessionId])
+  @@index([eventVolunteerId])
+}
+
+model PostSessionStatus {
+  id          String               @id @default(cuid())
+  postId      String
+  sessionId   String
+  status      SeatingSectionStatus @default(OPEN)
+  updatedById String
+  updatedAt   DateTime             @updatedAt
+  post        Post                 @relation(fields: [postId], references: [id], onDelete: Cascade)
+  session     Session              @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  updatedBy   EventVolunteer       @relation("PostSessionStatusUpdatedBy", fields: [updatedById], references: [id])
+
+  @@unique([postId, sessionId])
+  @@index([sessionId])
+}
+
+model FacilityLocation {
+  id          String  @id @default(cuid())
+  eventId     String
+  name        String
+  location    String
+  description String?
+  sortOrder   Int     @default(0)
+  event       Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
 }
 
 enum AppointmentStatus {
@@ -558,6 +646,12 @@ enum RecipientType {
   VOLUNTEER
   DEPARTMENT
   EVENT
+}
+
+enum SeatingSectionStatus {
+  OPEN
+  FILLING
+  FULL
 }
 
 enum SafetyIncidentType {

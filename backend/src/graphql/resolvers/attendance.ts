@@ -104,6 +104,19 @@ const attendanceResolvers = {
         orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
       });
     },
+
+    postAttendanceCounts: async (
+      _parent: unknown,
+      { postId }: { postId: string },
+      context: Context
+    ) => {
+      requireAuth(context);
+      return context.prisma.attendanceCount.findMany({
+        where: { postId },
+        include: { session: true },
+        orderBy: { updatedAt: 'desc' },
+      });
+    },
   },
 
   Mutation: {
@@ -119,13 +132,25 @@ const attendanceResolvers = {
       if (context.volunteer) {
         const eventId = await attendanceService.getSessionEventId(input.sessionId);
 
-        const eventVolunteer = await context.prisma.eventVolunteer.findFirst({
-          where: {
-            volunteerProfileId: context.volunteer.id,
-            eventId,
-          },
+        // Try as EventVolunteer first (new auth — context.volunteer.id = EventVolunteer.id)
+        let eventVolunteer = await context.prisma.eventVolunteer.findUnique({
+          where: { id: context.volunteer.id },
           include: { department: true },
         });
+
+        if (!eventVolunteer) {
+          // Fallback: legacy Volunteer auth — bridge via shared volunteerId
+          const volunteer = await context.prisma.volunteer.findUnique({
+            where: { id: context.volunteer.id },
+          });
+
+          if (volunteer) {
+            eventVolunteer = await context.prisma.eventVolunteer.findFirst({
+              where: { volunteerId: volunteer.volunteerId, eventId },
+              include: { department: true },
+            });
+          }
+        }
 
         if (!eventVolunteer || eventVolunteer.department?.departmentType !== 'ATTENDANT') {
           throw new AuthorizationError('Only attendant volunteers can submit counts');
