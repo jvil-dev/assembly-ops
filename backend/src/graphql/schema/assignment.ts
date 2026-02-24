@@ -64,6 +64,8 @@ const assignmentTypeDefs = `#graphql
     category: String
     location: String
     sortOrder: Int!
+    areaId: ID
+    areaName: String
   }
 
   type CoverageSession {

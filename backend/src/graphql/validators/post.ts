@@ -43,6 +43,7 @@ export const createPostSchema = z.object({
     .nullish()
     .transform((v: string | null | undefined) => v?.trim() || null),
   sortOrder: z.number().int().min(0, 'Sort order must be non-negative').default(0),
+  areaId: z.string().nullish().transform((v: string | null | undefined) => v || null),
 });
 
 export const createPostsSchema = z.object({

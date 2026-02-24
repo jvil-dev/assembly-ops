@@ -52,15 +52,36 @@ export class PostService {
       throw new NotFoundError('Department');
     }
 
+    // If areaId is provided, auto-derive category from the area
+    let category = validated.category;
+    let areaId = validated.areaId;
+
+    if (areaId) {
+      const area = await this.prisma.area.findUnique({
+        where: { id: areaId },
+      });
+      if (!area) {
+        throw new NotFoundError('Area');
+      }
+      if (area.departmentId !== departmentId) {
+        throw new ValidationError('Area must belong to the same department');
+      }
+      // Derive category from area if not explicitly provided
+      if (!category && area.category) {
+        category = area.category;
+      }
+    }
+
     return this.prisma.post.create({
       data: {
         name: validated.name,
         description: validated.description,
         location: validated.location,
         capacity: validated.capacity,
-        category: validated.category,
+        category,
         sortOrder: validated.sortOrder,
         departmentId,
+        areaId,
       },
     });
   }
@@ -85,15 +106,34 @@ export class PostService {
     const createdPosts: Post[] = [];
 
     for (const postInput of posts) {
+      let category = postInput.category;
+      let areaId = postInput.areaId ?? null;
+
+      if (areaId) {
+        const area = await this.prisma.area.findUnique({
+          where: { id: areaId },
+        });
+        if (!area) {
+          throw new NotFoundError('Area');
+        }
+        if (area.departmentId !== departmentId) {
+          throw new ValidationError('Area must belong to the same department');
+        }
+        if (!category && area.category) {
+          category = area.category;
+        }
+      }
+
       const post = await this.prisma.post.create({
         data: {
           name: postInput.name,
           description: postInput.description,
           location: postInput.location,
           capacity: postInput.capacity,
-          category: postInput.category,
+          category,
           sortOrder: postInput.sortOrder,
           departmentId,
+          areaId,
         },
       });
       createdPosts.push(post);
@@ -151,6 +191,7 @@ export class PostService {
     return this.prisma.post.findUnique({
       where: { id: postId },
       include: {
+        area: true,
         department: {
           include: {
             event: {
@@ -169,6 +210,7 @@ export class PostService {
     return this.prisma.post.findMany({
       where: { departmentId },
       include: {
+        area: true,
         _count: {
           select: { assignments: true },
         },
@@ -185,6 +227,7 @@ export class PostService {
         },
       },
       include: {
+        area: true,
         department: true,
         _count: {
           select: { assignments: true },

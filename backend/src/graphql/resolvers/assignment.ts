@@ -104,6 +104,16 @@ const assignmentResolvers = {
       return [];
     },
 
+    volunteerAssignments: async (
+      _parent: unknown,
+      { volunteerId }: { volunteerId: string },
+      context: Context
+    ) => {
+      requireAdmin(context);
+      const assignmentService = new AssignmentService(context.prisma);
+      return assignmentService.getVolunteerAssignments(volunteerId);
+    },
+
     myAssignments: async (_parent: unknown, { status }: { status?: string }, context: Context) => {
       requireVolunteer(context);
       const assignmentService = new AssignmentService(context.prisma);

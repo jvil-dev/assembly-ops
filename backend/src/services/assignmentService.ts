@@ -75,6 +75,8 @@ export interface CoverageSlot {
     category: string | null;
     location: string | null;
     sortOrder: number;
+    areaId: string | null;
+    areaName: string | null;
   };
   session: {
     id: string;
@@ -469,10 +471,11 @@ export class AssignmentService {
    * Returns a grid of posts × sessions showing filled/unfilled slots
    */
   async getDepartmentCoverage(departmentId: string): Promise<CoverageSlot[]> {
-    // Get all posts in the department
+    // Get all posts in the department (include area for grouping)
     const posts = await this.prisma.post.findMany({
       where: { departmentId },
       orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
+      include: { area: { select: { id: true, name: true } } },
     });
 
     if (posts.length === 0) {
@@ -536,6 +539,8 @@ export class AssignmentService {
             category: post.category,
             location: post.location,
             sortOrder: post.sortOrder,
+            areaId: post.area?.id ?? null,
+            areaName: post.area?.name ?? null,
           },
           session: {
             id: session.id,

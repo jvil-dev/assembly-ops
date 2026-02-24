@@ -29,6 +29,7 @@ const postTypeDefs = `#graphql
     capacity: Int
     category: String
     sortOrder: Int
+    areaId: ID
   }
 
   input CreatePostsInput {

@@ -161,6 +161,19 @@ export class EventService {
       });
     }
 
+    // Seed standard department roles (CO-1 hierarchy)
+    const defaultRoles = [
+      { name: 'Volunteer',          description: 'General department volunteer',               sortOrder: 0 },
+      { name: 'Captain',            description: 'Leads volunteers during a session or shift', sortOrder: 1 },
+      { name: 'Keyman',             description: 'Supervises a specific area or function',     sortOrder: 2 },
+      { name: 'Assistant Overseer', description: 'Assists the department overseer',            sortOrder: 3 },
+    ];
+    await Promise.all(
+      defaultRoles.map(r =>
+        this.prisma.role.create({ data: { ...r, eventId: event.id } })
+      )
+    );
+
     return event;
   }
 
