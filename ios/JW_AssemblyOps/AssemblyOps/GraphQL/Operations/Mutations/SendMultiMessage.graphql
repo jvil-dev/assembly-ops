@@ -1,0 +1,14 @@
+mutation SendMultiMessage($input: SendMultiMessageInput!) {
+  sendMultiMessage(input: $input) {
+    id
+    subject
+    body
+    recipientType
+    volunteer {
+      id
+      firstName
+      lastName
+    }
+    createdAt
+  }
+}

@@ -12,20 +12,41 @@ extension AssemblyOpsAPI {
     }
 
     init(
-      volunteerId: ID,
+      volunteerId: GraphQLNullable<ID> = nil,
+      recipientType: GraphQLNullable<GraphQLEnum<MessageSenderType>> = nil,
+      recipientId: GraphQLNullable<ID> = nil,
+      eventId: GraphQLNullable<ID> = nil,
       subject: GraphQLNullable<String> = nil,
       body: String
     ) {
       __data = InputDict([
         "volunteerId": volunteerId,
+        "recipientType": recipientType,
+        "recipientId": recipientId,
+        "eventId": eventId,
         "subject": subject,
         "body": body
       ])
     }
 
-    var volunteerId: ID {
+    var volunteerId: GraphQLNullable<ID> {
       get { __data["volunteerId"] }
       set { __data["volunteerId"] = newValue }
+    }
+
+    var recipientType: GraphQLNullable<GraphQLEnum<MessageSenderType>> {
+      get { __data["recipientType"] }
+      set { __data["recipientType"] = newValue }
+    }
+
+    var recipientId: GraphQLNullable<ID> {
+      get { __data["recipientId"] }
+      set { __data["recipientId"] = newValue }
+    }
+
+    var eventId: GraphQLNullable<ID> {
+      get { __data["eventId"] }
+      set { __data["eventId"] = newValue }
     }
 
     var subject: GraphQLNullable<String> {

@@ -81,6 +81,7 @@ struct MessageRowView: View {
         case .volunteer: return AppTheme.themeColor
         case .department: return .blue
         case .event: return .purple
+        case .admin: return .orange
         }
     }
 }

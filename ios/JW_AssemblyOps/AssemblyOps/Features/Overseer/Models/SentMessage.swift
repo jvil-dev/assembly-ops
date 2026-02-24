@@ -123,4 +123,26 @@ extension SentMessageItem {
         self.createdAt = createdAt
         self.recipientName = nil
     }
+
+    // Overload for SendMultiMessage mutation response
+    init?(from graphQL: AssemblyOpsAPI.SendMultiMessageMutation.Data.SendMultiMessage) {
+        self.id = graphQL.id
+        self.subject = graphQL.subject
+        self.body = graphQL.body
+        self.recipientType = graphQL.recipientType.rawValue
+        self.isRead = false
+        self.readAt = nil
+
+        let isoFormatter = DateUtils.isoFormatter
+        guard let createdAt = isoFormatter.date(from: graphQL.createdAt) else {
+            return nil
+        }
+        self.createdAt = createdAt
+
+        if let volunteer = graphQL.volunteer {
+            self.recipientName = "\(volunteer.firstName) \(volunteer.lastName)"
+        } else {
+            self.recipientName = nil
+        }
+    }
 }

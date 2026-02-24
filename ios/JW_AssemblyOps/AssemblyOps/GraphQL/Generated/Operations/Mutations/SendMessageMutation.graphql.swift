@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "SendMessage"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation SendMessage($input: SendMessageInput!) { sendMessage(input: $input) { __typename id subject body recipientType volunteer { __typename id firstName lastName } createdAt } }"#
+        #"mutation SendMessage($input: SendMessageInput!) { sendMessage(input: $input) { __typename id subject body recipientType senderType senderName volunteer { __typename id firstName lastName } conversation { __typename id } createdAt } }"#
       ))
 
     public var input: SendMessageInput
@@ -47,7 +47,10 @@ extension AssemblyOpsAPI {
           .field("subject", String?.self),
           .field("body", String.self),
           .field("recipientType", GraphQLEnum<AssemblyOpsAPI.RecipientType>.self),
+          .field("senderType", GraphQLEnum<AssemblyOpsAPI.MessageSenderType>?.self),
+          .field("senderName", String?.self),
           .field("volunteer", Volunteer?.self),
+          .field("conversation", Conversation?.self),
           .field("createdAt", AssemblyOpsAPI.DateTime.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -58,7 +61,10 @@ extension AssemblyOpsAPI {
         var subject: String? { __data["subject"] }
         var body: String { __data["body"] }
         var recipientType: GraphQLEnum<AssemblyOpsAPI.RecipientType> { __data["recipientType"] }
+        var senderType: GraphQLEnum<AssemblyOpsAPI.MessageSenderType>? { __data["senderType"] }
+        var senderName: String? { __data["senderName"] }
         var volunteer: Volunteer? { __data["volunteer"] }
+        var conversation: Conversation? { __data["conversation"] }
         var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }
 
         /// SendMessage.Volunteer
@@ -82,6 +88,25 @@ extension AssemblyOpsAPI {
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var firstName: String { __data["firstName"] }
           var lastName: String { __data["lastName"] }
+        }
+
+        /// SendMessage.Conversation
+        ///
+        /// Parent Type: `Conversation`
+        struct Conversation: AssemblyOpsAPI.SelectionSet {
+          let __data: DataDict
+          init(_dataDict: DataDict) { __data = _dataDict }
+
+          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Conversation }
+          static var __selections: [ApolloAPI.Selection] { [
+            .field("__typename", String.self),
+            .field("id", AssemblyOpsAPI.ID.self),
+          ] }
+          static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+            SendMessageMutation.Data.SendMessage.Conversation.self
+          ] }
+
+          var id: AssemblyOpsAPI.ID { __data["id"] }
         }
       }
     }

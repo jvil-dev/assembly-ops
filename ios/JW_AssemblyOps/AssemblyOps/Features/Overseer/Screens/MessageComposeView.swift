@@ -8,27 +8,16 @@
 // MARK: - Message Compose View
 //
 // Screen for composing and sending messages to volunteers, departments, or entire event.
-// Supports three recipient types with appropriate picker UI for each.
-//
-// Parameters:
-//   - initialRecipientType: Optional pre-selected recipient type (volunteer/department/event)
+// Supports single, multi-recipient, and template-based sends.
 //
 // Features:
-//   - Segmented control for recipient type selection
-//   - Volunteer picker for individual messages
-//   - Optional subject field (shown for volunteers)
-//   - Required message body field
+//   - Segmented control for recipient type
+//   - Single or multi-select volunteer picker
+//   - Template picker for quick compose
+//   - Subject and body fields
 //   - Form validation
-//   - Success/error handling with alerts
 //
-// Recipient Types:
-//   - Volunteer: Sends to individual volunteer (requires selection)
-//   - Department: Broadcasts to all volunteers in current department
-//   - Event: Broadcasts to all volunteers across entire event
-//
-// Navigation:
-//   - Accessed from OverseerMessagesView via compose button
-//   - Dismisses after successful send
+// Used by: OverseerMessagesView
 
 import SwiftUI
 
@@ -41,6 +30,8 @@ struct MessageComposeView: View {
     @Environment(\.dismiss) var dismiss
     @State private var hasAppeared = false
     @State private var showRecipientPicker = false
+    @State private var showMultiRecipientPicker = false
+    @State private var showTemplatePicker = false
     @State private var showError = false
 
     private let maxBodyLength = 5000
@@ -72,13 +63,22 @@ struct MessageComposeView: View {
                 .padding(.bottom, AppTheme.Spacing.xxl)
             }
             .themedBackground(scheme: colorScheme)
-            .navigationTitle("Compose Message")
+            .navigationTitle("messages.compose.title".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("general.cancel".localized) {
                         HapticManager.shared.lightTap()
                         dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showTemplatePicker = true
+                        HapticManager.shared.lightTap()
+                    } label: {
+                        Image(systemName: "doc.text")
                     }
                 }
             }
@@ -88,15 +88,23 @@ struct MessageComposeView: View {
                     selectedVolunteerName: $viewModel.selectedVolunteerName
                 )
             }
-            .alert("Message Sent", isPresented: $viewModel.didSend) {
-                Button("OK") {
+            .sheet(isPresented: $showMultiRecipientPicker) {
+                MultiRecipientPickerSheet(selectedIds: $viewModel.selectedVolunteerIds)
+            }
+            .sheet(isPresented: $showTemplatePicker) {
+                MessageTemplateSheet { template in
+                    viewModel.applyTemplate(template)
+                }
+            }
+            .alert("messages.compose.sent".localized, isPresented: $viewModel.didSend) {
+                Button("common.ok".localized) {
                     HapticManager.shared.lightTap()
                     dismiss()
                 }
             } message: {
                 Text(viewModel.sentCount == 1
-                    ? "Message sent successfully."
-                    : "Message sent to \(viewModel.sentCount) volunteers.")
+                    ? "messages.compose.sent.single".localized
+                    : String(format: "messages.compose.sent.multiple".localized, viewModel.sentCount))
             }
             .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
             .alert("common.error".localized, isPresented: $showError) {
@@ -110,7 +118,6 @@ struct MessageComposeView: View {
                 }
             }
             .onAppear {
-                // Set initial recipient type if provided
                 if let initialType = initialRecipientType {
                     viewModel.recipientType = initialType
                 }
@@ -125,17 +132,15 @@ struct MessageComposeView: View {
     // MARK: - Recipient Type Card
     private var recipientTypeCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            // Section header
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person.2")
                     .foregroundStyle(AppTheme.themeColor)
-                Text("RECIPIENT TYPE")
+                Text("messages.compose.recipientType".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
 
-            // Picker - only show Event option if user is App Admin
-            Picker("Recipient Type", selection: $viewModel.recipientType) {
+            Picker("messages.compose.recipientType".localized, selection: $viewModel.recipientType) {
                 ForEach(availableRecipientTypes, id: \.self) { type in
                     Label(type.composeDisplayName, systemImage: type.composeIcon)
                         .tag(type)
@@ -144,14 +149,14 @@ struct MessageComposeView: View {
             .pickerStyle(.segmented)
             .onChange(of: viewModel.recipientType) { _, newType in
                 HapticManager.shared.lightTap()
-                // Clear volunteer selection when switching away from volunteer type
                 if newType != .volunteer {
                     viewModel.selectedVolunteerId = nil
                     viewModel.selectedVolunteerName = nil
+                    viewModel.isMultiSelect = false
+                    viewModel.selectedVolunteerIds.removeAll()
                 }
             }
 
-            // Description text
             Text(recipientTypeDescription)
                 .font(AppTheme.Typography.caption)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
@@ -162,7 +167,7 @@ struct MessageComposeView: View {
 
     private var availableRecipientTypes: [MessageRecipientType] {
         if sessionState.isEventOverseer {
-            return MessageRecipientType.allCases
+            return [.volunteer, .department, .event]
         } else {
             return [.volunteer, .department]
         }
@@ -171,49 +176,96 @@ struct MessageComposeView: View {
     private var recipientTypeDescription: String {
         switch viewModel.recipientType {
         case .volunteer:
-            return "Send a message to one specific volunteer"
+            return viewModel.isMultiSelect
+                ? "messages.compose.multiSelect.description".localized
+                : "messages.compose.volunteer.description".localized
+        case .admin:
+            return "messages.compose.admin.description".localized
         case .department:
-            return "Send to all volunteers in \(sessionState.selectedDepartment?.name ?? "your department")"
+            return String(format: "messages.compose.department.description".localized,
+                          sessionState.selectedDepartment?.name ?? sessionState.claimedDepartment?.name ?? "messages.compose.yourDepartment".localized)
         case .event:
-            return "Send to all volunteers across the entire event"
+            return "messages.compose.event.description".localized
         }
     }
 
-    // MARK: - Recipient Card (Individual Volunteer)
+    // MARK: - Recipient Card
     private var recipientCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            // Section header
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person")
                     .foregroundStyle(AppTheme.themeColor)
-                Text("RECIPIENT")
+                Text("messages.compose.recipient".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
 
-            // Volunteer selection button
-            Button {
+            // Multi-select toggle
+            Toggle(isOn: $viewModel.isMultiSelect) {
+                Label("messages.compose.multiSelect".localized, systemImage: "person.2.badge.gearshape")
+                    .font(AppTheme.Typography.subheadline)
+            }
+            .tint(AppTheme.themeColor)
+            .onChange(of: viewModel.isMultiSelect) { _, isMulti in
                 HapticManager.shared.lightTap()
-                showRecipientPicker = true
-            } label: {
-                HStack {
-                    if let name = viewModel.selectedVolunteerName {
-                        Text(name)
-                            .font(AppTheme.Typography.body)
-                            .foregroundStyle(Color.primary)
-                    } else {
-                        Text("Select Volunteer")
-                            .font(AppTheme.Typography.body)
-                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                if isMulti {
+                    viewModel.selectedVolunteerId = nil
+                    viewModel.selectedVolunteerName = nil
+                } else {
+                    viewModel.selectedVolunteerIds.removeAll()
                 }
-                .padding(AppTheme.Spacing.m)
-                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+            }
+
+            if viewModel.isMultiSelect {
+                // Multi-select picker button
+                Button {
+                    HapticManager.shared.lightTap()
+                    showMultiRecipientPicker = true
+                } label: {
+                    HStack {
+                        if viewModel.selectedVolunteerIds.isEmpty {
+                            Text("messages.compose.selectRecipients".localized)
+                                .font(AppTheme.Typography.body)
+                                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        } else {
+                            Text(String(format: "messages.compose.selectedCount".localized, viewModel.selectedVolunteerIds.count))
+                                .font(AppTheme.Typography.body)
+                                .foregroundStyle(.primary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    }
+                    .padding(AppTheme.Spacing.m)
+                    .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                }
+            } else {
+                // Single volunteer picker button
+                Button {
+                    HapticManager.shared.lightTap()
+                    showRecipientPicker = true
+                } label: {
+                    HStack {
+                        if let name = viewModel.selectedVolunteerName {
+                            Text(name)
+                                .font(AppTheme.Typography.body)
+                                .foregroundStyle(.primary)
+                        } else {
+                            Text("messages.compose.selectVolunteer".localized)
+                                .font(AppTheme.Typography.body)
+                                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    }
+                    .padding(AppTheme.Spacing.m)
+                    .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                }
             }
         }
         .cardPadding()
@@ -223,18 +275,17 @@ struct MessageComposeView: View {
     // MARK: - Message Card
     private var messageCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            // Section header
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "envelope")
                     .foregroundStyle(AppTheme.themeColor)
-                Text("MESSAGE")
+                Text("messages.compose.message".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
 
             // Subject field
             VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                Text("Subject (optional)")
+                Text("messages.compose.subject".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 TextField("", text: $viewModel.subject)
@@ -247,7 +298,7 @@ struct MessageComposeView: View {
             // Body field
             VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 HStack {
-                    Text("Message *")
+                    Text("messages.compose.body".localized)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                     Spacer()
@@ -261,6 +312,7 @@ struct MessageComposeView: View {
                 TextEditor(text: $viewModel.body)
                     .frame(minHeight: 120)
                     .padding(AppTheme.Spacing.s)
+                    .scrollContentBackground(.hidden)
                     .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
                     .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                     .overlay(
@@ -289,7 +341,7 @@ struct MessageComposeView: View {
                         .tint(.white)
                 } else {
                     Image(systemName: "paperplane.fill")
-                    Text("Send Message")
+                    Text("messages.compose.send".localized)
                 }
             }
             .font(AppTheme.Typography.headline)

@@ -17,17 +17,18 @@ model Admin {
   congregationId    String? // NEW: FK to Congregation
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
-  attendanceCounts  AttendanceCount[]
-  checkIns          CheckIn[]
-  events            EventAdmin[]
-  messages          Message[]
-  refreshTokens     RefreshToken[]
-  eventNotes        EventNote[]
-  oauthConnections  OAuthConnection[]
-  congregationRef   Congregation?      @relation(fields: [congregationId], references: [id])
-  safetyIncidents   SafetyIncident[]
-  lostPersonAlerts  LostPersonAlert[]
-  attendantMeetings AttendantMeeting[]
+  attendanceCounts    AttendanceCount[]
+  checkIns            CheckIn[]
+  events              EventAdmin[]
+  sentMessages        Message[]          @relation("MessageSenderAdmin")
+  legacySentMessages  Message[]          @relation("MessageLegacySender")
+  refreshTokens       RefreshToken[]
+  eventNotes          EventNote[]
+  oauthConnections    OAuthConnection[]
+  congregationRef     Congregation?      @relation(fields: [congregationId], references: [id])
+  safetyIncidents     SafetyIncident[]
+  lostPersonAlerts    LostPersonAlert[]
+  attendantMeetings   AttendantMeeting[]
 
   @@index([email])
   @@index([congregationId])
@@ -160,6 +161,7 @@ model Event {
   attendantMeetings      AttendantMeeting[]
   walkThroughCompletions WalkThroughCompletion[]
   facilityLocations      FacilityLocation[]
+  conversations          Conversation[]
 
   @@index([joinCode])
   @@index([templateId])
@@ -241,7 +243,8 @@ model EventVolunteer {
   role               Role?                @relation(fields: [roleId], references: [id])
   assignments        ScheduleAssignment[]
   checkIns           CheckIn[]
-  messages           Message[]
+  sentMessages       Message[]          @relation("MessageSenderVol")
+  legacyMessages     Message[]          @relation("MessageLegacyRecipient")
   refreshTokens      RefreshToken[]
   safetyIncidents        SafetyIncident[]
   lostPersonAlerts       LostPersonAlert[]
@@ -296,28 +299,73 @@ model MeetingAttendance {
 }
 
 model Message {
-  id               String          @id @default(cuid())
-  subject          String?
-  body             String
-  recipientType    RecipientType
-  recipientId      String
-  isRead           Boolean         @default(false)
-  readAt           DateTime?
-  eventId          String
-  senderId         String?
-  volunteerId      String? // OLD
-  eventVolunteerId String? // NEW
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  event            Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  sender           Admin?          @relation(fields: [senderId], references: [id])
-  volunteer        Volunteer?      @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
-  eventVolunteer   EventVolunteer? @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
+  id                 String            @id @default(cuid())
+  subject            String?
+  body               String
+  recipientType      RecipientType
+  recipientId        String
+  isRead             Boolean           @default(false)
+  readAt             DateTime?
+  eventId            String
+  // New polymorphic sender identity
+  senderType         MessageSenderType?
+  senderAdminId      String?
+  senderVolId        String?
+  // Conversation threading (null for broadcasts)
+  conversationId     String?
+  // Soft delete flags
+  deletedBySender    Boolean           @default(false)
+  deletedByRecipient Boolean           @default(false)
+  // Legacy fields (kept for backward compatibility)
+  senderId           String?
+  volunteerId        String?
+  eventVolunteerId   String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  event              Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  senderAdmin        Admin?            @relation("MessageSenderAdmin", fields: [senderAdminId], references: [id])
+  senderVol          EventVolunteer?   @relation("MessageSenderVol", fields: [senderVolId], references: [id], onDelete: Cascade)
+  conversation       Conversation?     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  // Legacy relations
+  sender             Admin?            @relation("MessageLegacySender", fields: [senderId], references: [id])
+  volunteer          Volunteer?        @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  eventVolunteer     EventVolunteer?   @relation("MessageLegacyRecipient", fields: [eventVolunteerId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
+  @@index([conversationId])
+  @@index([senderType, senderAdminId])
+  @@index([senderType, senderVolId])
   @@index([recipientType, recipientId])
   @@index([volunteerId])
   @@index([eventVolunteerId])
+}
+
+model Conversation {
+  id           String                    @id @default(cuid())
+  eventId      String
+  subject      String?
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  event        Event                     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  messages     Message[]
+  participants ConversationParticipant[]
+
+  @@index([eventId])
+}
+
+model ConversationParticipant {
+  id              String            @id @default(cuid())
+  conversationId  String
+  participantType MessageSenderType
+  participantId   String
+  lastReadAt      DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime          @default(now())
+  conversation    Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, participantType, participantId])
+  @@index([participantType, participantId])
+  @@index([conversationId])
 }
 
 model OAuthConnection {
@@ -646,6 +694,12 @@ enum RecipientType {
   VOLUNTEER
   DEPARTMENT
   EVENT
+  ADMIN
+}
+
+enum MessageSenderType {
+  ADMIN
+  VOLUNTEER
 }
 
 enum SeatingSectionStatus {

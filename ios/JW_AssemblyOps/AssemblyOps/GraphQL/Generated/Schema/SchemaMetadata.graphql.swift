@@ -42,6 +42,8 @@ extension AssemblyOpsAPI {
       case "CheckInStats": return AssemblyOpsAPI.Objects.CheckInStats
       case "Circuit": return AssemblyOpsAPI.Objects.Circuit
       case "Congregation": return AssemblyOpsAPI.Objects.Congregation
+      case "Conversation": return AssemblyOpsAPI.Objects.Conversation
+      case "ConversationParticipant": return AssemblyOpsAPI.Objects.ConversationParticipant
       case "CoverageAssignment": return AssemblyOpsAPI.Objects.CoverageAssignment
       case "CoverageCheckIn": return AssemblyOpsAPI.Objects.CoverageCheckIn
       case "CoveragePost": return AssemblyOpsAPI.Objects.CoveragePost
@@ -52,6 +54,7 @@ extension AssemblyOpsAPI {
       case "Department": return AssemblyOpsAPI.Objects.Department
       case "Event": return AssemblyOpsAPI.Objects.Event
       case "EventAdmin": return AssemblyOpsAPI.Objects.EventAdmin
+      case "EventParticipant": return AssemblyOpsAPI.Objects.EventParticipant
       case "EventTemplate": return AssemblyOpsAPI.Objects.EventTemplate
       case "EventVolunteer": return AssemblyOpsAPI.Objects.EventVolunteer
       case "EventVolunteerAuthPayload": return AssemblyOpsAPI.Objects.EventVolunteerAuthPayload

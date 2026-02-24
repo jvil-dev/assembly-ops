@@ -132,6 +132,9 @@ const resolvers = {
   VolunteerProfile: volunteerProfileResolvers.VolunteerProfile,
   EventVolunteer: volunteerProfileResolvers.EventVolunteer,
   Area: areaResolvers.Area,
+  Message: messageResolvers.Message,
+  Conversation: messageResolvers.Conversation,
+  ConversationParticipant: messageResolvers.ConversationParticipant,
 };
 
 export default resolvers;

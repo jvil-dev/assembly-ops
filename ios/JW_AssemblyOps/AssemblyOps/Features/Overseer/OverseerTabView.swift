@@ -27,6 +27,7 @@ import SwiftUI
 struct OverseerTabView: View {
     @EnvironmentObject private var appState: AppState
     @ObservedObject private var sessionState = OverseerSessionState.shared
+    @ObservedObject private var badgeManager = UnreadBadgeManager.shared
 
     private var tabTintColor: Color {
         if let dept = sessionState.selectedDepartment {
@@ -60,6 +61,7 @@ struct OverseerTabView: View {
                     .tabItem {
                         Label("Messages", systemImage: "envelope")
                     }
+                    .badge(badgeManager.unreadCount)
 
                 OverseerProfileView()
                     .tabItem {
@@ -67,6 +69,9 @@ struct OverseerTabView: View {
                     }
             }
             .tint(tabTintColor)
+            .task {
+                badgeManager.startRefreshing()
+            }
         }
     }
 }

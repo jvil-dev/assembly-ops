@@ -4,10 +4,15 @@ mutation SendMessage($input: SendMessageInput!) {
     subject
     body
     recipientType
+    senderType
+    senderName
     volunteer {
       id
       firstName
       lastName
+    }
+    conversation {
+      id
     }
     createdAt
   }

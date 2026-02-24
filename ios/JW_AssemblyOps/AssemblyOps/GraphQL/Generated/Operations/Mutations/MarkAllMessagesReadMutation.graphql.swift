@@ -8,10 +8,16 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MarkAllMessagesRead"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation MarkAllMessagesRead { markAllMessagesRead { __typename markedCount } }"#
+        #"mutation MarkAllMessagesRead($eventId: ID) { markAllMessagesRead(eventId: $eventId) { __typename markedCount } }"#
       ))
 
-    public init() {}
+    public var eventId: GraphQLNullable<ID>
+
+    public init(eventId: GraphQLNullable<ID>) {
+      self.eventId = eventId
+    }
+
+    public var __variables: Variables? { ["eventId": eventId] }
 
     struct Data: AssemblyOpsAPI.SelectionSet {
       let __data: DataDict
@@ -19,7 +25,7 @@ extension AssemblyOpsAPI {
 
       static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Mutation }
       static var __selections: [ApolloAPI.Selection] { [
-        .field("markAllMessagesRead", MarkAllMessagesRead.self),
+        .field("markAllMessagesRead", MarkAllMessagesRead.self, arguments: ["eventId": .variable("eventId")]),
       ] }
       static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
         MarkAllMessagesReadMutation.Data.self

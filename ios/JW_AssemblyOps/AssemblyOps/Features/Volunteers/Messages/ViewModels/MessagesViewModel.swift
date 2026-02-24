@@ -44,6 +44,7 @@ final class MessagesViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var hasLoaded = false
     @Published var showUnreadOnly = false
+    @Published var recipients: [RecipientOption] = []
     
     var filteredMessages: [Message] {
         if showUnreadOnly {
@@ -98,10 +99,13 @@ final class MessagesViewModel: ObservableObject {
                     subject: message.subject,
                     body: message.body,
                     recipientType: message.recipientType,
+                    senderType: message.senderType,
+                    senderName: message.senderName,
+                    senderId: message.senderId,
+                    conversationId: message.conversationId,
                     isRead: true,
                     readAt: Date(),
-                    createdAt: message.createdAt,
-                    senderName: message.senderName
+                    createdAt: message.createdAt
                 )
             }
             unreadCount = max(0, unreadCount - 1)
@@ -122,10 +126,13 @@ final class MessagesViewModel: ObservableObject {
                     subject: message.subject,
                     body: message.body,
                     recipientType: message.recipientType,
+                    senderType: message.senderType,
+                    senderName: message.senderName,
+                    senderId: message.senderId,
+                    conversationId: message.conversationId,
                     isRead: true,
                     readAt: message.readAt ?? Date(),
-                    createdAt: message.createdAt,
-                    senderName: message.senderName
+                    createdAt: message.createdAt
                 )
             }
             unreadCount = 0
@@ -137,6 +144,35 @@ final class MessagesViewModel: ObservableObject {
         }
     }
     
+    /// Delete a message (soft delete)
+    func deleteMessage(_ message: Message) async {
+        do {
+            _ = try await MessagesService.shared.deleteMessage(messageId: message.id)
+            messages.removeAll { $0.id == message.id }
+            if !message.isRead {
+                unreadCount = max(0, unreadCount - 1)
+            }
+            HapticManager.shared.success()
+        } catch {
+            errorMessage = error.localizedDescription
+            HapticManager.shared.error()
+        }
+    }
+
+    /// Fetch available recipients for compose (excludes current user)
+    func fetchRecipients(eventId: String) async {
+        do {
+            var allRecipients = try await MessagesService.shared.fetchEventParticipants(eventId: eventId)
+            // Client-side safety: exclude self by ID
+            if let myId = AppState.shared.currentVolunteer?.id {
+                allRecipients.removeAll { $0.id == myId }
+            }
+            recipients = allRecipients
+        } catch {
+            print("Failed to fetch recipients: \(error)")
+        }
+    }
+
     /// Refresh messages
     func refresh() async {
         await fetchMessages()
