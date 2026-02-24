@@ -1,0 +1,14 @@
+query SearchMessages($eventId: ID!, $query: String!, $limit: Int, $offset: Int) {
+  searchMessages(eventId: $eventId, query: $query, limit: $limit, offset: $offset) {
+    id
+    subject
+    body
+    recipientType
+    senderType
+    senderName
+    senderId
+    isRead
+    readAt
+    createdAt
+  }
+}

@@ -13,11 +13,17 @@ extension AssemblyOpsAPI {
 
     init(
       isRead: GraphQLNullable<Bool> = nil,
-      senderId: GraphQLNullable<ID> = nil
+      senderId: GraphQLNullable<ID> = nil,
+      senderType: GraphQLNullable<GraphQLEnum<MessageSenderType>> = nil,
+      recipientType: GraphQLNullable<GraphQLEnum<RecipientType>> = nil,
+      search: GraphQLNullable<String> = nil
     ) {
       __data = InputDict([
         "isRead": isRead,
-        "senderId": senderId
+        "senderId": senderId,
+        "senderType": senderType,
+        "recipientType": recipientType,
+        "search": search
       ])
     }
 
@@ -29,6 +35,21 @@ extension AssemblyOpsAPI {
     var senderId: GraphQLNullable<ID> {
       get { __data["senderId"] }
       set { __data["senderId"] = newValue }
+    }
+
+    var senderType: GraphQLNullable<GraphQLEnum<MessageSenderType>> {
+      get { __data["senderType"] }
+      set { __data["senderType"] = newValue }
+    }
+
+    var recipientType: GraphQLNullable<GraphQLEnum<RecipientType>> {
+      get { __data["recipientType"] }
+      set { __data["recipientType"] = newValue }
+    }
+
+    var search: GraphQLNullable<String> {
+      get { __data["search"] }
+      set { __data["search"] = newValue }
     }
   }
 

@@ -559,8 +559,13 @@
 "assignment.attendance.lastUpdated" = "Last updated";
 "assignment.attendance.noHistory" = "No counts submitted yet";
 
+// MARK: - General
+"general.cancel" = "Cancel";
+"general.done" = "Done";
+
 // MARK: - Messages (Volunteer)
 "messages.title" = "Messages";
+"messages.loading" = "Loading messages...";
 "messages.filter.all" = "All";
 "messages.filter.unread" = "Unread";
 "messages.markAllRead" = "Mark All Read";
@@ -568,9 +573,87 @@
 "messages.detail.title" = "Message";
 "messages.detail.body" = "MESSAGE";
 "messages.empty.title" = "No Messages Yet";
-"messages.empty.subtitle" = "Messages from your overseer will appear here.";
+"messages.empty.subtitle" = "Messages will appear here when you receive them.";
 "messages.empty.unread.title" = "No Unread Messages";
 "messages.empty.unread.subtitle" = "You're all caught up!";
+"messages.delete" = "Delete";
+"messages.delete.confirm" = "Are you sure you want to delete this message?";
+"messages.reply" = "Reply";
+
+// MARK: - Conversations
+"messages.conversations.loading" = "Loading conversations...";
+"messages.conversations.empty.title" = "No Conversations";
+"messages.conversations.empty.subtitle" = "Start a conversation by composing a new message.";
+"messages.conversations.unavailable" = "Conversations are not available.";
+"messages.conversation.reply.placeholder" = "Type a reply...";
+
+// MARK: - Message Search
+"messages.search.title" = "Search Messages";
+"messages.search.placeholder" = "Search by subject or body";
+"messages.search.prompt" = "Type at least 2 characters to search";
+"messages.search.searching" = "Searching...";
+"messages.search.noResults" = "No Results";
+"messages.search.noResults.subtitle" = "Try a different search term.";
+
+// MARK: - Compose Message (Shared)
+"messages.compose.title" = "New Message";
+"messages.compose.send" = "Send";
+"messages.compose.sent" = "Message Sent";
+"messages.compose.sent.single" = "Message sent successfully.";
+"messages.compose.sent.multiple" = "Message sent to %d volunteers.";
+"messages.compose.recipient" = "RECIPIENT";
+"messages.compose.recipientType" = "RECIPIENT TYPE";
+"messages.compose.selectRecipient" = "Select a recipient";
+"messages.compose.selectRecipients" = "Select Recipients";
+"messages.compose.selectVolunteer" = "Select Volunteer";
+"messages.compose.selectedCount" = "%d selected";
+"messages.compose.noRecipients" = "No recipients available";
+"messages.compose.subject" = "Subject (optional)";
+"messages.compose.subject.placeholder" = "Enter subject...";
+"messages.compose.body" = "Message *";
+"messages.compose.message" = "MESSAGE";
+"messages.compose.multiSelect" = "Send to Multiple";
+"messages.compose.multiSelect.description" = "Send to multiple volunteers at once";
+"messages.compose.volunteer.description" = "Send a message to one specific volunteer";
+"messages.compose.admin.description" = "Send a message to an overseer";
+"messages.compose.department.description" = "Send to all volunteers in %@";
+"messages.compose.event.description" = "Send to all volunteers across the entire event";
+"messages.compose.yourDepartment" = "your department";
+"messages.compose.loadingVolunteers" = "Loading volunteers...";
+"messages.compose.searchVolunteers" = "Search volunteers...";
+"messages.compose.noVolunteers" = "No Volunteers";
+"messages.compose.noVolunteers.subtitle" = "Add volunteers to your department first";
+"messages.compose.noVolunteersSearch" = "No volunteers match your search";
+"messages.compose.selectAll" = "Select All";
+"messages.compose.deselectAll" = "Deselect All";
+
+// MARK: - Sent Messages (Overseer)
+"messages.sent.empty.title" = "No Messages Sent";
+"messages.sent.empty.subtitle" = "Messages you send will appear here.";
+
+// MARK: - Message Templates
+"messages.template.title" = "Message Templates";
+"messages.template.scheduleChange" = "Schedule Change";
+"messages.template.scheduleChange.subject" = "Schedule Update";
+"messages.template.scheduleChange.body" = "Your assignment schedule has been updated. Please check your schedule tab for the latest changes.";
+"messages.template.newAssignment" = "New Assignment";
+"messages.template.newAssignment.subject" = "New Assignment";
+"messages.template.newAssignment.body" = "You have been assigned to a new post. Please review your assignment details and confirm your availability.";
+"messages.template.shiftReminder" = "Shift Reminder";
+"messages.template.shiftReminder.subject" = "Upcoming Shift";
+"messages.template.shiftReminder.body" = "This is a reminder that your shift is coming up soon. Please arrive at your post on time.";
+"messages.template.checkInReminder" = "Check-In Reminder";
+"messages.template.checkInReminder.subject" = "Please Check In";
+"messages.template.checkInReminder.body" = "Please remember to check in when you arrive at your post. This helps us track attendance accurately.";
+"messages.template.meetingNotice" = "Meeting Notice";
+"messages.template.meetingNotice.subject" = "Meeting Scheduled";
+"messages.template.meetingNotice.body" = "A meeting has been scheduled. Please check the meetings section for details including time and location.";
+"messages.template.thankYou" = "Thank You";
+"messages.template.thankYou.subject" = "Thank You";
+"messages.template.thankYou.body" = "Thank you for your faithful service. Your hard work and dedication are truly appreciated.";
+"messages.template.importantNotice" = "Important Notice";
+"messages.template.importantNotice.subject" = "Important Notice";
+"messages.template.importantNotice.body" = "Please read this important notice carefully and follow any instructions provided.";
 
 // MARK: - Profile
 "profile.title" = "Profile";

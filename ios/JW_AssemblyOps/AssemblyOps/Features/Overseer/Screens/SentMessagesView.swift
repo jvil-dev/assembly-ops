@@ -11,6 +11,7 @@ struct SentMessagesView: View {
     @StateObject private var viewModel = SentMessagesViewModel()
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
+    @State private var showError = false
 
     var body: some View {
         Group {
@@ -33,7 +34,7 @@ struct SentMessagesView: View {
                 await viewModel.fetchMessages()
             }
         }
-        .alert("Error", isPresented: .constant(viewModel.error != nil)) {
+        .alert("Error", isPresented: $showError) {
             Button("OK") {
                 HapticManager.shared.lightTap()
                 viewModel.error = nil
@@ -42,6 +43,9 @@ struct SentMessagesView: View {
             if let error = viewModel.error {
                 Text(error)
             }
+        }
+        .onChange(of: viewModel.error) { _, newValue in
+            showError = newValue != nil
         }
         .onAppear {
             withAnimation(AppTheme.entranceAnimation) {
@@ -89,103 +93,6 @@ struct SentMessagesView: View {
             .padding(.top, AppTheme.Spacing.s)
             .padding(.bottom, AppTheme.Spacing.xxl)
         }
-    }
-}
-
-// MARK: - Sent Message Row
-
-private struct SentMessageRow: View {
-    let message: SentMessageItem
-    let colorScheme: ColorScheme
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            // Header row: recipient type badge + timestamp
-            HStack {
-                // Recipient type badge
-                HStack(spacing: AppTheme.Spacing.xs) {
-                    Image(systemName: recipientIcon)
-                        .font(.caption)
-                    Text(message.recipientTypeDisplayName)
-                        .font(AppTheme.Typography.caption)
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, AppTheme.Spacing.s)
-                .padding(.vertical, 4)
-                .background(recipientColor)
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-
-                Spacer()
-
-                // Timestamp
-                Text(timeAgo)
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-            }
-
-            // Recipient name (if individual)
-            if let recipientName = message.recipientName {
-                HStack(spacing: 6) {
-                    Image(systemName: "person.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                    Text(recipientName)
-                        .font(AppTheme.Typography.subheadline)
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                }
-            }
-
-            // Subject (if present)
-            if let subject = message.subject, !subject.isEmpty {
-                Text(subject)
-                    .font(AppTheme.Typography.headline)
-                    .foregroundStyle(.primary)
-            }
-
-            // Body preview (first 2 lines)
-            Text(message.body)
-                .font(AppTheme.Typography.body)
-                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                .lineLimit(2)
-
-            // Read status indicator (for individual messages)
-            if message.recipientType == "VOLUNTEER" {
-                HStack(spacing: AppTheme.Spacing.xs) {
-                    Image(systemName: message.isRead ? "checkmark.circle.fill" : "circle")
-                        .font(.caption)
-                        .foregroundStyle(message.isRead ? AppTheme.StatusColors.accepted : AppTheme.textTertiary(for: colorScheme))
-                    Text(message.isRead ? "Read" : "Unread")
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                }
-            }
-        }
-        .cardPadding()
-        .themedCard(scheme: colorScheme)
-    }
-
-    private var recipientIcon: String {
-        switch message.recipientType {
-        case "VOLUNTEER": return "person"
-        case "DEPARTMENT": return "person.3"
-        case "EVENT": return "megaphone"
-        default: return "envelope"
-        }
-    }
-
-    private var recipientColor: Color {
-        switch message.recipientType {
-        case "VOLUNTEER": return AppTheme.themeColor
-        case "DEPARTMENT": return .blue
-        case "EVENT": return .purple
-        default: return .gray
-        }
-    }
-
-    private var timeAgo: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: message.createdAt, relativeTo: Date())
     }
 }
 

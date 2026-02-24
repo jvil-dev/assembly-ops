@@ -1,0 +1,13 @@
+mutation SendConversationMessage($input: SendConversationMessageInput!) {
+  sendConversationMessage(input: $input) {
+    id
+    subject
+    body
+    recipientType
+    senderType
+    senderName
+    senderId
+    isRead
+    createdAt
+  }
+}

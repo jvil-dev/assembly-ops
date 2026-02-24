@@ -4,6 +4,8 @@ query SentMessages($limit: Int, $offset: Int) {
     subject
     body
     recipientType
+    senderType
+    senderName
     isRead
     readAt
     volunteer {

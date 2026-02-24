@@ -13,6 +13,8 @@
 //   - Themed card layout with recipient type badge
 //   - Subject, sender, and timestamp
 //   - Full message body
+//   - Reply button (opens conversation if exists)
+//   - Delete action
 //   - Auto-marks message as read on appear with haptic
 //
 // Used by: MessagesView (navigation destination)
@@ -21,10 +23,13 @@ import SwiftUI
 
 struct MessageDetailView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.dismiss) var dismiss
     @State private var hasAppeared = false
+    @State private var showDeleteConfirm = false
 
     let message: Message
     let onMarkRead: () async -> Void
+    var onDelete: (() async -> Void)?
 
     var body: some View {
         ScrollView {
@@ -36,6 +41,12 @@ struct MessageDetailView: View {
                 // Body card
                 bodyCard
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+
+                // Actions card
+                if message.conversationId != nil || onDelete != nil {
+                    actionsCard
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+                }
             }
             .screenPadding()
             .padding(.top, AppTheme.Spacing.l)
@@ -54,6 +65,15 @@ struct MessageDetailView: View {
             withAnimation(AppTheme.entranceAnimation) {
                 hasAppeared = true
             }
+        }
+        .alert("messages.delete.confirm".localized, isPresented: $showDeleteConfirm) {
+            Button("messages.delete".localized, role: .destructive) {
+                Task {
+                    await onDelete?()
+                    dismiss()
+                }
+            }
+            Button("general.cancel".localized, role: .cancel) {}
         }
     }
 
@@ -117,11 +137,54 @@ struct MessageDetailView: View {
         .themedCard(scheme: colorScheme)
     }
 
+    // MARK: - Actions Card
+
+    private var actionsCard: some View {
+        VStack(spacing: AppTheme.Spacing.m) {
+            // Reply button (if part of a conversation)
+            if let conversationId = message.conversationId {
+                NavigationLink {
+                    ConversationDetailView(
+                        conversationId: conversationId,
+                        otherParticipantName: message.senderName ?? "Unknown",
+                        currentUserId: AppState.shared.currentVolunteer?.id ?? AppState.shared.currentOverseer?.id
+                    )
+                } label: {
+                    Label("messages.reply".localized, systemImage: "arrowshape.turn.up.left")
+                        .font(AppTheme.Typography.body.weight(.medium))
+                        .foregroundStyle(AppTheme.themeColor)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppTheme.Spacing.m)
+                        .background(AppTheme.themeColor.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
+                }
+            }
+
+            // Delete button
+            if onDelete != nil {
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    Label("messages.delete".localized, systemImage: "trash")
+                        .font(AppTheme.Typography.body.weight(.medium))
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppTheme.Spacing.m)
+                        .background(Color.red.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
+                }
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
     private var recipientColor: Color {
         switch message.recipientType {
         case .volunteer: return AppTheme.themeColor
         case .department: return .blue
         case .event: return .purple
+        case .admin: return .orange
         }
     }
 }

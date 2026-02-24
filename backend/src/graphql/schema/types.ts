@@ -65,6 +65,12 @@ const types = `#graphql
     VOLUNTEER
     DEPARTMENT
     EVENT
+    ADMIN
+  }
+
+  enum MessageSenderType {
+    ADMIN
+    VOLUNTEER
   }
 
   enum CheckInStatus {
@@ -228,12 +234,34 @@ const types = `#graphql
     subject: String
     body: String!
     recipientType: RecipientType!
+    senderType: MessageSenderType
+    senderName: String
+    senderId: ID
     isRead: Boolean!
     readAt: DateTime
     event: Event!
     sender: Admin
     volunteer: Volunteer
+    conversation: Conversation
     createdAt: DateTime!
+  }
+
+  type Conversation {
+    id: ID!
+    subject: String
+    lastMessage: Message
+    participants: [ConversationParticipant!]!
+    unreadCount: Int!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
+  type ConversationParticipant {
+    id: ID!
+    participantType: MessageSenderType!
+    participantId: ID!
+    displayName: String!
+    lastReadAt: DateTime
   }
 
   type AttendanceCount {
