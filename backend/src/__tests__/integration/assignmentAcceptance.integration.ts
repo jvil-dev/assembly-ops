@@ -34,13 +34,13 @@ describe('Assignment Acceptance Operations', () => {
     app = await createTestApp();
     const email = `accept-test-${Date.now()}@example.com`;
 
-    // Register admin
+    // Register user (overseer)
     const registerRes = await request(app)
       .post('/graphql')
       .send({
         query: `
-          mutation Register($input: RegisterAdminInput!) {
-            registerAdmin(input: $input) { accessToken }
+          mutation Register($input: RegisterUserInput!) {
+            registerUser(input: $input) { accessToken }
           }
         `,
         variables: {
@@ -49,11 +49,12 @@ describe('Assignment Acceptance Operations', () => {
             password: 'TestPassword123',
             firstName: 'Accept',
             lastName: 'Tester',
+            isOverseer: true,
           },
         },
       });
 
-    adminToken = registerRes.body.data.registerAdmin.accessToken;
+    adminToken = registerRes.body.data.registerUser.accessToken;
 
     // Setup event, department, volunteer, post, session
     const templatesRes = await request(app)
@@ -149,10 +150,10 @@ describe('Assignment Acceptance Operations', () => {
       const volunteerLoginRes = await request(app)
         .post('/graphql')
         .send({
-          query: `mutation($input: LoginVolunteerInput!) { loginVolunteer(input: $input) { accessToken } }`,
+          query: `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
           variables: { input: { volunteerId: volunteerLoginId, token: volunteerLoginToken } },
         });
-      volunteerToken = volunteerLoginRes.body.data.loginVolunteer.accessToken;
+      volunteerToken = volunteerLoginRes.body.data.loginEventVolunteer.accessToken;
     }
   });
 

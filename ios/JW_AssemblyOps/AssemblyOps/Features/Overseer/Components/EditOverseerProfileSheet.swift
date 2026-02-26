@@ -53,19 +53,19 @@ struct EditOverseerProfileSheet: View {
     private let originalCircuitId: String?
 
     init() {
-        guard let overseer = AppState.shared.currentOverseer else {
-            fatalError("EditOverseerProfileSheet requires a current overseer")
+        guard let user = AppState.shared.currentUser else {
+            fatalError("EditOverseerProfileSheet requires a current user")
         }
 
-        self.originalFirstName = overseer.firstName
-        self.originalLastName = overseer.lastName
-        self.originalPhone = overseer.phone
-        self.originalCongregationId = overseer.congregationId
-        self.originalCircuitId = overseer.circuitId
+        self.originalFirstName = user.firstName
+        self.originalLastName = user.lastName
+        self.originalPhone = user.phone
+        self.originalCongregationId = user.congregationId
+        self.originalCircuitId = nil
 
-        _firstName = State(initialValue: overseer.firstName)
-        _lastName = State(initialValue: overseer.lastName)
-        _phone = State(initialValue: overseer.phone ?? "")
+        _firstName = State(initialValue: user.firstName)
+        _lastName = State(initialValue: user.lastName)
+        _phone = State(initialValue: user.phone ?? "")
     }
 
     private var isFormValid: Bool {
@@ -360,7 +360,7 @@ struct EditOverseerProfileSheet: View {
         let trimmedPhone = phone.trimmingCharacters(in: .whitespaces)
 
         // Build patch-style input — only send changed fields
-        var input = AssemblyOpsAPI.UpdateAdminProfileInput()
+        var input = AssemblyOpsAPI.UpdateUserProfileInput()
 
         if trimmedFirstName != originalFirstName {
             input.firstName = .some(trimmedFirstName)
@@ -380,7 +380,7 @@ struct EditOverseerProfileSheet: View {
 
         do {
             let result = try await NetworkClient.shared.apollo.perform(
-                mutation: AssemblyOpsAPI.UpdateAdminProfileMutation(input: input)
+                mutation: AssemblyOpsAPI.UpdateUserProfileMutation(input: input)
             )
 
             if let errors = result.errors, !errors.isEmpty {
@@ -390,18 +390,20 @@ struct EditOverseerProfileSheet: View {
                 return
             }
 
-            if let data = result.data?.updateAdminProfile {
+            if let data = result.data?.updateUserProfile {
                 // Update AppState with new profile data
-                appState.currentOverseer = OverseerInfo(
+                appState.currentUser = UserInfo(
                     id: data.id,
+                    userId: data.userId,
                     email: data.email,
-                    fullName: data.fullName,
                     firstName: data.firstName,
                     lastName: data.lastName,
+                    fullName: data.fullName,
                     phone: data.phone,
+                    congregation: data.congregation,
                     congregationId: data.congregationId,
-                    circuitId: data.congregationRef?.circuit.id,
-                    overseerType: appState.currentOverseer?.overseerType ?? ""
+                    appointmentStatus: appState.currentUser?.appointmentStatus,
+                    isOverseer: data.isOverseer
                 )
                 HapticManager.shared.success()
                 dismiss()

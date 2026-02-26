@@ -3,15 +3,12 @@ mutation LoginVolunteer($input: LoginEventVolunteerInput!) {
     eventVolunteer {
       id
       volunteerId
-      volunteerProfile {
+      user {
         firstName
         lastName
         email
         phone
         appointmentStatus
-        congregation {
-          name
-        }
       }
       event {
         id

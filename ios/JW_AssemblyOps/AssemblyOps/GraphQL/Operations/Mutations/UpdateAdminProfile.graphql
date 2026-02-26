@@ -1,21 +1,24 @@
-mutation UpdateAdminProfile($input: UpdateAdminProfileInput!) {
-    updateAdminProfile(input: $input) {
+mutation UpdateUserProfile($input: UpdateUserProfileInput!) {
+  updateUserProfile(input: $input) {
+    id
+    userId
+    email
+    firstName
+    lastName
+    fullName
+    phone
+    congregation
+    congregationId
+    isOverseer
+    congregationRef {
+      id
+      name
+      city
+      state
+      circuit {
         id
-        email
-        firstName
-        lastName
-        fullName
-        phone
-        congregationId
-        congregationRef {
-            id
-            name
-            city
-            state
-            circuit {
-                id
-                code
-            }
-        }
+        code
+      }
     }
+  }
 }

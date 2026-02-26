@@ -2,7 +2,6 @@ query SessionAttendanceCounts($sessionId: ID!) {
   sessionAttendanceCounts(sessionId: $sessionId) {
     id
     count
-    section
     notes
     session {
       id
@@ -14,6 +13,5 @@ query SessionAttendanceCounts($sessionId: ID!) {
       lastName
     }
     createdAt
-    updatedAt
   }
 }

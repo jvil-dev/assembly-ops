@@ -169,6 +169,10 @@ final class HomeViewModel: ObservableObject {
             let fetched = try await AssignmentsService.shared.fetchAssignments()
             assignments = fetched
             cache.save(fetched)
+            if !fetched.isEmpty {
+                AppState.shared.hasVolunteerEventMembership = true
+                AppState.shared.currentEventId = fetched.first?.eventId
+            }
         } catch {
             // Fallback to cache on failure
             if let cached = cache.load() {

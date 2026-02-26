@@ -1,51 +1,61 @@
 /**
  * Authorization Guards
  *
- * Guards are functions that check if a user has permission to perform an action.
- * They're called at the start of resolvers to protect sensitive operations.
+ * Guards check if the caller has permission before resolver logic runs.
  *
- * Available guards:
- *   - requireAdmin(): User must be logged in as an admin (overseer)
- *   - requireVolunteer(): User must be logged in as a volunteer
- *   - requireAuth(): User must be logged in as either admin or volunteer
- *   - requireEventAccess(): Admin must have access to a specific event
+ *   requireUser()        — any authenticated User (volunteer or overseer)
+ *   requireOverseer()    — User with isOverseer === true
+ *   requireAdmin()       — alias for requireOverseer() (backward compat)
+ *   requireVolunteer()   — EventVolunteer printed-card session
+ *   requireAuth()        — any authenticated caller (user or eventVolunteer)
+ *   requireEventAccess() — overseer must belong to the event (with optional role check)
  *
- * How to use in a resolver:
- *   ```
+ * Usage:
  *   myResolver: async (_, args, context) => {
- *     requireAdmin(context);  // Throws if not admin
- *     // ... rest of resolver logic
+ *     requireOverseer(context);
+ *     // ...
  *   }
- *   ```
- *
- * Authentication vs Authorization:
- *   - Authentication: "Who are you?" (handled by context.ts via JWT)
- *   - Authorization: "Are you allowed to do this?" (handled by these guards)
- *
- * Used by: ./resolvers/* to protect queries and mutations
  */
 import { Context } from '../context.js';
 import { AuthenticationError, AuthorizationError } from '../../utils/errors.js';
 import { EventRole } from '@prisma/client';
 
+export function requireUser(
+  context: Context
+): asserts context is Context & { user: NonNullable<Context['user']> } {
+  if (!context.user) {
+    throw new AuthenticationError('You must be logged in');
+  }
+}
+
+export function requireOverseer(
+  context: Context
+): asserts context is Context & { user: NonNullable<Context['user']> } {
+  if (!context.user) {
+    throw new AuthenticationError('You must be logged in');
+  }
+  if (!context.user.isOverseer) {
+    throw new AuthorizationError('Overseer access required');
+  }
+}
+
+// Backward-compat alias — existing resolvers calling requireAdmin() still work
 export function requireAdmin(
   context: Context
-): asserts context is Context & { admin: NonNullable<Context['admin']> } {
-  if (!context.admin) {
-    throw new AuthenticationError('You must be logged in as an admin');
-  }
+): asserts context is Context & { user: NonNullable<Context['user']> } {
+  requireOverseer(context);
 }
 
 export function requireVolunteer(
   context: Context
 ): asserts context is Context & { volunteer: NonNullable<Context['volunteer']> } {
   if (!context.volunteer) {
-    throw new AuthenticationError('You must be logged in as a volunteer');
+    throw new AuthenticationError('You must be logged in as an event volunteer');
   }
 }
 
 export function requireAuth(context: Context): void {
-  if (!context.admin && !context.volunteer) {
+  if (!context.user && !context.volunteer) {
     throw new AuthenticationError('You must be logged in');
   }
 }
@@ -55,17 +65,12 @@ export async function requireEventAccess(
   eventId: string,
   allowedRoles?: EventRole[]
 ): Promise<void> {
-  if (!context.admin) {
-    throw new AuthenticationError('You must be logged in as an admin');
+  if (!context.user) {
+    throw new AuthenticationError('You must be logged in');
   }
 
   const eventAdmin = await context.prisma.eventAdmin.findUnique({
-    where: {
-      adminId_eventId: {
-        adminId: context.admin.id,
-        eventId,
-      },
-    },
+    where: { userId_eventId: { userId: context.user.id, eventId } },
   });
 
   if (!eventAdmin) {

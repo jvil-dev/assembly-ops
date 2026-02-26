@@ -12,8 +12,8 @@
  * Mutations:
  *   - checkIn: Volunteer checks in to their assignment
  *   - checkOut: Volunteer checks out of their assignment
- *   - adminCheckIn: Admin checks in a volunteer on their behalf
- *   - markNoShow: Admin marks a volunteer as no-show
+ *   - adminCheckIn: Overseer checks in a volunteer on their behalf
+ *   - markNoShow: Overseer marks a volunteer as no-show
  */
 import { Context } from '../context.js';
 import { CheckInService } from '../../services/checkInService.js';
@@ -102,7 +102,7 @@ const checkInResolvers = {
       const eventId = await checkInService.getAssignmentEventId(input.assignmentId);
       await requireEventAccess(context, eventId);
 
-      return checkInService.adminCheckIn(context.admin.id, input);
+      return checkInService.adminCheckIn(context.admin!.id, input);
     },
 
     markNoShow: async (
@@ -116,7 +116,7 @@ const checkInResolvers = {
       const eventId = await checkInService.getAssignmentEventId(input.assignmentId);
       await requireEventAccess(context, eventId);
 
-      return checkInService.markNoShow(context.admin.id, input);
+      return checkInService.markNoShow(context.admin!.id, input);
     },
   },
 };

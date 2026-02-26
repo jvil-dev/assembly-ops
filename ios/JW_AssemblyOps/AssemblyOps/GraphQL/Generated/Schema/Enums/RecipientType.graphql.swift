@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     case volunteer = "VOLUNTEER"
     case department = "DEPARTMENT"
     case event = "EVENT"
-    case admin = "ADMIN"
+    case user = "USER"
   }
 
 }

@@ -21,6 +21,9 @@ query MyAssignments {
         id
         name
         departmentType
+        event {
+          id
+        }
       }
     }
     session {

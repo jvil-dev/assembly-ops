@@ -5,7 +5,7 @@
  * safety incidents, lost person alerts, and pre-event meetings.
  *
  * Enums:
- *   - SafetyIncidentType: 8 incident categories (building defect, wet floor, etc.)
+ *   - SafetyIncidentType: 10 incident categories (building defect, wet floor, etc.)
  *
  * Types:
  *   - SafetyIncident: Incident report with resolution tracking
@@ -50,7 +50,7 @@ export const attendantTypeDefs = `#graphql
     event: Event!
     resolved: Boolean!
     resolvedAt: String
-    resolvedBy: Admin
+    resolvedBy: User
     resolutionNotes: String
     createdAt: String!
   }
@@ -68,7 +68,7 @@ export const attendantTypeDefs = `#graphql
     event: Event!
     resolved: Boolean!
     resolvedAt: String
-    resolvedBy: Admin
+    resolvedBy: User
     resolutionNotes: String
     createdAt: String!
   }
@@ -79,7 +79,7 @@ export const attendantTypeDefs = `#graphql
     event: Event!
     meetingDate: String!
     notes: String
-    createdBy: Admin!
+    createdBy: User!
     attendees: [MeetingAttendance!]!
     createdAt: String!
     updatedAt: String!

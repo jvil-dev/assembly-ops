@@ -23,28 +23,13 @@ import { AuthorizationError } from '../../utils/errors.js';
 async function resolveEventVolunteer(
   context: Context
 ): Promise<string> {
-  // Try as EventVolunteer first (new auth)
   const ev = await context.prisma.eventVolunteer.findUnique({
     where: { id: context.volunteer!.id },
   });
-  if (ev) return ev.id;
-
-  // Fallback: legacy Volunteer auth — bridge via volunteerId
-  const volunteer = await context.prisma.volunteer.findUnique({
-    where: { id: context.volunteer!.id },
-  });
-  if (!volunteer) {
+  if (!ev) {
     throw new AuthorizationError('Volunteer not found');
   }
-
-  const eventVolunteer = await context.prisma.eventVolunteer.findFirst({
-    where: { volunteerId: volunteer.volunteerId },
-  });
-  if (!eventVolunteer) {
-    throw new AuthorizationError('Event volunteer not found');
-  }
-
-  return eventVolunteer.id;
+  return ev.id;
 }
 
 const walkThroughResolvers = {

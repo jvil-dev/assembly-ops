@@ -4,14 +4,14 @@
  * GraphQL resolvers for overseer coordination notes.
  *
  * Queries:
- *   - eventNote: Get note by ID (admin only)
- *   - departmentNotes: Get notes for a department (admin)
- *   - eventNotes: Get all notes for an event (admin)
+ *   - eventNote: Get note by ID (overseer only)
+ *   - departmentNotes: Get notes for a department (overseer)
+ *   - eventNotes: Get all notes for an event (overseer)
  *
  * Mutations:
- *   - createEventNote: Create a new note (admin)
- *   - updateEventNote: Update an existing note (admin)
- *   - deleteEventNote: Delete a note (admin)
+ *   - createEventNote: Create a new note (overseer)
+ *   - updateEventNote: Update an existing note (overseer)
+ *   - deleteEventNote: Delete a note (overseer)
  */
 import { Context } from '../context.js';
 import { EventNoteService } from '../../services/eventNoteService.js';
@@ -65,7 +65,7 @@ const eventNoteResolvers = {
       const eventId = await eventNoteService.getDepartmentEventId(input.departmentId);
       await requireEventAccess(context, eventId);
 
-      return eventNoteService.createNote(context.admin.id, input);
+      return eventNoteService.createNote(context.admin!.id, input);
     },
 
     updateEventNote: async (

@@ -46,7 +46,7 @@ extension AssemblyOpsAPI {
           .field("id", AssemblyOpsAPI.ID.self),
           .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
           .field("forceAssigned", Bool.self),
-          .field("volunteer", Volunteer.self),
+          .field("volunteer", Volunteer?.self),
           .field("post", Post.self),
           .field("session", Session.self),
         ] }
@@ -57,7 +57,7 @@ extension AssemblyOpsAPI {
         var id: AssemblyOpsAPI.ID { __data["id"] }
         var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
         var forceAssigned: Bool { __data["forceAssigned"] }
-        var volunteer: Volunteer { __data["volunteer"] }
+        var volunteer: Volunteer? { __data["volunteer"] }
         var post: Post { __data["post"] }
         var session: Session { __data["session"] }
 

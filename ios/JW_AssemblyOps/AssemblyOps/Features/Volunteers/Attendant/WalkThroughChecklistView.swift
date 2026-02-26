@@ -289,7 +289,7 @@ struct WalkThroughChecklistView: View {
     private var completeButton: some View {
         Button {
             Task {
-                guard let eventId = appState.currentVolunteer?.eventId,
+                guard let eventId = appState.currentEventId,
                       let sessionId = selectedSessionId else { return }
                 let notes = itemNotes.values.filter { !$0.isEmpty }.joined(separator: "; ")
                 await attendantVM.submitWalkThrough(

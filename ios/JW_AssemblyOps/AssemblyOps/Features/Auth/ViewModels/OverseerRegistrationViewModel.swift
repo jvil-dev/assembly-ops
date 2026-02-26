@@ -8,7 +8,7 @@
 // MARK: - Overseer Registration View Model
 //
 // Handles new overseer account creation via email/password or OAuth providers.
-// Validates form input and performs RegisterAdminMutation.
+// Validates form input and performs RegisterUserMutation.
 //
 // Properties:
 //   - email/password/confirmPassword: Account credential fields
@@ -24,7 +24,7 @@
 //   - First name and last name are required
 //
 // Methods:
-//   - register(): Create account via RegisterAdminMutation
+//   - register(): Create account via RegisterUserMutation
 //   - signInWithGoogle()/signInWithApple(): OAuth registration flows
 //
 // Flow:
@@ -76,36 +76,44 @@ final class OverseerRegistrationViewModel: ObservableObject {
     
     func register() {
         guard isFormValid else { return }
-        
+
         isLoading = true
         errorMessage = nil
-        
-        let input = AssemblyOpsAPI.RegisterAdminInput(
+
+        let input = AssemblyOpsAPI.RegisterUserInput(
             email: email.lowercased().trimmingCharacters(in: .whitespaces),
             password: password,
             firstName: firstName.trimmingCharacters(in: .whitespaces),
-            lastName: lastName.trimmingCharacters(in: .whitespaces)
+            lastName: lastName.trimmingCharacters(in: .whitespaces),
+            isOverseer: .some(true)
         )
-        
+
         NetworkClient.shared.apollo.perform(
-            mutation: AssemblyOpsAPI.RegisterAdminMutation(input: input)
+            mutation: AssemblyOpsAPI.RegisterUserMutation(input: input)
         ) { [weak self] result in
             Task { @MainActor in
                 switch result {
                 case .success(let graphQLResult):
-                    if let data = graphQLResult.data?.registerAdmin {
-                        let overseer = OverseerInfo(
-                            id: data.admin.id,
-                            email: data.admin.email,
-                            fullName: data.admin.fullName,
-                            firstName: data.admin.firstName,
-                            lastName: data.admin.lastName,
-                            phone: nil,
+                    if let data = graphQLResult.data?.registerUser {
+                        let user = UserInfo(
+                            id: data.user.id,
+                            userId: data.user.userId,
+                            email: data.user.email,
+                            firstName: data.user.firstName,
+                            lastName: data.user.lastName,
+                            fullName: data.user.fullName,
+                            phone: data.user.phone,
+                            congregation: data.user.congregation,
                             congregationId: nil,
-                            circuitId: nil,
-                            overseerType: ""
+                            appointmentStatus: data.user.appointmentStatus?.rawValue,
+                            isOverseer: data.user.isOverseer
                         )
-                        self?.appState.didLoginAsOverseer(overseer: overseer, accessToken: data.accessToken, refreshToken: data.refreshToken, expiresIn: data.expiresIn)
+                        self?.appState.didLogin(
+                            user: user,
+                            accessToken: data.accessToken,
+                            refreshToken: data.refreshToken,
+                            expiresIn: data.expiresIn
+                        )
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
                         self?.errorMessage = errors.first?.localizedDescription ?? "Registration failed"
                     }
@@ -168,17 +176,19 @@ final class OverseerRegistrationViewModel: ObservableObject {
                     if let data = graphQLResult.data?.loginWithGoogle {
                         self?.processOAuthResponse(
                             isNewUser: data.isNewUser,
-                            admin: data.admin.map { admin in
-                                OverseerInfo(
-                                    id: admin.id,
-                                    email: admin.email,
-                                    fullName: admin.fullName,
-                                    firstName: admin.firstName,
-                                    lastName: admin.lastName,
+                            user: data.user.map { u in
+                                UserInfo(
+                                    id: u.id,
+                                    userId: u.userId,
+                                    email: u.email,
+                                    firstName: u.firstName,
+                                    lastName: u.lastName,
+                                    fullName: u.fullName,
                                     phone: nil,
+                                    congregation: nil,
                                     congregationId: nil,
-                                    circuitId: nil,
-                                    overseerType: ""
+                                    appointmentStatus: nil,
+                                    isOverseer: u.isOverseer
                                 )
                             },
                             accessToken: data.accessToken,
@@ -216,17 +226,19 @@ final class OverseerRegistrationViewModel: ObservableObject {
                     if let data = graphQLResult.data?.loginWithApple {
                         self?.processOAuthResponse(
                             isNewUser: data.isNewUser,
-                            admin: data.admin.map { admin in
-                                OverseerInfo(
-                                    id: admin.id,
-                                    email: admin.email,
-                                    fullName: admin.fullName,
-                                    firstName: admin.firstName,
-                                    lastName: admin.lastName,
+                            user: data.user.map { u in
+                                UserInfo(
+                                    id: u.id,
+                                    userId: u.userId,
+                                    email: u.email,
+                                    firstName: u.firstName,
+                                    lastName: u.lastName,
+                                    fullName: u.fullName,
                                     phone: nil,
+                                    congregation: nil,
                                     congregationId: nil,
-                                    circuitId: nil,
-                                    overseerType: ""
+                                    appointmentStatus: nil,
+                                    isOverseer: u.isOverseer
                                 )
                             },
                             accessToken: data.accessToken,
@@ -250,7 +262,7 @@ final class OverseerRegistrationViewModel: ObservableObject {
 
     private func processOAuthResponse(
         isNewUser: Bool,
-        admin: OverseerInfo?,
+        user: UserInfo?,
         accessToken: String?,
         refreshToken: String?,
         expiresIn: Int?,
@@ -268,13 +280,13 @@ final class OverseerRegistrationViewModel: ObservableObject {
                 lastName: lastName ?? ""
             )
             showOAuthRegistration = true
-        } else if let admin = admin,
+        } else if let user = user,
                   let accessToken = accessToken,
                   let refreshToken = refreshToken,
                   let expiresIn = expiresIn {
             // Existing user - log them in
-            appState.didLoginAsOverseer(
-                overseer: admin,
+            appState.didLogin(
+                user: user,
                 accessToken: accessToken,
                 refreshToken: refreshToken,
                 expiresIn: expiresIn

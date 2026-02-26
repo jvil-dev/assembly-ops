@@ -57,7 +57,7 @@ struct HomeView: View {
     var switchToTab: ((VolunteerTab) -> Void)?
 
     private var isAttendant: Bool {
-        appState.currentVolunteer?.departmentType == "ATTENDANT"
+        viewModel.assignments.contains { $0.departmentType == "ATTENDANT" }
     }
 
     private var isCaptain: Bool {
@@ -167,7 +167,7 @@ struct HomeView: View {
                 await viewModel.loadAssignments()
                 if isAttendant {
                     await loadAttendantPosts()
-                    if let eventId = appState.currentVolunteer?.eventId {
+                    if let eventId = appState.currentEventId {
                         await attendantVM.loadConcerns(eventId: eventId)
                         await attendantVM.loadFacilityLocations(eventId: eventId)
                         if let sid = currentSessionId {
@@ -184,7 +184,7 @@ struct HomeView: View {
                 await viewModel.refresh()
                 if isAttendant {
                     await loadAttendantPosts()
-                    if let eventId = appState.currentVolunteer?.eventId {
+                    if let eventId = appState.currentEventId {
                         await attendantVM.loadConcerns(eventId: eventId)
                         await attendantVM.loadFacilityLocations(eventId: eventId)
                         if let sid = currentSessionId {
@@ -205,7 +205,7 @@ struct HomeView: View {
                     posts: attendantPosts,
                     currentSessionId: currentSessionId,
                     onDidReport: {
-                        if let eventId = appState.currentVolunteer?.eventId {
+                        if let eventId = appState.currentEventId {
                             await attendantVM.loadConcerns(eventId: eventId)
                         }
                     }
@@ -216,7 +216,7 @@ struct HomeView: View {
                     posts: attendantPosts,
                     currentSessionId: currentSessionId,
                     onDidReport: {
-                        if let eventId = appState.currentVolunteer?.eventId {
+                        if let eventId = appState.currentEventId {
                             await attendantVM.loadConcerns(eventId: eventId)
                         }
                     }
@@ -236,26 +236,26 @@ struct HomeView: View {
 
     private var welcomeHeader: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-            if let firstName = appState.currentVolunteer?.firstName {
+            if let firstName = appState.currentUser?.firstName {
                 Text(String(format: "home.welcome".localized, firstName))
                     .font(AppTheme.Typography.largeTitle)
                     .foregroundStyle(.primary)
             }
 
             HStack(spacing: AppTheme.Spacing.s) {
-                if let deptType = appState.currentVolunteer?.departmentType {
+                if let deptType = viewModel.assignments.first?.departmentType {
                     Circle()
                         .fill(DepartmentColor.color(for: deptType))
                         .frame(width: 8, height: 8)
                 }
 
-                if let department = appState.currentVolunteer?.departmentName {
+                if let department = viewModel.assignments.first?.departmentName {
                     Text(department)
                         .font(AppTheme.Typography.subheadline)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 }
 
-                if let appointment = appState.currentVolunteer?.appointmentStatus {
+                if let appointment = appState.currentUser?.appointmentStatus {
                     Text("•")
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                     Text(formatAppointment(appointment))
@@ -270,18 +270,6 @@ struct HomeView: View {
                         .font(AppTheme.Typography.subheadline)
                         .fontWeight(.semibold)
                         .foregroundStyle(AppTheme.themeColor)
-                }
-
-                if appState.currentVolunteer?.eventTheme != nil {
-                    Text("•")
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                }
-
-                if let theme = appState.currentVolunteer?.eventTheme {
-                    Text(theme)
-                        .font(AppTheme.Typography.subheadline)
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                        .lineLimit(1)
                 }
             }
         }

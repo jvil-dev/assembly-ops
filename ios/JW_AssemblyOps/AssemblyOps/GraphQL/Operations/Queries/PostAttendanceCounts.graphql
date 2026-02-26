@@ -2,13 +2,11 @@ query PostAttendanceCounts($postId: ID!) {
   postAttendanceCounts(postId: $postId) {
     id
     count
-    section
     notes
     session {
       id
       name
     }
     createdAt
-    updatedAt
   }
 }

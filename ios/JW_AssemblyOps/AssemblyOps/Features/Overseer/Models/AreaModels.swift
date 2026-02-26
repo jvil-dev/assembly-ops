@@ -113,8 +113,8 @@ extension AreaCaptainItem {
         self.sessionDate = DateUtils.parseISO8601(data.session.date)
         self.eventVolunteerId = data.eventVolunteer.id
         self.volunteerId = data.eventVolunteer.volunteerId
-        let profile = data.eventVolunteer.volunteerProfile
-        self.volunteerName = "\(profile.firstName) \(profile.lastName)"
+        let user = data.eventVolunteer.user
+        self.volunteerName = "\(user.firstName) \(user.lastName)"
     }
 
     init(fromSet data: AssemblyOpsAPI.SetAreaCaptainMutation.Data.SetAreaCaptain) {
@@ -124,8 +124,8 @@ extension AreaCaptainItem {
         self.sessionDate = nil
         self.eventVolunteerId = data.eventVolunteer.id
         self.volunteerId = data.eventVolunteer.volunteerId
-        let profile = data.eventVolunteer.volunteerProfile
-        self.volunteerName = "\(profile.firstName) \(profile.lastName)"
+        let user = data.eventVolunteer.user
+        self.volunteerName = "\(user.firstName) \(user.lastName)"
     }
 }
 
@@ -161,8 +161,8 @@ extension AreaGroupItem {
         self.sessionEndTime = nil
         if let captain = data.captain {
             self.captainId = captain.id
-            let profile = captain.eventVolunteer.volunteerProfile
-            self.captainName = "\(profile.firstName) \(profile.lastName)"
+            let user = captain.eventVolunteer.user
+            self.captainName = "\(user.firstName) \(user.lastName)"
             self.captainEventVolunteerId = captain.eventVolunteer.id
         } else {
             self.captainId = nil
@@ -184,8 +184,8 @@ extension AreaGroupItem {
             self.sessionStartTime = DateUtils.parseISO8601(captain.session.startTime)
             self.sessionEndTime = DateUtils.parseISO8601(captain.session.endTime)
             self.captainId = captain.id
-            let profile = captain.eventVolunteer.volunteerProfile
-            self.captainName = "\(profile.firstName) \(profile.lastName)"
+            let user = captain.eventVolunteer.user
+            self.captainName = "\(user.firstName) \(user.lastName)"
             self.captainEventVolunteerId = captain.eventVolunteer.id
         } else {
             self.sessionId = nil
@@ -224,10 +224,10 @@ extension AreaGroupMemberItem {
         self.postName = data.postName
         self.postId = data.postId
         self.assignmentId = data.assignment.id
-        self.volunteerId = data.assignment.volunteer.id
-        self.volunteerName = "\(data.assignment.volunteer.firstName) \(data.assignment.volunteer.lastName)"
-        self.congregation = data.assignment.volunteer.congregation
-        self.phone = data.assignment.volunteer.phone
+        self.volunteerId = data.assignment.volunteer?.id ?? ""
+        self.volunteerName = "\(data.assignment.volunteer?.firstName ?? "") \(data.assignment.volunteer?.lastName ?? "")"
+        self.congregation = data.assignment.volunteer?.congregation ?? ""
+        self.phone = data.assignment.volunteer?.phone
         self.status = data.assignment.status.rawValue
         self.isCaptain = data.assignment.isCaptain
         self.checkInId = data.assignment.checkIn?.id
@@ -243,10 +243,10 @@ extension AreaGroupMemberItem {
         self.postName = data.postName
         self.postId = data.postId
         self.assignmentId = data.assignment.id
-        self.volunteerId = data.assignment.volunteer.id
-        self.volunteerName = "\(data.assignment.volunteer.firstName) \(data.assignment.volunteer.lastName)"
-        self.congregation = data.assignment.volunteer.congregation
-        self.phone = data.assignment.volunteer.phone
+        self.volunteerId = data.assignment.volunteer?.id ?? ""
+        self.volunteerName = "\(data.assignment.volunteer?.firstName ?? "") \(data.assignment.volunteer?.lastName ?? "")"
+        self.congregation = data.assignment.volunteer?.congregation ?? ""
+        self.phone = data.assignment.volunteer?.phone
         self.status = data.assignment.status.rawValue
         self.isCaptain = false
         self.checkInId = data.assignment.checkIn?.id

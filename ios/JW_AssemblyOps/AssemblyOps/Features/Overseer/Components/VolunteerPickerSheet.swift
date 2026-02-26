@@ -219,7 +219,7 @@ struct VolunteerPickerSheet: View {
             }
         }
         .tint(AppTheme.themeColor)
-        .onChange(of: forceAssign) { _ in
+        .onChange(of: forceAssign) {
             HapticManager.shared.lightTap()
         }
         .cardPadding()

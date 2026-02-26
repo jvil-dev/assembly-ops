@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "PostAttendanceCounts"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query PostAttendanceCounts($postId: ID!) { postAttendanceCounts(postId: $postId) { __typename id count section notes session { __typename id name } createdAt updatedAt } }"#
+        #"query PostAttendanceCounts($postId: ID!) { postAttendanceCounts(postId: $postId) { __typename id count notes session { __typename id name } createdAt } }"#
       ))
 
     public var postId: ID
@@ -45,11 +45,9 @@ extension AssemblyOpsAPI {
           .field("__typename", String.self),
           .field("id", AssemblyOpsAPI.ID.self),
           .field("count", Int.self),
-          .field("section", String?.self),
           .field("notes", String?.self),
           .field("session", Session.self),
           .field("createdAt", AssemblyOpsAPI.DateTime.self),
-          .field("updatedAt", AssemblyOpsAPI.DateTime.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
           PostAttendanceCountsQuery.Data.PostAttendanceCount.self
@@ -57,11 +55,9 @@ extension AssemblyOpsAPI {
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
         var count: Int { __data["count"] }
-        var section: String? { __data["section"] }
         var notes: String? { __data["notes"] }
         var session: Session { __data["session"] }
         var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }
-        var updatedAt: AssemblyOpsAPI.DateTime { __data["updatedAt"] }
 
         /// PostAttendanceCount.Session
         ///

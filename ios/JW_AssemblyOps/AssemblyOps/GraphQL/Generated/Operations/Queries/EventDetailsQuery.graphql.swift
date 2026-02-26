@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "EventDetails"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query EventDetails($eventId: ID!) { event(id: $eventId) { __typename id name eventType venue address startDate endDate joinCode volunteerCount departments { __typename id name departmentType description volunteerCount isClaimed overseer { __typename id admin { __typename id fullName } } posts { __typename id name description location capacity } } sessions { __typename id name date startTime endTime } } }"#
+        #"query EventDetails($eventId: ID!) { event(id: $eventId) { __typename id name eventType venue address startDate endDate joinCode volunteerCount departments { __typename id name departmentType description volunteerCount isClaimed overseer { __typename id user { __typename id fullName } } posts { __typename id name description location capacity } } sessions { __typename id name date startTime endTime } } }"#
       ))
 
     public var eventId: ID
@@ -114,30 +114,30 @@ extension AssemblyOpsAPI {
             static var __selections: [ApolloAPI.Selection] { [
               .field("__typename", String.self),
               .field("id", AssemblyOpsAPI.ID.self),
-              .field("admin", Admin.self),
+              .field("user", User.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
               EventDetailsQuery.Data.Event.Department.Overseer.self
             ] }
 
             var id: AssemblyOpsAPI.ID { __data["id"] }
-            var admin: Admin { __data["admin"] }
+            var user: User { __data["user"] }
 
-            /// Event.Department.Overseer.Admin
+            /// Event.Department.Overseer.User
             ///
-            /// Parent Type: `Admin`
-            struct Admin: AssemblyOpsAPI.SelectionSet {
+            /// Parent Type: `User`
+            struct User: AssemblyOpsAPI.SelectionSet {
               let __data: DataDict
               init(_dataDict: DataDict) { __data = _dataDict }
 
-              static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Admin }
+              static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
               static var __selections: [ApolloAPI.Selection] { [
                 .field("__typename", String.self),
                 .field("id", AssemblyOpsAPI.ID.self),
                 .field("fullName", String.self),
               ] }
               static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-                EventDetailsQuery.Data.Event.Department.Overseer.Admin.self
+                EventDetailsQuery.Data.Event.Department.Overseer.User.self
               ] }
 
               var id: AssemblyOpsAPI.ID { __data["id"] }

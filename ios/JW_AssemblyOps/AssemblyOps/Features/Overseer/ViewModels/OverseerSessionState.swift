@@ -190,6 +190,57 @@ final class OverseerSessionState: ObservableObject {
         isLoadingDepartments = false
     }
 
+    // MARK: - Load For Event (Events Hub entry point)
+
+    /// Sets up session context from an EventMembershipItem (from Events Hub).
+    /// Avoids a redundant MyEventsQuery by using data already fetched.
+    func loadForEvent(_ membership: EventMembershipItem) async {
+        // Reset state
+        selectedEvent = nil
+        selectedDepartment = nil
+        departments = []
+        claimedDepartment = nil
+        error = nil
+
+        // Build EventSummary from membership data
+        let summary = EventSummary(
+            id: membership.eventId,
+            name: membership.eventName,
+            eventType: membership.eventType,
+            theme: nil,
+            venue: membership.venue,
+            startDate: membership.startDate,
+            endDate: membership.endDate,
+            role: membership.overseerRole ?? "DEPARTMENT_OVERSEER",
+            volunteerCount: membership.volunteerCount
+        )
+        selectedEvent = summary
+        isEventOverseer = membership.overseerRole == "APP_ADMIN"
+
+        // Set claimed department if present
+        if let deptId = membership.departmentId,
+           let deptName = membership.departmentName,
+           let deptType = membership.departmentType {
+            let dept = DepartmentSummary(
+                id: deptId,
+                name: deptName,
+                departmentType: deptType,
+                volunteerCount: 0 // Updated lazily when dashboard loads
+            )
+            claimedDepartment = dept
+            selectedDepartment = dept
+        }
+
+        // For event overseers, load full department list
+        if isEventOverseer {
+            await loadDepartments(for: membership.eventId)
+        } else if let claimed = claimedDepartment {
+            departments = [claimed]
+        }
+
+        print("[SessionState] loadForEvent: \(summary.name), isEventOverseer=\(isEventOverseer), claimedDepartment=\(claimedDepartment?.name ?? "nil")")
+    }
+
     // MARK: - Select Department
 
     func selectDepartment(_ department: DepartmentSummary?) {

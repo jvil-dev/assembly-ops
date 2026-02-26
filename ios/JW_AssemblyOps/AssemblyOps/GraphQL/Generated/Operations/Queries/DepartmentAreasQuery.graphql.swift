@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "DepartmentAreas"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query DepartmentAreas($departmentId: ID!) { departmentAreas(departmentId: $departmentId) { __typename id name description category sortOrder postCount posts { __typename id name capacity category sortOrder } captains { __typename id session { __typename id name date } eventVolunteer { __typename id volunteerId volunteerProfile { __typename firstName lastName } } } } }"#
+        #"query DepartmentAreas($departmentId: ID!) { departmentAreas(departmentId: $departmentId) { __typename id name description category sortOrder postCount posts { __typename id name capacity category sortOrder } captains { __typename id session { __typename id name date } eventVolunteer { __typename id volunteerId user { __typename firstName lastName } } } } }"#
       ))
 
     public var departmentId: ID
@@ -149,7 +149,7 @@ extension AssemblyOpsAPI {
               .field("__typename", String.self),
               .field("id", AssemblyOpsAPI.ID.self),
               .field("volunteerId", String.self),
-              .field("volunteerProfile", VolunteerProfile.self),
+              .field("user", User.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
               DepartmentAreasQuery.Data.DepartmentArea.Captain.EventVolunteer.self
@@ -157,23 +157,23 @@ extension AssemblyOpsAPI {
 
             var id: AssemblyOpsAPI.ID { __data["id"] }
             var volunteerId: String { __data["volunteerId"] }
-            var volunteerProfile: VolunteerProfile { __data["volunteerProfile"] }
+            var user: User { __data["user"] }
 
-            /// DepartmentArea.Captain.EventVolunteer.VolunteerProfile
+            /// DepartmentArea.Captain.EventVolunteer.User
             ///
-            /// Parent Type: `VolunteerProfile`
-            struct VolunteerProfile: AssemblyOpsAPI.SelectionSet {
+            /// Parent Type: `User`
+            struct User: AssemblyOpsAPI.SelectionSet {
               let __data: DataDict
               init(_dataDict: DataDict) { __data = _dataDict }
 
-              static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.VolunteerProfile }
+              static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
               static var __selections: [ApolloAPI.Selection] { [
                 .field("__typename", String.self),
                 .field("firstName", String.self),
                 .field("lastName", String.self),
               ] }
               static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-                DepartmentAreasQuery.Data.DepartmentArea.Captain.EventVolunteer.VolunteerProfile.self
+                DepartmentAreasQuery.Data.DepartmentArea.Captain.EventVolunteer.User.self
               ] }
 
               var firstName: String { __data["firstName"] }

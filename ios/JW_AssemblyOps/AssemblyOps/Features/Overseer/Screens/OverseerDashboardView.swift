@@ -162,6 +162,12 @@ struct OverseerDashboardView: View {
                 statsSection
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
 
+                // Join requests (Event Overseers only)
+                if sessionState.isEventOverseer {
+                    joinRequestsCard(eventId: event.id)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.13)
+                }
+
                 // Assignments overview
                 assignmentsOverviewSection
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
@@ -173,6 +179,41 @@ struct OverseerDashboardView: View {
             .padding(.top, AppTheme.Spacing.l)
             .padding(.bottom, AppTheme.Spacing.xxl)
         }
+    }
+
+    // MARK: - Join Requests Card
+
+    private func joinRequestsCard(eventId: String) -> some View {
+        NavigationLink(destination: JoinRequestsView(eventId: eventId)) {
+            HStack(spacing: AppTheme.Spacing.m) {
+                ZStack {
+                    Circle()
+                        .fill(AppTheme.StatusColors.pendingBackground)
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "person.badge.plus")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(AppTheme.StatusColors.pending)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Join Requests")
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(.primary)
+                    Text("Review pending volunteer requests")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+            .cardPadding()
+            .themedCard(scheme: colorScheme)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Empty State

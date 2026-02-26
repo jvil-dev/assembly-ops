@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "SafetyIncidents"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query SafetyIncidents($eventId: ID!, $resolved: Boolean) { safetyIncidents(eventId: $eventId, resolved: $resolved) { __typename id type description location post { __typename id name } reportedBy { __typename id volunteerProfile { __typename firstName lastName } } resolved resolvedAt resolvedBy { __typename id firstName lastName } resolutionNotes createdAt } }"#
+        #"query SafetyIncidents($eventId: ID!, $resolved: Boolean) { safetyIncidents(eventId: $eventId, resolved: $resolved) { __typename id type description location post { __typename id name } reportedBy { __typename id user { __typename firstName lastName } } resolved resolvedAt resolvedBy { __typename id firstName lastName } resolutionNotes createdAt } }"#
       ))
 
     public var eventId: ID
@@ -114,30 +114,30 @@ extension AssemblyOpsAPI {
           static var __selections: [ApolloAPI.Selection] { [
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
-            .field("volunteerProfile", VolunteerProfile.self),
+            .field("user", User.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             SafetyIncidentsQuery.Data.SafetyIncident.ReportedBy.self
           ] }
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
-          var volunteerProfile: VolunteerProfile { __data["volunteerProfile"] }
+          var user: User { __data["user"] }
 
-          /// SafetyIncident.ReportedBy.VolunteerProfile
+          /// SafetyIncident.ReportedBy.User
           ///
-          /// Parent Type: `VolunteerProfile`
-          struct VolunteerProfile: AssemblyOpsAPI.SelectionSet {
+          /// Parent Type: `User`
+          struct User: AssemblyOpsAPI.SelectionSet {
             let __data: DataDict
             init(_dataDict: DataDict) { __data = _dataDict }
 
-            static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.VolunteerProfile }
+            static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
             static var __selections: [ApolloAPI.Selection] { [
               .field("__typename", String.self),
               .field("firstName", String.self),
               .field("lastName", String.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-              SafetyIncidentsQuery.Data.SafetyIncident.ReportedBy.VolunteerProfile.self
+              SafetyIncidentsQuery.Data.SafetyIncident.ReportedBy.User.self
             ] }
 
             var firstName: String { __data["firstName"] }
@@ -147,12 +147,12 @@ extension AssemblyOpsAPI {
 
         /// SafetyIncident.ResolvedBy
         ///
-        /// Parent Type: `Admin`
+        /// Parent Type: `User`
         struct ResolvedBy: AssemblyOpsAPI.SelectionSet {
           let __data: DataDict
           init(_dataDict: DataDict) { __data = _dataDict }
 
-          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Admin }
+          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
           static var __selections: [ApolloAPI.Selection] { [
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),

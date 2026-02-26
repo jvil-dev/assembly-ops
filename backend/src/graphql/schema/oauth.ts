@@ -6,7 +6,7 @@ export const oauthTypeDefs = `#graphql
   }
 
   type OAuthAuthPayload {
-    admin: Admin
+    user: User
     accessToken: String
     refreshToken: String
     expiresIn: Int
@@ -31,11 +31,12 @@ export const oauthTypeDefs = `#graphql
     pendingOAuthToken: String!
     firstName: String!
     lastName: String!
+    isOverseer: Boolean
   }
 
   extend type Mutation {
     loginWithGoogle(input: GoogleAuthInput!): OAuthAuthPayload!
     loginWithApple(input: AppleAuthInput!): OAuthAuthPayload!
-    completeOAuthRegistration(input: CompleteOAuthRegistrationInput!): AuthPayload!
+    completeOAuthRegistration(input: CompleteOAuthRegistrationInput!): UserAuthPayload!
   }
 `;

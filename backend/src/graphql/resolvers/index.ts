@@ -7,7 +7,7 @@
  * Structure:
  *   - Query: All read operations (me, events, volunteers, etc.)
  *   - Mutation: All write operations (register, login, create, update, delete)
- *   - Type Resolvers: Computed fields on types (Admin.fullName, Event.volunteerCount)
+ *   - Type Resolvers: Computed fields on types (User.fullName, Event.volunteerCount)
  *
  * Flow:
  *   1. Client sends a GraphQL query/mutation
@@ -16,9 +16,9 @@
  *   4. Resolver calls guards (authorization), validators (input), and services (business logic)
  *   5. Result is returned to the client
  *
- * Type resolvers (Admin, Event, Volunteer, etc.):
+ * Type resolvers (User, Event, Volunteer, etc.):
  *   These resolve fields that aren't directly stored in the database.
- *   Example: Admin.fullName computes firstName + lastName
+ *   Example: User.fullName computes firstName + lastName
  *   Example: Event.volunteerCount counts related volunteers
  *
  * Used by: ../index.ts (Apollo Server setup)
@@ -118,11 +118,10 @@ const resolvers = {
     ...facilityLocationResolvers.Mutation,
   },
 
-  Admin: authResolvers.Admin,
+  User: authResolvers.User,
   Event: eventResolvers.Event,
   EventTemplate: eventResolvers.EventTemplate,
   Department: eventResolvers.Department,
-  Volunteer: volunteerResolvers.Volunteer,
   Post: postResolvers.Post,
   Session: sessionResolvers.Session,
   ScheduleAssignment: assignmentResolvers.ScheduleAssignment,
@@ -131,6 +130,7 @@ const resolvers = {
   Congregation: congregationResolvers.Congregation,
   VolunteerProfile: volunteerProfileResolvers.VolunteerProfile,
   EventVolunteer: volunteerProfileResolvers.EventVolunteer,
+  Volunteer: volunteerResolvers.Volunteer,
   Area: areaResolvers.Area,
   Message: messageResolvers.Message,
   Conversation: messageResolvers.Conversation,

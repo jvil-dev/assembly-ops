@@ -36,7 +36,7 @@ const postResolvers = {
       const postService = new PostService(context.prisma);
 
       // Verify access
-      await postService.verifyPostAccess(id, context.admin.id);
+      await postService.verifyPostAccess(id, context.admin!.id);
 
       return postService.getPost(id);
     },
@@ -122,7 +122,7 @@ const postResolvers = {
       requireAdmin(context);
 
       const postService = new PostService(context.prisma);
-      await postService.verifyPostAccess(id, context.admin.id);
+      await postService.verifyPostAccess(id, context.admin!.id);
 
       return postService.updatePost(id, input);
     },
@@ -131,7 +131,7 @@ const postResolvers = {
       requireAdmin(context);
 
       const postService = new PostService(context.prisma);
-      await postService.verifyPostAccess(id, context.admin.id);
+      await postService.verifyPostAccess(id, context.admin!.id);
 
       return postService.deletePost(id);
     },

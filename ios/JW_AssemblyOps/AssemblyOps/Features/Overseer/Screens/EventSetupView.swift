@@ -7,61 +7,75 @@
 
 // MARK: - Event Setup View
 //
-// Router view presenting two options for overseers without events:
-//   1. Activate Event - Create a new event from a template
-//   2. Join Event - Join an existing event with a join code
+// Router view presenting three options for overseers without events:
+//   1. Activate Event  - Create a new event from a template (Event Overseer path)
+//   2. Browse Events   - Discover and request to join an event (Dept Overseer path)
+//   3. Join with Code  - Join an existing event with a join code (secondary)
 //
-// Shown after profile setup when overseer has no events.
-// Cannot be dismissed - must complete one of the flows to proceed.
+// Shown after login when overseer has no events.
+// Cannot be dismissed — must complete one of the flows to proceed.
 //
 
 import SwiftUI
 
 struct EventSetupView: View {
+    /// When true, skips the inner NavigationStack (already inside a parent NavigationStack).
+    var isEmbedded: Bool = false
+
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel = EventSetupViewModel()
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
     @State private var showActivateEvent = false
+    @State private var showBrowseEvents = false
     @State private var showJoinEvent = false
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: AppTheme.Spacing.xl) {
-                    // Header
-                    headerSection
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
-
-                    // Activate Event card
-                    activateEventCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
-
-                    // Divider
-                    dividerRow
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
-
-                    // Join Event card
-                    joinEventCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
-                }
-                .screenPadding()
-                .padding(.top, AppTheme.Spacing.l)
-                .padding(.bottom, AppTheme.Spacing.xxl)
+        if isEmbedded {
+            scrollContent
+        } else {
+            NavigationStack {
+                scrollContent
             }
-            .themedBackground(scheme: colorScheme)
-            .navigationTitle("Get Started")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(isPresented: $showActivateEvent) {
-                EventTemplateListView(viewModel: viewModel)
+        }
+    }
+
+    private var scrollContent: some View {
+        ScrollView {
+            VStack(spacing: AppTheme.Spacing.xl) {
+                // Header
+                headerSection
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+
+                // Activate Event card
+                activateEventCard
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+
+                // Divider
+                dividerRow
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+
+                // Browse Events card
+                browseEventsCard
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+
+                // Have a join code? link
+                haveCodeLink
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
             }
-            .navigationDestination(isPresented: $showJoinEvent) {
-                JoinEventView(viewModel: viewModel)
-            }
-            .onAppear {
-                withAnimation(AppTheme.entranceAnimation) {
-                    hasAppeared = true
-                }
+            .screenPadding()
+            .padding(.top, AppTheme.Spacing.l)
+            .padding(.bottom, AppTheme.Spacing.xxl)
+        }
+        .themedBackground(scheme: colorScheme)
+        .navigationTitle("Get Started")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $showActivateEvent) {
+            EventTemplateListView(viewModel: viewModel)
+        }
+        .onAppear {
+            withAnimation(AppTheme.entranceAnimation) {
+                hasAppeared = true
             }
         }
     }
@@ -78,7 +92,7 @@ struct EventSetupView: View {
                 .font(AppTheme.Typography.title)
                 .fontWeight(.bold)
 
-            Text("Create a new event from a template or join an existing one with a code from the Event Overseer.")
+            Text("Activate a new event or find one to join as a department overseer.")
                 .font(AppTheme.Typography.subheadline)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 .multilineTextAlignment(.center)
@@ -149,11 +163,11 @@ struct EventSetupView: View {
         }
     }
 
-    // MARK: - Join Event Card
+    // MARK: - Browse Events Card
 
-    private var joinEventCard: some View {
+    private var browseEventsCard: some View {
         Button {
-            showJoinEvent = true
+            showBrowseEvents = true
             HapticManager.shared.lightTap()
         } label: {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
@@ -162,13 +176,13 @@ struct EventSetupView: View {
                         Circle()
                             .fill(AppTheme.StatusColors.info.opacity(0.15))
                             .frame(width: 44, height: 44)
-                        Image(systemName: "person.badge.key.fill")
+                        Image(systemName: "magnifyingglass.circle.fill")
                             .font(.title2)
                             .foregroundStyle(AppTheme.StatusColors.info)
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Join Event")
+                        Text("Browse Events")
                             .font(AppTheme.Typography.headline)
                             .foregroundStyle(colorScheme == .dark ? .white : .primary)
 
@@ -184,7 +198,7 @@ struct EventSetupView: View {
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 }
 
-                Text("Join an event using a code from the Event Overseer. You can then claim a department to manage.")
+                Text("Find publicly listed Circuit Assemblies and request to join as a department overseer.")
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                     .multilineTextAlignment(.leading)
@@ -193,6 +207,31 @@ struct EventSetupView: View {
             .themedCard(scheme: colorScheme)
         }
         .buttonStyle(.plain)
+        .navigationDestination(isPresented: $showBrowseEvents) {
+            VolunteerEventDiscoveryView()
+        }
+    }
+
+    // MARK: - Have a Join Code? Link
+
+    private var haveCodeLink: some View {
+        HStack(spacing: 4) {
+            Text("Have a join code?")
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            Button {
+                showJoinEvent = true
+                HapticManager.shared.lightTap()
+            } label: {
+                Text("Enter it here")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.themeColor)
+                    .fontWeight(.medium)
+            }
+        }
+        .navigationDestination(isPresented: $showJoinEvent) {
+            JoinEventView(viewModel: viewModel)
+        }
     }
 }
 

@@ -12,7 +12,7 @@ mutation SetAreaCaptain($input: SetAreaCaptainInput!) {
         eventVolunteer {
             id
             volunteerId
-            volunteerProfile {
+            user {
                 firstName
                 lastName
             }

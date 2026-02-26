@@ -1,74 +1,34 @@
 /**
- * VolunteerProfile & EventVolunteer Resolvers
+ * User Profile & EventVolunteer Resolvers
  *
- * Handles persistent volunteer profiles and per-event volunteer instances.
+ * Handles persistent user profiles and per-event volunteer instances.
+ * Users are the persistent identity; EventVolunteers are per-event credentials.
  *
  * Queries:
- *   - volunteerProfiles: Get all profiles (optionally filtered by congregation)
- *   - volunteerProfilesByCircuit: Get all profiles in a circuit
- *   - searchVolunteerProfiles: Search profiles by name
- *   - volunteerProfile: Get a single profile by ID
+ *   - volunteerProfiles: Search users by name/congregation (replaces old VolunteerProfile queries)
+ *   - volunteerProfilesByCircuit: Get users in a circuit
+ *   - searchVolunteerProfiles: Search by name
+ *   - volunteerProfile: Get a single user by ID
  *   - eventVolunteer: Get a single event volunteer by ID
- *   - eventVolunteerByVolunteerId: Get event volunteer by login ID (e.g., "CA-A7X9K2")
+ *   - eventVolunteerByVolunteerId: Get event volunteer by login ID
  *
  * Mutations:
- *   - createVolunteerProfile: Create a new persistent profile
- *   - updateVolunteerProfile: Update an existing profile
- *   - deleteVolunteerProfile: Delete a profile (if no active event assignments)
- *   - addVolunteerToEvent: Add existing profile to an event (generates credentials)
+ *   - addVolunteerToEvent: Add existing User to an event (generates credentials)
  *   - removeVolunteerFromEvent: Remove volunteer from event
- *   - createAndAddVolunteer: Create profile + add to event in one step
  *   - regenerateVolunteerToken: Generate new login token for event volunteer
- *
- * Type Resolvers:
- *   - VolunteerProfile.congregation, eventVolunteers
- *   - EventVolunteer.volunteerProfile, event, department, role, assignments
  *
  * Schema: ../schema/volunteerProfile.ts
  */
 import { Context } from '../context.js';
-import { VolunteerProfile, EventVolunteer } from '@prisma/client';
+import { User, EventVolunteer } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { generateEventVolunteerId, generateToken, hashToken } from '../../utils/credentials.js';
 import { encryptField } from '../../utils/encryption.js';
 import { requireAdmin, requireEventAccess } from '../guards/auth.js';
 
 // Input types
-export interface CreateVolunteerProfileInput {
-  firstName: string;
-  lastName: string;
-  email?: string;
-  phone?: string;
-  appointmentStatus?: 'PUBLISHER' | 'MINISTERIAL_SERVANT' | 'ELDER';
-  notes?: string;
-  congregationId: string;
-}
-
-export interface UpdateVolunteerProfileInput {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  appointmentStatus?: 'PUBLISHER' | 'MINISTERIAL_SERVANT' | 'ELDER';
-  notes?: string;
-  congregationId?: string;
-}
-
 export interface AddVolunteerToEventInput {
-  volunteerProfileId: string;
-  eventId: string;
-  departmentId?: string;
-  roleId?: string;
-}
-
-export interface CreateAndAddVolunteerInput {
-  firstName: string;
-  lastName: string;
-  email?: string;
-  phone?: string;
-  appointmentStatus?: 'PUBLISHER' | 'MINISTERIAL_SERVANT' | 'ELDER';
-  notes?: string;
-  congregationId: string;
+  userId: string;
   eventId: string;
   departmentId?: string;
   roleId?: string;
@@ -103,9 +63,9 @@ const volunteerProfileResolvers = {
       _parent: unknown,
       args: { congregationId?: string },
       context: Context
-    ): Promise<VolunteerProfile[]> => {
+    ): Promise<User[]> => {
       requireAdmin(context);
-      return context.prisma.volunteerProfile.findMany({
+      return context.prisma.user.findMany({
         where: args.congregationId ? { congregationId: args.congregationId } : {},
         orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
       });
@@ -115,11 +75,11 @@ const volunteerProfileResolvers = {
       _parent: unknown,
       { circuitId }: { circuitId: string },
       context: Context
-    ): Promise<VolunteerProfile[]> => {
+    ): Promise<User[]> => {
       requireAdmin(context);
-      return context.prisma.volunteerProfile.findMany({
+      return context.prisma.user.findMany({
         where: {
-          congregation: { circuitId },
+          congregationRef: { circuitId },
         },
         orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
       });
@@ -129,19 +89,18 @@ const volunteerProfileResolvers = {
       _parent: unknown,
       args: { query: string; circuitId?: string },
       context: Context
-    ): Promise<VolunteerProfile[]> => {
+    ): Promise<User[]> => {
       requireAdmin(context);
       const searchTerms = args.query.toLowerCase().split(' ');
 
-      return context.prisma.volunteerProfile.findMany({
+      return context.prisma.user.findMany({
         where: {
           AND: [
-            args.circuitId ? { congregation: { circuitId: args.circuitId } } : {},
+            args.circuitId ? { congregationRef: { circuitId: args.circuitId } } : {},
             {
               OR: [
                 { firstName: { contains: args.query, mode: 'insensitive' } },
                 { lastName: { contains: args.query, mode: 'insensitive' } },
-                // Search for "first last" pattern
                 ...(searchTerms.length === 2
                   ? [
                       {
@@ -165,9 +124,9 @@ const volunteerProfileResolvers = {
       _parent: unknown,
       { id }: { id: string },
       context: Context
-    ): Promise<VolunteerProfile | null> => {
+    ): Promise<User | null> => {
       requireAdmin(context);
-      return context.prisma.volunteerProfile.findUnique({
+      return context.prisma.user.findUnique({
         where: { id },
       });
     },
@@ -208,61 +167,6 @@ const volunteerProfileResolvers = {
   },
 
   Mutation: {
-    createVolunteerProfile: async (
-      _parent: unknown,
-      { input }: { input: CreateVolunteerProfileInput },
-      context: Context
-    ): Promise<VolunteerProfile> => {
-      requireAdmin(context);
-      return context.prisma.volunteerProfile.create({
-        data: {
-          firstName: input.firstName,
-          lastName: input.lastName,
-          email: input.email,
-          phone: input.phone,
-          appointmentStatus: input.appointmentStatus || 'PUBLISHER',
-          notes: input.notes,
-          congregationId: input.congregationId,
-        },
-      });
-    },
-
-    updateVolunteerProfile: async (
-      _parent: unknown,
-      { id, input }: { id: string; input: UpdateVolunteerProfileInput },
-      context: Context
-    ): Promise<VolunteerProfile> => {
-      requireAdmin(context);
-      return context.prisma.volunteerProfile.update({
-        where: { id },
-        data: input,
-      });
-    },
-
-    deleteVolunteerProfile: async (
-      _parent: unknown,
-      { id }: { id: string },
-      context: Context
-    ): Promise<boolean> => {
-      requireAdmin(context);
-      // Check if profile has any event volunteers
-      const eventVolunteers = await context.prisma.eventVolunteer.findMany({
-        where: { volunteerProfileId: id },
-      });
-
-      if (eventVolunteers.length > 0) {
-        throw new GraphQLError('Cannot delete profile with active event assignments', {
-          extensions: { code: 'BAD_REQUEST' },
-        });
-      }
-
-      await context.prisma.volunteerProfile.delete({
-        where: { id },
-      });
-
-      return true;
-    },
-
     addVolunteerToEvent: async (
       _parent: unknown,
       { input }: { input: AddVolunteerToEventInput },
@@ -270,13 +174,13 @@ const volunteerProfileResolvers = {
     ) => {
       requireAdmin(context);
       await requireEventAccess(context, input.eventId);
-      const { volunteerProfileId, eventId, departmentId, roleId } = input;
+      const { userId, eventId, departmentId, roleId } = input;
 
       // Check if already added to this event
       const existing = await context.prisma.eventVolunteer.findUnique({
         where: {
-          volunteerProfileId_eventId: {
-            volunteerProfileId,
+          userId_eventId: {
+            userId,
             eventId,
           },
         },
@@ -288,7 +192,18 @@ const volunteerProfileResolvers = {
         });
       }
 
-      // Get event to determine prefix
+      // Get the user for invite message
+      const user = await context.prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new GraphQLError('User not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Get event name
       const event = await context.prisma.event.findUnique({
         where: { id: eventId },
         include: { template: true },
@@ -301,8 +216,7 @@ const volunteerProfileResolvers = {
       }
 
       // Generate credentials
-      const prefix = event.template.eventType === 'CIRCUIT_ASSEMBLY' ? 'CA' : 'RC';
-      const volunteerId = generateEventVolunteerId(prefix);
+      const volunteerId = generateEventVolunteerId();
       const token = generateToken();
       const tokenHash = await hashToken(token);
 
@@ -311,20 +225,19 @@ const volunteerProfileResolvers = {
           volunteerId,
           tokenHash,
           encryptedToken: encryptField(token),
-          volunteerProfileId,
+          userId,
           eventId,
           departmentId,
           roleId,
         },
         include: {
-          volunteerProfile: true,
+          user: true,
           event: { include: { template: true } },
         },
       });
 
-      // Generate invite message
       const inviteMessage = generateInviteMessage(
-        eventVolunteer.volunteerProfile.firstName,
+        eventVolunteer.user.firstName,
         eventVolunteer.event.template.name,
         volunteerId,
         token
@@ -332,92 +245,6 @@ const volunteerProfileResolvers = {
 
       return {
         eventVolunteer,
-        volunteerId,
-        token,
-        inviteMessage,
-      };
-    },
-
-    createAndAddVolunteer: async (
-      _parent: unknown,
-      { input }: { input: CreateAndAddVolunteerInput },
-      context: Context
-    ) => {
-      requireAdmin(context);
-      await requireEventAccess(context, input.eventId);
-      const {
-        firstName,
-        lastName,
-        email,
-        phone,
-        appointmentStatus,
-        notes,
-        congregationId,
-        eventId,
-        departmentId,
-        roleId,
-      } = input;
-
-      // Get event to determine prefix
-      const event = await context.prisma.event.findUnique({
-        where: { id: eventId },
-        include: { template: true },
-      });
-
-      if (!event) {
-        throw new GraphQLError('Event not found', {
-          extensions: { code: 'NOT_FOUND' },
-        });
-      }
-
-      // Generate credentials
-      const prefix = event.template.eventType === 'CIRCUIT_ASSEMBLY' ? 'CA' : 'RC';
-      const volunteerId = generateEventVolunteerId(prefix);
-      const token = generateToken();
-      const tokenHash = await hashToken(token);
-
-      // Create profile and event volunteer in transaction
-      const result = await context.prisma.$transaction(async (tx) => {
-        const profile = await tx.volunteerProfile.create({
-          data: {
-            firstName,
-            lastName,
-            email,
-            phone,
-            appointmentStatus: appointmentStatus || 'PUBLISHER',
-            notes,
-            congregationId,
-          },
-        });
-
-        const eventVolunteer = await tx.eventVolunteer.create({
-          data: {
-            volunteerId,
-            tokenHash,
-            encryptedToken: encryptField(token),
-            volunteerProfileId: profile.id,
-            eventId,
-            departmentId,
-            roleId,
-          },
-          include: {
-            volunteerProfile: true,
-            event: { include: { template: true } },
-          },
-        });
-
-        return eventVolunteer;
-      });
-
-      const inviteMessage = generateInviteMessage(
-        result.volunteerProfile.firstName,
-        result.event.template.name,
-        volunteerId,
-        token
-      );
-
-      return {
-        eventVolunteer: result,
         volunteerId,
         token,
         inviteMessage,
@@ -440,7 +267,7 @@ const volunteerProfileResolvers = {
         });
       }
       await requireEventAccess(context, ev.eventId);
-      // Check for active assignments
+
       const assignments = await context.prisma.scheduleAssignment.findMany({
         where: { eventVolunteerId },
       });
@@ -456,6 +283,18 @@ const volunteerProfileResolvers = {
       });
 
       return true;
+    },
+
+    addVolunteerByUserId: async (
+      _parent: unknown,
+      { eventId, userId: userShortId, departmentId }: { eventId: string; userId: string; departmentId?: string },
+      context: Context
+    ) => {
+      requireAdmin(context);
+      await requireEventAccess(context, eventId);
+      const { VolunteerService } = await import('../../services/volunteerService.js');
+      const volunteerService = new VolunteerService(context.prisma);
+      return volunteerService.addVolunteerByUserId(eventId, userShortId, context.admin!.id, departmentId);
     },
 
     regenerateVolunteerToken: async (
@@ -474,6 +313,7 @@ const volunteerProfileResolvers = {
         });
       }
       await requireEventAccess(context, evRecord.eventId);
+
       const token = generateToken();
       const tokenHash = await hashToken(token);
 
@@ -481,13 +321,13 @@ const volunteerProfileResolvers = {
         where: { id: eventVolunteerId },
         data: { tokenHash, encryptedToken: encryptField(token) },
         include: {
-          volunteerProfile: true,
+          user: true,
           event: { include: { template: true } },
         },
       });
 
       const inviteMessage = generateInviteMessage(
-        eventVolunteer.volunteerProfile.firstName,
+        eventVolunteer.user.firstName,
         eventVolunteer.event.template.name,
         eventVolunteer.volunteerId,
         token
@@ -502,25 +342,26 @@ const volunteerProfileResolvers = {
     },
   },
 
+  // Type resolvers for User (as volunteer profile)
   VolunteerProfile: {
-    congregation: async (profile: VolunteerProfile, _args: unknown, context: Context) => {
+    congregation: async (user: User, _args: unknown, context: Context) => {
+      if (!(user as User & { congregationId?: string | null }).congregationId) return null;
       return context.prisma.congregation.findUnique({
-        where: { id: profile.congregationId },
+        where: { id: (user as User & { congregationId: string }).congregationId },
       });
     },
 
-    eventVolunteers: async (profile: VolunteerProfile, _args: unknown, context: Context) => {
+    eventVolunteers: async (user: User, _args: unknown, context: Context) => {
       return context.prisma.eventVolunteer.findMany({
-        where: { volunteerProfileId: profile.id },
+        where: { userId: user.id },
       });
     },
   },
 
   EventVolunteer: {
-    volunteerProfile: async (ev: EventVolunteer, _args: unknown, context: Context) => {
-      return context.prisma.volunteerProfile.findUnique({
-        where: { id: ev.volunteerProfileId },
-        include: { congregation: true },
+    user: async (ev: EventVolunteer, _args: unknown, context: Context) => {
+      return context.prisma.user.findUnique({
+        where: { id: ev.userId },
       });
     },
 

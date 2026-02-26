@@ -1,34 +1,15 @@
 /**
  * GraphQL Auth Schema
  *
- * Defines authentication-related queries and mutations for admins (overseers).
- *
- * Types:
- *   - AuthPayload: Returned after login/register (admin + tokens)
- *   - TokenPayload: Returned after refresh (new tokens only)
- *   - LogoutPayload: Confirms logout success
- *
- * Queries:
- *   - me: Get the currently logged-in admin's profile
- *
- * Mutations:
- *   - registerAdmin: Create a new admin account
- *   - loginAdmin: Log in and get access + refresh tokens
- *   - refreshToken: Exchange refresh token for new access token
- *   - logoutAdmin: Invalidate a specific refresh token
- *   - logoutAllSessions: Invalidate ALL refresh tokens for this admin
- *
- * Flow:
- *   1. Admin registers or logs in → gets accessToken + refreshToken
- *   2. accessToken is sent in Authorization header for API calls
- *   3. When accessToken expires (15 min), use refreshToken to get a new one
- *   4. refreshToken expires after 7 days, then must log in again
+ * Unified auth for all users (overseers and volunteers).
+ * All users register/login through the same flow.
+ * isOverseer flag controls access to overseer features.
  *
  * Implemented by: ../resolvers/auth.ts
  */
 const authTypeDefs = `#graphql
-  type AuthPayload {
-    admin: Admin!
+  type UserAuthPayload {
+    user: User!
     accessToken: String!
     refreshToken: String!
     expiresIn: Int!
@@ -56,14 +37,18 @@ const authTypeDefs = `#graphql
     token: String!
   }
 
-  input RegisterAdminInput {
+  input RegisterUserInput {
     email: String!
     password: String!
     firstName: String!
     lastName: String!
+    phone: String
+    congregation: String
+    appointmentStatus: AppointmentStatus
+    isOverseer: Boolean
   }
 
-  input LoginAdminInput {
+  input LoginUserInput {
     email: String!
     password: String!
   }
@@ -72,25 +57,27 @@ const authTypeDefs = `#graphql
     refreshToken: String!
   }
 
-  input UpdateAdminProfileInput {
+  input UpdateUserProfileInput {
     firstName: String
     lastName: String
     phone: String
+    congregation: String
     congregationId: ID
   }
 
   extend type Query {
-    me: Admin
+    me: User
   }
 
   extend type Mutation {
-    registerAdmin(input: RegisterAdminInput!): AuthPayload!
-    loginAdmin(input: LoginAdminInput!): AuthPayload!
+    registerUser(input: RegisterUserInput!): UserAuthPayload!
+    loginUser(input: LoginUserInput!): UserAuthPayload!
     loginEventVolunteer(input: LoginEventVolunteerInput!): EventVolunteerAuthPayload!
     refreshToken(input: RefreshTokenInput!): TokenPayload!
-    logoutAdmin(refreshToken: String!): LogoutPayload!
+    logoutUser(refreshToken: String!): LogoutPayload!
     logoutAllSessions: LogoutPayload!
-    updateAdminProfile(input: UpdateAdminProfileInput!): Admin!
+    updateUserProfile(input: UpdateUserProfileInput!): User!
+    setOverseerMode(isOverseer: Boolean!): User!
   }
 `;
 

@@ -7,7 +7,7 @@ query WalkThroughCompletions($eventId: ID!, $sessionId: ID) {
     }
     eventVolunteer {
       id
-      volunteerProfile {
+      user {
         firstName
         lastName
       }

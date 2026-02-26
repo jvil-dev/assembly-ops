@@ -5,14 +5,16 @@
  *
  * Methods:
  *   - getEventTemplates(serviceYear?): Get available event templates
- *   - activateEvent(input, adminId): Create event from template, admin becomes APP_ADMIN
- *   - joinEvent(input, adminId): Join event using join code as DEPARTMENT_OVERSEER
- *   - claimDepartment(input, adminId): Claim a department in an event
- *   - getMyEvents(adminId): Get all events this admin is part of
+ *   - activateEvent(input, userId): Create event from template, user becomes APP_ADMIN
+ *   - joinEvent(input, userId): Join event using join code as DEPARTMENT_OVERSEER
+ *   - claimDepartment(input, userId): Claim a department in an event
+ *   - getMyEvents(userId): Get all events this user is part of
+ *   - getMyAllEvents(userId): Get all events this user is part of (all roles)
  *   - getEvent(eventId): Get single event with all related data
  *   - getEventDepartments(eventId): Get departments for an event
- *   - getEventAdmins(eventId): Get all admins for an event
- *   - promoteToAppAdmin(input, adminId): Promote a Department Overseer to App Admin
+ *   - getEventAdmins(eventId): Get all overseers for an event
+ *   - promoteToAppAdmin(input, userId): Promote a Department Overseer to App Admin
+ *   - discoverEvents(eventType?): Get public events available to join
  *
  * Event Lifecycle:
  *   1. HQ seeds event templates (Circuit Assembly 2025, etc.)
@@ -93,7 +95,7 @@ export class EventService {
       where: {
         templateId,
         admins: {
-          some: { adminId },
+          some: { userId: adminId },
         },
       },
     });
@@ -108,7 +110,7 @@ export class EventService {
         templateId,
         admins: {
           create: {
-            adminId,
+            userId: adminId,
             role: EventRole.APP_ADMIN,
           },
         },
@@ -116,7 +118,7 @@ export class EventService {
       include: {
         template: true,
         admins: {
-          include: { admin: true },
+          include: { user: true },
         },
       },
     });
@@ -198,8 +200,8 @@ export class EventService {
     // Check if already a member
     const existingMembership = await this.prisma.eventAdmin.findUnique({
       where: {
-        adminId_eventId: {
-          adminId,
+        userId_eventId: {
+          userId: adminId,
           eventId: event.id,
         },
       },
@@ -212,7 +214,7 @@ export class EventService {
     // Add as member (no role yet - must claim department)
     const eventAdmin = await this.prisma.eventAdmin.create({
       data: {
-        adminId,
+        userId: adminId,
         eventId: event.id,
         role: EventRole.DEPARTMENT_OVERSEER, // Default role until they claim
       },
@@ -220,7 +222,7 @@ export class EventService {
         event: {
           include: { template: true },
         },
-        admin: true,
+        user: true,
       },
     });
 
@@ -238,8 +240,8 @@ export class EventService {
     // Check admin is member of event
     const eventAdmin = await this.prisma.eventAdmin.findUnique({
       where: {
-        adminId_eventId: {
-          adminId,
+        userId_eventId: {
+          userId: adminId,
           eventId,
         },
       },
@@ -257,12 +259,12 @@ export class EventService {
           departmentType,
         },
       },
-      include: { overseer: { include: { admin: true } } },
+      include: { overseer: { include: { user: true } } },
     });
 
     if (existingDepartment) {
       const overseerName = existingDepartment.overseer
-        ? `${existingDepartment.overseer.admin.firstName} ${existingDepartment.overseer.admin.lastName}`
+        ? `${existingDepartment.overseer.user.firstName} ${existingDepartment.overseer.user.lastName}`
         : 'Unknown';
       throw new ConflictError(
         `${DEPARTMENT_NAMES[departmentType]} is already claimed by ${overseerName}`
@@ -300,7 +302,7 @@ export class EventService {
       where: { id: department.id },
       include: {
         overseer: {
-          include: { admin: true },
+          include: { user: true },
         },
         event: {
           include: { template: true },
@@ -309,16 +311,96 @@ export class EventService {
     });
   }
 
+  async getMyAllEvents(userId: string) {
+    // 1. Fetch overseer memberships
+    const eventAdmins = await this.prisma.eventAdmin.findMany({
+      where: { userId },
+      include: {
+        event: {
+          include: {
+            template: true,
+            departments: true,
+            _count: { select: { eventVolunteers: true } },
+          },
+        },
+        department: true,
+      },
+      orderBy: { event: { template: { startDate: 'asc' } } },
+    });
+
+    // 2. Fetch volunteer memberships
+    const eventVolunteers = await this.prisma.eventVolunteer.findMany({
+      where: { userId },
+      include: {
+        event: {
+          include: {
+            template: true,
+            _count: { select: { eventVolunteers: true } },
+          },
+        },
+        department: true,
+      },
+      orderBy: { event: { template: { startDate: 'asc' } } },
+    });
+
+    // 3. Merge, de-duplicate by eventId (overseer role wins if both exist)
+    const seen = new Set<string>();
+    const results: Array<{
+      eventId: string;
+      event: typeof eventAdmins[0]['event'] | typeof eventVolunteers[0]['event'];
+      membershipType: 'OVERSEER' | 'VOLUNTEER';
+      overseerRole: string | null;
+      departmentId: string | null;
+      departmentName: string | null;
+      departmentType: string | null;
+      eventVolunteerId: string | null;
+      volunteerId: string | null;
+    }> = [];
+
+    for (const ea of eventAdmins) {
+      seen.add(ea.eventId);
+      results.push({
+        eventId: ea.eventId,
+        event: ea.event,
+        membershipType: 'OVERSEER',
+        overseerRole: ea.role,
+        departmentId: ea.department?.id ?? null,
+        departmentName: ea.department?.name ?? null,
+        departmentType: ea.department?.departmentType ?? null,
+        eventVolunteerId: null,
+        volunteerId: null,
+      });
+    }
+
+    for (const ev of eventVolunteers) {
+      if (seen.has(ev.eventId)) continue; // Overseer membership takes priority
+      seen.add(ev.eventId);
+      results.push({
+        eventId: ev.eventId,
+        event: ev.event,
+        membershipType: 'VOLUNTEER',
+        overseerRole: null,
+        departmentId: ev.department?.id ?? null,
+        departmentName: ev.department?.name ?? null,
+        departmentType: ev.department?.departmentType ?? null,
+        eventVolunteerId: ev.id,
+        volunteerId: ev.volunteerId,
+      });
+    }
+
+    return results;
+  }
+
   async getMyEvents(adminId: string) {
     const eventAdmins = await this.prisma.eventAdmin.findMany({
-      where: { adminId },
+      where: { userId: adminId },
       include: {
         event: {
           include: {
             template: true,
             departments: true,
             _count: {
-              select: { volunteers: true },
+              select: { eventVolunteers: true },
             },
           },
         },
@@ -343,22 +425,22 @@ export class EventService {
         template: true,
         admins: {
           include: {
-            admin: true,
+            user: true,
             department: true,
           },
         },
         departments: {
           include: {
             overseer: {
-              include: { admin: true },
+              include: { user: true },
             },
             _count: {
-              select: { volunteers: true, posts: true },
+              select: { eventVolunteers: true, posts: true },
             },
           },
         },
         _count: {
-          select: { volunteers: true, sessions: true },
+          select: { eventVolunteers: true, sessions: true },
         },
       },
     });
@@ -369,10 +451,10 @@ export class EventService {
       where: { eventId },
       include: {
         overseer: {
-          include: { admin: true },
+          include: { user: true },
         },
         _count: {
-          select: { volunteers: true, posts: true },
+          select: { eventVolunteers: true, posts: true },
         },
       },
       orderBy: { name: 'asc' },
@@ -383,7 +465,7 @@ export class EventService {
     return this.prisma.eventAdmin.findMany({
       where: { eventId },
       include: {
-        admin: true,
+        user: true,
         event: true,
         department: true,
       },
@@ -400,8 +482,8 @@ export class EventService {
     // 1. Verify requesting admin is APP_ADMIN for this event
     const requestingEventAdmin = await this.prisma.eventAdmin.findUnique({
       where: {
-        adminId_eventId: {
-          adminId: requestingAdminId,
+        userId_eventId: {
+          userId: requestingAdminId,
           eventId,
         },
       },
@@ -419,13 +501,13 @@ export class EventService {
     // 2. Find target admin
     const targetEventAdmin = await this.prisma.eventAdmin.findUnique({
       where: {
-        adminId_eventId: {
-          adminId,
+        userId_eventId: {
+          userId: adminId,
           eventId,
         },
       },
       include: {
-        admin: true,
+        user: true,
         event: true,
         department: true,
       },
@@ -445,7 +527,7 @@ export class EventService {
       where: { id: targetEventAdmin.id },
       data: { role: EventRole.APP_ADMIN },
       include: {
-        admin: true,
+        user: true,
         event: true,
         department: true,
       },

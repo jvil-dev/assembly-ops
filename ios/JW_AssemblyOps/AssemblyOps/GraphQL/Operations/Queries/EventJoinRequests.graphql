@@ -1,0 +1,19 @@
+query EventJoinRequests($eventId: ID!, $status: JoinRequestStatus) {
+  eventJoinRequests(eventId: $eventId, status: $status) {
+    id
+    eventId
+    user {
+      id
+      userId
+      firstName
+      lastName
+      congregation
+      appointmentStatus
+    }
+    departmentType
+    status
+    note
+    createdAt
+    resolvedAt
+  }
+}

@@ -4,11 +4,8 @@ mutation SendMultiMessage($input: SendMultiMessageInput!) {
     subject
     body
     recipientType
-    volunteer {
-      id
-      firstName
-      lastName
-    }
+    senderType
+    senderName
     createdAt
   }
 }

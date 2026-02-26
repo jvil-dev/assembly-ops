@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "SubmitAttendanceCount"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation SubmitAttendanceCount($input: SubmitAttendanceCountInput!) { submitAttendanceCount(input: $input) { __typename id count section notes session { __typename id name } createdAt } }"#
+        #"mutation SubmitAttendanceCount($input: SubmitAttendanceCountInput!) { submitAttendanceCount(input: $input) { __typename id count notes session { __typename id name } createdAt } }"#
       ))
 
     public var input: SubmitAttendanceCountInput
@@ -45,7 +45,6 @@ extension AssemblyOpsAPI {
           .field("__typename", String.self),
           .field("id", AssemblyOpsAPI.ID.self),
           .field("count", Int.self),
-          .field("section", String?.self),
           .field("notes", String?.self),
           .field("session", Session.self),
           .field("createdAt", AssemblyOpsAPI.DateTime.self),
@@ -56,7 +55,6 @@ extension AssemblyOpsAPI {
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
         var count: Int { __data["count"] }
-        var section: String? { __data["section"] }
         var notes: String? { __data["notes"] }
         var session: Session { __data["session"] }
         var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }

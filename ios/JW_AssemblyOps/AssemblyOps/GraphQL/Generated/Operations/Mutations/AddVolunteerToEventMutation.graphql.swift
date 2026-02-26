@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "AddVolunteerToEvent"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation AddVolunteerToEvent($input: AddVolunteerToEventInput!) { addVolunteerToEvent(input: $input) { __typename eventVolunteer { __typename id volunteerId volunteerProfile { __typename id firstName lastName } } volunteerId token inviteMessage } }"#
+        #"mutation AddVolunteerToEvent($input: AddVolunteerToEventInput!) { addVolunteerToEvent(input: $input) { __typename eventVolunteer { __typename id volunteerId user { __typename id firstName lastName } } volunteerId token inviteMessage } }"#
       ))
 
     public var input: AddVolunteerToEventInput
@@ -69,7 +69,7 @@ extension AssemblyOpsAPI {
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
             .field("volunteerId", String.self),
-            .field("volunteerProfile", VolunteerProfile.self),
+            .field("user", User.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             AddVolunteerToEventMutation.Data.AddVolunteerToEvent.EventVolunteer.self
@@ -77,16 +77,16 @@ extension AssemblyOpsAPI {
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var volunteerId: String { __data["volunteerId"] }
-          var volunteerProfile: VolunteerProfile { __data["volunteerProfile"] }
+          var user: User { __data["user"] }
 
-          /// AddVolunteerToEvent.EventVolunteer.VolunteerProfile
+          /// AddVolunteerToEvent.EventVolunteer.User
           ///
-          /// Parent Type: `VolunteerProfile`
-          struct VolunteerProfile: AssemblyOpsAPI.SelectionSet {
+          /// Parent Type: `User`
+          struct User: AssemblyOpsAPI.SelectionSet {
             let __data: DataDict
             init(_dataDict: DataDict) { __data = _dataDict }
 
-            static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.VolunteerProfile }
+            static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
             static var __selections: [ApolloAPI.Selection] { [
               .field("__typename", String.self),
               .field("id", AssemblyOpsAPI.ID.self),
@@ -94,7 +94,7 @@ extension AssemblyOpsAPI {
               .field("lastName", String.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-              AddVolunteerToEventMutation.Data.AddVolunteerToEvent.EventVolunteer.VolunteerProfile.self
+              AddVolunteerToEventMutation.Data.AddVolunteerToEvent.EventVolunteer.User.self
             ] }
 
             var id: AssemblyOpsAPI.ID { __data["id"] }

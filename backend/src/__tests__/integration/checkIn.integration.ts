@@ -44,10 +44,10 @@ describe('Check-In Operations', () => {
     app = await createTestApp();
     const email = `checkin-test-${Date.now()}@example.com`;
 
-    // Register admin
+    // Register user (overseer)
     const registerRes = await graphqlRequest(
-      `mutation Register($input: RegisterAdminInput!) {
-        registerAdmin(input: $input) { accessToken admin { id } }
+      `mutation Register($input: RegisterUserInput!) {
+        registerUser(input: $input) { accessToken user { id } }
       }`,
       {
         input: {
@@ -55,6 +55,7 @@ describe('Check-In Operations', () => {
           password: 'TestPassword123!',
           firstName: 'CheckIn',
           lastName: 'Tester',
+          isOverseer: true,
         },
       }
     );
@@ -63,7 +64,7 @@ describe('Check-In Operations', () => {
       console.error('Register failed:', registerRes.body.errors);
       return;
     }
-    adminToken = registerRes.body.data.registerAdmin.accessToken;
+    adminToken = registerRes.body.data.registerUser.accessToken;
 
     // Get event template
     const templatesRes = await authRequest(
@@ -197,14 +198,14 @@ describe('Check-In Operations', () => {
 
     // Login as volunteer
     const volunteerLoginRes = await graphqlRequest(
-      `mutation($input: LoginVolunteerInput!) { loginVolunteer(input: $input) { accessToken } }`,
+      `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
       { input: { volunteerId: volunteerLoginId, token: volunteerLoginToken } }
     );
     if (volunteerLoginRes.body.errors) {
       console.error('Volunteer login failed:', volunteerLoginRes.body.errors);
       return;
     }
-    volunteerToken = volunteerLoginRes.body.data.loginVolunteer.accessToken;
+    volunteerToken = volunteerLoginRes.body.data.loginEventVolunteer.accessToken;
   });
 
   afterAll(async () => {

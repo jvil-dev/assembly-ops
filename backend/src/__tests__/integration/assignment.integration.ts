@@ -41,13 +41,13 @@ describe('Assignment Operations', () => {
     app = await createTestApp();
     const email = `assignment-test-${Date.now()}@example.com`;
 
-    // Register admin
+    // Register user (overseer)
     const registerRes = await request(app)
       .post('/graphql')
       .send({
         query: `
-          mutation Register($input: RegisterAdminInput!) {
-            registerAdmin(input: $input) {
+          mutation Register($input: RegisterUserInput!) {
+            registerUser(input: $input) {
               accessToken
             }
           }
@@ -58,6 +58,7 @@ describe('Assignment Operations', () => {
             password: 'TestPassword123!',
             firstName: 'Assignment',
             lastName: 'Tester',
+            isOverseer: true,
           },
         },
       });
@@ -66,7 +67,7 @@ describe('Assignment Operations', () => {
       console.error('Register failed:', registerRes.body.errors);
       return;
     }
-    accessToken = registerRes.body.data.registerAdmin.accessToken;
+    accessToken = registerRes.body.data.registerUser.accessToken;
 
     // Get template and activate event
     const templatesRes = await request(app)

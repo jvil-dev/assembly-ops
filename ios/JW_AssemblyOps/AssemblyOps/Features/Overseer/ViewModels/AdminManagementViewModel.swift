@@ -55,9 +55,9 @@ final class AdminManagementViewModel: ObservableObject {
             eventAdmins = admins.map { admin in
                 EventAdminItem(
                     id: admin.id,
-                    adminId: admin.admin.id,
-                    fullName: "\(admin.admin.firstName) \(admin.admin.lastName)",
-                    email: admin.admin.email,
+                    adminId: admin.user.id,
+                    fullName: "\(admin.user.firstName) \(admin.user.lastName)",
+                    email: admin.user.email,
                     role: admin.role.rawValue,
                     departmentName: admin.department?.name,
                     claimedAt: DateUtils.isoFormatter.date(from: admin.claimedAt) ?? Date()

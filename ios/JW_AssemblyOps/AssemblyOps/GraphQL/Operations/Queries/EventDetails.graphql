@@ -18,7 +18,7 @@ query EventDetails($eventId: ID!) {
             isClaimed
             overseer {
                 id
-                admin {
+                user {
                     id
                     fullName
                 }

@@ -1,0 +1,16 @@
+mutation RequestToJoinEvent($eventId: ID!, $departmentType: DepartmentType, $note: String) {
+  requestToJoinEvent(eventId: $eventId, departmentType: $departmentType, note: $note) {
+    id
+    eventId
+    user {
+      id
+      userId
+      firstName
+      lastName
+    }
+    departmentType
+    status
+    note
+    createdAt
+  }
+}

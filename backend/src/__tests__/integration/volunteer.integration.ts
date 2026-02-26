@@ -6,20 +6,20 @@
  * generated ID + token credentials (no password).
  *
  * Test Setup:
- *   1. Register a new admin (becomes APP_ADMIN)
+ *   1. Register a new user (becomes APP_ADMIN)
  *   2. Activate an event from template
  *   3. Claim a department
  *
  * Tests:
  *   - createVolunteer: Create volunteer with event-type-aware ID prefix (CA-/RC-)
- *   - loginVolunteer: Authenticate with volunteerId + token
+ *   - loginEventVolunteer: Authenticate with volunteerId + token
  *   - volunteerToken: Query decrypted token (admin-only, AES-256-GCM)
  *   - regenerateVolunteerCredentials: Generate new volunteerId + token
  *   - volunteers: Query event volunteers list
  *
  * Authorization:
- *   - Volunteer mutations require authenticated admin with event access
- *   - volunteerToken requires admin authentication
+ *   - Volunteer mutations require authenticated overseer with event access
+ *   - volunteerToken requires overseer authentication
  */
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
@@ -37,13 +37,13 @@ describe('Volunteer Operations', () => {
     app = await createTestApp();
     const email = `vol-test-${Date.now()}@example.com`;
 
-    // Register admin
+    // Register user (overseer)
     const registerRes = await request(app)
       .post('/graphql')
       .send({
         query: `
-          mutation Register($input: RegisterAdminInput!) {
-            registerAdmin(input: $input) {
+          mutation Register($input: RegisterUserInput!) {
+            registerUser(input: $input) {
               accessToken
             }
           }
@@ -54,6 +54,7 @@ describe('Volunteer Operations', () => {
             password: 'TestPassword123!',
             firstName: 'Vol',
             lastName: 'Tester',
+            isOverseer: true,
           },
         },
       });
@@ -62,7 +63,7 @@ describe('Volunteer Operations', () => {
       console.error('Register failed:', registerRes.body.errors);
       return;
     }
-    accessToken = registerRes.body.data.registerAdmin.accessToken;
+    accessToken = registerRes.body.data.registerUser.accessToken;
 
     // Get a template and activate event
     const templatesRes = await request(app)
@@ -131,7 +132,7 @@ describe('Volunteer Operations', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.createVolunteer.volunteerId).toMatch(/^(CA|RC)-/);
+      expect(response.body.data.createVolunteer.volunteerId).toMatch(/^[A-Z0-9]{6}$/);
       expect(response.body.data.createVolunteer.token).toBeDefined();
 
       volunteerId = response.body.data.createVolunteer.id;
@@ -142,7 +143,7 @@ describe('Volunteer Operations', () => {
     });
   });
 
-  describe('loginVolunteer', () => {
+  describe('loginEventVolunteer', () => {
     it('should login with valid credentials', async () => {
       if (!volunteerCredentials) {
         console.log('Skipping - no credentials available');
@@ -153,13 +154,10 @@ describe('Volunteer Operations', () => {
         .post('/graphql')
         .send({
           query: `
-            mutation Login($input: LoginVolunteerInput!) {
-              loginVolunteer(input: $input) {
-                volunteer {
+            mutation Login($input: LoginEventVolunteerInput!) {
+              loginEventVolunteer(input: $input) {
+                eventVolunteer {
                   id
-                  firstName
-                  lastName
-                  fullName
                 }
                 accessToken
                 refreshToken
@@ -171,8 +169,7 @@ describe('Volunteer Operations', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.loginVolunteer.accessToken).toBeDefined();
-      expect(response.body.data.loginVolunteer.volunteer.fullName).toBe('Test Volunteer');
+      expect(response.body.data.loginEventVolunteer.accessToken).toBeDefined();
     });
   });
 
@@ -245,7 +242,7 @@ describe('Volunteer Operations', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.regenerateVolunteerCredentials.volunteerId).toMatch(/^(CA|RC)-/);
+      expect(response.body.data.regenerateVolunteerCredentials.volunteerId).toMatch(/^[A-Z0-9]{6}$/);
       expect(response.body.data.regenerateVolunteerCredentials.token).toBeDefined();
       expect(response.body.data.regenerateVolunteerCredentials.token).toHaveLength(8);
 

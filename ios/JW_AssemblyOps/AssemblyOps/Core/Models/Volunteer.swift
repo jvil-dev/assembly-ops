@@ -8,7 +8,7 @@
 // MARK: - Volunteer Model
 //
 // Local model representing volunteer profile data.
-// Parsed from GraphQL MyVolunteerProfileQuery response.
+// Built from AppState.currentUser (UserInfo) for profile display.
 //
 // Properties:
 //   - id, volunteerId: Unique identifiers
@@ -40,8 +40,8 @@ struct Volunteer: Identifiable {
     let departmentId: String?
     let departmentName: String?
     let departmentType: String?
-    let eventId: String
-    let eventName: String
+    let eventId: String?
+    let eventName: String?
     let eventVenue: String?
     let eventAddress: String?
     let eventStartDate: Date?

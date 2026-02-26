@@ -44,17 +44,6 @@ const attendanceTypeDefs = `#graphql
   # TYPES
   # ============================================
 
-  type AttendanceCount {
-    id: ID!
-    count: Int!
-    section: String
-    notes: String
-    session: Session!
-    submittedBy: Admin!
-    createdAt: DateTime!
-    updatedAt: DateTime!
-  }
-
   type SessionAttendanceSummary {
     session: Session!
     totalCount: Int!

@@ -21,14 +21,14 @@
 //   - PendingOAuthData: Holds pending token and user info from OAuth provider
 //
 // Methods:
-//   - login(): Authenticate with email/password via LoginAdminMutation
+//   - login(): Authenticate with email/password via LoginUserMutation
 //   - signInWithGoogle(): Initiate Google OAuth flow
 //   - signInWithApple(): Initiate Apple OAuth flow
 //
 // Flow:
 //   1. User enters credentials or taps OAuth button
 //   2. ViewModel calls appropriate GraphQL mutation
-//   3. On success: AppState.didLoginAsOverseer() stores tokens and updates state
+//   3. On success: AppState.didLogin() stores tokens and updates state
 //   4. On OAuth with new user: Shows OAuthRegistrationView to complete profile
 //
 
@@ -67,30 +67,37 @@ final class OverseerLoginViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
-        let input = AssemblyOpsAPI.LoginAdminInput(
+        let input = AssemblyOpsAPI.LoginUserInput(
             email: email.lowercased().trimmingCharacters(in: .whitespaces),
             password: password
         )
 
         NetworkClient.shared.apollo.perform(
-            mutation: AssemblyOpsAPI.LoginAdminMutation(input: input)
+            mutation: AssemblyOpsAPI.LoginUserMutation(input: input)
         ) { [weak self] result in
             Task { @MainActor in
                 switch result {
                 case .success(let graphQLResult):
-                    if let data = graphQLResult.data?.loginAdmin {
-                        let overseer = OverseerInfo(
-                            id: data.admin.id,
-                            email: data.admin.email,
-                            fullName: data.admin.fullName,
-                            firstName: data.admin.firstName,
-                            lastName: data.admin.lastName,
-                            phone: data.admin.phone,
-                            congregationId: data.admin.congregationId,
-                            circuitId: nil,
-                            overseerType: ""
+                    if let data = graphQLResult.data?.loginUser {
+                        let user = UserInfo(
+                            id: data.user.id,
+                            userId: data.user.userId,
+                            email: data.user.email,
+                            firstName: data.user.firstName,
+                            lastName: data.user.lastName,
+                            fullName: data.user.fullName,
+                            phone: data.user.phone,
+                            congregation: data.user.congregation,
+                            congregationId: data.user.congregationId,
+                            appointmentStatus: data.user.appointmentStatus?.rawValue,
+                            isOverseer: data.user.isOverseer
                         )
-                        self?.appState.didLoginAsOverseer(overseer: overseer, accessToken: data.accessToken, refreshToken: data.refreshToken, expiresIn: data.expiresIn)
+                        self?.appState.didLogin(
+                            user: user,
+                            accessToken: data.accessToken,
+                            refreshToken: data.refreshToken,
+                            expiresIn: data.expiresIn
+                        )
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
                         self?.errorMessage = errors.first?.localizedDescription ?? "Login failed"
                     }
@@ -153,17 +160,19 @@ final class OverseerLoginViewModel: ObservableObject {
                     if let data = graphQLResult.data?.loginWithGoogle {
                         self?.processOAuthResponse(
                             isNewUser: data.isNewUser,
-                            admin: data.admin.map { admin in
-                                OverseerInfo(
-                                    id: admin.id,
-                                    email: admin.email,
-                                    fullName: admin.fullName,
-                                    firstName: admin.firstName,
-                                    lastName: admin.lastName,
+                            user: data.user.map { u in
+                                UserInfo(
+                                    id: u.id,
+                                    userId: u.userId,
+                                    email: u.email,
+                                    firstName: u.firstName,
+                                    lastName: u.lastName,
+                                    fullName: u.fullName,
                                     phone: nil,
+                                    congregation: nil,
                                     congregationId: nil,
-                                    circuitId: nil,
-                                    overseerType: ""
+                                    appointmentStatus: nil,
+                                    isOverseer: u.isOverseer
                                 )
                             },
                             accessToken: data.accessToken,
@@ -202,17 +211,19 @@ final class OverseerLoginViewModel: ObservableObject {
                     if let data = graphQLResult.data?.loginWithApple {
                         self?.processOAuthResponse(
                             isNewUser: data.isNewUser,
-                            admin: data.admin.map { admin in
-                                OverseerInfo(
-                                    id: admin.id,
-                                    email: admin.email,
-                                    fullName: admin.fullName,
-                                    firstName: admin.firstName,
-                                    lastName: admin.lastName,
+                            user: data.user.map { u in
+                                UserInfo(
+                                    id: u.id,
+                                    userId: u.userId,
+                                    email: u.email,
+                                    firstName: u.firstName,
+                                    lastName: u.lastName,
+                                    fullName: u.fullName,
                                     phone: nil,
+                                    congregation: nil,
                                     congregationId: nil,
-                                    circuitId: nil,
-                                    overseerType: ""
+                                    appointmentStatus: nil,
+                                    isOverseer: u.isOverseer
                                 )
                             },
                             accessToken: data.accessToken,
@@ -237,7 +248,7 @@ final class OverseerLoginViewModel: ObservableObject {
 
     private func processOAuthResponse(
         isNewUser: Bool,
-        admin: OverseerInfo?,
+        user: UserInfo?,
         accessToken: String?,
         refreshToken: String?,
         expiresIn: Int?,
@@ -255,12 +266,12 @@ final class OverseerLoginViewModel: ObservableObject {
                 lastName: lastName
             )
             showOAuthRegistration = true
-        } else if let admin = admin,
+        } else if let user = user,
                   let accessToken = accessToken,
                   let refreshToken = refreshToken,
                   let expiresIn = expiresIn {
-            appState.didLoginAsOverseer(
-                overseer: admin,
+            appState.didLogin(
+                user: user,
                 accessToken: accessToken,
                 refreshToken: refreshToken,
                 expiresIn: expiresIn

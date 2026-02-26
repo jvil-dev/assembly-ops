@@ -110,7 +110,7 @@ struct CreateVolunteerSheet: View {
             }
             .task {
                 await loadCongregations()
-                if AppState.shared.currentOverseer?.circuitId == nil {
+                if AppState.shared.currentUser?.congregationId == nil {
                     await loadAllCircuits()
                 }
                 if let eventId = OverseerSessionState.shared.selectedEvent?.id {
@@ -141,7 +141,7 @@ struct CreateVolunteerSheet: View {
                 themedTextField("Last Name", text: $lastName)
 
                 // Circuit picker (shown when overseer has no circuitId set)
-                if AppState.shared.currentOverseer?.circuitId == nil {
+                if AppState.shared.currentUser?.congregationId == nil {
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
                         Text("Circuit")
                             .font(AppTheme.Typography.caption)
@@ -186,7 +186,7 @@ struct CreateVolunteerSheet: View {
                 }
 
                 // Congregation dropdown
-                if AppState.shared.currentOverseer?.circuitId != nil || selectedCircuit != nil {
+                if AppState.shared.currentUser?.congregationId != nil || selectedCircuit != nil {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
                     Text("Congregation")
                         .font(AppTheme.Typography.caption)
@@ -362,7 +362,7 @@ struct CreateVolunteerSheet: View {
     // MARK: - Actions
 
     private func loadCongregations() async {
-        guard let circuitId = AppState.shared.currentOverseer?.circuitId else {
+        guard let circuitId = AppState.shared.currentUser?.congregationId else {
             // No circuitId — circuit picker will be shown instead
             return
         }

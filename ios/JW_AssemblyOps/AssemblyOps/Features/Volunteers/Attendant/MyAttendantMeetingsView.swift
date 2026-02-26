@@ -43,12 +43,12 @@ struct MyAttendantMeetingsView: View {
         .themedBackground(scheme: colorScheme)
         .navigationTitle("attendant.meetings.myTitle".localized)
         .refreshable {
-            if let eventId = appState.currentVolunteer?.eventId {
+            if let eventId = appState.currentEventId {
                 await viewModel.loadMyMeetings(eventId: eventId)
             }
         }
         .task {
-            if let eventId = appState.currentVolunteer?.eventId {
+            if let eventId = appState.currentEventId {
                 await viewModel.loadMyMeetings(eventId: eventId)
             }
         }

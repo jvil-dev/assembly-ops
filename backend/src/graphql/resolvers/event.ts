@@ -5,11 +5,12 @@
  *
  * Queries:
  *   - eventTemplates: Get available templates (optionally filtered by service year)
- *   - myEvents: Get all events the current admin is associated with
+ *   - myEvents: Get all events the current overseer is associated with
  *   - event: Get a single event by ID (requires event access)
  *   - eventDepartments: Get all departments for an event
  *   - availableDepartments: Get department types not yet claimed
- *   - eventAdmins: Get all admins for an event (requires event access)
+ *   - eventAdmins: Get all overseers for an event (requires event access)
+ *   - discoverEvents: Get public events available to join
  *
  * Mutations:
  *   - activateEvent: Create a real event from a template (generates join code)
@@ -20,19 +21,19 @@
  * Type Resolvers:
  *   - Event: name, eventType, venue, etc. (derived from template)
  *   - Event.volunteerCount: Counts volunteers in this event
- *   - EventTemplate.isActivated: Whether this admin has activated this template
+ *   - EventTemplate.isActivated: Whether this overseer has activated this template
  *   - Department.volunteerCount: Counts volunteers in this department
  *   - Department.isClaimed: Whether someone has claimed this department
  *
  * Dependencies:
  *   - EventService (../../services/eventService.ts): Business logic
- *   - Guards (../guards/auth.ts): requireAdmin, requireEventAccess
+ *   - Guards (../guards/auth.ts): requireAdmin, requireAuth, requireUser, requireEventAccess
  *
  * Schema: ../schema/event.ts
  */
 import { Context } from '../context.js';
 import { EventService } from '../../services/eventService.js';
-import { requireAdmin, requireAuth, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireUser, requireEventAccess } from '../guards/auth.js';
 import { Event, EventTemplate, EventAdmin, Department, DepartmentType } from '@prisma/client';
 
 // All 12 department types
@@ -66,7 +67,13 @@ const eventResolvers = {
     myEvents: async (_parent: unknown, _args: unknown, context: Context): Promise<EventAdmin[]> => {
       requireAdmin(context);
       const eventService = new EventService(context.prisma);
-      return eventService.getMyEvents(context.admin.id);
+      return eventService.getMyEvents(context.admin!.id);
+    },
+
+    myAllEvents: async (_parent: unknown, _args: unknown, context: Context) => {
+      requireUser(context);
+      const eventService = new EventService(context.prisma);
+      return eventService.getMyAllEvents(context.user!.id);
     },
 
     event: async (_parent: unknown, { id }: { id: string }, context: Context) => {
@@ -114,6 +121,23 @@ const eventResolvers = {
       const eventService = new EventService(context.prisma);
       return eventService.getEventAdmins(eventId);
     },
+
+    discoverEvents: async (
+      _parent: unknown,
+      { eventType }: { eventType?: string },
+      context: Context
+    ) => {
+      requireAuth(context);
+      const where: Record<string, unknown> = { isPublic: true };
+      if (eventType) {
+        where.template = { eventType };
+      }
+      return context.prisma.event.findMany({
+        where,
+        include: { template: true, admins: true, departments: true, sessions: true, roles: true },
+        orderBy: { createdAt: 'desc' },
+      });
+    },
   },
 
   Mutation: {
@@ -124,7 +148,7 @@ const eventResolvers = {
     ) => {
       requireAdmin(context);
       const eventService = new EventService(context.prisma);
-      return eventService.activateEvent(input, context.admin.id);
+      return eventService.activateEvent(input, context.admin!.id);
     },
 
     joinEvent: async (
@@ -134,7 +158,7 @@ const eventResolvers = {
     ) => {
       requireAdmin(context);
       const eventService = new EventService(context.prisma);
-      return eventService.joinEvent(input, context.admin.id);
+      return eventService.joinEvent(input, context.admin!.id);
     },
 
     claimDepartment: async (
@@ -145,7 +169,7 @@ const eventResolvers = {
       requireAdmin(context);
       await requireEventAccess(context, input.eventId);
       const eventService = new EventService(context.prisma);
-      return eventService.claimDepartment(input, context.admin.id);
+      return eventService.claimDepartment(input, context.admin!.id);
     },
 
     promoteToAppAdmin: async (
@@ -156,7 +180,7 @@ const eventResolvers = {
       requireAdmin(context);
       await requireEventAccess(context, input.eventId);
       const eventService = new EventService(context.prisma);
-      return eventService.promoteToAppAdmin(input, context.admin.id);
+      return eventService.promoteToAppAdmin(input, context.admin!.id);
     },
   },
 
@@ -168,7 +192,7 @@ const eventResolvers = {
     startDate: (event: Event & { template: EventTemplate }) => event.template.startDate,
     endDate: (event: Event & { template: EventTemplate }) => event.template.endDate,
     volunteerCount: async (event: Event, _args: unknown, context: Context) => {
-      const count = await context.prisma.volunteer.count({
+      const count = await context.prisma.eventVolunteer.count({
         where: { eventId: event.id },
       });
       return count;
@@ -181,7 +205,7 @@ const eventResolvers = {
       const event = await context.prisma.event.findFirst({
         where: {
           templateId: template.id,
-          admins: { some: { adminId: context.admin.id } },
+          admins: { some: { userId: context.admin!.id } },
         },
       });
       return !!event;
@@ -190,7 +214,7 @@ const eventResolvers = {
 
   Department: {
     volunteerCount: async (dept: Department, _args: unknown, context: Context) => {
-      return context.prisma.volunteer.count({
+      return context.prisma.eventVolunteer.count({
         where: { departmentId: dept.id },
       });
     },

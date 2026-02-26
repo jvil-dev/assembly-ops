@@ -6,8 +6,8 @@
  * Methods:
  *   - checkIn(volunteerId, input): Volunteer checks in to their assignment
  *   - checkOut(volunteerId, input): Volunteer checks out of their assignment
- *   - adminCheckIn(adminId, input): Admin checks in a volunteer (override)
- *   - markNoShow(adminId, input): Admin marks a volunteer as no-show
+ *   - adminCheckIn(adminId, input): Overseer checks in a volunteer (override)
+ *   - markNoShow(adminId, input): Overseer marks a volunteer as no-show
  *   - getCheckIn(id): Get a check-in record by ID
  *   - getSessionCheckIns(sessionId): Get all check-ins for a session
  *   - getCheckInStats(sessionId): Get check-in statistics for a session
@@ -20,11 +20,11 @@
  *
  * Assignment Status Validation:
  *   - Volunteers can only check in to ACCEPTED or force-assigned assignments
- *   - Admins can check in any assignment (override for last-minute substitutions)
+ *   - Overseers can check in any assignment (override for last-minute substitutions)
  *
  * Authorization:
  *   - Volunteers can only check in/out of their own assignments
- *   - Admins can check in any volunteer in events they have access to
+ *   - Overseers can check in any volunteer in events they have access to
  *
  * Called by: ../graphql/resolvers/checkIn.ts
  */
@@ -73,7 +73,7 @@ export class CheckInService {
     const assignment = await this.prisma.scheduleAssignment.findUnique({
       where: { id: assignmentId },
       include: {
-        volunteer: true,
+        eventVolunteer: { include: { user: true } },
         session: true,
         checkIn: true,
       },
@@ -83,7 +83,7 @@ export class CheckInService {
       throw new NotFoundError('Assignment');
     }
 
-    if (assignment.volunteerId !== volunteerId) {
+    if (assignment.eventVolunteerId !== volunteerId) {
       throw new AuthorizationError('This assignment does not belong to you');
     }
 
@@ -114,7 +114,7 @@ export class CheckInService {
         include: {
           assignment: {
             include: {
-              volunteer: true,
+              eventVolunteer: { include: { user: true } },
               post: true,
               session: true,
             },
@@ -132,7 +132,7 @@ export class CheckInService {
       include: {
         assignment: {
           include: {
-            volunteer: true,
+            eventVolunteer: { include: { user: true } },
             post: true,
             session: true,
           },
@@ -164,7 +164,7 @@ export class CheckInService {
       throw new NotFoundError('Assignment');
     }
 
-    if (assignment.volunteerId !== volunteerId) {
+    if (assignment.eventVolunteerId !== volunteerId) {
       throw new AuthorizationError('This assignment does not belong to you');
     }
 
@@ -189,7 +189,7 @@ export class CheckInService {
       include: {
         assignment: {
           include: {
-            volunteer: true,
+            eventVolunteer: { include: { user: true } },
             post: true,
             session: true,
           },
@@ -241,7 +241,7 @@ export class CheckInService {
         include: {
           assignment: {
             include: {
-              volunteer: true,
+              eventVolunteer: { include: { user: true } },
               post: true,
               session: true,
             },
@@ -262,7 +262,7 @@ export class CheckInService {
       include: {
         assignment: {
           include: {
-            volunteer: true,
+            eventVolunteer: { include: { user: true } },
             post: true,
             session: true,
           },
@@ -317,7 +317,7 @@ export class CheckInService {
         include: {
           assignment: {
             include: {
-              volunteer: true,
+              eventVolunteer: { include: { user: true } },
               post: true,
               session: true,
             },
@@ -338,7 +338,7 @@ export class CheckInService {
       include: {
         assignment: {
           include: {
-            volunteer: true,
+            eventVolunteer: { include: { user: true } },
             post: true,
             session: true,
           },
@@ -357,7 +357,7 @@ export class CheckInService {
       include: {
         assignment: {
           include: {
-            volunteer: true,
+            eventVolunteer: { include: { user: true } },
             post: { include: { department: true } },
             session: true,
           },
@@ -378,7 +378,7 @@ export class CheckInService {
       include: {
         assignment: {
           include: {
-            volunteer: true,
+            eventVolunteer: { include: { user: true } },
             post: { include: { department: true } },
           },
         },

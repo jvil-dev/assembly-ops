@@ -81,7 +81,7 @@ struct ReportLostPersonView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("common.save".localized) {
                         Task {
-                            guard let eventId = appState.currentVolunteer?.eventId else { return }
+                            guard let eventId = appState.currentEventId else { return }
                             let ageValue: Int? = Int(ageText)
                             let loc = resolvedLocation
                             let time: String? = includeLastSeenTime ? ISO8601DateFormatter().string(from: lastSeenTime) : nil

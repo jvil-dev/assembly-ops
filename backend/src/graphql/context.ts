@@ -1,34 +1,23 @@
 /**
  * GraphQL Context
  *
- * The context is an object that's available to every resolver. It's created
- * fresh for each request and contains:
- *   - prisma: Database client for queries
- *   - req/res: Express request/response objects
- *   - admin: If an admin is logged in, their id and email
- *   - volunteer: If a volunteer is logged in, their id, eventId, departmentId
+ * Created fresh for each request. Identifies the caller via JWT and
+ * attaches user or eventVolunteer info for guards and resolvers to use.
  *
- * How it works:
- *   1. Every request hits createContext() before reaching resolvers
- *   2. We extract the JWT from the Authorization header
- *   3. We verify and decode the token to identify the user
- *   4. We attach admin or volunteer info to the context
- *   5. Resolvers can then check context.admin or context.volunteer
- *
- * Used by:
- *   - ./guards/auth.ts: Checks context.admin/volunteer for authorization
- *   - ./resolvers/*: Access prisma and auth info via context
- *
- * Called by: Apollo Server (./index.ts) on every request
+ * Token types:
+ *   'user'           → logged-in User (volunteer or overseer) → context.user
+ *   'eventVolunteer' → printed-card event-day session         → context.volunteer
  */
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import prisma from '../config/database.js';
 import { extractTokenFromHeader, verifyAccessToken } from '../utils/jwt.js';
 
-export interface AdminContext {
+export interface UserContext {
   id: string;
+  userId: string; // 6-char permanent ID
   email: string;
+  isOverseer: boolean;
 }
 
 export interface VolunteerContext {
@@ -41,8 +30,10 @@ export interface Context {
   prisma: PrismaClient;
   req: Request;
   res: Response;
-  admin?: AdminContext;
-  volunteer?: VolunteerContext;
+  user?: UserContext;         // Logged-in User (volunteer or overseer)
+  volunteer?: VolunteerContext; // EventVolunteer printed-card session
+  // Legacy aliases kept so existing guards/resolvers compile during migration
+  admin?: UserContext;
 }
 
 export async function createContext({
@@ -52,53 +43,40 @@ export async function createContext({
   req: Request;
   res: Response;
 }): Promise<Context> {
-  const context: Context = {
-    prisma,
-    req,
-    res,
-  };
+  const context: Context = { prisma, req, res };
 
   const token = extractTokenFromHeader(req.headers.authorization);
+  if (!token) return context;
 
-  if (token) {
-    try {
-      const payload = verifyAccessToken(token);
+  try {
+    const payload = verifyAccessToken(token);
 
-      if (payload.type === 'admin') {
-        context.admin = {
-          id: payload.sub,
-          email: payload.email || '',
-        };
-      } else if (payload.type === 'volunteer') {
-        const volunteer = await prisma.volunteer.findUnique({
-          where: { id: payload.sub },
-          select: { id: true, eventId: true, departmentId: true },
-        });
+    if (payload.type === 'user') {
+      const user = await prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: { id: true, userId: true, email: true, isOverseer: true },
+      });
 
-        if (volunteer) {
-          context.volunteer = {
-            id: volunteer.id,
-            eventId: volunteer.eventId,
-            departmentId: volunteer.departmentId || undefined,
-          };
-        }
-      } else if (payload.type === 'eventVolunteer') {
-        const eventVolunteer = await prisma.eventVolunteer.findUnique({
-          where: { id: payload.sub },
-          select: { id: true, eventId: true, departmentId: true },
-        });
-
-        if (eventVolunteer) {
-          context.volunteer = {
-            id: eventVolunteer.id,
-            eventId: eventVolunteer.eventId,
-            departmentId: eventVolunteer.departmentId || undefined,
-          };
-        }
+      if (user) {
+        context.user = user;
+        context.admin = user; // backward-compat alias
       }
-    } catch {
-      // Invalid token - continue without auth context
+    } else if (payload.type === 'eventVolunteer') {
+      const ev = await prisma.eventVolunteer.findUnique({
+        where: { id: payload.sub },
+        select: { id: true, eventId: true, departmentId: true },
+      });
+
+      if (ev) {
+        context.volunteer = {
+          id: ev.id,
+          eventId: ev.eventId,
+          departmentId: ev.departmentId || undefined,
+        };
+      }
     }
+  } catch {
+    // Invalid token — continue without auth context
   }
 
   return context;

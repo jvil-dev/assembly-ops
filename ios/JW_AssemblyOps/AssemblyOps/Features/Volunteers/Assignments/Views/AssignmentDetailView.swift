@@ -127,8 +127,8 @@ struct AssignmentDetailView: View {
                     await attendantVM.loadPostSessionStatuses(sessionId: assignment.sessionId)
                 }
             }
-            if isAttendantCaptain, let eventId = appState.currentVolunteer?.eventId {
-                async let concerns: () = attendantVM.loadConcerns(eventId: eventId)
+            if isAttendantCaptain {
+                async let concerns: () = attendantVM.loadConcerns(eventId: assignment.eventId)
                 async let areaGroupLoad: () = loadAreaGroup()
                 _ = await (concerns, areaGroupLoad)
             }

@@ -1,0 +1,11 @@
+query MyJoinRequests {
+  myJoinRequests {
+    id
+    eventId
+    departmentType
+    status
+    note
+    createdAt
+    resolvedAt
+  }
+}

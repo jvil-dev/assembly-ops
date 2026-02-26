@@ -3,7 +3,7 @@ query EventAdmins($eventId: ID!) {
     id
     role
     claimedAt
-    admin {
+    user {
       id
       firstName
       lastName

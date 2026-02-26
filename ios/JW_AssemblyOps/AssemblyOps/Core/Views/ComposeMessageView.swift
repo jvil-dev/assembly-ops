@@ -210,7 +210,7 @@ struct ComposeMessageView: View {
         let bodyText = messageBody.trimmingCharacters(in: .whitespacesAndNewlines)
 
         do {
-            let recipientType: AssemblyOpsAPI.MessageSenderType = recipient.isAdmin ? .admin : .volunteer
+            let recipientType: AssemblyOpsAPI.MessageSenderType = recipient.isAdmin ? .user : .volunteer
             let conversation = try await MessagesService.shared.startConversation(
                 eventId: eventId,
                 recipientType: recipientType,

@@ -1,59 +1,48 @@
 /**
  * Auth Resolvers
  *
- * Handles admin authentication: register, login, logout, token refresh.
+ * Handles unified user authentication: register, login, logout, token refresh.
+ * All users (overseers and volunteers) share the same auth flow.
  *
  * Queries:
- *   - me: Returns the currently logged-in admin, or null if not authenticated
+ *   - me: Returns the currently logged-in user, or null if not authenticated
  *
  * Mutations:
- *   - registerAdmin: Creates a new admin account, returns tokens
- *   - loginAdmin: Authenticates with email/password, returns tokens
+ *   - registerUser: Creates a new user account, returns tokens
+ *   - loginUser: Authenticates with email/password, returns tokens
+ *   - loginEventVolunteer: Legacy printed-card login (volunteerId + token)
  *   - refreshToken: Exchanges refresh token for new access token
- *   - logoutAdmin: Invalidates a specific refresh token
- *   - logoutAllSessions: Invalidates ALL refresh tokens for this admin
+ *   - logoutUser: Invalidates a specific refresh token
+ *   - logoutAllSessions: Invalidates ALL refresh tokens for this user
+ *   - updateUserProfile: Update profile fields
+ *   - setOverseerMode: Toggle isOverseer flag
  *
- * Type Resolvers (Admin):
+ * Type Resolvers (User):
  *   - fullName: Computed field (firstName + lastName)
- *   - eventRoles: Fetches all EventAdmin records for this admin
- *
- * Dependencies:
- *   - AuthService (../../services/authService.ts): Business logic for auth
- *   - Guards (../guards/auth.ts): Authorization checks
+ *   - eventRoles: Fetches all EventAdmin records for this user
  *
  * Schema: ../schema/auth.ts
  */
 import { Context } from '../context.js';
 import { AuthService } from '../../services/authService.js';
 import { AuthenticationError } from '../../utils/errors.js';
-import { requireAdmin } from '../guards/auth.js';
-import { Admin, EventAdmin } from '@prisma/client';
-
-export interface RegisterInput {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-}
-
-export interface LoginInput {
-  email: string;
-  password: string;
-}
-
-export interface RefreshInput {
-  refreshToken: string;
-}
+import { requireUser } from '../guards/auth.js';
+import { User, EventAdmin } from '@prisma/client';
+import {
+  RegisterUserInput,
+  LoginUserInput,
+} from '../validators/auth.js';
 
 export interface LoginEventVolunteerInput {
   volunteerId: string;
   token: string;
 }
 
-export interface UpdateAdminProfileInput {
+export interface UpdateUserProfileInput {
   firstName?: string | null;
   lastName?: string | null;
   phone?: string | null;
+  congregation?: string | null;
   congregationId?: string | null;
 }
 
@@ -63,44 +52,44 @@ const authResolvers = {
       _parent: unknown,
       _args: unknown,
       context: Context
-    ): Promise<Admin | null> => {
-      if (!context.admin) {
+    ): Promise<User | null> => {
+      if (!context.user) {
         return null;
       }
 
-      return context.prisma.admin.findUnique({
-        where: { id: context.admin.id },
+      return context.prisma.user.findUnique({
+        where: { id: context.user.id },
       });
     },
   },
 
   Mutation: {
-    registerAdmin: async (
+    registerUser: async (
       _parent: unknown,
-      { input }: { input: RegisterInput },
+      { input }: { input: RegisterUserInput },
       context: Context
     ) => {
       const authService = new AuthService(context.prisma);
-      const result = await authService.registerAdmin(input);
+      const result = await authService.registerUser(input);
 
       return {
-        admin: result.admin,
+        user: result.user,
         accessToken: result.tokens.accessToken,
         refreshToken: result.tokens.refreshToken,
         expiresIn: result.tokens.expiresIn,
       };
     },
 
-    loginAdmin: async (
+    loginUser: async (
       _parent: unknown,
-      { input }: { input: LoginInput },
+      { input }: { input: LoginUserInput },
       context: Context
     ) => {
       const authService = new AuthService(context.prisma);
-      const result = await authService.loginAdmin(input);
+      const result = await authService.loginUser(input);
 
       return {
-        admin: result.admin,
+        user: result.user,
         accessToken: result.tokens.accessToken,
         refreshToken: result.tokens.refreshToken,
         expiresIn: result.tokens.expiresIn,
@@ -125,7 +114,7 @@ const authResolvers = {
 
     refreshToken: async (
       _parent: unknown,
-      { input }: { input: RefreshInput },
+      { input }: { input: { refreshToken: string } },
       context: Context
     ) => {
       const authService = new AuthService(context.prisma);
@@ -142,12 +131,12 @@ const authResolvers = {
       };
     },
 
-    logoutAdmin: async (
+    logoutUser: async (
       _parent: unknown,
       { refreshToken }: { refreshToken: string },
       context: Context
     ) => {
-      requireAdmin(context);
+      requireUser(context);
       const authService = new AuthService(context.prisma);
       await authService.logout(refreshToken);
 
@@ -159,44 +148,56 @@ const authResolvers = {
       _args: unknown,
       context: Context
     ) => {
-      requireAdmin(context);
+      requireUser(context);
 
-      const authService = new AuthService(context.prisma);
-      await authService.logoutAll(context.admin.id, 'admin');
+      await context.prisma.refreshToken.updateMany({
+        where: { userId: context.user!.id },
+        data: { revoked: true },
+      });
 
       return { success: true };
     },
 
-    updateAdminProfile: async (
+    updateUserProfile: async (
       _parent: unknown,
-      { input }: { input: UpdateAdminProfileInput },
+      { input }: { input: UpdateUserProfileInput },
       context: Context
     ) => {
-      requireAdmin(context);
+      requireUser(context);
       const authService = new AuthService(context.prisma);
-      return authService.updateProfile(context.admin.id, input);
+      return authService.updateProfile(context.user!.id, input);
+    },
+
+    setOverseerMode: async (
+      _parent: unknown,
+      { isOverseer }: { isOverseer: boolean },
+      context: Context
+    ) => {
+      requireUser(context);
+      const authService = new AuthService(context.prisma);
+      return authService.setOverseerMode(context.user!.id, isOverseer);
     },
   },
 
-  Admin: {
-    fullName: (admin: Admin): string => {
-      return `${admin.firstName} ${admin.lastName}`;
+  User: {
+    fullName: (user: User): string => {
+      return `${user.firstName} ${user.lastName}`;
     },
 
     eventRoles: async (
-      admin: Admin,
+      user: User,
       _args: unknown,
       context: Context
     ): Promise<EventAdmin[]> => {
       return context.prisma.eventAdmin.findMany({
-        where: { adminId: admin.id },
+        where: { userId: user.id },
       });
     },
 
-    congregationRef: async (admin: Admin, _args: unknown, context: Context) => {
-      if (!(admin as Admin & { congregationId?: string | null }).congregationId) return null;
+    congregationRef: async (user: User, _args: unknown, context: Context) => {
+      if (!(user as User & { congregationId?: string | null }).congregationId) return null;
       return context.prisma.congregation.findUnique({
-        where: { id: (admin as Admin & { congregationId: string }).congregationId },
+        where: { id: (user as User & { congregationId: string }).congregationId },
       });
     },
   },

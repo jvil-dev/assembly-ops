@@ -8,30 +8,19 @@
 // MARK: - Landing View
 //
 // Initial welcome screen shown to unauthenticated users.
-// Provides navigation to volunteer login and overseer login/registration.
-//
-// Features:
-//   - App logo and branding header
-//   - Volunteer login button (primary action)
-//   - Overseer login and registration buttons
-//   - Adaptive colors for light/dark mode
-//   - Animated appearance on load
+// Single auth entry point — no role selection.
 //
 // Navigation:
-//   - VolunteerLoginView: For volunteers with ID and token
-//   - OverseerLoginView: For overseers with email/password or OAuth
-//   - OverseerRegistrationView: For new overseer account creation
+//   - UnifiedLoginView: For all sign-ins
+//   - RegistrationView: For new account creation
 
 import SwiftUI
 
 struct LandingView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
-    @State private var showVolunteerLogin = false
-    @State private var showOverseerLogin = false
-    @State private var showOverseerRegistration = false
-
-    // MARK: - Body
+    @State private var showLogin = false
+    @State private var showRegistration = false
 
     var body: some View {
         NavigationStack {
@@ -40,77 +29,106 @@ struct LandingView: View {
                     AppTheme.backgroundGradient(for: colorScheme)
                         .ignoresSafeArea()
 
+                    // Upper-right ambient glow
+                    Circle()
+                        .fill(AppTheme.themeColor.opacity(colorScheme == .dark ? 0.2 : 0.07))
+                        .frame(width: 300, height: 300)
+                        .blur(radius: 90)
+                        .offset(x: geometry.size.width * 0.35, y: -geometry.size.height * 0.2)
+                        .ignoresSafeArea()
+
+                    // Lower-left secondary glow
+                    Circle()
+                        .fill(AppTheme.themeColor.opacity(colorScheme == .dark ? 0.1 : 0.04))
+                        .frame(width: 200, height: 200)
+                        .blur(radius: 70)
+                        .offset(x: -geometry.size.width * 0.3, y: geometry.size.height * 0.25)
+                        .ignoresSafeArea()
+
                     VStack(spacing: 0) {
                         Spacer()
 
-                        // Header
-                        headerSection
+                        // Hero
+                        heroSection
                             .opacity(hasAppeared ? 1 : 0)
-                            .offset(y: hasAppeared ? 0 : 20)
+                            .offset(y: hasAppeared ? 0 : 24)
+                            .animation(.easeOut(duration: 0.55).delay(0.05), value: hasAppeared)
 
                         Spacer()
 
-                        // Login Options
-                        loginOptions
-                            .padding(.horizontal, AppTheme.Spacing.xxl)
+                        // Buttons
+                        actionSection
+                            .padding(.horizontal, AppTheme.Spacing.xl)
                             .opacity(hasAppeared ? 1 : 0)
-                            .offset(y: hasAppeared ? 0 : 30)
+                            .offset(y: hasAppeared ? 0 : 32)
+                            .animation(.easeOut(duration: 0.55).delay(0.18), value: hasAppeared)
 
-                        Spacer()
-                        Spacer()
+                        Spacer(minLength: geometry.size.height * 0.08)
                     }
                 }
             }
             .navigationBarHidden(true)
             .onAppear {
-                withAnimation(AppTheme.entranceAnimation) {
-                    hasAppeared = true
-                }
+                withAnimation { hasAppeared = true }
             }
-            .navigationDestination(isPresented: $showVolunteerLogin) {
-                VolunteerLoginView()
+            .navigationDestination(isPresented: $showLogin) {
+                UnifiedLoginView()
             }
-            .navigationDestination(isPresented: $showOverseerLogin) {
-                OverseerLoginView()
+            .navigationDestination(isPresented: $showRegistration) {
+                RegistrationView()
             }
         }
     }
 
-    // MARK: - Header
+    // MARK: - Hero
 
-    private var headerSection: some View {
+    private var heroSection: some View {
         VStack(spacing: AppTheme.Spacing.xl) {
-            Image("Logo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 140, height: 140)
-                .shadow(color: AppTheme.themeColor.opacity(0.2), radius: 16, x: 0, y: 6)
+            // Logo with ring glow
+            ZStack {
+                Circle()
+                    .fill(AppTheme.themeColor.opacity(colorScheme == .dark ? 0.22 : 0.09))
+                    .frame(width: 168, height: 168)
 
-            VStack(spacing: AppTheme.Spacing.s) {
+                Image("Logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 120, height: 120)
+                    .shadow(color: AppTheme.themeColor.opacity(0.25), radius: 20, x: 0, y: 6)
+            }
+            .scaleEffect(hasAppeared ? 1.0 : 1.02)
+            .animation(
+                .easeInOut(duration: 2.2).repeatForever(autoreverses: true),
+                value: hasAppeared
+            )
+
+            VStack(spacing: AppTheme.Spacing.m) {
                 Text("AssemblyOps")
-                    .font(.system(size: 34, weight: .bold, design: .default))
+                    .font(.system(size: 36, weight: .bold))
                     .foregroundStyle(AppTheme.themeColor)
-                    .tracking(0.5)
+                    .tracking(0.3)
 
-                Text("Volunteer scheduling made simple")
-                    .font(AppTheme.Typography.subheadline)
+                Text("Volunteer scheduling\nmade simple.")
+                    .font(.system(size: 17, weight: .regular))
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
             }
         }
     }
 
-    // MARK: - Login Options
+    // MARK: - Buttons
 
-    private var loginOptions: some View {
+    private var actionSection: some View {
         VStack(spacing: AppTheme.Spacing.l) {
-            // Volunteer Button
+            // Primary — Sign In
             Button {
-                showVolunteerLogin = true
+                showLogin = true
             } label: {
                 HStack(spacing: AppTheme.Spacing.m) {
                     Image(systemName: "person.fill")
-                        .font(.system(size: 18, weight: .medium))
-                    Text("Sign in as Volunteer")
+                        .font(.system(size: 16, weight: .medium))
+                    Text(NSLocalizedString("auth.signin", comment: ""))
                         .font(AppTheme.Typography.bodyMedium)
                 }
                 .frame(maxWidth: .infinity)
@@ -119,17 +137,18 @@ struct LandingView: View {
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
                     .fill(AppTheme.themeColor)
+                    .shadow(color: AppTheme.themeColor.opacity(0.35), radius: 12, x: 0, y: 4)
             )
             .foregroundStyle(.white)
 
-            // Overseer Button
+            // Secondary — Create Account
             Button {
-                showOverseerLogin = true
+                showRegistration = true
             } label: {
                 HStack(spacing: AppTheme.Spacing.m) {
-                    Image(systemName: "shield.fill")
-                        .font(.system(size: 18, weight: .medium))
-                    Text("Sign in as Overseer")
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 16, weight: .medium))
+                    Text(NSLocalizedString("auth.createAccount", comment: ""))
                         .font(AppTheme.Typography.bodyMedium)
                 }
                 .frame(maxWidth: .infinity)
@@ -137,22 +156,16 @@ struct LandingView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
-                    .stroke(AppTheme.themeColor, lineWidth: 2)
+                    .stroke(AppTheme.themeColor, lineWidth: 1.5)
             )
             .foregroundStyle(AppTheme.themeColor)
 
-            // Registration link for new overseers
-            Button {
-                showOverseerRegistration = true
-            } label: {
-                Text("New overseer? Register here")
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.themeColor)
-            }
-            .padding(.top, AppTheme.Spacing.s)
-        }
-        .navigationDestination(isPresented: $showOverseerRegistration) {
-            OverseerRegistrationView()
+            // Wordmark anchor
+            Text("ASSEMBLYOPS")
+                .font(.system(size: 10, weight: .medium))
+                .tracking(3)
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme).opacity(0.6))
+                .padding(.top, AppTheme.Spacing.xs)
         }
     }
 }

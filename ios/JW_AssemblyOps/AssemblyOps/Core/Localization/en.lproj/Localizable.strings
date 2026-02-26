@@ -103,6 +103,7 @@
 "tab.schedule" = "Schedule";
 "tab.messages" = "Messages";
 "tab.profile" = "Profile";
+"tab.findEvent" = "Find Event";
 "tab.dashboard" = "Dashboard";
 "tab.volunteers" = "Volunteers";
 "tab.assignments" = "Assignments";
@@ -677,3 +678,46 @@
 "language.select" = "Select Language";
 "language.english" = "English";
 "language.spanish" = "Español";
+
+// MARK: - Sprint 6.11 — Unified Auth & Volunteer Discovery
+"auth.signin" = "Sign In";
+"auth.createAccount" = "Create Account";
+"auth.useCredentials" = "Use printed event credentials";
+"auth.isOverseer.toggle" = "I'm serving as a Department Overseer";
+"auth.isOverseer.explainer" = "You'll have access to event management tools";
+"auth.duplicate.email" = "An account with this email already exists.";
+"auth.duplicate.trySignIn" = "Try signing in instead.";
+
+"volunteer.eventDiscovery.requestToJoin" = "Request to Join";
+"volunteer.eventDiscovery.inviteOnly" = "Invite Only";
+"volunteer.eventDiscovery.requestSent" = "Request sent!";
+"volunteer.eventDiscovery.pendingStatus.title" = "Request Pending";
+"volunteer.eventDiscovery.pendingStatus.subtitle" = "Waiting for overseer approval. You'll be notified once added.";
+"volunteer.joinRequest.pending" = "Join Requests";
+
+"overseer.joinRequests.approve" = "Approve";
+"overseer.joinRequests.deny" = "Deny";
+
+"event.regional.inviteOnly" = "Regional conventions are invite-only";
+
+"profile.overseerMode" = "Overseer Mode";
+
+// MARK: - Sprint 6.11 Part A — Events Hub
+"eventsHub.title" = "My Events";
+"eventsHub.section.active" = "Active";
+"eventsHub.section.upcoming" = "Upcoming";
+"eventsHub.section.past" = "Past";
+"eventsHub.empty.title" = "No Events Yet";
+"eventsHub.empty.subtitle" = "Tap + to discover and join an upcoming assembly.";
+"eventsHub.browse" = "Browse Events";
+"eventsHub.role.eventOverseer" = "Event Overseer";
+"eventsHub.role.deptOverseer" = "%@ Overseer";
+"eventsHub.role.volunteer" = "Volunteer";
+"eventsHub.status.active" = "Active Now";
+"eventsHub.loading" = "Loading event...";
+
+// Settings
+"settings.title" = "Settings";
+"settings.editProfile" = "Edit Profile";
+"settings.appearance" = "Appearance";
+"settings.logout.confirm" = "Are you sure you want to log out?";

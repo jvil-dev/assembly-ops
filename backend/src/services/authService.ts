@@ -1,49 +1,67 @@
 /**
  * Auth Service
  *
- * Business logic for admin authentication. Handles registration, login, logout,
- * and token refresh operations.
+ * Unified authentication for all users (volunteers and overseers).
+ * Replaces the old split Admin/Volunteer auth system.
  *
  * Methods:
- *   - registerAdmin(input): Create new admin account, returns admin + tokens
- *   - loginAdmin(input): Authenticate with email/password, returns admin + tokens
+ *   - registerUser(input): Create new account, returns user + tokens
+ *   - loginUser(input): Authenticate with email/password, returns user + tokens
+ *   - loginWithGoogle(idToken): OAuth login/registration via Google
+ *   - loginWithApple(identityToken, firstName?, lastName?): OAuth login via Apple
+ *   - completeOAuthRegistration(input): Complete OAuth new-user registration
+ *   - loginEventVolunteer(volunteerId, token): Event-day printed-card login (legacy path)
  *   - refreshToken(token): Exchange refresh token for new access token
  *   - logout(token): Invalidate a specific refresh token
- *   - logoutAll(userId, userType): Invalidate ALL refresh tokens for a user
+ *   - updateProfile(userId, input): Patch user profile fields
+ *   - setOverseerMode(userId, isOverseer): Toggle overseer flag
  *
- * Flow:
- *   1. Resolver receives GraphQL request
- *   2. Resolver calls AuthService method
- *   3. AuthService validates input with Zod schemas
- *   4. AuthService performs database operations
- *   5. AuthService calls TokenService for token management
- *   6. Result returned to resolver → client
- *
- * Security:
- *   - Passwords hashed with bcrypt before storage
- *   - Refresh tokens stored in database for validation/revocation
- *   - Generic error messages for auth failures (prevent user enumeration)
- *
- * Dependencies:
- *   - TokenService: Manages refresh token storage/validation
- *   - utils/password.ts: Password hashing and verification
- *   - utils/jwt.ts: Token generation
- *   - validators/auth.ts: Input validation schemas
+ * JWT Payload:
+ *   { sub: user.id, type: 'user', email, isOverseer }
+ *   { sub: eventVolunteer.id, type: 'eventVolunteer' }  ← for printed-card sessions
  *
  * Called by: ../graphql/resolvers/auth.ts
  */
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, AuthProvider } from '@prisma/client';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { generateTokens, TokenPair } from '../utils/jwt.js';
 import { TokenService } from './tokenService.js';
 import { AuthenticationError, ConflictError, ValidationError } from '../utils/errors.js';
-import {
-  registerAdminSchema,
-  loginAdminSchema,
-  RegisterAdminInput,
-  LoginAdminInput,
-} from '../graphql/validators/auth.js';
+import { generateUserId } from '../utils/credentials.js';
 import { verifyToken } from '../utils/credentials.js';
+import { verifyGoogleToken, verifyAppleToken } from '../utils/oauthVerifiers.js';
+import { generatePendingOAuthToken, verifyPendingOAuthToken } from '../utils/pendingOAuth.js';
+import { encryptField } from '../utils/encryption.js';
+import {
+  registerUserSchema,
+  loginUserSchema,
+  RegisterUserInput,
+  LoginUserInput,
+} from '../graphql/validators/auth.js';
+
+// Shape returned for all user auth operations
+export interface UserAuthResult {
+  user: {
+    id: string;
+    userId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone: string | null;
+    congregation: string | null;
+    congregationId: string | null;
+    appointmentStatus: string | null;
+    isOverseer: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  tokens: TokenPair;
+  isNewUser?: boolean;
+  pendingOAuthToken?: string;
+  email?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+}
 
 export class AuthService {
   private tokenService: TokenService;
@@ -52,235 +70,199 @@ export class AuthService {
     this.tokenService = new TokenService(prisma);
   }
 
-  async registerAdmin(input: RegisterAdminInput): Promise<{
-    admin: { id: string; email: string; firstName: string; lastName: string };
-    tokens: TokenPair;
-  }> {
-    // Validate input
-    const result = registerAdminSchema.safeParse(input);
+  // ─────────────────────────────────────────────
+  // EMAIL / PASSWORD AUTH
+  // ─────────────────────────────────────────────
+
+  async registerUser(input: RegisterUserInput): Promise<UserAuthResult> {
+    const result = registerUserSchema.safeParse(input);
     if (!result.success) {
-      const firstError = result.error.issues[0];
-      throw new ValidationError(firstError.message);
+      throw new ValidationError(result.error.issues[0].message);
     }
     const validated = result.data;
 
-    // Check if email already exists
-    const existingAdmin = await this.prisma.admin.findUnique({
-      where: { email: validated.email },
-    });
-
-    if (existingAdmin) {
+    // Duplicate email guard
+    const existing = await this.prisma.user.findUnique({ where: { email: validated.email } });
+    if (existing) {
       throw new ConflictError('An account with this email already exists');
     }
 
-    // Hash password
+    // Ensure userId is globally unique (collision is astronomically unlikely but guard anyway)
+    let userId: string;
+    let attempts = 0;
+    do {
+      userId = generateUserId();
+      attempts++;
+      if (attempts > 10) throw new Error('Failed to generate unique user ID');
+    } while (await this.prisma.user.findUnique({ where: { userId } }));
+
     const passwordHash = await hashPassword(validated.password);
 
-    // Create admin
-    const admin = await this.prisma.admin.create({
+    const user = await this.prisma.user.create({
       data: {
+        userId,
         email: validated.email,
         passwordHash,
         firstName: validated.firstName,
         lastName: validated.lastName,
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
+        phone: validated.phone ?? null,
+        congregation: validated.congregation ?? null,
+        appointmentStatus: validated.appointmentStatus ?? null,
+        isOverseer: validated.isOverseer ?? false,
       },
     });
 
-    // Generate tokens
-    const tokens = generateTokens({
-      sub: admin.id,
-      type: 'admin',
-      email: admin.email,
-    });
-
-    // Store refresh token
-    await this.tokenService.createRefreshToken(tokens.refreshToken, admin.id, 'admin');
-
-    return { admin, tokens };
+    const tokens = await this.issueTokens(user);
+    return { user, tokens };
   }
 
-  async loginAdmin(input: LoginAdminInput): Promise<{
-    admin: { id: string; email: string; firstName: string; lastName: string };
-    tokens: TokenPair;
-  }> {
-    // Validate input
-    const result = loginAdminSchema.safeParse(input);
+  async loginUser(input: LoginUserInput): Promise<UserAuthResult> {
+    const result = loginUserSchema.safeParse(input);
     if (!result.success) {
-      const firstError = result.error.issues[0];
-      throw new ValidationError(firstError.message);
+      throw new ValidationError(result.error.issues[0].message);
     }
     const validated = result.data;
 
-    // Find admin
-    const admin = await this.prisma.admin.findUnique({
-      where: { email: validated.email },
-    });
+    const user = await this.prisma.user.findUnique({ where: { email: validated.email } });
 
-    if (!admin) {
+    if (!user || !user.passwordHash) {
       throw new AuthenticationError('Invalid email or password');
     }
 
-    // Verify password (passwordHash can be null for OAuth-only accounts)
-    if (!admin.passwordHash) {
-      throw new AuthenticationError('Invalid email or password');
-    }
-    const isValid = await verifyPassword(validated.password, admin.passwordHash);
+    const isValid = await verifyPassword(validated.password, user.passwordHash);
     if (!isValid) {
       throw new AuthenticationError('Invalid email or password');
     }
 
-    // Delete any existing tokens for this admin (prevents collision on quick re-login)
-    await this.tokenService.deleteAllUserTokens(admin.id, 'admin');
+    const tokens = await this.issueTokens(user);
+    return { user, tokens };
+  }
 
-    // Generate tokens
-    const tokens = generateTokens({
-      sub: admin.id,
-      type: 'admin',
-      email: admin.email,
+  // ─────────────────────────────────────────────
+  // OAUTH AUTH (Google + Apple)
+  // ─────────────────────────────────────────────
+
+  async loginWithGoogle(idToken: string): Promise<UserAuthResult> {
+    const userInfo = await verifyGoogleToken(idToken);
+    return this.handleOAuthLogin(AuthProvider.GOOGLE, userInfo);
+  }
+
+  async loginWithApple(
+    identityToken: string,
+    firstName?: string,
+    lastName?: string
+  ): Promise<UserAuthResult> {
+    const userInfo = await verifyAppleToken(identityToken);
+    if (firstName) userInfo.firstName = firstName;
+    if (lastName) userInfo.lastName = lastName;
+    return this.handleOAuthLogin(AuthProvider.APPLE, userInfo);
+  }
+
+  private async handleOAuthLogin(
+    provider: AuthProvider,
+    userInfo: { providerId: string; email: string; firstName?: string; lastName?: string }
+  ): Promise<UserAuthResult> {
+    // Check for existing OAuth connection
+    const connection = await this.prisma.oAuthConnection.findUnique({
+      where: { provider_providerId: { provider, providerId: userInfo.providerId } },
+      include: { user: true },
     });
 
-    // Store refresh token
-    await this.tokenService.createRefreshToken(tokens.refreshToken, admin.id, 'admin');
+    if (connection) {
+      const tokens = await this.issueTokens(connection.user);
+      return { user: connection.user, tokens, isNewUser: false, email: userInfo.email };
+    }
 
+    // Check if email matches an existing account → auto-link
+    const existingUser = await this.prisma.user.findUnique({ where: { email: userInfo.email } });
+
+    if (existingUser) {
+      await this.prisma.oAuthConnection.create({
+        data: {
+          provider,
+          providerId: userInfo.providerId,
+          encryptedEmail: encryptField(userInfo.email),
+          userId: existingUser.id,
+        },
+      });
+      const tokens = await this.issueTokens(existingUser);
+      return { user: existingUser, tokens, isNewUser: false, email: userInfo.email };
+    }
+
+    // New user — return pending token for profile completion
+    const pendingOAuthToken = generatePendingOAuthToken({
+      provider,
+      providerId: userInfo.providerId,
+      email: userInfo.email,
+    });
+
+    // Return a partial result — user is null until completeOAuthRegistration
     return {
-      admin: {
-        id: admin.id,
-        email: admin.email,
-        firstName: admin.firstName,
-        lastName: admin.lastName,
-      },
-      tokens,
+      user: null as any, // resolver checks isNewUser and won't access user
+      tokens: null as any,
+      isNewUser: true,
+      pendingOAuthToken,
+      email: userInfo.email,
+      firstName: userInfo.firstName,
+      lastName: userInfo.lastName,
     };
   }
 
-  async refreshToken(refreshToken: string): Promise<TokenPair | null> {
-    const validation = await this.tokenService.validateRefreshToken(refreshToken);
-    if (!validation) {
-      return null;
-    }
+  async completeOAuthRegistration(input: {
+    pendingOAuthToken: string;
+    firstName: string;
+    lastName: string;
+    isOverseer?: boolean;
+  }): Promise<UserAuthResult> {
+    const pending = verifyPendingOAuthToken(input.pendingOAuthToken);
+    if (!pending) throw new AuthenticationError('Invalid or expired registration token');
 
-    let email: string | undefined;
-    if (validation.userType === 'admin') {
-      const admin = await this.prisma.admin.findUnique({
-        where: { id: validation.userId },
-        select: { email: true },
+    // Ensure userId uniqueness
+    let userId: string;
+    let attempts = 0;
+    do {
+      userId = generateUserId();
+      attempts++;
+      if (attempts > 10) throw new Error('Failed to generate unique user ID');
+    } while (await this.prisma.user.findUnique({ where: { userId } }));
+
+    const user = await this.prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          userId,
+          email: pending.email,
+          passwordHash: null,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          isOverseer: input.isOverseer ?? false,
+        },
       });
-      email = admin?.email;
-    }
-
-    return this.tokenService.rotateRefreshToken(
-      refreshToken,
-      validation.userId,
-      validation.userType,
-      email
-    );
-  }
-
-  async logout(refreshToken: string): Promise<boolean> {
-    await this.tokenService.revokeRefreshToken(refreshToken);
-    return true;
-  }
-
-  async logoutAll(userId: string, userType: 'admin' | 'volunteer' | 'eventVolunteer'): Promise<boolean> {
-    await this.tokenService.revokeAllUserTokens(userId, userType);
-    return true;
-  }
-
-  /**
-   * Update an admin's profile (patch-style: only provided fields are updated)
-   */
-  async updateProfile(
-    adminId: string,
-    input: {
-      firstName?: string | null;
-      lastName?: string | null;
-      phone?: string | null;
-      congregationId?: string | null;
-    }
-  ) {
-    const data: Record<string, unknown> = {};
-
-    if (input.firstName !== undefined && input.firstName !== null) {
-      data.firstName = input.firstName;
-    }
-    if (input.lastName !== undefined && input.lastName !== null) {
-      data.lastName = input.lastName;
-    }
-    if (input.phone !== undefined) {
-      data.phone = input.phone;
-    }
-    if (input.congregationId !== undefined && input.congregationId !== null) {
-      // Look up congregation to also update the backward-compat string field
-      const congregation = await this.prisma.congregation.findUnique({
-        where: { id: input.congregationId },
-        select: { name: true, city: true },
+      await tx.oAuthConnection.create({
+        data: {
+          provider: pending.provider,
+          providerId: pending.providerId,
+          encryptedEmail: encryptField(pending.email),
+          userId: newUser.id,
+        },
       });
-      if (!congregation) {
-        throw new ValidationError('Congregation not found');
-      }
-      data.congregationId = input.congregationId;
-      data.congregation = `${congregation.name} - ${congregation.city}`;
-    }
-
-    return this.prisma.admin.update({
-      where: { id: adminId },
-      data,
+      return newUser;
     });
+
+    const tokens = await this.issueTokens(user);
+    return { user, tokens };
   }
 
-  /**
-   * Login an EventVolunteer using their volunteer ID (CA-XXXXXX or RC-XXXXXX) and token
-   */
-  async loginEventVolunteer(volunteerId: string, token: string): Promise<{
-    eventVolunteer: {
-      id: string;
-      volunteerId: string;
-      volunteerProfileId: string;
-      eventId: string;
-      departmentId: string | null;
-      roleId: string | null;
-      volunteerProfile: {
-        id: string;
-        firstName: string;
-        lastName: string;
-      };
-      event: {
-        id: string;
-        template: {
-          name: string;
-        };
-      };
-      department: { id: string; name: string } | null;
-    };
-    tokens: TokenPair;
-  }> {
-    // Find event volunteer by ID
+  // ─────────────────────────────────────────────
+  // EVENT VOLUNTEER (printed-card legacy login)
+  // ─────────────────────────────────────────────
+
+  async loginEventVolunteer(volunteerId: string, token: string) {
     const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
       where: { volunteerId },
       include: {
-        volunteerProfile: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        event: {
-          include: {
-            template: {
-              select: { name: true },
-            },
-          },
-        },
-        department: {
-          select: { id: true, name: true, departmentType: true },
-        },
+        user: { select: { id: true, firstName: true, lastName: true } },
+        event: { include: { template: { select: { name: true } } } },
+        department: { select: { id: true, name: true, departmentType: true } },
       },
     });
 
@@ -288,38 +270,100 @@ export class AuthService {
       throw new AuthenticationError('Invalid volunteer ID or token');
     }
 
-    // Verify token against hash
     const isValid = await verifyToken(token, eventVolunteer.tokenHash);
-
     if (!isValid) {
       throw new AuthenticationError('Invalid volunteer ID or token');
     }
 
-    // Delete any existing tokens for this event volunteer
     await this.tokenService.deleteAllUserTokens(eventVolunteer.id, 'eventVolunteer');
 
-    // Generate JWT tokens
-    const tokens = generateTokens({
-      sub: eventVolunteer.id,
-      type: 'eventVolunteer',
-    });
-
-    // Store refresh token
+    const tokens = generateTokens({ sub: eventVolunteer.id, type: 'eventVolunteer' });
     await this.tokenService.createRefreshToken(tokens.refreshToken, eventVolunteer.id, 'eventVolunteer');
 
-    return {
-      eventVolunteer: {
-        id: eventVolunteer.id,
-        volunteerId: eventVolunteer.volunteerId,
-        volunteerProfileId: eventVolunteer.volunteerProfileId,
-        eventId: eventVolunteer.eventId,
-        departmentId: eventVolunteer.departmentId,
-        roleId: eventVolunteer.roleId,
-        volunteerProfile: eventVolunteer.volunteerProfile,
-        event: eventVolunteer.event,
-        department: eventVolunteer.department,
-      },
-      tokens,
-    };
+    return { eventVolunteer, tokens };
+  }
+
+  // ─────────────────────────────────────────────
+  // TOKEN MANAGEMENT
+  // ─────────────────────────────────────────────
+
+  async refreshToken(refreshToken: string): Promise<TokenPair | null> {
+    const validation = await this.tokenService.validateRefreshToken(refreshToken);
+    if (!validation) return null;
+
+    if (validation.userType === 'user') {
+      const user = await this.prisma.user.findUnique({
+        where: { id: validation.userId },
+        select: { email: true, isOverseer: true },
+      });
+      return this.tokenService.rotateRefreshToken(
+        refreshToken,
+        validation.userId,
+        'user',
+        user?.email,
+        user?.isOverseer
+      );
+    }
+
+    return this.tokenService.rotateRefreshToken(refreshToken, validation.userId, 'eventVolunteer');
+  }
+
+  async logout(refreshToken: string): Promise<boolean> {
+    await this.tokenService.revokeRefreshToken(refreshToken);
+    return true;
+  }
+
+  // ─────────────────────────────────────────────
+  // PROFILE MANAGEMENT
+  // ─────────────────────────────────────────────
+
+  async updateProfile(
+    userId: string,
+    input: {
+      firstName?: string | null;
+      lastName?: string | null;
+      phone?: string | null;
+      congregationId?: string | null;
+      congregation?: string | null;
+    }
+  ) {
+    const data: Record<string, unknown> = {};
+
+    if (input.firstName != null) data.firstName = input.firstName;
+    if (input.lastName != null) data.lastName = input.lastName;
+    if (input.phone !== undefined) data.phone = input.phone;
+    if (input.congregationId != null) {
+      const cong = await this.prisma.congregation.findUnique({
+        where: { id: input.congregationId },
+        select: { name: true, city: true },
+      });
+      if (!cong) throw new ValidationError('Congregation not found');
+      data.congregationId = input.congregationId;
+      data.congregation = `${cong.name} - ${cong.city}`;
+    } else if (input.congregation !== undefined) {
+      data.congregation = input.congregation;
+    }
+
+    return this.prisma.user.update({ where: { id: userId }, data });
+  }
+
+  async setOverseerMode(userId: string, isOverseer: boolean) {
+    return this.prisma.user.update({ where: { id: userId }, data: { isOverseer } });
+  }
+
+  // ─────────────────────────────────────────────
+  // INTERNAL HELPERS
+  // ─────────────────────────────────────────────
+
+  private async issueTokens(user: { id: string; email: string; isOverseer: boolean }) {
+    await this.tokenService.deleteAllUserTokens(user.id, 'user');
+    const tokens = generateTokens({
+      sub: user.id,
+      type: 'user',
+      email: user.email,
+      isOverseer: user.isOverseer,
+    });
+    await this.tokenService.createRefreshToken(tokens.refreshToken, user.id, 'user');
+    return tokens;
   }
 }

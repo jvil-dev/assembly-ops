@@ -97,8 +97,8 @@ extension SafetyIncidentItem {
         self.location = data.location
         self.postId = data.post?.id
         self.postName = data.post?.name
-        let profile = data.reportedBy.volunteerProfile
-        self.reportedByName = "\(profile.firstName) \(profile.lastName)"
+        let user = data.reportedBy.user
+        self.reportedByName = "\(user.firstName) \(user.lastName)"
         self.resolved = data.resolved
         self.resolvedAt = data.resolvedAt.flatMap { DateUtils.parseISO8601($0) }
         if let resolver = data.resolvedBy {
@@ -156,8 +156,8 @@ extension LostPersonAlertItem {
         self.lastSeenTime = data.lastSeenTime.flatMap { DateUtils.parseISO8601($0) }
         self.contactName = data.contactName
         self.contactPhone = data.contactPhone
-        let profile = data.reportedBy.volunteerProfile
-        self.reportedByName = "\(profile.firstName) \(profile.lastName)"
+        let user = data.reportedBy.user
+        self.reportedByName = "\(user.firstName) \(user.lastName)"
         self.resolved = data.resolved
         self.resolvedAt = data.resolvedAt.flatMap { DateUtils.parseISO8601($0) }
         if let resolver = data.resolvedBy {
@@ -247,22 +247,22 @@ extension MeetingAttendeeItem {
     init?(from data: AssemblyOpsAPI.AttendantMeetingsQuery.Data.AttendantMeeting.Attendee) {
         self.id = data.id
         self.volunteerId = data.eventVolunteer.id
-        let profile = data.eventVolunteer.volunteerProfile
-        self.volunteerName = "\(profile.firstName) \(profile.lastName)"
+        let user = data.eventVolunteer.user
+        self.volunteerName = "\(user.firstName) \(user.lastName)"
     }
 
     init?(fromCreate data: AssemblyOpsAPI.CreateAttendantMeetingMutation.Data.CreateAttendantMeeting.Attendee) {
         self.id = data.id
         self.volunteerId = data.eventVolunteer.id
-        let profile = data.eventVolunteer.volunteerProfile
-        self.volunteerName = "\(profile.firstName) \(profile.lastName)"
+        let user = data.eventVolunteer.user
+        self.volunteerName = "\(user.firstName) \(user.lastName)"
     }
 
     init?(fromMyMeeting data: AssemblyOpsAPI.MyAttendantMeetingsQuery.Data.MyAttendantMeeting.Attendee) {
         self.id = data.id
         self.volunteerId = data.eventVolunteer.id
-        let profile = data.eventVolunteer.volunteerProfile
-        self.volunteerName = "\(profile.firstName) \(profile.lastName)"
+        let user = data.eventVolunteer.user
+        self.volunteerName = "\(user.firstName) \(user.lastName)"
     }
 }
 
@@ -296,8 +296,8 @@ extension WalkThroughCompletionItem {
         self.completedAt = DateUtils.parseISO8601(data.completedAt) ?? Date()
         self.itemCount = data.itemCount
         self.notes = data.notes
-        let profile = data.eventVolunteer.volunteerProfile
-        self.volunteerName = "\(profile.firstName) \(profile.lastName)"
+        let user = data.eventVolunteer.user
+        self.volunteerName = "\(user.firstName) \(user.lastName)"
     }
 }
 

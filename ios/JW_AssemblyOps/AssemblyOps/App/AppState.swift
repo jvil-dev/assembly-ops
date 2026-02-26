@@ -8,139 +8,81 @@
 // MARK: - App State
 //
 // Global singleton managing authentication state and current user session.
-// Observed by the root view to control navigation between auth and main flows.
+// All users land on EventsHomeView after login (no role branching at root).
 //
 // Properties:
 //   - isLoggedIn: Whether user has valid auth tokens
 //   - isLoading: True during initial auth check on app launch
-//   - currentVolunteer: Cached volunteer info after login
+//   - currentUser: Unified user info (both overseers and volunteers)
+//   - hasVolunteerEventMembership: Whether volunteer has active event context
+//   - currentEventId: Active event context for volunteer tab views
 //
 // Methods:
 //   - checkAuthState(): Verify stored tokens on app launch
 //   - refreshTokenIfNeeded(): Exchange expired access token for new one
-//   - didLogin(volunteer:accessToken:refreshToken:expiresIn:): Store tokens after successful login
+//   - didLogin(user:...): Store tokens after unified user login
+//   - didUpdateOverseerMode(isOverseer:): Update user's overseer flag
 //   - logout(): Clear all tokens and reset state
 //
-// Flow:
-//   1. App launches → checkAuthState() runs
-//   2. If tokens exist and valid → isLoggedIn = true
-//   3. If tokens expired → refreshTokenIfNeeded() attempts refresh
-//   4. On refresh failure → logout() clears state
+// Routing (AssemblyOpsApp.swift):
+//   isLoading   → LaunchView
+//   !isLoggedIn → LandingView
+//   isLoggedIn  → EventsHomeView (unified hub for all users)
 //
 // Dependencies:
 //   - KeychainManager: Secure token storage
-//   - NetworkClient: GraphQL API calls for token refresh
-//
-// Used by: JW_AssemblyOpsApp.swift (root view switching)
+//   - NetworkClient: GraphQL API calls
 
 import Foundation
 import SwiftUI
 import Combine
 import Apollo
 
-/// Global app state for authentication and navigation
 @MainActor
 final class AppState: ObservableObject {
     static let shared = AppState()
 
     @Published var isLoggedIn: Bool = false
     @Published var isLoading: Bool = true
-    @Published var currentVolunteer: VolunteerInfo?
-    @Published var currentOverseer: OverseerInfo?
-    @Published var userType: UserType = .unknown
-    @Published var needsProfileSetup: Bool = false
-    @Published var needsEventSetup: Bool = false
-    
-    enum UserType {
-        case unknown
-        case volunteer
-        case overseer
+    @Published var currentUser: UserInfo?
+    /// True when a volunteer has active event context (set by EventEntryView).
+    @Published var hasVolunteerEventMembership: Bool = false
+    /// The eventId for the volunteer's current event. Set by EventEntryView.
+    @Published var currentEventId: String?
+
+    var isOverseer: Bool {
+        currentUser?.isOverseer ?? false
     }
 
     private init() {
         checkAuthState()
     }
 
-    /// Check if user is already logged in on app launch
+    // MARK: - Auth State
+
     func checkAuthState() {
         isLoading = true
 
-        if KeychainManager.shared.isLoggedIn {
-            // Restore user type from keychain
-            if KeychainManager.shared.userType == "overseer" {
-                userType = .overseer
-            } else {
-                userType = .volunteer
-            }
-
-            if KeychainManager.shared.isTokenExpired {
-                // Token expired, try to refresh
-                refreshTokenIfNeeded()
-            } else {
-                // Fetch user profile to populate current user info
-                fetchUserProfile()
-            }
-        } else {
+        guard KeychainManager.shared.isLoggedIn else {
             isLoggedIn = false
             isLoading = false
+            return
         }
-    }
 
-    /// Fetch user profile after session restore
-    private func fetchUserProfile() {
-        if userType == .volunteer {
-            fetchVolunteerProfile()
-        } else if userType == .overseer {
-            fetchOverseerProfile()
+        if KeychainManager.shared.isTokenExpired {
+            refreshTokenIfNeeded()
         } else {
-            isLoggedIn = true
-            isLoading = false
+            fetchUserProfile()
         }
     }
 
-    /// Fetch volunteer profile from server
-    private func fetchVolunteerProfile() {
-        NetworkClient.shared.apollo.fetch(
-            query: AssemblyOpsAPI.MyVolunteerProfileQuery(),
-            cachePolicy: .fetchIgnoringCacheData
-        ) { [weak self] result in
-            Task { @MainActor in
-                switch result {
-                case .success(let graphQLResult):
-                    if let profile = graphQLResult.data?.myVolunteerProfile {
-                        self?.currentVolunteer = VolunteerInfo(
-                            id: profile.id,
-                            volunteerId: profile.volunteerId,
-                            firstName: profile.firstName,
-                            lastName: profile.lastName,
-                            fullName: profile.fullName,
-                            congregation: profile.congregation,
-                            appointmentStatus: profile.appointmentStatus?.rawValue,
-                            eventId: profile.event.id,
-                            eventName: profile.event.name,
-                            eventVenue: profile.event.venue,
-                            eventTheme: nil,
-                            departmentId: profile.department?.id,
-                            departmentName: profile.department?.name,
-                            departmentType: profile.department?.departmentType.rawValue
-                        )
-                        self?.isLoggedIn = true
-                    } else {
-                        // Profile fetch failed, but tokens are valid - proceed anyway
-                        self?.isLoggedIn = true
-                    }
-                case .failure(let error):
-                    print("Profile fetch failed: \(error)")
-                    // Network error but tokens exist - proceed with login
-                    self?.isLoggedIn = true
-                }
-                self?.isLoading = false
-            }
-        }
+    // MARK: - Profile Fetch
+
+    private func fetchUserProfile() {
+        fetchMeProfile()
     }
 
-    /// Fetch overseer profile from server
-    private func fetchOverseerProfile() {
+    private func fetchMeProfile() {
         NetworkClient.shared.apollo.fetch(
             query: AssemblyOpsAPI.MeQuery(),
             cachePolicy: .fetchIgnoringCacheData
@@ -149,45 +91,10 @@ final class AppState: ObservableObject {
                 switch result {
                 case .success(let graphQLResult):
                     if let me = graphQLResult.data?.me {
-                        self?.currentOverseer = OverseerInfo(
-                            id: me.id,
-                            email: me.email,
-                            fullName: me.fullName,
-                            firstName: me.firstName,
-                            lastName: me.lastName,
-                            phone: me.phone,
-                            congregationId: me.congregationId,
-                            circuitId: me.congregationRef?.circuit.id,
-                            overseerType: ""
-                        )
-                        self?.needsProfileSetup = me.congregationId == nil
+                        self?.currentUser = UserInfo(from: me)
                     }
-                    // After profile, check if overseer has events
-                    self?.checkOverseerEvents()
                 case .failure(let error):
-                    print("Overseer profile fetch failed: \(error)")
-                    // Network error but tokens exist - proceed
-                    self?.isLoggedIn = true
-                    self?.isLoading = false
-                }
-            }
-        }
-    }
-
-    /// Check if overseer has any events (after profile is loaded)
-    private func checkOverseerEvents() {
-        NetworkClient.shared.apollo.fetch(
-            query: AssemblyOpsAPI.MyEventsQuery(),
-            cachePolicy: .fetchIgnoringCacheData
-        ) { [weak self] result in
-            Task { @MainActor in
-                switch result {
-                case .success(let graphQLResult):
-                    let eventCount = graphQLResult.data?.myEvents.count ?? 0
-                    self?.needsEventSetup = eventCount == 0
-                case .failure:
-                    // Network error - don't block, assume they might have events
-                    self?.needsEventSetup = false
+                    print("Profile fetch failed: \(error)")
                 }
                 self?.isLoggedIn = true
                 self?.isLoading = false
@@ -195,7 +102,8 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Refresh access token using refresh token
+    // MARK: - Token Refresh
+
     func refreshTokenIfNeeded() {
         guard let refreshToken = KeychainManager.shared.refreshToken else {
             logout()
@@ -216,10 +124,7 @@ final class AppState: ObservableObject {
                             refreshToken: data.refreshToken,
                             expiresIn: data.expiresIn
                         )
-                        // Recreate Apollo client with new auth headers
                         NetworkClient.shared.resetClient()
-                        // Fetch profile after refresh (populates currentOverseer/currentVolunteer
-                        // and checks needsProfileSetup/needsEventSetup)
                         self?.fetchUserProfile()
                     } else {
                         self?.logout()
@@ -234,98 +139,87 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Log out and clear all stored data
+    // MARK: - Login
+
+    /// Called after successful unified user login (registerUser / loginUser / OAuth)
+    func didLogin(user: UserInfo, accessToken: String, refreshToken: String, expiresIn: Int) {
+        KeychainManager.shared.saveTokens(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            expiresIn: expiresIn
+        )
+        KeychainManager.shared.userId = user.id
+        currentUser = user
+        NetworkClient.shared.resetClient()
+        isLoggedIn = true
+    }
+
+    /// Called when overseer mode is toggled in profile settings
+    func didUpdateOverseerMode(isOverseer: Bool) {
+        guard let user = currentUser else { return }
+        currentUser = UserInfo(
+            id: user.id, userId: user.userId, email: user.email,
+            firstName: user.firstName, lastName: user.lastName, fullName: user.fullName,
+            phone: user.phone, congregation: user.congregation, congregationId: user.congregationId,
+            appointmentStatus: user.appointmentStatus, isOverseer: isOverseer
+        )
+    }
+
+    // MARK: - Logout
+
     func logout() {
         KeychainManager.shared.clearAll()
         AssignmentCache.shared.clear()
-        currentVolunteer = nil
-        currentOverseer = nil
-        userType = .unknown
-        needsProfileSetup = false
-        needsEventSetup = false
+        currentUser = nil
+        hasVolunteerEventMembership = false
+        currentEventId = nil
         isLoggedIn = false
         NetworkClient.shared.resetClient()
     }
-
-    /// Called after successful volunteer login
-    func didLoginAsVolunteer(volunteer: VolunteerInfo, accessToken: String, refreshToken: String, expiresIn: Int) {
-        KeychainManager.shared.saveTokens(
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-            expiresIn: expiresIn
-        )
-        KeychainManager.shared.volunteerId = volunteer.id
-        KeychainManager.shared.userType = "volunteer"
-        currentVolunteer = volunteer
-        userType = .volunteer
-        isLoggedIn = true
-        NetworkClient.shared.resetClient()
-    }
-    
-    /// Called after successful overseer login
-    func didLoginAsOverseer(overseer: OverseerInfo, accessToken: String, refreshToken: String, expiresIn: Int) {
-        KeychainManager.shared.saveTokens(
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-            expiresIn: expiresIn
-        )
-        KeychainManager.shared.overseerId = overseer.id
-        KeychainManager.shared.userType = "overseer"
-        userType = .overseer
-        NetworkClient.shared.resetClient()
-
-        // Fetch full profile from server (login responses may have partial data,
-        // e.g. OAuth logins don't return congregationId). This also chains into
-        // checkOverseerEvents() to determine needsEventSetup.
-        fetchOverseerProfile()
-    }
-    
-    var isOverseer: Bool {
-        userType == .overseer
-    }
 }
 
-/// Volunteer info stored in app state
-struct VolunteerInfo: Identifiable {
-    let id: String
-    let volunteerId: String
-    let firstName: String
-    let lastName: String
-    let fullName: String
-    let congregation: String
-    let appointmentStatus: String?
-    let eventId: String
-    let eventName: String?
-    let eventVenue: String?
-    let eventTheme: String?
-    let departmentId: String?
-    let departmentName: String?
-    let departmentType: String?
-}
+// MARK: - UserInfo
 
-/// Overseer info stored in app state
-struct OverseerInfo: Identifiable {
+/// Unified user identity — overseers and volunteers share this type
+struct UserInfo: Identifiable {
     let id: String
+    let userId: String          // 6-char permanent ID, e.g. "A7X9K2"
     let email: String
-    let fullName: String
     let firstName: String
     let lastName: String
+    let fullName: String
     let phone: String?
+    let congregation: String?
     let congregationId: String?
-    let circuitId: String?
-    let overseerType: String
+    let appointmentStatus: String?
+    let isOverseer: Bool
+
+    var initials: String {
+        let parts = fullName.split(separator: " ")
+        if parts.count >= 2 {
+            return "\(parts[0].prefix(1))\(parts[1].prefix(1))".uppercased()
+        }
+        return String(fullName.prefix(2)).uppercased()
+    }
 
     var isProfileComplete: Bool {
         congregationId != nil && !fullName.trimmingCharacters(in: .whitespaces).isEmpty
     }
+}
 
-    var initials: String {
-        let names = fullName.split(separator: " ")
-        if names.count >= 2 {
-            return "\(names[0].prefix(1))\(names[1].prefix(1))".uppercased()
-        } else if let first = names.first {
-            return String(first.prefix(2)).uppercased()
-        }
-        return "?"
+extension UserInfo {
+    init(from me: AssemblyOpsAPI.MeQuery.Data.Me) {
+        self.id = me.id
+        self.userId = me.userId
+        self.email = me.email
+        self.firstName = me.firstName
+        self.lastName = me.lastName
+        self.fullName = me.fullName
+        self.phone = me.phone
+        self.congregation = me.congregation
+        self.congregationId = me.congregationId
+        self.appointmentStatus = me.appointmentStatus?.rawValue
+        self.isOverseer = me.isOverseer
     }
 }
+

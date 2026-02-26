@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "SentMessages"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query SentMessages($limit: Int, $offset: Int) { sentMessages(limit: $limit, offset: $offset) { __typename id subject body recipientType senderType senderName isRead readAt volunteer { __typename id firstName lastName } createdAt } }"#
+        #"query SentMessages($limit: Int, $offset: Int) { sentMessages(limit: $limit, offset: $offset) { __typename id subject body recipientType senderType senderName senderId isRead readAt createdAt } }"#
       ))
 
     public var limit: GraphQLNullable<Int>
@@ -60,9 +60,9 @@ extension AssemblyOpsAPI {
           .field("recipientType", GraphQLEnum<AssemblyOpsAPI.RecipientType>.self),
           .field("senderType", GraphQLEnum<AssemblyOpsAPI.MessageSenderType>?.self),
           .field("senderName", String?.self),
+          .field("senderId", AssemblyOpsAPI.ID?.self),
           .field("isRead", Bool.self),
           .field("readAt", AssemblyOpsAPI.DateTime?.self),
-          .field("volunteer", Volunteer?.self),
           .field("createdAt", AssemblyOpsAPI.DateTime.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -75,33 +75,10 @@ extension AssemblyOpsAPI {
         var recipientType: GraphQLEnum<AssemblyOpsAPI.RecipientType> { __data["recipientType"] }
         var senderType: GraphQLEnum<AssemblyOpsAPI.MessageSenderType>? { __data["senderType"] }
         var senderName: String? { __data["senderName"] }
+        var senderId: AssemblyOpsAPI.ID? { __data["senderId"] }
         var isRead: Bool { __data["isRead"] }
         var readAt: AssemblyOpsAPI.DateTime? { __data["readAt"] }
-        var volunteer: Volunteer? { __data["volunteer"] }
         var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }
-
-        /// SentMessage.Volunteer
-        ///
-        /// Parent Type: `Volunteer`
-        struct Volunteer: AssemblyOpsAPI.SelectionSet {
-          let __data: DataDict
-          init(_dataDict: DataDict) { __data = _dataDict }
-
-          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Volunteer }
-          static var __selections: [ApolloAPI.Selection] { [
-            .field("__typename", String.self),
-            .field("id", AssemblyOpsAPI.ID.self),
-            .field("firstName", String.self),
-            .field("lastName", String.self),
-          ] }
-          static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-            SentMessagesQuery.Data.SentMessage.Volunteer.self
-          ] }
-
-          var id: AssemblyOpsAPI.ID { __data["id"] }
-          var firstName: String { __data["firstName"] }
-          var lastName: String { __data["lastName"] }
-        }
       }
     }
   }

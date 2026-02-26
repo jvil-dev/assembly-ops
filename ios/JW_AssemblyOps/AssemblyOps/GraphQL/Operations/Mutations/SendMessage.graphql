@@ -6,11 +6,7 @@ mutation SendMessage($input: SendMessageInput!) {
     recipientType
     senderType
     senderName
-    volunteer {
-      id
-      firstName
-      lastName
-    }
+    senderId
     conversation {
       id
     }

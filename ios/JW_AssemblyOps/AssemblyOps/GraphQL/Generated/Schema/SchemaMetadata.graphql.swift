@@ -29,14 +29,12 @@ extension AssemblyOpsAPI {
 
     static func objectType(forTypename typename: String) -> ApolloAPI.Object? {
       switch typename {
-      case "Admin": return AssemblyOpsAPI.Objects.Admin
       case "Area": return AssemblyOpsAPI.Objects.Area
       case "AreaCaptainAssignment": return AssemblyOpsAPI.Objects.AreaCaptainAssignment
       case "AreaGroup": return AssemblyOpsAPI.Objects.AreaGroup
       case "AreaGroupMember": return AssemblyOpsAPI.Objects.AreaGroupMember
       case "AttendanceCount": return AssemblyOpsAPI.Objects.AttendanceCount
       case "AttendantMeeting": return AssemblyOpsAPI.Objects.AttendantMeeting
-      case "AuthPayload": return AssemblyOpsAPI.Objects.AuthPayload
       case "CaptainGroup": return AssemblyOpsAPI.Objects.CaptainGroup
       case "CheckIn": return AssemblyOpsAPI.Objects.CheckIn
       case "CheckInStats": return AssemblyOpsAPI.Objects.CheckInStats
@@ -54,6 +52,7 @@ extension AssemblyOpsAPI {
       case "Department": return AssemblyOpsAPI.Objects.Department
       case "Event": return AssemblyOpsAPI.Objects.Event
       case "EventAdmin": return AssemblyOpsAPI.Objects.EventAdmin
+      case "EventJoinRequest": return AssemblyOpsAPI.Objects.EventJoinRequest
       case "EventParticipant": return AssemblyOpsAPI.Objects.EventParticipant
       case "EventTemplate": return AssemblyOpsAPI.Objects.EventTemplate
       case "EventVolunteer": return AssemblyOpsAPI.Objects.EventVolunteer
@@ -75,6 +74,9 @@ extension AssemblyOpsAPI {
       case "Session": return AssemblyOpsAPI.Objects.Session
       case "SessionAttendanceSummary": return AssemblyOpsAPI.Objects.SessionAttendanceSummary
       case "TokenPayload": return AssemblyOpsAPI.Objects.TokenPayload
+      case "User": return AssemblyOpsAPI.Objects.User
+      case "UserAuthPayload": return AssemblyOpsAPI.Objects.UserAuthPayload
+      case "UserEventMembership": return AssemblyOpsAPI.Objects.UserEventMembership
       case "Volunteer": return AssemblyOpsAPI.Objects.Volunteer
       case "VolunteerCredentials": return AssemblyOpsAPI.Objects.VolunteerCredentials
       case "VolunteerProfile": return AssemblyOpsAPI.Objects.VolunteerProfile

@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "EventAdmins"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query EventAdmins($eventId: ID!) { eventAdmins(eventId: $eventId) { __typename id role claimedAt admin { __typename id firstName lastName email } department { __typename id name departmentType } } }"#
+        #"query EventAdmins($eventId: ID!) { eventAdmins(eventId: $eventId) { __typename id role claimedAt user { __typename id firstName lastName email } department { __typename id name departmentType } } }"#
       ))
 
     public var eventId: ID
@@ -46,7 +46,7 @@ extension AssemblyOpsAPI {
           .field("id", AssemblyOpsAPI.ID.self),
           .field("role", GraphQLEnum<AssemblyOpsAPI.EventRole>.self),
           .field("claimedAt", AssemblyOpsAPI.DateTime.self),
-          .field("admin", Admin.self),
+          .field("user", User.self),
           .field("department", Department?.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -56,17 +56,17 @@ extension AssemblyOpsAPI {
         var id: AssemblyOpsAPI.ID { __data["id"] }
         var role: GraphQLEnum<AssemblyOpsAPI.EventRole> { __data["role"] }
         var claimedAt: AssemblyOpsAPI.DateTime { __data["claimedAt"] }
-        var admin: Admin { __data["admin"] }
+        var user: User { __data["user"] }
         var department: Department? { __data["department"] }
 
-        /// EventAdmin.Admin
+        /// EventAdmin.User
         ///
-        /// Parent Type: `Admin`
-        struct Admin: AssemblyOpsAPI.SelectionSet {
+        /// Parent Type: `User`
+        struct User: AssemblyOpsAPI.SelectionSet {
           let __data: DataDict
           init(_dataDict: DataDict) { __data = _dataDict }
 
-          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Admin }
+          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
           static var __selections: [ApolloAPI.Selection] { [
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
@@ -75,7 +75,7 @@ extension AssemblyOpsAPI {
             .field("email", String.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-            EventAdminsQuery.Data.EventAdmin.Admin.self
+            EventAdminsQuery.Data.EventAdmin.User.self
           ] }
 
           var id: AssemblyOpsAPI.ID { __data["id"] }

@@ -41,6 +41,7 @@ struct ProfileView: View {
     @State private var showingLogoutAlert = false
     @State private var showError = false
     @State private var hasAppeared = false
+    @State private var copiedId = false
 
     var body: some View {
         NavigationStack {
@@ -103,9 +104,11 @@ struct ProfileView: View {
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
                 }
 
-                // Event info
-                eventCard(volunteer: volunteer)
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+                // Event info — only shown once the volunteer is part of an event
+                if volunteer.eventName != nil {
+                    eventCard(volunteer: volunteer)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+                }
 
                 // Contact info (always show — users can add phone/email)
                 contactCard(volunteer: volunteer)
@@ -172,6 +175,30 @@ struct ProfileView: View {
                         .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
                         .clipShape(Capsule())
                 }
+
+                Button {
+                    UIPasteboard.general.string = volunteer.volunteerId
+                    HapticManager.shared.success()
+                    copiedId = true
+                    Task { try? await Task.sleep(for: .seconds(2)); copiedId = false }
+                } label: {
+                    HStack(spacing: AppTheme.Spacing.xs) {
+                        Text("YOUR ID")
+                            .font(AppTheme.Typography.captionSmall)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                        Text(volunteer.volunteerId)
+                            .font(.system(.body, design: .monospaced).weight(.semibold))
+                            .foregroundStyle(AppTheme.themeColor)
+                        Image(systemName: copiedId ? "checkmark" : "doc.on.doc")
+                            .font(.system(size: 12))
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    }
+                    .padding(.horizontal, AppTheme.Spacing.m)
+                    .padding(.vertical, AppTheme.Spacing.s)
+                    .background(AppTheme.themeColor.opacity(0.08))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity)
@@ -232,7 +259,7 @@ struct ProfileView: View {
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
 
-            Text(volunteer.eventName)
+            Text(volunteer.eventName ?? "")
                 .font(AppTheme.Typography.headline)
                 .foregroundStyle(.primary)
 
@@ -304,20 +331,12 @@ struct ProfileView: View {
             }
 
             if viewModel.isEditing {
-                VStack(spacing: AppTheme.Spacing.s) {
-                    editField(
-                        icon: "phone",
-                        placeholder: "profile.edit.phone".localized,
-                        text: $viewModel.editPhone,
-                        keyboardType: .phonePad
-                    )
-                    editField(
-                        icon: "envelope",
-                        placeholder: "profile.edit.email".localized,
-                        text: $viewModel.editEmail,
-                        keyboardType: .emailAddress
-                    )
-                }
+                editField(
+                    icon: "phone",
+                    placeholder: "profile.edit.phone".localized,
+                    text: $viewModel.editPhone,
+                    keyboardType: .phonePad
+                )
             } else {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
                     if let phone = volunteer.phone {

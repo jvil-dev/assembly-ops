@@ -3,6 +3,6 @@ mutation UpdateAttendanceCount($id: ID!, $input: UpdateAttendanceCountInput!) {
     id
     count
     notes
-    updatedAt
+    createdAt
   }
 }

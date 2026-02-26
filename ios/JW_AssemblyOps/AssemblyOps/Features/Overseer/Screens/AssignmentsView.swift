@@ -85,7 +85,7 @@ struct AssignmentsView: View {
             }
         }
         .task {
-            if sessions.isEmpty, let eventId = sessionState.selectedEvent?.id {
+            if sessions.isEmpty, sessionState.selectedEvent?.id != nil {
                 await loadSessions()
             }
         }

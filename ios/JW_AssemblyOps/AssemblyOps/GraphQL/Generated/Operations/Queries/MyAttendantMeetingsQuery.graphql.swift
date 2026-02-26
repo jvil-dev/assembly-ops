@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MyAttendantMeetings"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query MyAttendantMeetings($eventId: ID!) { myAttendantMeetings(eventId: $eventId) { __typename id session { __typename id name date } meetingDate notes createdBy { __typename id firstName lastName } attendees { __typename id eventVolunteer { __typename id volunteerProfile { __typename firstName lastName } } } createdAt } }"#
+        #"query MyAttendantMeetings($eventId: ID!) { myAttendantMeetings(eventId: $eventId) { __typename id session { __typename id name date } meetingDate notes createdBy { __typename id firstName lastName } attendees { __typename id eventVolunteer { __typename id user { __typename firstName lastName } } } createdAt } }"#
       ))
 
     public var eventId: ID
@@ -88,12 +88,12 @@ extension AssemblyOpsAPI {
 
         /// MyAttendantMeeting.CreatedBy
         ///
-        /// Parent Type: `Admin`
+        /// Parent Type: `User`
         struct CreatedBy: AssemblyOpsAPI.SelectionSet {
           let __data: DataDict
           init(_dataDict: DataDict) { __data = _dataDict }
 
-          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Admin }
+          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
           static var __selections: [ApolloAPI.Selection] { [
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
@@ -140,30 +140,30 @@ extension AssemblyOpsAPI {
             static var __selections: [ApolloAPI.Selection] { [
               .field("__typename", String.self),
               .field("id", AssemblyOpsAPI.ID.self),
-              .field("volunteerProfile", VolunteerProfile.self),
+              .field("user", User.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
               MyAttendantMeetingsQuery.Data.MyAttendantMeeting.Attendee.EventVolunteer.self
             ] }
 
             var id: AssemblyOpsAPI.ID { __data["id"] }
-            var volunteerProfile: VolunteerProfile { __data["volunteerProfile"] }
+            var user: User { __data["user"] }
 
-            /// MyAttendantMeeting.Attendee.EventVolunteer.VolunteerProfile
+            /// MyAttendantMeeting.Attendee.EventVolunteer.User
             ///
-            /// Parent Type: `VolunteerProfile`
-            struct VolunteerProfile: AssemblyOpsAPI.SelectionSet {
+            /// Parent Type: `User`
+            struct User: AssemblyOpsAPI.SelectionSet {
               let __data: DataDict
               init(_dataDict: DataDict) { __data = _dataDict }
 
-              static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.VolunteerProfile }
+              static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
               static var __selections: [ApolloAPI.Selection] { [
                 .field("__typename", String.self),
                 .field("firstName", String.self),
                 .field("lastName", String.self),
               ] }
               static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-                MyAttendantMeetingsQuery.Data.MyAttendantMeeting.Attendee.EventVolunteer.VolunteerProfile.self
+                MyAttendantMeetingsQuery.Data.MyAttendantMeeting.Attendee.EventVolunteer.User.self
               ] }
 
               var firstName: String { __data["firstName"] }

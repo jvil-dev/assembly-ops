@@ -11,7 +11,7 @@ mutation CreateAttendantMeeting($input: CreateAttendantMeetingInput!) {
       id
       eventVolunteer {
         id
-        volunteerProfile {
+        user {
           firstName
           lastName
         }

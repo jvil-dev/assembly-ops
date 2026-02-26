@@ -23,15 +23,15 @@ describe('Auth', () => {
     await closeTestApp();
   });
 
-  describe('registerAdmin', () => {
-    it('should register a new admin', async () => {
+  describe('registerUser', () => {
+    it('should register a new user', async () => {
       const response = await request(app)
         .post('/graphql')
         .send({
           query: `
-            mutation RegisterAdmin($input: RegisterAdminInput!) {
-              registerAdmin(input: $input) {
-                admin {
+            mutation RegisterUser($input: RegisterUserInput!) {
+              registerUser(input: $input) {
+                user {
                   id
                   email
                   firstName
@@ -48,12 +48,12 @@ describe('Auth', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.registerAdmin.admin.email).toBe(testUser.email);
-      expect(response.body.data.registerAdmin.accessToken).toBeDefined();
-      expect(response.body.data.registerAdmin.refreshToken).toBeDefined();
+      expect(response.body.data.registerUser.user.email).toBe(testUser.email);
+      expect(response.body.data.registerUser.accessToken).toBeDefined();
+      expect(response.body.data.registerUser.refreshToken).toBeDefined();
 
-      accessToken = response.body.data.registerAdmin.accessToken;
-      refreshToken = response.body.data.registerAdmin.refreshToken;
+      accessToken = response.body.data.registerUser.accessToken;
+      refreshToken = response.body.data.registerUser.refreshToken;
     });
 
     it('should reject duplicate email', async () => {
@@ -61,9 +61,9 @@ describe('Auth', () => {
         .post('/graphql')
         .send({
           query: `
-            mutation RegisterAdmin($input: RegisterAdminInput!) {
-              registerAdmin(input: $input) {
-                admin { id }
+            mutation RegisterUser($input: RegisterUserInput!) {
+              registerUser(input: $input) {
+                user { id }
               }
             }
           `,
@@ -75,15 +75,15 @@ describe('Auth', () => {
     });
   });
 
-  describe('loginAdmin', () => {
+  describe('loginUser', () => {
     it('should login with valid credentials', async () => {
       const response = await request(app)
         .post('/graphql')
         .send({
           query: `
-            mutation LoginAdmin($input: LoginAdminInput!) {
-              loginAdmin(input: $input) {
-                admin {
+            mutation LoginUser($input: LoginUserInput!) {
+              loginUser(input: $input) {
+                user {
                   email
                 }
                 accessToken
@@ -101,11 +101,11 @@ describe('Auth', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.loginAdmin.admin.email).toBe(testUser.email);
+      expect(response.body.data.loginUser.user.email).toBe(testUser.email);
 
       // Update tokens - login deletes old tokens and creates new ones
-      accessToken = response.body.data.loginAdmin.accessToken;
-      refreshToken = response.body.data.loginAdmin.refreshToken;
+      accessToken = response.body.data.loginUser.accessToken;
+      refreshToken = response.body.data.loginUser.refreshToken;
     });
 
     it('should reject invalid password', async () => {
@@ -113,9 +113,9 @@ describe('Auth', () => {
         .post('/graphql')
         .send({
           query: `
-            mutation LoginAdmin($input: LoginAdminInput!) {
-              loginAdmin(input: $input) {
-                admin { id }
+            mutation LoginUser($input: LoginUserInput!) {
+              loginUser(input: $input) {
+                user { id }
               }
             }
           `,
@@ -133,7 +133,7 @@ describe('Auth', () => {
   });
 
   describe('me', () => {
-    it('should return current admin when authenticated', async () => {
+    it('should return current user when authenticated', async () => {
       const response = await request(app)
         .post('/graphql')
         .set('Authorization', `Bearer ${accessToken}`)

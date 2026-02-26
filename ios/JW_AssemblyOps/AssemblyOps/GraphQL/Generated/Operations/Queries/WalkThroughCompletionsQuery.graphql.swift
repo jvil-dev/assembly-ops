@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "WalkThroughCompletions"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query WalkThroughCompletions($eventId: ID!, $sessionId: ID) { walkThroughCompletions(eventId: $eventId, sessionId: $sessionId) { __typename id session { __typename id name } eventVolunteer { __typename id volunteerProfile { __typename firstName lastName } } completedAt itemCount notes } }"#
+        #"query WalkThroughCompletions($eventId: ID!, $sessionId: ID) { walkThroughCompletions(eventId: $eventId, sessionId: $sessionId) { __typename id session { __typename id name } eventVolunteer { __typename id user { __typename firstName lastName } } completedAt itemCount notes } }"#
       ))
 
     public var eventId: ID
@@ -104,30 +104,30 @@ extension AssemblyOpsAPI {
           static var __selections: [ApolloAPI.Selection] { [
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
-            .field("volunteerProfile", VolunteerProfile.self),
+            .field("user", User.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             WalkThroughCompletionsQuery.Data.WalkThroughCompletion.EventVolunteer.self
           ] }
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
-          var volunteerProfile: VolunteerProfile { __data["volunteerProfile"] }
+          var user: User { __data["user"] }
 
-          /// WalkThroughCompletion.EventVolunteer.VolunteerProfile
+          /// WalkThroughCompletion.EventVolunteer.User
           ///
-          /// Parent Type: `VolunteerProfile`
-          struct VolunteerProfile: AssemblyOpsAPI.SelectionSet {
+          /// Parent Type: `User`
+          struct User: AssemblyOpsAPI.SelectionSet {
             let __data: DataDict
             init(_dataDict: DataDict) { __data = _dataDict }
 
-            static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.VolunteerProfile }
+            static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
             static var __selections: [ApolloAPI.Selection] { [
               .field("__typename", String.self),
               .field("firstName", String.self),
               .field("lastName", String.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-              WalkThroughCompletionsQuery.Data.WalkThroughCompletion.EventVolunteer.VolunteerProfile.self
+              WalkThroughCompletionsQuery.Data.WalkThroughCompletion.EventVolunteer.User.self
             ] }
 
             var firstName: String { __data["firstName"] }

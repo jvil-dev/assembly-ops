@@ -1,14 +1,21 @@
 mutation LoginWithApple($input: AppleAuthInput!) {
-    loginWithApple(input: $input) {
-        admin { id email firstName lastName fullName }
-        accessToken
-        refreshToken
-        expiresIn
-        isNewUser
-        pendingOAuthToken
-        email
-        firstName
-        lastName
+  loginWithApple(input: $input) {
+    user {
+      id
+      userId
+      email
+      firstName
+      lastName
+      fullName
+      isOverseer
     }
+    accessToken
+    refreshToken
+    expiresIn
+    isNewUser
+    pendingOAuthToken
+    email
+    firstName
+    lastName
+  }
 }
-

@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "SessionAttendanceCounts"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query SessionAttendanceCounts($sessionId: ID!) { sessionAttendanceCounts(sessionId: $sessionId) { __typename id count section notes session { __typename id name } submittedBy { __typename id firstName lastName } createdAt updatedAt } }"#
+        #"query SessionAttendanceCounts($sessionId: ID!) { sessionAttendanceCounts(sessionId: $sessionId) { __typename id count notes session { __typename id name } submittedBy { __typename id firstName lastName } createdAt } }"#
       ))
 
     public var sessionId: ID
@@ -45,12 +45,10 @@ extension AssemblyOpsAPI {
           .field("__typename", String.self),
           .field("id", AssemblyOpsAPI.ID.self),
           .field("count", Int.self),
-          .field("section", String?.self),
           .field("notes", String?.self),
           .field("session", Session.self),
           .field("submittedBy", SubmittedBy.self),
           .field("createdAt", AssemblyOpsAPI.DateTime.self),
-          .field("updatedAt", AssemblyOpsAPI.DateTime.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
           SessionAttendanceCountsQuery.Data.SessionAttendanceCount.self
@@ -58,12 +56,10 @@ extension AssemblyOpsAPI {
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
         var count: Int { __data["count"] }
-        var section: String? { __data["section"] }
         var notes: String? { __data["notes"] }
         var session: Session { __data["session"] }
         var submittedBy: SubmittedBy { __data["submittedBy"] }
         var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }
-        var updatedAt: AssemblyOpsAPI.DateTime { __data["updatedAt"] }
 
         /// SessionAttendanceCount.Session
         ///
@@ -88,12 +84,12 @@ extension AssemblyOpsAPI {
 
         /// SessionAttendanceCount.SubmittedBy
         ///
-        /// Parent Type: `Admin`
+        /// Parent Type: `User`
         struct SubmittedBy: AssemblyOpsAPI.SelectionSet {
           let __data: DataDict
           init(_dataDict: DataDict) { __data = _dataDict }
 
-          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Admin }
+          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
           static var __selections: [ApolloAPI.Selection] { [
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),

@@ -37,11 +37,11 @@ struct MessagesView: View {
     @State private var showSearch = false
 
     private var eventId: String? {
-        AppState.shared.currentVolunteer?.eventId
+        AppState.shared.currentEventId
     }
 
     private var currentUserId: String? {
-        AppState.shared.currentVolunteer?.id
+        AppState.shared.currentUser?.id
     }
 
     enum MessageTab: String, CaseIterable {

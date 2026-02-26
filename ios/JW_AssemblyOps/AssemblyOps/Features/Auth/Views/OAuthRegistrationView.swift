@@ -7,33 +7,19 @@
 
 // MARK: - OAuth Registration View
 //
-// Full-screen form for completing overseer registration after OAuth authentication.
-// Displayed when a new user signs in via Apple/Google and needs to provide additional info.
+// Full-screen form for completing registration after OAuth authentication.
+// Displayed when a new user signs in via Apple/Google and needs to provide name info.
 //
 // Parameters:
 //   - email: Pre-filled from OAuth provider (read-only display)
 //   - firstName/lastName: Pre-filled if provided by OAuth, otherwise editable
 //   - pendingOAuthToken: Token from backend to complete registration
 //
-// Fields:
-//   - First Name: Required, editable
-//   - Last Name: Required, editable
-//   - Phone: Optional contact number
-//   - Congregation: Required congregation name
-//
 // Features:
-//   - Adaptive colors for light/dark mode
-//   - Animated card appearance on load
-//   - Swipe-to-dismiss gesture
-//   - Form validation before submission
+//   - AppTheme-compliant colors (no local computed color properties)
+//   - Animated card appearance
+//   - Overseer toggle
 //   - CompleteOAuthRegistrationMutation on submit
-//
-// Flow:
-//   1. User arrives from OAuth sign-in with pendingOAuthToken
-//   2. Fills in required fields (name already pre-filled if available)
-//   3. On submit: Calls CompleteOAuthRegistrationMutation
-//   4. On success: AppState.didLoginAsOverseer() logs user in
-//
 
 import SwiftUI
 import Apollo
@@ -51,14 +37,15 @@ struct OAuthRegistrationView: View {
 
     @State private var firstNameField: String
     @State private var lastNameField: String
+    @State private var isOverseer: Bool = false
     @State private var isSubmitting = false
     @State private var errorMessage: String?
+    @State private var showError = false
 
     private let appState = AppState.shared
 
     private enum Field {
-        case firstName
-        case lastName
+        case firstName, lastName
     }
 
     init(email: String, firstName: String?, lastName: String?, pendingOAuthToken: String) {
@@ -70,38 +57,11 @@ struct OAuthRegistrationView: View {
         _lastNameField = State(initialValue: lastName ?? "")
     }
 
-    // MARK: - Adaptive Colors
-
-    private var backgroundTop: Color {
-        colorScheme == .dark
-            ? Color(white: 0.1)
-            : Color(red: 0.98, green: 0.97, blue: 0.95)
-    }
-
-    private var backgroundBottom: Color {
-        colorScheme == .dark
-            ? Color(white: 0.08)
-            : Color(red: 0.96, green: 0.94, blue: 0.91)
-    }
-
-    private var cardBackground: Color {
-        colorScheme == .dark
-            ? Color(white: 0.15)
-            : Color.white
-    }
-
-    private var textSecondary: Color {
-        colorScheme == .dark
-            ? Color.white.opacity(0.6)
-            : Color(red: 0.45, green: 0.45, blue: 0.45)
-    }
-
-    // MARK: - Body
-
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                backgroundGradient
+                AppTheme.backgroundGradient(for: colorScheme)
+                    .ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -130,17 +90,14 @@ struct OAuthRegistrationView: View {
                 hasAppeared = true
             }
         }
-    }
-
-    // MARK: - Background
-
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [backgroundTop, backgroundBottom],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        .onChange(of: errorMessage) { _, error in
+            showError = error != nil
+        }
+        .alert("Registration Failed", isPresented: $showError) {
+            Button("OK") { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "")
+        }
     }
 
     // MARK: - Card
@@ -149,14 +106,14 @@ struct OAuthRegistrationView: View {
         VStack(spacing: 28) {
             headerSection
             formSection
-            errorSection
+            overseerToggle
             registerButton
             helpText
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 36)
-        .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .background(AppTheme.cardBackground(for: colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large))
         .shadow(color: Color.black.opacity(0.06), radius: 20, x: 0, y: 8)
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
         .opacity(hasAppeared ? 1 : 0)
@@ -167,20 +124,22 @@ struct OAuthRegistrationView: View {
 
     private var headerSection: some View {
         VStack(spacing: 12) {
-            Image("Logo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 100, height: 100)
-                .shadow(color: Color("ThemeColor").opacity(0.15), radius: 12, x: 0, y: 4)
+            ZStack {
+                Circle()
+                    .fill(AppTheme.themeColor.opacity(colorScheme == .dark ? 0.22 : 0.1))
+                    .frame(width: 88, height: 88)
+                Image(systemName: "person.fill")
+                    .font(.system(size: 38, weight: .medium))
+                    .foregroundStyle(AppTheme.themeColor)
+            }
 
             Text("Complete Registration")
-                .font(.system(size: 24, weight: .semibold, design: .default))
-                .foregroundStyle(Color("ThemeColor"))
-                .tracking(0.3)
+                .font(.system(size: 24, weight: .bold))
+                .foregroundStyle(AppTheme.themeColor)
 
             Text("Just a few more details to get started")
                 .font(.subheadline)
-                .foregroundStyle(textSecondary)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
         }
     }
 
@@ -188,23 +147,29 @@ struct OAuthRegistrationView: View {
 
     private var formSection: some View {
         VStack(spacing: 20) {
-            // Email display (read-only)
             VStack(alignment: .leading, spacing: 6) {
                 Text("EMAIL")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(Color.gray)
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(0.6)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
 
-                Text(email)
-                    .font(.system(size: 17, weight: .regular, design: .default))
-                    .foregroundStyle(textSecondary)
-
-                Rectangle()
-                    .fill(Color.gray.opacity(0.2))
-                    .frame(height: 1)
+                HStack {
+                    Text(email)
+                        .font(.system(size: 17))
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    Spacer()
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
+                .padding(.bottom, 8)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(AppTheme.dividerColor(for: colorScheme))
+                        .frame(height: 1)
+                }
             }
 
-            // First Name
             UnderlineTextField(
                 label: "FIRST NAME",
                 placeholder: "Enter your first name",
@@ -218,7 +183,6 @@ struct OAuthRegistrationView: View {
             )
             .focused($focusedField, equals: .firstName)
 
-            // Last Name
             UnderlineTextField(
                 label: "LAST NAME",
                 placeholder: "Enter your last name",
@@ -234,25 +198,24 @@ struct OAuthRegistrationView: View {
         }
     }
 
-    // MARK: - Error
+    // MARK: - Overseer Toggle
 
-    @ViewBuilder
-    private var errorSection: some View {
-        if let error = errorMessage {
-            HStack(spacing: AppTheme.Spacing.s) {
-                Image(systemName: "exclamationmark.circle.fill")
-                    .font(.subheadline)
-                Text(error)
-                    .font(.subheadline)
+    private var overseerToggle: some View {
+        Toggle(isOn: $isOverseer) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(NSLocalizedString("auth.isOverseer.toggle", comment: ""))
+                    .font(AppTheme.Typography.body)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                if isOverseer {
+                    Text(NSLocalizedString("auth.isOverseer.explainer", comment: ""))
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.themeColor)
+                        .transition(.opacity)
+                }
             }
-            .foregroundStyle(Color(red: 0.8, green: 0.25, blue: 0.2))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(red: 0.8, green: 0.25, blue: 0.2).opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .transition(.opacity.combined(with: .scale(scale: 0.95)))
         }
+        .tint(AppTheme.themeColor)
+        .animation(.easeInOut(duration: 0.2), value: isOverseer)
     }
 
     // MARK: - Button
@@ -263,23 +226,24 @@ struct OAuthRegistrationView: View {
         } label: {
             Group {
                 if isSubmitting {
-                    ProgressView()
-                        .tint(.white)
+                    ProgressView().tint(.white)
                 } else {
                     Text("Complete Registration")
                         .font(.system(size: 17, weight: .semibold))
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 52)
+            .frame(height: AppTheme.ButtonHeight.large)
         }
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(isFormValid ? Color("ThemeColor") : Color("ThemeColor").opacity(0.4))
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                .fill(isFormValid ? AppTheme.themeColor : AppTheme.themeColor.opacity(0.4))
+                .shadow(color: AppTheme.themeColor.opacity(isFormValid ? 0.3 : 0),
+                        radius: 10, x: 0, y: 3)
         )
         .foregroundStyle(.white)
         .disabled(!isFormValid || isSubmitting)
-        .animation(.easeInOut(duration: 0.2), value: isFormValid)
+        .animation(AppTheme.quickAnimation, value: isFormValid)
     }
 
     // MARK: - Help
@@ -287,7 +251,7 @@ struct OAuthRegistrationView: View {
     private var helpText: some View {
         Text("Your information is used for event coordination only")
             .font(.footnote)
-            .foregroundStyle(textSecondary)
+            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             .multilineTextAlignment(.center)
     }
 
@@ -302,14 +266,14 @@ struct OAuthRegistrationView: View {
 
     private func register() {
         guard isFormValid else { return }
-
         isSubmitting = true
         errorMessage = nil
 
         let input = AssemblyOpsAPI.CompleteOAuthRegistrationInput(
             pendingOAuthToken: pendingOAuthToken,
             firstName: firstNameField.trimmingCharacters(in: .whitespaces),
-            lastName: lastNameField.trimmingCharacters(in: .whitespaces)
+            lastName: lastNameField.trimmingCharacters(in: .whitespaces),
+            isOverseer: isOverseer ? .some(true) : .none
         )
 
         NetworkClient.shared.apollo.perform(
@@ -319,30 +283,32 @@ struct OAuthRegistrationView: View {
                 switch result {
                 case .success(let graphQLResult):
                     if let data = graphQLResult.data?.completeOAuthRegistration {
-                        let overseer = OverseerInfo(
-                            id: data.admin.id,
-                            email: data.admin.email,
-                            fullName: data.admin.fullName,
-                            firstName: data.admin.firstName,
-                            lastName: data.admin.lastName,
+                        let user = UserInfo(
+                            id: data.user.id,
+                            userId: data.user.userId,
+                            email: data.user.email,
+                            firstName: data.user.firstName,
+                            lastName: data.user.lastName,
+                            fullName: data.user.fullName,
                             phone: nil,
+                            congregation: nil,
                             congregationId: nil,
-                            circuitId: nil,
-                            overseerType: ""
+                            appointmentStatus: nil,
+                            isOverseer: data.user.isOverseer
                         )
-                        appState.didLoginAsOverseer(
-                            overseer: overseer,
+                        self.appState.didLogin(
+                            user: user,
                             accessToken: data.accessToken,
                             refreshToken: data.refreshToken,
                             expiresIn: data.expiresIn
                         )
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
-                        errorMessage = errors.first?.localizedDescription ?? "Registration failed"
+                        self.errorMessage = errors.first?.message ?? "Registration failed"
                     }
                 case .failure:
-                    errorMessage = "Unable to connect. Please try again."
+                    self.errorMessage = "Unable to connect. Please try again."
                 }
-                isSubmitting = false
+                self.isSubmitting = false
             }
         }
     }
@@ -350,8 +316,8 @@ struct OAuthRegistrationView: View {
 
 #Preview {
     OAuthRegistrationView(
-        email: "",
-        firstName: "",
+        email: "user@example.com",
+        firstName: "Jorge",
         lastName: nil,
         pendingOAuthToken: "token"
     )

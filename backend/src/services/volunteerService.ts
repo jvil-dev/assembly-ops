@@ -6,7 +6,6 @@
  * Methods:
  *   - createVolunteer(eventId, input, departmentId?): Create single volunteer
  *   - createVolunteers(input, defaultDepartmentId?): Bulk create volunteers
- *   - loginVolunteer(input): Authenticate volunteer with volunteerId + token
  *   - getVolunteer(id): Get volunteer with all related data
  *   - getEventVolunteers(eventId, departmentId?): List volunteers for event/department
  *   - updateVolunteer(id, input): Update volunteer details
@@ -19,12 +18,6 @@
  *   - tokenHash: bcrypt hash of the token stored in database
  *   - Plain token is ONLY returned when creating/regenerating (never stored)
  *
- * Login Flow:
- *   1. Volunteer receives printed card with volunteerId + token
- *   2. Volunteer enters credentials in mobile app
- *   3. loginVolunteer() verifies against tokenHash
- *   4. JWT tokens issued (same as admin flow)
- *
  * CreatedVolunteer Interface:
  *   When creating a volunteer, we return the plain token (for printing/sending).
  *   This is the ONLY time the plain token is available.
@@ -32,19 +25,15 @@
  * Called by: ../graphql/resolvers/volunteer.ts
  */
 import { PrismaClient } from '@prisma/client';
-import { NotFoundError, ValidationError, AuthenticationError } from '../utils/errors.js';
-import { generateEventVolunteerId, generateToken, hashToken, encryptToken, decryptToken } from '../utils/credentials.js';
+import { NotFoundError, ValidationError } from '../utils/errors.js';
+import { generateEventVolunteerId, generateToken, hashToken, decryptToken } from '../utils/credentials.js';
 import { encryptField } from '../utils/encryption.js';
-import { verifyPassword } from '../utils/password.js';
-import { generateTokens, TokenPair } from '../utils/jwt.js';
 import { TokenService } from './tokenService.js';
 import {
   createVolunteerSchema,
   createVolunteersSchema,
-  loginVolunteerSchema,
   CreateVolunteerInput,
   CreateVolunteersInput,
-  LoginVolunteerInput,
 } from '../graphql/validators/volunteer.js';
 
 export interface CreatedVolunteer {
@@ -85,77 +74,67 @@ export class VolunteerService {
       throw new NotFoundError('Event');
     }
 
-    // Generate credentials with event-type prefix (CA for Circuit Assembly, RC for Regional/Special Convention)
-    const prefix = event.template.eventType === 'CIRCUIT_ASSEMBLY' ? 'CA' : 'RC';
-    const volunteerId = generateEventVolunteerId(prefix);
+    // Generate volunteer credentials
+    const volunteerId = generateEventVolunteerId();
     const token = generateToken();
     const tokenHash = await hashToken(token);
-    const encryptedToken = encryptToken(token);
 
     const deptId = departmentId || validated.departmentId;
 
-    // Create volunteer (legacy) + VolunteerProfile + EventVolunteer in transaction
-    const volunteer = await this.prisma.$transaction(async (tx) => {
-      // Legacy Volunteer record
-      const vol = await tx.volunteer.create({
-        data: {
-          volunteerId,
-          tokenHash,
-          encryptedToken,
-          firstName: validated.firstName,
-          lastName: validated.lastName,
-          email: validated.email,
-          phone: validated.phone,
-          congregation: validated.congregation,
-          appointmentStatus: validated.appointmentStatus,
-          notes: validated.notes,
-          eventId,
-          departmentId: deptId,
-          roleId: validated.roleId,
-        },
-      });
-
-      // Find or create Congregation for VolunteerProfile
+    // Find or create Congregation and User, then create EventVolunteer in transaction
+    const eventVolunteer = await this.prisma.$transaction(async (tx) => {
+      // Find or create Congregation for User
       const congregationRecord = await this.findOrCreateCongregation(
         tx, validated.congregation, event.template.circuitId
       );
 
-      // VolunteerProfile (persistent across events)
-      const profile = await tx.volunteerProfile.create({
-        data: {
-          firstName: validated.firstName,
-          lastName: validated.lastName,
-          email: validated.email,
-          phone: validated.phone,
-          appointmentStatus: validated.appointmentStatus || 'PUBLISHER',
-          notes: validated.notes,
-          congregationId: congregationRecord.id,
-        },
-      });
+      // Find or create User (persistent across events)
+      let user = validated.email
+        ? await tx.user.findUnique({ where: { email: validated.email } })
+        : null;
 
-      // EventVolunteer (per-event instance, same credentials)
-      await tx.eventVolunteer.create({
+      if (!user) {
+        // Generate a unique userId for the User record
+        const { generateUserId } = await import('../utils/credentials.js');
+        const newUserId = generateUserId();
+        user = await tx.user.create({
+          data: {
+            userId: newUserId,
+            email: validated.email ?? `${volunteerId}@placeholder.assemblyops.io`,
+            firstName: validated.firstName,
+            lastName: validated.lastName,
+            phone: validated.phone,
+            appointmentStatus: validated.appointmentStatus || 'PUBLISHER',
+            congregation: validated.congregation,
+            congregationId: congregationRecord.id,
+          },
+        });
+      }
+
+      // EventVolunteer (per-event credential record)
+      const ev = await tx.eventVolunteer.create({
         data: {
           volunteerId,
           tokenHash,
           encryptedToken: encryptField(token),
-          volunteerProfileId: profile.id,
+          userId: user.id,
           eventId,
           departmentId: deptId,
           roleId: validated.roleId,
         },
+        include: { user: true },
       });
 
-      return vol;
+      return ev;
     });
 
     return {
-      id: volunteer.id,
-      volunteerId: volunteer.volunteerId,
+      id: eventVolunteer.id,
+      volunteerId: eventVolunteer.volunteerId,
       token, // Plain token to give to volunteer
-      firstName: volunteer.firstName,
-      lastName: volunteer.lastName,
-      congregation: volunteer.congregation,
+      firstName: eventVolunteer.user.firstName,
+      lastName: eventVolunteer.user.lastName,
+      congregation: eventVolunteer.user.congregation ?? validated.congregation,
     };
   }
 
@@ -180,129 +159,74 @@ export class VolunteerService {
       throw new NotFoundError('Event');
     }
 
-    const prefix = event.template.eventType === 'CIRCUIT_ASSEMBLY' ? 'CA' : 'RC';
     const createdVolunteers: CreatedVolunteer[] = [];
 
     for (const volunteerInput of volunteers) {
-      const volId = generateEventVolunteerId(prefix);
+      const volId = generateEventVolunteerId();
       const volToken = generateToken();
       const volTokenHash = await hashToken(volToken);
-      const volEncryptedToken = encryptToken(volToken);
       const deptId = volunteerInput.departmentId || defaultDepartmentId;
 
-      const volunteer = await this.prisma.$transaction(async (tx) => {
-        const vol = await tx.volunteer.create({
-          data: {
-            volunteerId: volId,
-            tokenHash: volTokenHash,
-            encryptedToken: volEncryptedToken,
-            firstName: volunteerInput.firstName,
-            lastName: volunteerInput.lastName,
-            email: volunteerInput.email,
-            phone: volunteerInput.phone,
-            congregation: volunteerInput.congregation,
-            appointmentStatus: volunteerInput.appointmentStatus,
-            notes: volunteerInput.notes,
-            eventId,
-            departmentId: deptId,
-            roleId: volunteerInput.roleId,
-          },
-        });
-
+      const eventVolunteer = await this.prisma.$transaction(async (tx) => {
         const congregationRecord = await this.findOrCreateCongregation(
           tx, volunteerInput.congregation, event.template.circuitId
         );
 
-        const profile = await tx.volunteerProfile.create({
-          data: {
-            firstName: volunteerInput.firstName,
-            lastName: volunteerInput.lastName,
-            email: volunteerInput.email,
-            phone: volunteerInput.phone,
-            appointmentStatus: volunteerInput.appointmentStatus || 'PUBLISHER',
-            notes: volunteerInput.notes,
-            congregationId: congregationRecord.id,
-          },
-        });
+        let user = volunteerInput.email
+          ? await tx.user.findUnique({ where: { email: volunteerInput.email } })
+          : null;
 
-        await tx.eventVolunteer.create({
+        if (!user) {
+          const { generateUserId } = await import('../utils/credentials.js');
+          const newUserId = generateUserId();
+          user = await tx.user.create({
+            data: {
+              userId: newUserId,
+              email: volunteerInput.email ?? `${volId}@placeholder.assemblyops.io`,
+              firstName: volunteerInput.firstName,
+              lastName: volunteerInput.lastName,
+              phone: volunteerInput.phone,
+              appointmentStatus: volunteerInput.appointmentStatus || 'PUBLISHER',
+              congregation: volunteerInput.congregation,
+              congregationId: congregationRecord.id,
+            },
+          });
+        }
+
+        const ev = await tx.eventVolunteer.create({
           data: {
             volunteerId: volId,
             tokenHash: volTokenHash,
             encryptedToken: encryptField(volToken),
-            volunteerProfileId: profile.id,
+            userId: user.id,
             eventId,
             departmentId: deptId,
             roleId: volunteerInput.roleId,
           },
+          include: { user: true },
         });
 
-        return vol;
+        return ev;
       });
 
       createdVolunteers.push({
-        id: volunteer.id,
-        volunteerId: volunteer.volunteerId,
+        id: eventVolunteer.id,
+        volunteerId: eventVolunteer.volunteerId,
         token: volToken,
-        firstName: volunteer.firstName,
-        lastName: volunteer.lastName,
-        congregation: volunteer.congregation,
+        firstName: eventVolunteer.user.firstName,
+        lastName: eventVolunteer.user.lastName,
+        congregation: eventVolunteer.user.congregation ?? volunteerInput.congregation,
       });
     }
 
     return createdVolunteers;
   }
 
-  async loginVolunteer(input: LoginVolunteerInput): Promise<{
-    volunteer: { id: string; firstName: string; lastName: string; eventId: string };
-    tokens: TokenPair;
-  }> {
-    const result = loginVolunteerSchema.safeParse(input);
-    if (!result.success) {
-      throw new ValidationError(result.error.issues[0].message);
-    }
-
-    const { volunteerId, token } = result.data;
-
-    // Find volunteer
-    const volunteer = await this.prisma.volunteer.findUnique({
-      where: { volunteerId },
-    });
-
-    if (!volunteer) {
-      throw new AuthenticationError('Invalid volunteer ID or token');
-    }
-
-    // Verify token
-    const isValid = await verifyPassword(token, volunteer.tokenHash);
-    if (!isValid) {
-      throw new AuthenticationError('Invalid volunteer ID or token');
-    }
-
-    // Generate tokens
-    const tokens = generateTokens({
-      sub: volunteer.id,
-      type: 'volunteer',
-    });
-
-    // Store refresh token
-    await this.tokenService.createRefreshToken(tokens.refreshToken, volunteer.id, 'volunteer');
-
-    return {
-      volunteer: {
-        id: volunteer.id,
-        firstName: volunteer.firstName,
-        lastName: volunteer.lastName,
-        eventId: volunteer.eventId,
-      },
-      tokens,
-    };
-  }
-
   async getVolunteer(volunteerId: string) {
-    return this.prisma.volunteer.findUnique({
+    return this.prisma.eventVolunteer.findUnique({
       where: { id: volunteerId },
       include: {
+        user: true,
         event: {
           include: { template: true },
         },
@@ -325,39 +249,50 @@ export class VolunteerService {
       where.departmentId = departmentId;
     }
 
-    return this.prisma.volunteer.findMany({
+    return this.prisma.eventVolunteer.findMany({
       where,
       include: {
+        user: true,
         department: true,
         role: true,
       },
-      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+      orderBy: [{ user: { lastName: 'asc' } }, { user: { firstName: 'asc' } }],
     });
   }
 
   async updateVolunteer(volunteerId: string, input: Partial<CreateVolunteerInput>) {
-    const volunteer = await this.prisma.volunteer.findUnique({
+    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
       where: { id: volunteerId },
+      include: { user: true },
     });
 
-    if (!volunteer) {
+    if (!eventVolunteer) {
       throw new NotFoundError('Volunteer');
     }
 
-    return this.prisma.volunteer.update({
+    // Update User fields if provided
+    if (input.firstName || input.lastName || input.email || input.phone || input.congregation || input.appointmentStatus) {
+      await this.prisma.user.update({
+        where: { id: eventVolunteer.userId },
+        data: {
+          ...(input.firstName && { firstName: input.firstName }),
+          ...(input.lastName && { lastName: input.lastName }),
+          ...(input.email && { email: input.email }),
+          ...(input.phone !== undefined && { phone: input.phone }),
+          ...(input.congregation && { congregation: input.congregation }),
+          ...(input.appointmentStatus && { appointmentStatus: input.appointmentStatus }),
+        },
+      });
+    }
+
+    return this.prisma.eventVolunteer.update({
       where: { id: volunteerId },
       data: {
-        firstName: input.firstName,
-        lastName: input.lastName,
-        email: input.email,
-        phone: input.phone,
-        congregation: input.congregation,
-        appointmentStatus: input.appointmentStatus,
-        notes: input.notes,
         departmentId: input.departmentId,
         roleId: input.roleId,
       },
       include: {
+        user: true,
         department: true,
         role: true,
       },
@@ -365,15 +300,15 @@ export class VolunteerService {
   }
 
   async deleteVolunteer(volunteerId: string) {
-    const volunteer = await this.prisma.volunteer.findUnique({
+    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
       where: { id: volunteerId },
     });
 
-    if (!volunteer) {
+    if (!eventVolunteer) {
       throw new NotFoundError('Volunteer');
     }
 
-    await this.prisma.volunteer.delete({
+    await this.prisma.eventVolunteer.delete({
       where: { id: volunteerId },
     });
 
@@ -384,34 +319,28 @@ export class VolunteerService {
     volunteerId: string;
     token: string;
   }> {
-    const volunteer = await this.prisma.volunteer.findUnique({
+    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
       where: { id: volunteerId },
-      include: {
-        event: { include: { template: true } },
-      },
     });
 
-    if (!volunteer) {
+    if (!eventVolunteer) {
       throw new NotFoundError('Volunteer');
     }
 
-    const prefix = volunteer.event.template.eventType === 'CIRCUIT_ASSEMBLY' ? 'CA' : 'RC';
-    const newVolunteerId = generateEventVolunteerId(prefix);
+    const newVolunteerId = generateEventVolunteerId();
     const token = generateToken();
     const tokenHash = await hashToken(token);
-    const encryptedToken = encryptToken(token);
-
-    await this.prisma.volunteer.update({
+    await this.prisma.eventVolunteer.update({
       where: { id: volunteerId },
       data: {
         volunteerId: newVolunteerId,
         tokenHash,
-        encryptedToken,
+        encryptedToken: encryptField(token),
       },
     });
 
     // Revoke any existing refresh tokens
-    await this.tokenService.revokeAllUserTokens(volunteerId, 'volunteer');
+    await this.tokenService.revokeAllUserTokens(volunteerId, 'eventVolunteer');
 
     return {
       volunteerId: newVolunteerId,
@@ -420,19 +349,276 @@ export class VolunteerService {
   }
 
   async getVolunteerToken(volunteerId: string): Promise<string> {
-    const volunteer = await this.prisma.volunteer.findUnique({
+    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
       where: { id: volunteerId },
     });
 
-    if (!volunteer) {
+    if (!eventVolunteer) {
       throw new NotFoundError('Volunteer');
     }
 
-    if (!volunteer.encryptedToken) {
+    if (!eventVolunteer.encryptedToken) {
       throw new NotFoundError('Token not available for this volunteer');
     }
 
-    return decryptToken(volunteer.encryptedToken);
+    return decryptToken(eventVolunteer.encryptedToken);
+  }
+
+  /**
+   * Request to join an event as a volunteer.
+   * Circuit Assembly events: creates a PENDING join request.
+   * Regional or Special Convention: invite-only, throws error.
+   */
+  async requestToJoinEvent(
+    eventId: string,
+    userId: string,
+    departmentType?: string,
+    note?: string
+  ) {
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+      include: { template: true },
+    });
+
+    if (!event) {
+      throw new NotFoundError('Event');
+    }
+
+    // Regional and special conventions are invite-only
+    if (
+      event.template.eventType === 'REGIONAL_CONVENTION' ||
+      event.template.eventType === 'SPECIAL_CONVENTION'
+    ) {
+      throw new ValidationError(
+        'Regional and special convention events are invite-only. Please contact your department overseer.'
+      );
+    }
+
+    // Check if already a volunteer for this event
+    const existingVolunteer = await this.prisma.eventVolunteer.findUnique({
+      where: { userId_eventId: { userId, eventId } },
+    });
+
+    if (existingVolunteer) {
+      throw new ValidationError('You are already a volunteer for this event.');
+    }
+
+    // Check for existing request
+    const existingRequest = await this.prisma.eventJoinRequest.findUnique({
+      where: { eventId_userId: { eventId, userId } },
+    });
+
+    if (existingRequest) {
+      if (existingRequest.status === 'PENDING') {
+        throw new ValidationError('You already have a pending join request for this event.');
+      }
+      // If denied, allow re-request by updating
+      return this.prisma.eventJoinRequest.update({
+        where: { id: existingRequest.id },
+        data: {
+          status: 'PENDING',
+          departmentType: departmentType as any,
+          note,
+          resolvedAt: null,
+          resolvedById: null,
+        },
+        include: { user: true, event: { include: { template: true } } },
+      });
+    }
+
+    return this.prisma.eventJoinRequest.create({
+      data: {
+        eventId,
+        userId,
+        departmentType: departmentType as any,
+        note,
+      },
+      include: { user: true, event: { include: { template: true } } },
+    });
+  }
+
+  /**
+   * Cancel a pending join request (by the requesting user).
+   */
+  async cancelJoinRequest(requestId: string, userId: string) {
+    const request = await this.prisma.eventJoinRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!request) {
+      throw new NotFoundError('Join request');
+    }
+
+    if (request.userId !== userId) {
+      throw new ValidationError('You can only cancel your own join requests.');
+    }
+
+    if (request.status !== 'PENDING') {
+      throw new ValidationError('Only pending requests can be cancelled.');
+    }
+
+    return this.prisma.eventJoinRequest.delete({
+      where: { id: requestId },
+    });
+  }
+
+  /**
+   * Approve a join request (overseer action).
+   * Creates an EventVolunteer record with generated credentials.
+   */
+  async approveJoinRequest(requestId: string, adminUserId: string) {
+    const request = await this.prisma.eventJoinRequest.findUnique({
+      where: { id: requestId },
+      include: { user: true, event: { include: { template: true } } },
+    });
+
+    if (!request) {
+      throw new NotFoundError('Join request');
+    }
+
+    if (request.status !== 'PENDING') {
+      throw new ValidationError('Only pending requests can be approved.');
+    }
+
+    const volunteerId = generateEventVolunteerId();
+    const token = generateToken();
+    const tokenHash = await hashToken(token);
+
+    return this.prisma.$transaction(async (tx) => {
+      // Mark request approved
+      await tx.eventJoinRequest.update({
+        where: { id: requestId },
+        data: {
+          status: 'APPROVED',
+          resolvedAt: new Date(),
+          resolvedById: adminUserId,
+        },
+      });
+
+      // Create EventVolunteer record
+      const eventVolunteer = await tx.eventVolunteer.create({
+        data: {
+          volunteerId,
+          tokenHash,
+          encryptedToken: encryptField(token),
+          userId: request.userId,
+          eventId: request.eventId,
+          departmentId: undefined,
+        },
+        include: { user: true, event: { include: { template: true } } },
+      });
+
+      return {
+        eventVolunteer,
+        volunteerId,
+        token,
+        inviteMessage: `Hi ${request.user.firstName}! Your request to join ${request.event.template.name} has been approved.\n\nYour login credentials:\nVolunteer ID: ${volunteerId}\nToken: ${token}`,
+      };
+    });
+  }
+
+  /**
+   * Deny a join request (overseer action).
+   */
+  async denyJoinRequest(requestId: string, adminUserId: string, reason?: string) {
+    const request = await this.prisma.eventJoinRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!request) {
+      throw new NotFoundError('Join request');
+    }
+
+    if (request.status !== 'PENDING') {
+      throw new ValidationError('Only pending requests can be denied.');
+    }
+
+    return this.prisma.eventJoinRequest.update({
+      where: { id: requestId },
+      data: {
+        status: 'DENIED',
+        resolvedAt: new Date(),
+        resolvedById: adminUserId,
+        note: reason || request.note,
+      },
+      include: { user: true, event: { include: { template: true } } },
+    });
+  }
+
+  /**
+   * Add a volunteer directly by their 6-char userId (overseer action).
+   * Bypasses join request flow — overseer invites directly.
+   */
+  async addVolunteerByUserId(
+    eventId: string,
+    userShortId: string,
+    adminUserId: string,
+    departmentId?: string
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { userId: userShortId },
+    });
+
+    if (!user) {
+      throw new NotFoundError(`No user found with ID: ${userShortId}`);
+    }
+
+    // Check if already added
+    const existing = await this.prisma.eventVolunteer.findUnique({
+      where: { userId_eventId: { userId: user.id, eventId } },
+    });
+
+    if (existing) {
+      throw new ValidationError('This user is already a volunteer for this event.');
+    }
+
+    const volunteerId = generateEventVolunteerId();
+    const token = generateToken();
+    const tokenHash = await hashToken(token);
+
+    const eventVolunteer = await this.prisma.eventVolunteer.create({
+      data: {
+        volunteerId,
+        tokenHash,
+        encryptedToken: encryptField(token),
+        userId: user.id,
+        eventId,
+        departmentId,
+      },
+      include: { user: true, event: { include: { template: true } } },
+    });
+
+    return {
+      eventVolunteer,
+      volunteerId,
+      token,
+      inviteMessage: `Hi ${user.firstName}! You've been added to ${eventVolunteer.event.template.name}.\n\nYour login credentials:\nVolunteer ID: ${volunteerId}\nToken: ${token}`,
+    };
+  }
+
+  /**
+   * Get all join requests for an event (overseer view).
+   */
+  async getEventJoinRequests(eventId: string, status?: string) {
+    return this.prisma.eventJoinRequest.findMany({
+      where: {
+        eventId,
+        ...(status && { status: status as any }),
+      },
+      include: { user: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Get all join requests for the current user.
+   */
+  async getMyJoinRequests(userId: string) {
+    return this.prisma.eventJoinRequest.findMany({
+      where: { userId },
+      include: { event: { include: { template: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   /**

@@ -1,22 +1,21 @@
 export const volunteerProfileTypeDefs = `#graphql
   type VolunteerProfile {
     id: ID!
+    userId: String!
     firstName: String!
     lastName: String!
     email: String
     phone: String
-    appointmentStatus: AppointmentStatus!
-    notes: String
-    congregation: Congregation!
+    appointmentStatus: AppointmentStatus
+    congregation: Congregation
     eventVolunteers: [EventVolunteer!]!
     createdAt: DateTime!
-    updatedAt: DateTime!
   }
 
   type EventVolunteer {
     id: ID!
     volunteerId: String!
-    volunteerProfile: VolunteerProfile!
+    user: User!
     event: Event!
     department: Department
     role: Role
@@ -32,41 +31,8 @@ export const volunteerProfileTypeDefs = `#graphql
     inviteMessage: String!
   }
 
-  input CreateVolunteerProfileInput {
-    firstName: String!
-    lastName: String!
-    email: String
-    phone: String
-    appointmentStatus: AppointmentStatus
-    notes: String
-    congregationId: ID!
-  }
-
-  input UpdateVolunteerProfileInput {
-    firstName: String
-    lastName: String
-    email: String
-    phone: String
-    appointmentStatus: AppointmentStatus
-    notes: String
-    congregationId: ID
-  }
-
   input AddVolunteerToEventInput {
-    volunteerProfileId: ID!
-    eventId: ID!
-    departmentId: ID
-    roleId: ID
-  }
-
-  input CreateAndAddVolunteerInput {
-    firstName: String!
-    lastName: String!
-    email: String
-    phone: String
-    appointmentStatus: AppointmentStatus
-    notes: String
-    congregationId: ID!
+    userId: ID!
     eventId: ID!
     departmentId: ID
     roleId: ID
@@ -82,15 +48,9 @@ export const volunteerProfileTypeDefs = `#graphql
   }
 
   extend type Mutation {
-    createVolunteerProfile(input: CreateVolunteerProfileInput!): VolunteerProfile!
-    updateVolunteerProfile(id: ID!, input: UpdateVolunteerProfileInput!): VolunteerProfile!
-    deleteVolunteerProfile(id: ID!): Boolean!
-
     addVolunteerToEvent(input: AddVolunteerToEventInput!): EventVolunteerCredentials!
     removeVolunteerFromEvent(eventVolunteerId: ID!): Boolean!
-
-    createAndAddVolunteer(input: CreateAndAddVolunteerInput!): EventVolunteerCredentials!
-
+    addVolunteerByUserId(eventId: ID!, userId: String!, departmentId: ID): EventVolunteerCredentials!
     regenerateVolunteerToken(eventVolunteerId: ID!): EventVolunteerCredentials!
   }
 `;

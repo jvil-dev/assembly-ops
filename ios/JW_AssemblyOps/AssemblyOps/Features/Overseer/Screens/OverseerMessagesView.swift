@@ -42,7 +42,7 @@ struct OverseerMessagesView: View {
     }
 
     private var currentUserId: String? {
-        AppState.shared.currentOverseer?.id
+        AppState.shared.currentUser?.id
     }
 
     enum OverseerMessageTab: String, CaseIterable {

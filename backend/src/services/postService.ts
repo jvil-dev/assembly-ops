@@ -258,8 +258,8 @@ export class PostService {
 
     const eventAdmin = await this.prisma.eventAdmin.findUnique({
       where: {
-        adminId_eventId: {
-          adminId,
+        userId_eventId: {
+          userId: adminId,
           eventId: post.department.eventId,
         },
       },

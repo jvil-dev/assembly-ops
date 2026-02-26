@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "UpdateAttendanceCount"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation UpdateAttendanceCount($id: ID!, $input: UpdateAttendanceCountInput!) { updateAttendanceCount(id: $id, input: $input) { __typename id count notes updatedAt } }"#
+        #"mutation UpdateAttendanceCount($id: ID!, $input: UpdateAttendanceCountInput!) { updateAttendanceCount(id: $id, input: $input) { __typename id count notes createdAt } }"#
       ))
 
     public var id: ID
@@ -57,7 +57,7 @@ extension AssemblyOpsAPI {
           .field("id", AssemblyOpsAPI.ID.self),
           .field("count", Int.self),
           .field("notes", String?.self),
-          .field("updatedAt", AssemblyOpsAPI.DateTime.self),
+          .field("createdAt", AssemblyOpsAPI.DateTime.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
           UpdateAttendanceCountMutation.Data.UpdateAttendanceCount.self
@@ -66,7 +66,7 @@ extension AssemblyOpsAPI {
         var id: AssemblyOpsAPI.ID { __data["id"] }
         var count: Int { __data["count"] }
         var notes: String? { __data["notes"] }
-        var updatedAt: AssemblyOpsAPI.DateTime { __data["updatedAt"] }
+        var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }
       }
     }
   }

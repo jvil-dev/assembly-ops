@@ -67,7 +67,7 @@ const congregationResolvers = {
     },
 
     volunteerProfiles: async (congregation: Congregation, _args: unknown, context: Context) => {
-      return context.prisma.volunteerProfile.findMany({
+      return context.prisma.user.findMany({
         where: { congregationId: congregation.id },
         orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
       });
