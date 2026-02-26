@@ -41,7 +41,8 @@ final class RegistrationViewModel: ObservableObject {
     @Published var firstName = ""
     @Published var lastName = ""
     @Published var phone = ""
-    @Published var congregation = ""
+    @Published var congregationName = ""  // display name set by CongregationSearchField
+    @Published var congregationId: String? = nil  // DB id set on selection
     @Published var appointmentStatus: String? = nil
     @Published var isOverseer: Bool = false
     @Published var isLoading: Bool = false
@@ -91,8 +92,9 @@ final class RegistrationViewModel: ObservableObject {
 
         let phoneValue: GraphQLNullable<String> = phone.trimmingCharacters(in: .whitespaces).isEmpty
             ? .none : .some(phone.trimmingCharacters(in: .whitespaces))
-        let congregationValue: GraphQLNullable<String> = congregation.trimmingCharacters(in: .whitespaces).isEmpty
-            ? .none : .some(congregation.trimmingCharacters(in: .whitespaces))
+        let congregationValue: GraphQLNullable<String> = congregationName.trimmingCharacters(in: .whitespaces).isEmpty
+            ? .none : .some(congregationName.trimmingCharacters(in: .whitespaces))
+        let congregationIdValue: GraphQLNullable<AssemblyOpsAPI.ID> = congregationId.map { .some($0) } ?? .none
 
         let input = AssemblyOpsAPI.RegisterUserInput(
             email: email.lowercased().trimmingCharacters(in: .whitespaces),
@@ -101,6 +103,7 @@ final class RegistrationViewModel: ObservableObject {
             lastName: lastName.trimmingCharacters(in: .whitespaces),
             phone: phoneValue,
             congregation: congregationValue,
+            congregationId: congregationIdValue,
             appointmentStatus: appointmentStatusEnum,
             isOverseer: isOverseer ? .some(true) : .none
         )
@@ -125,6 +128,7 @@ final class RegistrationViewModel: ObservableObject {
                             appointmentStatus: data.user.appointmentStatus?.rawValue,
                             isOverseer: data.user.isOverseer
                         )
+                        HapticManager.shared.success()
                         self?.appState.didLogin(
                             user: user,
                             accessToken: data.accessToken,
@@ -133,9 +137,11 @@ final class RegistrationViewModel: ObservableObject {
                         )
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
                         self?.errorMessage = errors.first?.message ?? "Registration failed"
+                        HapticManager.shared.error()
                     }
                 case .failure:
                     self?.errorMessage = "Unable to connect. Please try again."
+                    HapticManager.shared.error()
                 }
                 self?.isLoading = false
             }

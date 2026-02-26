@@ -133,11 +133,11 @@ struct OAuthRegistrationView: View {
                     .foregroundStyle(AppTheme.themeColor)
             }
 
-            Text("Complete Registration")
+            Text("auth.oauth.completeRegistration".localized)
                 .font(.system(size: 24, weight: .bold))
                 .foregroundStyle(AppTheme.themeColor)
 
-            Text("Just a few more details to get started")
+            Text("auth.oauth.subtitle".localized)
                 .font(.subheadline)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
         }
@@ -228,7 +228,7 @@ struct OAuthRegistrationView: View {
                 if isSubmitting {
                     ProgressView().tint(.white)
                 } else {
-                    Text("Complete Registration")
+                    Text("auth.oauth.completeRegistration".localized)
                         .font(.system(size: 17, weight: .semibold))
                 }
             }
@@ -249,7 +249,7 @@ struct OAuthRegistrationView: View {
     // MARK: - Help
 
     private var helpText: some View {
-        Text("Your information is used for event coordination only")
+        Text("auth.privacyNote".localized)
             .font(.footnote)
             .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             .multilineTextAlignment(.center)
