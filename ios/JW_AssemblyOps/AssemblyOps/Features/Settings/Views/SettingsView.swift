@@ -12,7 +12,8 @@
 //
 // Sections:
 //   - Profile header: Avatar with initials, name, email, userId badge, edit button
-//   - Language: Segmented picker (English / Español)
+//   - Language: NavigationLink to LanguageSettingsView
+//   - Archived Events: NavigationLink to ArchivedEventsView
 //   - Logout: Destructive button with confirmation alert
 //
 // Navigation:
@@ -22,6 +23,7 @@
 //
 
 import SwiftUI
+import Apollo
 
 struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
@@ -33,6 +35,8 @@ struct SettingsView: View {
     @State private var showEditProfile = false
     @State private var hasAppeared = false
     @State private var copiedId = false
+    @State private var isSavingOverseerMode = false
+    @State private var showOverseerError = false
 
     var body: some View {
         NavigationStack {
@@ -42,17 +46,25 @@ struct SettingsView: View {
                     profileHeader
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                    // Language selector
-                    languageCard
+                    // Language nav row
+                    languageRow
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+
+                    // Archived Events nav row
+                    archivedEventsRow
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+
+                    // Overseer mode toggle
+                    overseerModeRow
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
 
                     // Logout button
                     logoutButton
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
 
                     // App version
                     appVersion
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
                 }
                 .screenPadding()
                 .padding(.top, AppTheme.Spacing.l)
@@ -84,6 +96,11 @@ struct SettingsView: View {
                 }
             } message: {
                 Text("settings.logout.confirm".localized)
+            }
+            .alert("common.error".localized, isPresented: $showOverseerError) {
+                Button("common.ok".localized, role: .cancel) {}
+            } message: {
+                Text("settings.overseerMode.error".localized)
             }
         }
     }
@@ -168,23 +185,115 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Language Card
+    // MARK: - Language Row
 
-    private var languageCard: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: AppTheme.Spacing.s) {
-                Image(systemName: "globe")
-                    .foregroundStyle(AppTheme.themeColor)
-                Text("LANGUAGE")
-                    .font(AppTheme.Typography.caption)
+    private var languageRow: some View {
+        NavigationLink {
+            LanguageSettingsView()
+        } label: {
+            HStack(spacing: AppTheme.Spacing.m) {
+                ZStack {
+                    Circle()
+                        .fill(AppTheme.themeColor.opacity(colorScheme == .dark ? 0.2 : 0.1))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "globe")
+                        .font(.system(size: 16))
+                        .foregroundStyle(AppTheme.themeColor)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("settings.language".localized)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(.primary)
+                    Text(localizationManager.currentLanguage == "es" ? "Español" : "English")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
+            .cardPadding()
+            .themedCard(scheme: colorScheme)
+        }
+        .buttonStyle(.plain)
+    }
 
-            Picker("language.select".localized, selection: $localizationManager.currentLanguage) {
-                Text("language.english".localized).tag("en")
-                Text("language.spanish".localized).tag("es")
+    // MARK: - Archived Events Row
+
+    private var archivedEventsRow: some View {
+        NavigationLink {
+            ArchivedEventsView()
+        } label: {
+            HStack(spacing: AppTheme.Spacing.m) {
+                ZStack {
+                    Circle()
+                        .fill(Color.orange.opacity(colorScheme == .dark ? 0.2 : 0.1))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "archivebox")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.orange)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("settings.archivedEvents".localized)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(.primary)
+                    Text("settings.archivedEvents.subtitle".localized)
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
-            .pickerStyle(.segmented)
+            .cardPadding()
+            .themedCard(scheme: colorScheme)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Overseer Mode Row
+
+    private var overseerModeRow: some View {
+        HStack(spacing: AppTheme.Spacing.m) {
+            ZStack {
+                Circle()
+                    .fill(Color.purple.opacity(colorScheme == .dark ? 0.2 : 0.1))
+                    .frame(width: 40, height: 40)
+                Image(systemName: "building.2")
+                    .font(.system(size: 16))
+                    .foregroundStyle(.purple)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("profile.overseerMode".localized)
+                    .font(AppTheme.Typography.bodyMedium)
+                    .foregroundStyle(.primary)
+                Text("profile.overseerMode.subtitle".localized)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            }
+
+            Spacer()
+
+            if isSavingOverseerMode {
+                ProgressView()
+                    .scaleEffect(0.8)
+            } else {
+                Toggle("", isOn: Binding(
+                    get: { appState.isOverseer },
+                    set: { newValue in setOverseerMode(newValue) }
+                ))
+                .labelsHidden()
+                .tint(AppTheme.themeColor)
+            }
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
@@ -214,6 +323,27 @@ struct SettingsView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Overseer Mode Mutation
+
+    private func setOverseerMode(_ newValue: Bool) {
+        isSavingOverseerMode = true
+        NetworkClient.shared.apollo.perform(
+            mutation: AssemblyOpsAPI.SetOverseerModeMutation(isOverseer: newValue)
+        ) { result in
+            Task { @MainActor in
+                self.isSavingOverseerMode = false
+                if case .success(let r) = result, r.data?.setOverseerMode != nil {
+                    self.appState.didUpdateOverseerMode(isOverseer: newValue)
+                    HapticManager.shared.success()
+                } else {
+                    self.appState.didUpdateOverseerMode(isOverseer: !newValue)
+                    self.showOverseerError = true
+                    HapticManager.shared.error()
+                }
+            }
+        }
     }
 
     // MARK: - App Version
