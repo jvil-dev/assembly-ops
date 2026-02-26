@@ -70,22 +70,6 @@ final class AdminManagementViewModel: ObservableObject {
         isLoading = false
     }
 
-    func promoteToAppAdmin(eventId: String, adminId: String) async throws {
-        isPromoting = true
-        defer { isPromoting = false }
-
-        let input = AssemblyOpsAPI.PromoteToAppAdminInput(
-            eventId: eventId,
-            adminId: adminId
-        )
-
-        _ = try await NetworkClient.shared.apollo.perform(
-            mutation: AssemblyOpsAPI.PromoteToAppAdminMutation(input: input)
-        )
-
-        HapticManager.shared.success()
-        await loadEventAdmins(eventId: eventId)
-    }
 }
 
 struct EventAdminItem: Identifiable {

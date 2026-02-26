@@ -12,19 +12,18 @@
 //
 // Sections:
 //   - Event Picker Header: Tap to switch events (shows current event name/venue)
-//   - Department Selector: Event Overseers can switch departments (hidden for Dept Overseers)
 //   - Dashboard Content: Event statistics, quick actions, coverage summary
 //
 // Features:
 //   - Auto-loads events on appear via OverseerSessionState.loadEvents()
-//   - Conditionally shows department picker for Event Overseers
 //   - Displays selectEventPrompt when no event selected
 //   - Warm gradient background with floating cards
 //   - Staggered entrance animations
+//   - Department Settings navigation card
 //
 // Navigation:
 //   - EventPickerSheet: Modal for event selection
-//   - DepartmentPickerSheet: Modal for department selection (Event Overseers)
+//   - DepartmentSettingsView: Department configuration and hierarchy
 //
 
 import SwiftUI
@@ -36,7 +35,6 @@ struct OverseerDashboardView: View {
     @StateObject private var messagesVM = SentMessagesViewModel()
     @Environment(\.colorScheme) var colorScheme
     @State private var showEventPicker = false
-    @State private var showDepartmentPicker = false
     @State private var hasAppeared = false
 
     private var departmentAccentColor: Color {
@@ -53,12 +51,6 @@ struct OverseerDashboardView: View {
                 eventPickerHeader
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                // Department selector (Event Overseers only)
-                if sessionState.isEventOverseer && sessionState.selectedEvent != nil {
-                    departmentSelector
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
-                }
-
                 if let event = sessionState.selectedEvent {
                     if sessionState.selectedDepartment?.departmentType == "ATTENDANT" {
                         AttendantDashboardView()
@@ -70,12 +62,9 @@ struct OverseerDashboardView: View {
                 }
             }
             .themedBackground(scheme: colorScheme)
-            .navigationTitle("Dashboard")
+            .navigationTitle("overseer.dashboard.title".localized)
             .sheet(isPresented: $showEventPicker) {
                 EventPickerSheet()
-            }
-            .sheet(isPresented: $showDepartmentPicker) {
-                DepartmentPickerSheet()
             }
             .onAppear {
                 withAnimation(AppTheme.entranceAnimation) {
@@ -86,7 +75,7 @@ struct OverseerDashboardView: View {
         .task {
             await sessionState.loadEvents()
 
-            // Load attendance summary - provides session data dor check-in stats
+            // Load attendance summary - provides session data for check-in stats
             if let eventId = sessionState.selectedEvent?.id {
                 await attendanceVM.loadEventSummary(eventId: eventId)
                 await checkInStatsVM.loadStatsForLatestSession(sessions: attendanceVM.sessionSummaries)
@@ -103,7 +92,7 @@ struct OverseerDashboardView: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                    Text(sessionState.selectedEvent?.name ?? "Select Event")
+                    Text(sessionState.selectedEvent?.name ?? "overseer.dashboard.selectEvent".localized)
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)
                     if let venue = sessionState.selectedEvent?.venue {
@@ -124,34 +113,6 @@ struct OverseerDashboardView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Department Selector
-
-    private var departmentSelector: some View {
-        Button {
-            showDepartmentPicker = true
-        } label: {
-            HStack(spacing: AppTheme.Spacing.s) {
-                Image(systemName: "building.2")
-                    .font(.system(size: 14))
-                    .foregroundStyle(departmentAccentColor)
-
-                Text(sessionState.selectedDepartment?.name ?? "All Departments")
-                    .font(AppTheme.Typography.subheadline)
-                    .foregroundStyle(.primary)
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-            }
-            .padding(.horizontal, AppTheme.Spacing.cardPadding)
-            .padding(.vertical, AppTheme.Spacing.m)
-            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-        }
-        .buttonStyle(.plain)
-    }
-
     // MARK: - Dashboard Content
 
     @ViewBuilder
@@ -162,15 +123,19 @@ struct OverseerDashboardView: View {
                 statsSection
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
 
-                // Join requests (Event Overseers only)
-                if sessionState.isEventOverseer {
-                    joinRequestsCard(eventId: event.id)
+                // Department Settings
+                if let dept = sessionState.claimedDepartment {
+                    departmentSettingsCard(department: dept)
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.13)
                 }
 
+                // Join requests
+                joinRequestsCard(eventId: event.id)
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+
                 // Assignments overview
                 assignmentsOverviewSection
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.18)
 
                 // Check-in stats and attendance actions
                 recentActivitySection
@@ -179,6 +144,41 @@ struct OverseerDashboardView: View {
             .padding(.top, AppTheme.Spacing.l)
             .padding(.bottom, AppTheme.Spacing.xxl)
         }
+    }
+
+    // MARK: - Department Settings Card
+
+    private func departmentSettingsCard(department: DepartmentSummary) -> some View {
+        NavigationLink(destination: DepartmentSettingsView(departmentId: department.id)) {
+            HStack(spacing: AppTheme.Spacing.m) {
+                ZStack {
+                    Circle()
+                        .fill(departmentAccentColor.opacity(0.15))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "gearshape.2")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(departmentAccentColor)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("departmentSettings.title".localized)
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(.primary)
+                    Text(department.name)
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+            .cardPadding()
+            .themedCard(scheme: colorScheme)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Join Requests Card
@@ -196,10 +196,10 @@ struct OverseerDashboardView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Join Requests")
+                    Text("overseer.joinRequests.title".localized)
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)
-                    Text("Review pending volunteer requests")
+                    Text("overseer.joinRequests.subtitle".localized)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 }
@@ -220,9 +220,9 @@ struct OverseerDashboardView: View {
 
     private var selectEventPrompt: some View {
         ContentUnavailableView(
-            "No Event Selected",
+            "overseer.dashboard.noEvent.title".localized,
             systemImage: "calendar",
-            description: Text("Tap above to select an event to manage")
+            description: Text("overseer.dashboard.noEvent.subtitle".localized)
         )
     }
 
@@ -231,28 +231,28 @@ struct OverseerDashboardView: View {
     private var statsSection: some View {
         LazyVGrid(columns: [.init(), .init()], spacing: AppTheme.Spacing.m) {
             StatCard(
-                title: "Volunteers",
+                title: "overseer.dashboard.stat.volunteers".localized,
                 value: "\(sessionState.selectedDepartment?.volunteerCount ?? sessionState.selectedEvent?.volunteerCount ?? 0)",
                 icon: "person.3",
                 accentColor: departmentAccentColor,
                 colorScheme: colorScheme
             )
             StatCard(
-                title: "Assignments",
+                title: "overseer.dashboard.stat.assignments".localized,
                 value: "—",
                 icon: "calendar",
                 accentColor: departmentAccentColor,
                 colorScheme: colorScheme
             )
             StatCard(
-                title: "Pending",
+                title: "overseer.dashboard.stat.pending".localized,
                 value: "—",
                 icon: "clock",
                 accentColor: departmentAccentColor,
                 colorScheme: colorScheme
             )
             StatCard(
-                title: "Coverage",
+                title: "overseer.dashboard.stat.coverage".localized,
                 value: "—",
                 icon: "chart.pie",
                 accentColor: departmentAccentColor,
@@ -265,7 +265,7 @@ struct OverseerDashboardView: View {
 
     private var assignmentsOverviewSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            Text("Assignments Overview")
+            Text("overseer.dashboard.assignmentsOverview".localized)
                 .font(AppTheme.Typography.headline)
                 .foregroundStyle(departmentAccentColor)
 
@@ -275,7 +275,7 @@ struct OverseerDashboardView: View {
                     Image(systemName: "tablecells")
                         .font(.system(size: 28))
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                    Text("View the Assignments tab for coverage details")
+                    Text("overseer.dashboard.assignmentsHint".localized)
                         .font(AppTheme.Typography.subheadline)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                         .multilineTextAlignment(.center)
@@ -306,7 +306,7 @@ struct OverseerDashboardView: View {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "number")
                     .foregroundStyle(departmentAccentColor)
-                Text("ATTENDANCE")
+                Text("overseer.dashboard.attendance".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
@@ -317,7 +317,7 @@ struct OverseerDashboardView: View {
                         .foregroundStyle(departmentAccentColor)
                         .frame(width: 24)
 
-                    Text("Submit Count")
+                    Text("overseer.dashboard.submitCount".localized)
                         .font(AppTheme.Typography.subheadline)
                         .foregroundStyle(.primary)
 
@@ -339,7 +339,7 @@ struct OverseerDashboardView: View {
                         .foregroundStyle(departmentAccentColor)
                         .frame(width: 24)
 
-                    Text("View Summary")
+                    Text("overseer.dashboard.viewSummary".localized)
                         .font(AppTheme.Typography.subheadline)
                         .foregroundStyle(.primary)
 

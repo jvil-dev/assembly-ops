@@ -52,15 +52,13 @@ struct AssignmentsView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        if sessionState.isEventOverseer {
-                            Button {
-                                showCreateSession = true
-                            } label: {
-                                Label("session.create".localized, systemImage: "calendar.badge.plus")
-                            }
-
-                            Divider()
+                        Button {
+                            showCreateSession = true
+                        } label: {
+                            Label("session.create".localized, systemImage: "calendar.badge.plus")
                         }
+
+                        Divider()
 
                         NavigationLink {
                             DeclinedAssignmentsView()

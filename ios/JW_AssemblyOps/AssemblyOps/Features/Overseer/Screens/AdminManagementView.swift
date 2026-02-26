@@ -62,24 +62,6 @@ struct AdminManagementView: View {
         .navigationTitle(NSLocalizedString("admin.manage.title", comment: ""))
         .refreshable { await loadData() }
         .task { await loadData() }
-        .alert(
-            NSLocalizedString("admin.promote.alert.title", comment: ""),
-            isPresented: Binding(
-                get: { adminToPromote != nil },
-                set: { if !$0 { adminToPromote = nil } }
-            )
-        ) {
-            Button(NSLocalizedString("common.cancel", comment: ""), role: .cancel) {
-                adminToPromote = nil
-            }
-            Button(NSLocalizedString("admin.promote.button", comment: "")) {
-                Task { await performPromotion() }
-            }
-        } message: {
-            if let admin = adminToPromote {
-                Text(String(format: NSLocalizedString("admin.promote.alert.message", comment: ""), admin.fullName))
-            }
-        }
         .onAppear {
             withAnimation(AppTheme.entranceAnimation) {
                 hasAppeared = true
@@ -111,17 +93,12 @@ struct AdminManagementView: View {
 
                 Spacer()
 
-                Text(admin.isAppAdmin
-                     ? NSLocalizedString("role.app_admin", comment: "")
-                     : NSLocalizedString("role.department_overseer", comment: ""))
+                Text(NSLocalizedString("role.department_overseer", comment: ""))
                     .font(AppTheme.Typography.captionBold)
-                    .foregroundStyle(admin.isAppAdmin ? AppTheme.themeColor : .secondary)
+                    .foregroundStyle(.secondary)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(
-                        (admin.isAppAdmin ? AppTheme.themeColor : Color.secondary)
-                            .opacity(0.15)
-                    )
+                    .background(Color.secondary.opacity(0.15))
                     .clipShape(Capsule())
             }
 
@@ -136,7 +113,7 @@ struct AdminManagementView: View {
                 }
             }
 
-            if sessionState.isEventOverseer && !admin.isAppAdmin {
+            if false { // Promote feature removed — no APP_ADMIN role
                 Divider()
 
                 Button {
@@ -181,17 +158,6 @@ struct AdminManagementView: View {
         await viewModel.loadEventAdmins(eventId: eventId)
     }
 
-    private func performPromotion() async {
-        guard let admin = adminToPromote,
-              let eventId = sessionState.selectedEvent?.id else { return }
-
-        do {
-            try await viewModel.promoteToAppAdmin(eventId: eventId, adminId: admin.adminId)
-            adminToPromote = nil
-        } catch {
-            viewModel.error = error.localizedDescription
-        }
-    }
 }
 
 #Preview {

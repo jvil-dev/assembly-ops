@@ -35,7 +35,7 @@ struct VolunteerListView: View {
     @Environment(\.colorScheme) var colorScheme
 
     @State private var searchText = ""
-    @State private var showCreateVolunteer = false
+    @State private var showAddVolunteer = false
     @State private var selectedTab: VolunteerTab = .myDepartment
     @State private var hasAppeared = false
     @State private var volunteerToDelete: VolunteerListItem?
@@ -90,15 +90,15 @@ struct VolunteerListView: View {
                 ToolbarItem(placement: .primaryAction) {
                     if isEditable {
                         Button {
-                            showCreateVolunteer = true
+                            showAddVolunteer = true
                         } label: {
                             Image(systemName: "plus")
                         }
                     }
                 }
             }
-            .sheet(isPresented: $showCreateVolunteer) {
-                CreateVolunteerSheet(viewModel: viewModel)
+            .sheet(isPresented: $showAddVolunteer) {
+                AddVolunteerSheet(viewModel: viewModel)
             }
             .refreshable {
                 await loadVolunteers()
@@ -223,13 +223,13 @@ struct VolunteerListView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
 
-            Text(selectedTab == .myDepartment ? "No Volunteers" : "No Event Volunteers")
+            Text(selectedTab == .myDepartment ? "volunteers.empty.title".localized : "volunteers.allEmpty.title".localized)
                 .font(AppTheme.Typography.headline)
                 .foregroundStyle(.primary)
 
             Text(selectedTab == .myDepartment
-                ? "Tap + to add your first volunteer"
-                : "No volunteers have been added to this event yet")
+                ? "volunteers.empty.subtitle".localized
+                : "volunteers.allEmpty.subtitle".localized)
                 .font(AppTheme.Typography.subheadline)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 .multilineTextAlignment(.center)
