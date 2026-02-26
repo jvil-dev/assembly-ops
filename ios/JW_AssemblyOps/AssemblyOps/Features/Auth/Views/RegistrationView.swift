@@ -33,7 +33,7 @@ struct RegistrationView: View {
     @State private var showError = false
 
     private enum Field: Hashable {
-        case firstName, lastName, email, password, confirmPassword, phone, congregation
+        case firstName, lastName, email, password, confirmPassword, phone
     }
 
     var body: some View {
@@ -231,25 +231,24 @@ struct RegistrationView: View {
                 text: $viewModel.phone,
                 isSecure: false,
                 isFocused: focusedField == .phone,
-                onSubmit: { focusedField = .congregation },
+                onSubmit: { focusedField = nil },
                 autocapitalization: .never,
                 keyboardType: .phonePad,
                 isMonospaced: false
             )
             .focused($focusedField, equals: .phone)
 
-            UnderlineTextField(
-                label: "CONGREGATION",
-                placeholder: "Your congregation name",
-                text: $viewModel.congregation,
-                isSecure: false,
-                isFocused: focusedField == .congregation,
-                onSubmit: { focusedField = nil },
-                autocapitalization: .words,
-                keyboardType: .default,
-                isMonospaced: false
-            )
-            .focused($focusedField, equals: .congregation)
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                Text("CONGREGATION")
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(0.6)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+                CongregationSearchField(
+                    selectedName: $viewModel.congregationName,
+                    selectedId: $viewModel.congregationId
+                )
+            }
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
                 Text("APPOINTMENT STATUS")
@@ -308,7 +307,7 @@ struct RegistrationView: View {
                 Rectangle()
                     .fill(AppTheme.dividerColor(for: colorScheme))
                     .frame(height: 1)
-                Text("or sign up with")
+                Text("auth.orSignUpWith".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                     .fixedSize()
@@ -389,7 +388,7 @@ struct RegistrationView: View {
     // MARK: - Terms
 
     private var termsCaption: some View {
-        Text("By creating an account, you agree to our Terms of Service")
+        Text("auth.termsAgreement".localized)
             .font(.footnote)
             .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             .multilineTextAlignment(.center)

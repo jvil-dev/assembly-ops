@@ -4,7 +4,7 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI {
-  struct PromoteToAppAdminInput: InputObject {
+  struct PurchaseDepartmentInput: InputObject {
     private(set) var __data: InputDict
 
     init(_ data: InputDict) {
@@ -13,11 +13,11 @@ extension AssemblyOpsAPI {
 
     init(
       eventId: ID,
-      adminId: ID
+      departmentType: GraphQLEnum<DepartmentType>
     ) {
       __data = InputDict([
         "eventId": eventId,
-        "adminId": adminId
+        "departmentType": departmentType
       ])
     }
 
@@ -26,9 +26,9 @@ extension AssemblyOpsAPI {
       set { __data["eventId"] = newValue }
     }
 
-    var adminId: ID {
-      get { __data["adminId"] }
-      set { __data["adminId"] = newValue }
+    var departmentType: GraphQLEnum<DepartmentType> {
+      get { __data["departmentType"] }
+      set { __data["departmentType"] = newValue }
     }
   }
 

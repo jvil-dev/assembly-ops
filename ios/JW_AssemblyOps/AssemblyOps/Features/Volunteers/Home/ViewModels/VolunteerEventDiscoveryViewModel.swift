@@ -8,18 +8,20 @@
 // MARK: - Volunteer Event Discovery View Model
 //
 // Loads publicly visible events and handles join requests.
+// Also supports joining a department directly via access code.
 // Used by VolunteerEventDiscoveryView.
 //
 // Methods:
 //   - loadEvents(): Fetch public events from discoverEvents query
 //   - requestToJoin(eventId:departmentType:note:): Submit join request
+//   - joinByAccessCode(code:): Join department directly via access code
 //
 
 import Foundation
 import Combine
 import Apollo
 
-struct DiscoverableEvent: Identifiable {
+struct DiscoverableEvent: Identifiable, Hashable {
     let id: String
     let name: String
     let eventType: String      // raw value e.g. "CIRCUIT_ASSEMBLY"
@@ -53,6 +55,17 @@ final class VolunteerEventDiscoveryViewModel: ObservableObject {
     // Tracks pending requests by eventId
     @Published var pendingRequestIds: Set<String> = []
     @Published var sentRequestIds: Set<String> = []
+
+    // Access code join state
+    @Published var isJoiningByCode = false
+    @Published var accessCodeResult: AccessCodeJoinResult?
+
+    struct AccessCodeJoinResult: Identifiable {
+        let id = UUID()
+        let volunteerId: String
+        let token: String
+        let inviteMessage: String?
+    }
 
     func loadEvents() {
         isLoading = true
@@ -121,6 +134,44 @@ final class VolunteerEventDiscoveryViewModel: ObservableObject {
                     }
                 case .failure:
                     self?.errorMessage = "Unable to send request. Please try again."
+                    HapticManager.shared.error()
+                }
+            }
+        }
+    }
+
+    func joinByAccessCode(code: String) {
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        guard !trimmed.isEmpty else {
+            errorMessage = "volunteerDiscovery.accessCode.empty".localized
+            return
+        }
+
+        isJoiningByCode = true
+        errorMessage = nil
+
+        let input = AssemblyOpsAPI.JoinDepartmentByCodeInput(accessCode: trimmed)
+
+        NetworkClient.shared.apollo.perform(
+            mutation: AssemblyOpsAPI.JoinDepartmentByCodeMutation(input: input)
+        ) { [weak self] result in
+            Task { @MainActor in
+                self?.isJoiningByCode = false
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.joinDepartmentByAccessCode {
+                        self?.accessCodeResult = AccessCodeJoinResult(
+                            volunteerId: data.volunteerId,
+                            token: data.token,
+                            inviteMessage: data.inviteMessage
+                        )
+                        HapticManager.shared.success()
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        self?.errorMessage = errors.first?.message ?? "volunteerDiscovery.accessCode.failed".localized
+                        HapticManager.shared.error()
+                    }
+                case .failure(let error):
+                    self?.errorMessage = error.localizedDescription
                     HapticManager.shared.error()
                 }
             }

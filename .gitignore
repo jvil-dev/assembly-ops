@@ -70,6 +70,9 @@ temp/
 *.tgz
 .cache/
 
+# Worktrees
+.worktrees/
+
 # Xcode
   *.xcuserstate
   xcuserdata/

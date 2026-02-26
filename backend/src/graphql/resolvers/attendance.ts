@@ -174,7 +174,7 @@ const attendanceResolvers = {
       const eventId = await attendanceService.getSessionEventId(input.sessionId);
       await requireEventAccess(context, eventId);
 
-      return attendanceService.submitAttendanceCount(context.admin!.id, input);
+      return attendanceService.submitAttendanceCount(context.user!.id, input);
     },
 
     updateAttendanceCount: async (

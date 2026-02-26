@@ -4,41 +4,34 @@
  * Runtime validation for event-related inputs.
  *
  * Schemas:
- *   - activateEventSchema: Validates event activation (templateId required)
- *   - joinEventSchema: Validates joining an event (joinCode required)
- *   - claimDepartmentSchema: Validates department claiming (eventId + departmentType)
- *   - promoteToAppAdminSchema: Validates admin promotion (eventId + adminId)
- *
- * Note on nativeEnum:
- *   z.nativeEnum(DepartmentType) validates against Prisma's enum values.
- *   This ensures only valid department types (ATTENDANT, PARKING, etc.) are accepted.
+ *   - purchaseDepartmentSchema: Validates department purchase (eventId + departmentType)
+ *   - joinDepartmentByCodeSchema: Validates joining by access code
+ *   - assignHierarchyRoleSchema: Validates hierarchy role assignment
  *
  * Used by: ../../services/eventService.ts
  */
 import { z } from 'zod';
 import { DepartmentType } from '@prisma/client';
 
-export const activateEventSchema = z.object({
-  templateId: z.string().min(1, 'Template ID is required'),
-});
-
-export const joinEventSchema = z.object({
-  joinCode: z.string().min(1, 'Join code is required'),
-});
-
-export const claimDepartmentSchema = z.object({
+export const purchaseDepartmentSchema = z.object({
   eventId: z.string().min(1, 'Event ID is required'),
   departmentType: z.nativeEnum(DepartmentType, {
     error: 'Invalid department type',
   }),
 });
 
-export const promoteToAppAdminSchema = z.object({
-  eventId: z.string().cuid('Invalid event ID format'),
-  adminId: z.string().cuid('Invalid admin ID format'),
+export const joinDepartmentByCodeSchema = z.object({
+  accessCode: z.string().min(5, 'Access code is required').max(12, 'Access code too long'),
 });
 
-export type ActivateEventInput = z.infer<typeof activateEventSchema>;
-export type JoinEventInput = z.infer<typeof joinEventSchema>;
-export type ClaimDepartmentInput = z.infer<typeof claimDepartmentSchema>;
-export type PromoteToAppAdminInput = z.infer<typeof promoteToAppAdminSchema>;
+export const assignHierarchyRoleSchema = z.object({
+  departmentId: z.string().min(1, 'Department ID is required'),
+  eventVolunteerId: z.string().min(1, 'Event Volunteer ID is required'),
+  hierarchyRole: z.enum(['ASSISTANT_OVERSEER'], {
+    error: 'Invalid hierarchy role',
+  }),
+});
+
+export type PurchaseDepartmentInput = z.infer<typeof purchaseDepartmentSchema>;
+export type JoinDepartmentByCodeInput = z.infer<typeof joinDepartmentByCodeSchema>;
+export type AssignHierarchyRoleInput = z.infer<typeof assignHierarchyRoleSchema>;

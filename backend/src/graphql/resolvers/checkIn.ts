@@ -102,7 +102,7 @@ const checkInResolvers = {
       const eventId = await checkInService.getAssignmentEventId(input.assignmentId);
       await requireEventAccess(context, eventId);
 
-      return checkInService.adminCheckIn(context.admin!.id, input);
+      return checkInService.adminCheckIn(context.user!.id, input);
     },
 
     markNoShow: async (
@@ -116,7 +116,7 @@ const checkInResolvers = {
       const eventId = await checkInService.getAssignmentEventId(input.assignmentId);
       await requireEventAccess(context, eventId);
 
-      return checkInService.markNoShow(context.admin!.id, input);
+      return checkInService.markNoShow(context.user!.id, input);
     },
   },
 };

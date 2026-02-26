@@ -48,8 +48,8 @@ extension AssemblyOpsAPI {
       case "CoverageSession": return AssemblyOpsAPI.Objects.CoverageSession
       case "CoverageSlot": return AssemblyOpsAPI.Objects.CoverageSlot
       case "CoverageVolunteer": return AssemblyOpsAPI.Objects.CoverageVolunteer
-      case "CreatedVolunteer": return AssemblyOpsAPI.Objects.CreatedVolunteer
       case "Department": return AssemblyOpsAPI.Objects.Department
+      case "DepartmentHierarchy": return AssemblyOpsAPI.Objects.DepartmentHierarchy
       case "Event": return AssemblyOpsAPI.Objects.Event
       case "EventAdmin": return AssemblyOpsAPI.Objects.EventAdmin
       case "EventJoinRequest": return AssemblyOpsAPI.Objects.EventJoinRequest

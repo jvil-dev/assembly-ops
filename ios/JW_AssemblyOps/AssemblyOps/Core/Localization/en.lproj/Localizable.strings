@@ -14,6 +14,7 @@
 "common.success" = "Success";
 "common.retry" = "Retry";
 "common.search" = "Search";
+"common.searchFailed" = "Search failed. Check your connection.";
 "common.add" = "Add";
 "common.remove" = "Remove";
 "common.copy" = "Copy";
@@ -695,6 +696,8 @@
 "volunteer.eventDiscovery.pendingStatus.subtitle" = "Waiting for overseer approval. You'll be notified once added.";
 "volunteer.joinRequest.pending" = "Join Requests";
 
+"overseer.joinRequests.title" = "Join Requests";
+"overseer.joinRequests.subtitle" = "Review pending volunteer requests";
 "overseer.joinRequests.approve" = "Approve";
 "overseer.joinRequests.deny" = "Deny";
 
@@ -721,3 +724,155 @@
 "settings.editProfile" = "Edit Profile";
 "settings.appearance" = "Appearance";
 "settings.logout.confirm" = "Are you sure you want to log out?";
+"settings.language" = "Language";
+"settings.language.note" = "The app will update immediately when you switch languages.";
+"settings.archivedEvents" = "Archived Events";
+"settings.archivedEvents.subtitle" = "Past events older than 30 days";
+
+// MARK: - Sprint 6.12 — Department Autonomy & Browse Events Redesign
+
+// Browse Events — Overseer
+"browseEvents.overseer.title" = "Select an Event";
+"browseEvents.overseer.subtitle" = "Choose an event to purchase your department.";
+"browseEvents.empty.title" = "No Events Available";
+"browseEvents.empty.subtitle" = "Check back later for upcoming assemblies.";
+
+// Department Selection
+"departmentSelection.chooseTitle" = "Choose Your Department";
+"departmentSelection.confirm.title" = "Purchase Department";
+"departmentSelection.confirm.purchase" = "Confirm Purchase";
+"departmentSelection.confirm.message" = "Purchase %@ department for %@?";
+"departmentSelection.purchasing" = "Purchasing...";
+
+// Access Code Display
+"accessCode.title" = "Department Setup";
+"accessCode.success.title" = "Department Purchased!";
+"accessCode.success.subtitle" = "Share this access code with your volunteers.";
+"accessCode.label" = "ACCESS CODE";
+"accessCode.copy" = "Copy Code";
+"accessCode.copied" = "Copied!";
+"accessCode.share" = "Share";
+"accessCode.share.message" = "Join the %1$@ department for %2$@. Access code: %3$@";
+"accessCode.shareMessage" = "Join %@ department using this access code: %@";
+"accessCode.instructions.title" = "HOW TO SHARE";
+"accessCode.instructions.step1" = "Share this code with volunteers in your department";
+"accessCode.instructions.step2" = "They can enter it in the app to join your department instantly";
+"accessCode.instructions.step3" = "The code does not expire — share it anytime";
+"accessCode.instruction1" = "Share this code with volunteers in your department";
+"accessCode.instruction2" = "They can enter it in the app to join instantly";
+"accessCode.instruction3" = "The code does not expire — share it anytime";
+"accessCode.done" = "Go to My Events";
+
+// Volunteer Discovery
+"volunteerDiscovery.hero.title" = "Join Your Event";
+"volunteerDiscovery.hero.subtitle" = "Enter an access code, share your ID, or browse events.";
+"volunteerDiscovery.accessCode.header" = "QUICK JOIN";
+"volunteerDiscovery.accessCode.title" = "Enter Access Code";
+"volunteerDiscovery.accessCode.description" = "Got a code from your department overseer? Enter it below to join instantly.";
+"volunteerDiscovery.accessCode.placeholder" = "XXX-XXXX";
+"volunteerDiscovery.accessCode.join" = "Join";
+"volunteerDiscovery.accessCode.empty" = "Please enter an access code.";
+"volunteerDiscovery.accessCode.failed" = "Unable to join. Check the code and try again.";
+"volunteerDiscovery.userId.header" = "ALTERNATIVE";
+"volunteerDiscovery.userId.title" = "Share Your User ID";
+"volunteerDiscovery.userId.description" = "Give this ID to your department overseer and they can add you directly.";
+"volunteerDiscovery.userId.copy" = "Copy";
+"volunteerDiscovery.userId.copied" = "Copied!";
+"volunteerDiscovery.orBrowse" = "or browse events";
+"volunteerDiscovery.empty.title" = "No Events Available";
+"volunteerDiscovery.empty.subtitle" = "Check back later or ask your department overseer for an access code.";
+"volunteerDiscovery.joining" = "Joining...";
+"volunteerDiscovery.joinSuccess.title" = "Welcome!";
+"volunteerDiscovery.joinSuccess.message" = "You've been added to the department. Return to My Events to get started.";
+
+// Department Settings
+"deptSettings.title" = "Department Settings";
+"deptSettings.loadFailed" = "Unable to load department info.";
+"deptSettings.eventInfo" = "EVENT INFO";
+"deptSettings.volunteerCount" = "%d volunteers";
+"deptSettings.accessCode" = "ACCESS CODE";
+"deptSettings.accessCode.subtitle" = "Share this code with volunteers to let them join your department.";
+"deptSettings.accessCode.copy" = "Copy Code";
+"deptSettings.accessCode.copied" = "Copied!";
+"deptSettings.accessCode.share" = "Share";
+"deptSettings.accessCode.shareMessage" = "Join %@ department using this access code: %@";
+"deptSettings.accessCode.none" = "No access code generated.";
+"deptSettings.roster" = "DEPARTMENT ROSTER";
+"deptSettings.roster.overseer" = "Department Overseer";
+"deptSettings.roster.assistant" = "Assistant Overseer";
+"deptSettings.roster.addAssistant" = "Add Assistant Overseer";
+"deptSettings.roster.removeConfirm" = "Remove this assistant overseer?";
+"deptSettings.roster.removeAction" = "Remove";
+"deptSettings.role.assigned" = "Assistant overseer assigned successfully.";
+"deptSettings.role.removed" = "Role removed.";
+"deptSettings.privacy" = "VISIBILITY";
+"deptSettings.privacy.toggle" = "Public Department";
+"deptSettings.privacy.description" = "When public, volunteers can discover and request to join this department.";
+"deptSettings.status" = "EVENT STATUS";
+"deptSettings.status.completed" = "Event completed";
+"deptSettings.status.upcoming" = "Starts in %d days";
+"deptSettings.status.active" = "Event is active";
+"deptSettings.picker.title" = "Assign Assistant Overseer";
+"deptSettings.picker.instructions.title" = "Enter Volunteer ID";
+"deptSettings.picker.instructions.body" = "Ask the volunteer for their 6-character User ID (visible in their Settings screen) and enter it below.";
+"deptSettings.picker.idLabel" = "VOLUNTEER ID";
+"deptSettings.picker.idPlaceholder" = "e.g. AB12CD";
+"deptSettings.picker.assign" = "Assign Role";
+
+// Archived Events
+"archivedEvents.empty.title" = "No Archived Events";
+"archivedEvents.empty.subtitle" = "Events archive 30 days after they end.";
+
+// MARK: - Add Volunteer Sheet (Sprint 6.12 Addendum)
+"addVolunteer.title" = "Add Volunteer";
+"addVolunteer.or" = "or";
+"addVolunteer.accessCode.header" = "SHARE ACCESS CODE";
+"addVolunteer.accessCode.title" = "Share Your Department Code";
+"addVolunteer.accessCode.description" = "Volunteers enter this code in the app to join your department instantly — no approval needed.";
+"addVolunteer.accessCode.shareMessage" = "Join our department using this access code: %@";
+"addVolunteer.accessCode.none" = "No access code available. Purchase your department first.";
+"addVolunteer.userId.header" = "ADD MANUALLY";
+"addVolunteer.userId.title" = "Add by User ID";
+"addVolunteer.userId.description" = "Enter a volunteer's User ID to add them directly to your department.";
+"addVolunteer.userId.placeholder" = "e.g. A7X9K2";
+"addVolunteer.userId.add" = "Add";
+"addVolunteer.userId.hint" = "Volunteers can find their User ID in Settings.";
+"addVolunteer.credentials.title" = "Credentials";
+"addVolunteer.credentials.subtitle" = "Share these login credentials with the volunteer:";
+"addVolunteer.credentials.volunteerId" = "Volunteer ID";
+"addVolunteer.credentials.token" = "Token";
+"addVolunteer.credentials.copy" = "Copy Credentials";
+"addVolunteer.credentials.copied" = "Copied to clipboard";
+"common.copied" = "Copied!";
+
+// Volunteer List empty states
+"volunteers.empty.title" = "No Volunteers Yet";
+"volunteers.empty.subtitle" = "Tap + to share your access code or add a volunteer by User ID.";
+"volunteers.allEmpty.title" = "No Event Volunteers";
+"volunteers.allEmpty.subtitle" = "No volunteers have joined this event yet.";
+
+// MARK: - Overseer Dashboard
+"overseer.dashboard.title" = "Dashboard";
+"overseer.dashboard.selectEvent" = "Select Event";
+"overseer.dashboard.noEvent.title" = "No Event Selected";
+"overseer.dashboard.noEvent.subtitle" = "Tap above to select an event to manage";
+"overseer.dashboard.stat.volunteers" = "Volunteers";
+"overseer.dashboard.stat.assignments" = "Assignments";
+"overseer.dashboard.stat.pending" = "Pending";
+"overseer.dashboard.stat.coverage" = "Coverage";
+"overseer.dashboard.assignmentsOverview" = "Assignments Overview";
+"overseer.dashboard.assignmentsHint" = "View the Assignments tab for coverage details";
+"overseer.dashboard.attendance" = "ATTENDANCE";
+"overseer.dashboard.submitCount" = "Submit Count";
+"overseer.dashboard.viewSummary" = "View Summary";
+
+// MARK: - Registration
+"auth.orSignUpWith" = "or sign up with";
+"auth.termsAgreement" = "By creating an account, you agree to our Terms of Service";
+"auth.oauth.completeRegistration" = "Complete Registration";
+"auth.oauth.subtitle" = "Just a few more details to get started";
+"auth.privacyNote" = "Your information is used for event coordination only";
+
+// MARK: - Overseer Mode Toggle (Settings)
+"profile.overseerMode.subtitle" = "Purchase and manage departments";
+"settings.overseerMode.error" = "Failed to update. Please try again.";

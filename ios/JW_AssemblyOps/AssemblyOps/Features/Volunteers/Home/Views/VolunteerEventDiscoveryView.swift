@@ -8,8 +8,10 @@
 // MARK: - Volunteer Event Discovery View
 //
 // Shown to volunteers with no active EventVolunteer membership.
-// Lists publicly visible events. Circuit Assembly → "Request to Join" button.
-// Regional/Special Convention → "Invite Only" badge, no action.
+// Three paths to join an event:
+//   1. Enter a department access code (auto-join, no approval)
+//   2. Share your user ID with an overseer (they add you directly)
+//   3. Browse public events and request to join (fallback)
 //
 // Data: discoverEvents query via VolunteerEventDiscoveryViewModel
 //
@@ -18,51 +20,135 @@ import SwiftUI
 
 struct VolunteerEventDiscoveryView: View {
     @StateObject private var viewModel = VolunteerEventDiscoveryViewModel()
+    @EnvironmentObject private var appState: AppState
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.dismiss) private var dismiss
     @State private var hasAppeared = false
     @State private var showError = false
+    @State private var accessCodeInput = ""
+    @State private var copiedUserId = false
+    @State private var showJoinSuccess = false
 
     var body: some View {
+        contentWithBackground
+            .onAppear(perform: handleAppearance)
+            .onChange(of: viewModel.errorMessage) { _, newValue in handleErrorChange(nil, newValue) }
+            .onChange(of: viewModel.accessCodeResult == nil) { _, isNil in showJoinSuccess = !isNil }
+            .alert("Error", isPresented: $showError, actions: errorAlertActions, message: errorAlertMessage)
+            .alert("volunteerDiscovery.joinSuccess.title".localized, isPresented: $showJoinSuccess, actions: successAlertActions, message: successAlertMessage)
+            .overlay(content: loadingOverlayContent)
+    }
+    
+    // MARK: - Body Helpers
+    
+    private var contentWithBackground: some View {
+        mainContent
+            .themedBackground(scheme: colorScheme)
+    }
+    
+    private func handleAppearance() {
+        withAnimation(AppTheme.entranceAnimation) { hasAppeared = true }
+        viewModel.loadEvents()
+    }
+    
+    private func handleErrorChange(_ oldValue: String?, _ newValue: String?) {
+        showError = newValue != nil
+    }
+    
+    @ViewBuilder
+    private func errorAlertActions() -> some View {
+        Button("OK") { viewModel.errorMessage = nil }
+    }
+    
+    @ViewBuilder
+    private func errorAlertMessage() -> some View {
+        Text(viewModel.errorMessage ?? "")
+    }
+    
+    @ViewBuilder
+    private func successAlertActions() -> some View {
+        Button("OK") {
+            viewModel.accessCodeResult = nil
+            dismiss()
+        }
+    }
+    
+    @ViewBuilder
+    private func successAlertMessage() -> some View {
+        Text("volunteerDiscovery.joinSuccess.message".localized)
+    }
+    
+    @ViewBuilder
+    private func loadingOverlayContent() -> some View {
+        loadingOverlay
+    }
+    
+    // MARK: - Main Content
+    
+    private var mainContent: some View {
         ScrollView {
             VStack(spacing: 0) {
                 heroSection
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                VStack(spacing: AppTheme.Spacing.xl) {
-                    if !viewModel.sentRequestIds.isEmpty {
-                        pendingRequestsBanner
-                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.08)
-                    }
-
-                    if viewModel.isLoading {
-                        loadingSkeleton
-                    } else if viewModel.events.isEmpty {
-                        emptyState
-                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
-                    } else {
-                        ForEach(Array(viewModel.events.enumerated()), id: \.element.id) { index, event in
-                            eventCard(for: event)
-                                .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index) * 0.06 + 0.1)
-                        }
-                    }
-                }
-                .screenPadding()
-                .padding(.top, AppTheme.Spacing.xl)
-                .padding(.bottom, AppTheme.Spacing.xxl)
+                contentCards
+                    .screenPadding()
+                    .padding(.top, AppTheme.Spacing.xl)
+                    .padding(.bottom, AppTheme.Spacing.xxl)
             }
         }
-        .themedBackground(scheme: colorScheme)
-        .onAppear {
-            withAnimation(AppTheme.entranceAnimation) { hasAppeared = true }
-            viewModel.loadEvents()
+    }
+    
+    private var contentCards: some View {
+        VStack(spacing: AppTheme.Spacing.xl) {
+            // Primary path: access code
+            accessCodeCard
+                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+
+            // Secondary path: share user ID
+            userIdCard
+                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+
+            // Divider
+            orBrowseDivider
+                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+
+            if !viewModel.sentRequestIds.isEmpty {
+                pendingRequestsBanner
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.18)
+            }
+
+            eventsListContent
         }
-        .onChange(of: viewModel.errorMessage) { _, error in
-            showError = error != nil
+    }
+    
+    @ViewBuilder
+    private var eventsListContent: some View {
+        if viewModel.isLoading {
+            loadingSkeleton
+        } else if viewModel.events.isEmpty {
+            emptyState
+                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
+        } else {
+            eventsList
         }
-        .alert("Error", isPresented: $showError) {
-            Button("OK") { viewModel.errorMessage = nil }
-        } message: {
-            Text(viewModel.errorMessage ?? "")
+    }
+    
+    private var eventsList: some View {
+        ForEach(Array(viewModel.events.enumerated()), id: \.element.id) { index, event in
+            eventCard(for: event)
+                .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index) * 0.06 + 0.2)
+        }
+    }
+    
+    @ViewBuilder
+    private var loadingOverlay: some View {
+        if viewModel.isJoiningByCode {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+            ProgressView("volunteerDiscovery.joining".localized)
+                .padding()
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium))
         }
     }
 
@@ -103,11 +189,11 @@ struct VolunteerEventDiscoveryView: View {
                 }
 
                 VStack(spacing: 6) {
-                    Text("Find Your Event")
+                    Text("volunteerDiscovery.hero.title".localized)
                         .font(.system(size: 26, weight: .bold, design: .default))
                         .foregroundStyle(colorScheme == .dark ? .white : Color(red: 0.1, green: 0.1, blue: 0.1))
 
-                    Text("Browse upcoming assemblies and request to serve.")
+                    Text("volunteerDiscovery.hero.subtitle".localized)
                         .font(AppTheme.Typography.subheadline)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                         .multilineTextAlignment(.center)
@@ -115,6 +201,146 @@ struct VolunteerEventDiscoveryView: View {
             }
             .padding(.bottom, AppTheme.Spacing.xxl)
             .padding(.horizontal, AppTheme.Spacing.screenEdge)
+        }
+    }
+
+    // MARK: - Access Code Card
+
+    private var accessCodeCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: 8) {
+                Image(systemName: "key.fill")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("volunteerDiscovery.accessCode.header".localized)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            Text("volunteerDiscovery.accessCode.title".localized)
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+
+            Text("volunteerDiscovery.accessCode.description".localized)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+            HStack(spacing: AppTheme.Spacing.m) {
+                TextField("volunteerDiscovery.accessCode.placeholder".localized, text: $accessCodeInput)
+                    .font(.system(size: 18, weight: .medium, design: .monospaced))
+                    .textInputAutocapitalization(.characters)
+                    .autocorrectionDisabled()
+                    .padding(.horizontal, AppTheme.Spacing.m)
+                    .padding(.vertical, AppTheme.Spacing.m)
+                    .background(
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                            .fill(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                            .strokeBorder(AppTheme.themeColor.opacity(0.3), lineWidth: 1)
+                    )
+
+                Button {
+                    HapticManager.shared.lightTap()
+                    viewModel.joinByAccessCode(code: accessCodeInput)
+                } label: {
+                    Text("volunteerDiscovery.accessCode.join".localized)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, AppTheme.Spacing.l)
+                        .frame(height: AppTheme.ButtonHeight.medium)
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                        .fill(accessCodeInput.isEmpty ? AppTheme.themeColor.opacity(0.4) : AppTheme.themeColor)
+                )
+                .disabled(accessCodeInput.isEmpty || viewModel.isJoiningByCode)
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - User ID Card
+
+    private var userIdCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: 8) {
+                Image(systemName: "person.text.rectangle")
+                    .foregroundStyle(AppTheme.themeColor)
+                Text("volunteerDiscovery.userId.header".localized)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            Text("volunteerDiscovery.userId.title".localized)
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+
+            Text("volunteerDiscovery.userId.description".localized)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+            if let userId = appState.currentUser?.userId {
+                HStack(spacing: AppTheme.Spacing.m) {
+                    Text(userId)
+                        .font(.system(size: 16, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+
+                    Spacer()
+
+                    Button {
+                        UIPasteboard.general.string = userId
+                        HapticManager.shared.lightTap()
+                        withAnimation(AppTheme.quickAnimation) { copiedUserId = true }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation(AppTheme.quickAnimation) { copiedUserId = false }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: copiedUserId ? "checkmark" : "doc.on.doc")
+                                .font(.system(size: 13))
+                            Text(copiedUserId ? "volunteerDiscovery.userId.copied".localized : "volunteerDiscovery.userId.copy".localized)
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        .foregroundStyle(copiedUserId ? AppTheme.StatusColors.accepted : AppTheme.themeColor)
+                        .padding(.horizontal, AppTheme.Spacing.m)
+                        .padding(.vertical, AppTheme.Spacing.s)
+                        .background(
+                            Capsule()
+                                .fill(copiedUserId
+                                      ? AppTheme.StatusColors.acceptedBackground
+                                      : AppTheme.themeColor.opacity(colorScheme == .dark ? 0.2 : 0.1))
+                        )
+                    }
+                    .animation(AppTheme.quickAnimation, value: copiedUserId)
+                }
+                .padding(AppTheme.Spacing.m)
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                        .fill(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                )
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Or Browse Divider
+
+    private var orBrowseDivider: some View {
+        HStack(spacing: AppTheme.Spacing.m) {
+            Rectangle()
+                .fill(AppTheme.textTertiary(for: colorScheme).opacity(0.3))
+                .frame(height: 1)
+            Text("volunteerDiscovery.orBrowse".localized)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            Rectangle()
+                .fill(AppTheme.textTertiary(for: colorScheme).opacity(0.3))
+                .frame(height: 1)
         }
     }
 
@@ -205,11 +431,11 @@ struct VolunteerEventDiscoveryView: View {
             }
 
             VStack(spacing: AppTheme.Spacing.s) {
-                Text("No Events Available")
+                Text("volunteerDiscovery.empty.title".localized)
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
 
-                Text("Check back later or ask your department\noverseer for an invitation.")
+                Text("volunteerDiscovery.empty.subtitle".localized)
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                     .multilineTextAlignment(.center)

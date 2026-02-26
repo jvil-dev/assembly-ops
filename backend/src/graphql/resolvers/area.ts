@@ -37,7 +37,7 @@ const areaResolvers = {
       const areaService = new AreaService(context.prisma);
       const eventId = await areaService.getAreaEventId(id);
 
-      if (context.admin) {
+      if (context.user) {
         await requireEventAccess(context, eventId);
       }
 
@@ -58,7 +58,7 @@ const areaResolvers = {
       });
       if (!department) return [];
 
-      if (context.admin) {
+      if (context.user) {
         await requireEventAccess(context, department.eventId);
       }
 
@@ -75,7 +75,7 @@ const areaResolvers = {
       const areaService = new AreaService(context.prisma);
       const eventId = await areaService.getAreaEventId(areaId);
 
-      if (context.admin) {
+      if (context.user) {
         await requireEventAccess(context, eventId);
       }
 

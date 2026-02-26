@@ -36,10 +36,11 @@ struct EventMembershipItem: Identifiable, Hashable {
     let volunteerCount: Int
     let membershipType: MembershipType
     // Overseer-specific
-    let overseerRole: String?     // "APP_ADMIN" | "DEPARTMENT_OVERSEER"
+    let overseerRole: String?     // "DEPARTMENT_OVERSEER"
     let departmentId: String?
     let departmentName: String?
     let departmentType: String?
+    let departmentAccessCode: String?
     // Volunteer-specific
     let eventVolunteerId: String?
     let volunteerId: String?
@@ -67,16 +68,20 @@ struct EventMembershipItem: Identifiable, Hashable {
     var displayRole: String {
         switch membershipType {
         case .overseer:
-            if overseerRole == "APP_ADMIN" {
-                return "eventsHub.role.eventOverseer".localized
-            }
             if let dept = departmentName {
                 return String(format: "eventsHub.role.deptOverseer".localized, dept)
             }
-            return "eventsHub.role.deptOverseer".localized
+            return "eventsHub.role.overseer".localized
         case .volunteer:
             return "eventsHub.role.volunteer".localized
         }
+    }
+
+    /// Events archive 30 days after they end
+    var isArchived: Bool {
+        guard dateStatus == .past else { return false }
+        let archiveDate = Calendar.current.date(byAdding: .day, value: 30, to: endDate)
+        return Date() > (archiveDate ?? endDate)
     }
 
     var displayEventType: String {
@@ -175,15 +180,16 @@ final class EventsHomeViewModel: ObservableObject {
                 departmentId: e.departmentId,
                 departmentName: e.departmentName,
                 departmentType: e.departmentType?.rawValue,
+                departmentAccessCode: e.departmentAccessCode,
                 eventVolunteerId: e.eventVolunteerId,
                 volunteerId: e.volunteerId
             )
         }
 
-        // Group by date status
+        // Group by date status (archived items excluded from Past — shown in Settings > Archive)
         let active = items.filter { $0.dateStatus == .active }
         let future = items.filter { $0.dateStatus == .future }
-        let past = items.filter { $0.dateStatus == .past }
+        let past = items.filter { $0.dateStatus == .past && !$0.isArchived }
 
         var result: [EventSection] = []
         if !active.isEmpty {

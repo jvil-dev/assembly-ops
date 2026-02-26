@@ -18,6 +18,7 @@ extension AssemblyOpsAPI {
       lastName: String,
       phone: GraphQLNullable<String> = nil,
       congregation: GraphQLNullable<String> = nil,
+      congregationId: GraphQLNullable<ID> = nil,
       appointmentStatus: GraphQLNullable<GraphQLEnum<AppointmentStatus>> = nil,
       isOverseer: GraphQLNullable<Bool> = nil
     ) {
@@ -28,6 +29,7 @@ extension AssemblyOpsAPI {
         "lastName": lastName,
         "phone": phone,
         "congregation": congregation,
+        "congregationId": congregationId,
         "appointmentStatus": appointmentStatus,
         "isOverseer": isOverseer
       ])
@@ -61,6 +63,11 @@ extension AssemblyOpsAPI {
     var congregation: GraphQLNullable<String> {
       get { __data["congregation"] }
       set { __data["congregation"] = newValue }
+    }
+
+    var congregationId: GraphQLNullable<ID> {
+      get { __data["congregationId"] }
+      set { __data["congregationId"] = newValue }
     }
 
     var appointmentStatus: GraphQLNullable<GraphQLEnum<AppointmentStatus>> {

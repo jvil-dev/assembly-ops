@@ -1,0 +1,3 @@
+mutation RemoveHierarchyRole($departmentId: ID!, $eventVolunteerId: ID!) {
+  removeHierarchyRole(departmentId: $departmentId, eventVolunteerId: $eventVolunteerId)
+}

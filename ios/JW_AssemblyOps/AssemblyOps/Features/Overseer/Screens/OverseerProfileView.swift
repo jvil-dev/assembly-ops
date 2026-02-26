@@ -62,19 +62,13 @@ struct OverseerProfileView: View {
                     languageCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
 
-                    // Admin management (App Admins only)
-                    if sessionState.isEventOverseer {
-                        adminManagementLink
-                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
-                    }
-
                     // Logout button
                     logoutButton
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
 
                     // App version
                     appVersion
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.3)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
                 }
                 .screenPadding()
                 .padding(.top, AppTheme.Spacing.l)
@@ -172,9 +166,7 @@ struct OverseerProfileView: View {
                             .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
 
                         // Role badge
-                        Text(sessionState.isEventOverseer
-                            ? NSLocalizedString("role.app_admin", comment: "")
-                            : NSLocalizedString("role.department_overseer", comment: ""))
+                        Text(NSLocalizedString("role.department_overseer", comment: ""))
                             .font(AppTheme.Typography.captionBold)
                             .foregroundStyle(AppTheme.themeColor)
                             .padding(.horizontal, 12)

@@ -4,7 +4,7 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI {
-  struct ActivateEventInput: InputObject {
+  struct JoinDepartmentByCodeInput: InputObject {
     private(set) var __data: InputDict
 
     init(_ data: InputDict) {
@@ -12,16 +12,16 @@ extension AssemblyOpsAPI {
     }
 
     init(
-      templateId: ID
+      accessCode: String
     ) {
       __data = InputDict([
-        "templateId": templateId
+        "accessCode": accessCode
       ])
     }
 
-    var templateId: ID {
-      get { __data["templateId"] }
-      set { __data["templateId"] = newValue }
+    var accessCode: String {
+      get { __data["accessCode"] }
+      set { __data["accessCode"] = newValue }
     }
   }
 

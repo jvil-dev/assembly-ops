@@ -8,15 +8,15 @@
 // MARK: - Overseer Session State
 //
 // Singleton managing the current overseer's session context.
-// Tracks selected event, department, and user role for scoped data access.
+// Tracks selected event and department for scoped data access.
+// All overseers are department overseers (APP_ADMIN removed in Sprint 6.12).
 //
 // Properties:
 //   - selectedEvent: Currently active event for the session
-//   - selectedDepartment: Active department (nil for Event Overseers viewing all)
+//   - selectedDepartment: The overseer's purchased department
 //   - events: List of events the overseer has access to
-//   - departments: Departments within the selected event
-//   - isEventOverseer: True if user has event-level access (can switch departments)
-//   - claimedDepartment: The department a Department Overseer is assigned to
+//   - departments: Department for this overseer (single dept)
+//   - claimedDepartment: The department the overseer purchased
 //
 // Types:
 //   - EventSummary: Lightweight event data for selection UI
@@ -24,12 +24,7 @@
 //
 // Methods:
 //   - loadEvents(): Fetch events via MyEventsQuery, auto-select first event
-//   - loadDepartments(for:): Fetch departments for event (Event Overseers only)
-//   - selectDepartment(_:): Change active department (Event Overseers only)
-//
-// Access Control:
-//   - Event Overseers: Can view all departments, switch freely
-//   - Department Overseers: Locked to their claimed department
+//   - loadForEvent(_:): Set up from EventMembershipItem (Events Hub entry)
 //
 
 import Foundation
@@ -47,10 +42,7 @@ final class OverseerSessionState: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
 
-    /// True if current user is an Event Overseer (can switch departments)
-    @Published var isEventOverseer = false
-
-    /// The department the overseer claimed (for Department Overseers)
+    /// The department the overseer purchased
     @Published var claimedDepartment: DepartmentSummary?
 
     private let dateFormatter: ISO8601DateFormatter = {
@@ -80,7 +72,6 @@ final class OverseerSessionState: ObservableObject {
             }
 
             var mappedEvents: [EventSummary] = []
-            var foundEventOverseerRole = false
 
             for eventAdmin in data {
                 let event = eventAdmin.event
@@ -98,12 +89,7 @@ final class OverseerSessionState: ObservableObject {
                 )
                 mappedEvents.append(summary)
 
-                // Check if this user is an App Admin for any event
-                if eventAdmin.role == .case(.appAdmin) {
-                    foundEventOverseerRole = true
-                }
-
-                // Store claimed department for any role that has one
+                // Store claimed department
                 if let dept = eventAdmin.department {
                     claimedDepartment = DepartmentSummary(
                         id: dept.id,
@@ -115,14 +101,13 @@ final class OverseerSessionState: ObservableObject {
             }
 
             events = mappedEvents
-            isEventOverseer = foundEventOverseerRole
 
-            print("[SessionState] loadEvents: \(events.count) events, isEventOverseer=\(isEventOverseer), claimedDepartment=\(claimedDepartment?.name ?? "nil")")
+            print("[SessionState] loadEvents: \(events.count) events, claimedDepartment=\(claimedDepartment?.name ?? "nil")")
 
             // Auto-select first event
             if let first = events.first {
                 selectedEvent = first
-                await loadDepartments(for: first.id)
+                loadDepartment()
             }
 
         } catch {
@@ -132,69 +117,21 @@ final class OverseerSessionState: ObservableObject {
         isLoading = false
     }
 
-    // MARK: - Load Departments
+    // MARK: - Load Department
 
-    @Published var isLoadingDepartments = false
-
-    func loadDepartments(for eventId: String) async {
-        // Department overseers can only see their claimed department
-        guard isEventOverseer else {
-            if let claimed = claimedDepartment {
-                departments = [claimed]
-                selectedDepartment = claimed
-            }
-            return
+    /// Sets the overseer's single claimed department as the active selection.
+    func loadDepartment() {
+        if let claimed = claimedDepartment {
+            departments = [claimed]
+            selectedDepartment = claimed
         }
-
-        isLoadingDepartments = true
-
-        do {
-            let result = try await NetworkClient.shared.apollo.fetch(
-                query: AssemblyOpsAPI.EventDepartmentsQuery(eventId: eventId),
-                cachePolicy: .fetchIgnoringCacheData
-            )
-
-            if let errors = result.errors, !errors.isEmpty {
-                print("[SessionState] EventDepartmentsQuery errors: \(errors.map { $0.localizedDescription })")
-            }
-
-            guard let data = result.data?.eventDepartments else {
-                print("[SessionState] EventDepartmentsQuery returned nil for eventId: \(eventId)")
-                isLoadingDepartments = false
-                return
-            }
-
-            print("[SessionState] EventDepartmentsQuery returned \(data.count) departments")
-
-            departments = data.map { dept in
-                DepartmentSummary(
-                    id: dept.id,
-                    name: dept.name,
-                    departmentType: dept.departmentType.rawValue,
-                    volunteerCount: dept.volunteerCount
-                )
-            }
-
-            // Auto-select claimed department if available, otherwise view all
-            if let claimed = claimedDepartment,
-               departments.contains(where: { $0.id == claimed.id }) {
-                selectedDepartment = claimed
-            } else {
-                selectedDepartment = nil
-            }
-
-        } catch {
-            print("[SessionState] Failed to load departments: \(error)")
-        }
-
-        isLoadingDepartments = false
     }
 
     // MARK: - Load For Event (Events Hub entry point)
 
     /// Sets up session context from an EventMembershipItem (from Events Hub).
     /// Avoids a redundant MyEventsQuery by using data already fetched.
-    func loadForEvent(_ membership: EventMembershipItem) async {
+    func loadForEvent(_ membership: EventMembershipItem) {
         // Reset state
         selectedEvent = nil
         selectedDepartment = nil
@@ -215,7 +152,6 @@ final class OverseerSessionState: ObservableObject {
             volunteerCount: membership.volunteerCount
         )
         selectedEvent = summary
-        isEventOverseer = membership.overseerRole == "APP_ADMIN"
 
         // Set claimed department if present
         if let deptId = membership.departmentId,
@@ -225,27 +161,15 @@ final class OverseerSessionState: ObservableObject {
                 id: deptId,
                 name: deptName,
                 departmentType: deptType,
-                volunteerCount: 0 // Updated lazily when dashboard loads
+                volunteerCount: 0,
+                accessCode: membership.departmentAccessCode
             )
             claimedDepartment = dept
-            selectedDepartment = dept
         }
 
-        // For event overseers, load full department list
-        if isEventOverseer {
-            await loadDepartments(for: membership.eventId)
-        } else if let claimed = claimedDepartment {
-            departments = [claimed]
-        }
+        loadDepartment()
 
-        print("[SessionState] loadForEvent: \(summary.name), isEventOverseer=\(isEventOverseer), claimedDepartment=\(claimedDepartment?.name ?? "nil")")
-    }
-
-    // MARK: - Select Department
-
-    func selectDepartment(_ department: DepartmentSummary?) {
-        guard isEventOverseer else { return }
-        selectedDepartment = department
+        print("[SessionState] loadForEvent: \(summary.name), claimedDepartment=\(claimedDepartment?.name ?? "nil")")
     }
 
     // MARK: - Helpers
@@ -278,4 +202,13 @@ struct DepartmentSummary: Identifiable, Hashable {
     let name: String
     let departmentType: String
     let volunteerCount: Int
+    let accessCode: String?
+
+    init(id: String, name: String, departmentType: String, volunteerCount: Int, accessCode: String? = nil) {
+        self.id = id
+        self.name = name
+        self.departmentType = departmentType
+        self.volunteerCount = volunteerCount
+        self.accessCode = accessCode
+    }
 }

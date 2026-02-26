@@ -21,3 +21,12 @@ query CongregationsByCircuit($circuitId: ID!) {
     language
   }
 }
+
+query SearchCongregations($query: String!) {
+  searchCongregations(query: $query) {
+    id
+    name
+    city
+    state
+  }
+}

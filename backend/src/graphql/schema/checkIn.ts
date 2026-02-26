@@ -18,9 +18,9 @@
  *   - checkOut: Volunteer checks out of their assignment
  *   - adminCheckIn: Admin checks in a volunteer on their behalf
  *   - markNoShow: Admin marks a volunteer as no-show
- *   - recordAttendance: Record audience count for CO-24 (APP_ADMIN)
- *   - updateAttendance: Update audience count (APP_ADMIN)
- *   - deleteAttendance: Delete audience count (APP_ADMIN)
+ *   - recordAttendance: Record audience count for CO-24 (overseer)
+ *   - updateAttendance: Update audience count (overseer)
+ *   - deleteAttendance: Delete audience count (overseer)
  *
  * Implemented by: ../resolvers/checkIn.ts
  */

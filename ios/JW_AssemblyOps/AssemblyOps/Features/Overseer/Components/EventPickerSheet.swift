@@ -35,9 +35,7 @@ struct EventPickerSheet: View {
                         Button {
                             HapticManager.shared.lightTap()
                             sessionState.selectedEvent = event
-                            Task {
-                                await sessionState.loadDepartments(for: event.id)
-                            }
+                            sessionState.loadDepartment()
                             dismiss()
                         } label: {
                             EventRow(

@@ -44,6 +44,7 @@ const authTypeDefs = `#graphql
     lastName: String!
     phone: String
     congregation: String
+    congregationId: ID
     appointmentStatus: AppointmentStatus
     isOverseer: Boolean
   }

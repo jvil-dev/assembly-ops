@@ -10,10 +10,10 @@
  *   - sessions(eventId): List all sessions for an event
  *
  * Mutations:
- *   - createSession(eventId, input): Create single session (APP_ADMIN only)
- *   - createSessions(input): Bulk create sessions (APP_ADMIN only)
- *   - updateSession(id, input): Update session details (APP_ADMIN only)
- *   - deleteSession(id): Remove a session (APP_ADMIN only)
+ *   - createSession(eventId, input): Create single session (overseer)
+ *   - createSessions(input): Bulk create sessions (overseer)
+ *   - updateSession(id, input): Update session details (overseer)
+ *   - deleteSession(id): Remove a session (overseer)
  *
  * Field Resolvers:
  *   - startTime/endTime: Return time as-is for DateTime scalar
@@ -21,7 +21,7 @@
  *
  * Authorization:
  *   All operations require admin authentication.
- *   Mutations restricted to APP_ADMIN role.
+ *   Mutations restricted to overseer role.
  */
 import { Context } from '../context.js';
 import { SessionService } from '../../services/sessionService.js';
@@ -61,7 +61,7 @@ const sessionResolvers = {
       context: Context
     ) => {
       requireAdmin(context);
-      await requireEventAccess(context, eventId, ['APP_ADMIN']);
+      await requireEventAccess(context, eventId);
 
       const sessionService = new SessionService(context.prisma);
       return sessionService.createSession(eventId, input);
@@ -73,7 +73,7 @@ const sessionResolvers = {
       context: Context
     ) => {
       requireAdmin(context);
-      await requireEventAccess(context, input.eventId, ['APP_ADMIN']);
+      await requireEventAccess(context, input.eventId);
 
       const sessionService = new SessionService(context.prisma);
       return sessionService.createSessions(input);
@@ -88,7 +88,7 @@ const sessionResolvers = {
 
       const sessionService = new SessionService(context.prisma);
       const eventId = await sessionService.getSessionEventId(id);
-      await requireEventAccess(context, eventId, ['APP_ADMIN']);
+      await requireEventAccess(context, eventId);
 
       return sessionService.updateSession(id, input);
     },
@@ -98,7 +98,7 @@ const sessionResolvers = {
 
       const sessionService = new SessionService(context.prisma);
       const eventId = await sessionService.getSessionEventId(id);
-      await requireEventAccess(context, eventId, ['APP_ADMIN']);
+      await requireEventAccess(context, eventId);
 
       return sessionService.deleteSession(id);
     },

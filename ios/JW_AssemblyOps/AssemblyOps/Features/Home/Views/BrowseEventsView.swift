@@ -8,8 +8,8 @@
 // MARK: - Browse Events View
 //
 // Role-aware wrapper pushed from EventsHomeView's "+" button.
-//   - Overseers → EventSetupView (embedded, no inner NavigationStack)
-//   - Volunteers → VolunteerEventDiscoveryView
+//   - Overseers → OverseerDepartmentBrowseView (select event → purchase dept)
+//   - Volunteers → VolunteerEventDiscoveryView (access code + browse)
 //
 // Already inside EventsHomeView's NavigationStack, so child views
 // must NOT wrap their own NavigationStack.
@@ -22,8 +22,10 @@ struct BrowseEventsView: View {
 
     var body: some View {
         if appState.isOverseer {
-            EventSetupView(isEmbedded: true)
-                .environmentObject(appState)
+            OverseerDepartmentBrowseView()
+                .navigationDestination(for: DiscoverableEvent.self) { event in
+                    DepartmentSelectionView(event: event)
+                }
         } else {
             VolunteerEventDiscoveryView()
         }

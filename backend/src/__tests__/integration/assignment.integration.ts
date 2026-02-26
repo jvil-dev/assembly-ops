@@ -5,9 +5,9 @@
  * Tests the full flow: HTTP request → GraphQL → Resolver → Service → Database.
  *
  * Test Setup (beforeAll):
- *   1. Register a test admin
- *   2. Activate an event from a template
- *   3. Claim a department (Attendant)
+ *   1. Register a test overseer
+ *   2. Create a test event via Prisma
+ *   3. Purchase a department (Attendant)
  *   4. Create a post (East Lobby, capacity 2)
  *   5. Create a session (Saturday Morning)
  *   6. Create a volunteer (John Smith)
@@ -24,6 +24,7 @@
  */
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
+import { createTestEvent } from '../testHelpers.js';
 import type { Application } from 'express';
 
 let app: Application;
@@ -69,109 +70,92 @@ describe('Assignment Operations', () => {
     }
     accessToken = registerRes.body.data.registerUser.accessToken;
 
-    // Get template and activate event
-    const templatesRes = await request(app)
+    // Create a test event directly via Prisma
+    eventId = await createTestEvent();
+
+    // Purchase a department to gain event access
+    const purchaseRes = await request(app)
       .post('/graphql')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
-        query: `query { eventTemplates(serviceYear: 2026) { id } }`,
+        query: `
+          mutation Purchase($input: PurchaseDepartmentInput!) {
+            purchaseDepartment(input: $input) { id }
+          }
+        `,
+        variables: {
+          input: { eventId, departmentType: 'ATTENDANT' },
+        },
       });
 
-    if (templatesRes.body.data.eventTemplates.length > 0) {
-      const templateId = templatesRes.body.data.eventTemplates[0].id;
-
-      const activateRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          query: `
-            mutation Activate($input: ActivateEventInput!) {
-              activateEvent(input: $input) { id }
-            }
-          `,
-          variables: { input: { templateId } },
-        });
-
-      eventId = activateRes.body.data.activateEvent.id;
-
-      // Claim department
-      const claimRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          query: `
-            mutation Claim($input: ClaimDepartmentInput!) {
-              claimDepartment(input: $input) { id }
-            }
-          `,
-          variables: { input: { eventId, departmentType: 'ATTENDANT' } },
-        });
-
-      departmentId = claimRes.body.data.claimDepartment.id;
-
-      // Create post
-      const postRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          query: `
-            mutation CreatePost($departmentId: ID!, $input: CreatePostInput!) {
-              createPost(departmentId: $departmentId, input: $input) { id }
-            }
-          `,
-          variables: {
-            departmentId,
-            input: { name: 'East Lobby', capacity: 2 },
-          },
-        });
-
-      postId = postRes.body.data.createPost.id;
-
-      // Create session
-      const sessionRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          query: `
-            mutation CreateSession($eventId: ID!, $input: CreateSessionInput!) {
-              createSession(eventId: $eventId, input: $input) { id }
-            }
-          `,
-          variables: {
-            eventId,
-            input: {
-              name: 'Saturday Morning',
-              date: '2026-03-07T00:00:00Z',
-              startTime: '09:00',
-              endTime: '12:00',
-            },
-          },
-        });
-
-      sessionId = sessionRes.body.data.createSession.id;
-
-      // Create volunteer
-      const volunteerRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          query: `
-            mutation CreateVolunteer($eventId: ID!, $input: CreateVolunteerInput!) {
-              createVolunteer(eventId: $eventId, input: $input) { id }
-            }
-          `,
-          variables: {
-            eventId,
-            input: {
-              firstName: 'John',
-              lastName: 'Smith',
-              congregation: 'Test Congregation',
-            },
-          },
-        });
-
-      volunteerId = volunteerRes.body.data.createVolunteer.id;
+    if (purchaseRes.body.errors) {
+      console.error('Purchase failed:', purchaseRes.body.errors);
+      return;
     }
+    departmentId = purchaseRes.body.data.purchaseDepartment.id;
+
+    // Create post
+    const postRes = await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        query: `
+          mutation CreatePost($departmentId: ID!, $input: CreatePostInput!) {
+            createPost(departmentId: $departmentId, input: $input) { id }
+          }
+        `,
+        variables: {
+          departmentId,
+          input: { name: 'East Lobby', capacity: 2 },
+        },
+      });
+
+    postId = postRes.body.data.createPost.id;
+
+    // Create session
+    const sessionRes = await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        query: `
+          mutation CreateSession($eventId: ID!, $input: CreateSessionInput!) {
+            createSession(eventId: $eventId, input: $input) { id }
+          }
+        `,
+        variables: {
+          eventId,
+          input: {
+            name: 'Saturday Morning',
+            date: '2026-03-07T00:00:00Z',
+            startTime: '09:00',
+            endTime: '12:00',
+          },
+        },
+      });
+
+    sessionId = sessionRes.body.data.createSession.id;
+
+    // Create volunteer
+    const volunteerRes = await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        query: `
+          mutation CreateVolunteer($eventId: ID!, $input: CreateVolunteerInput!) {
+            createVolunteer(eventId: $eventId, input: $input) { id }
+          }
+        `,
+        variables: {
+          eventId,
+          input: {
+            firstName: 'John',
+            lastName: 'Smith',
+            congregation: `Assign Cong ${Date.now()}`,
+          },
+        },
+      });
+
+    volunteerId = volunteerRes.body.data.createVolunteer.id;
   });
 
   afterAll(async () => {

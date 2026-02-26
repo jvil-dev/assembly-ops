@@ -65,7 +65,7 @@ const eventNoteResolvers = {
       const eventId = await eventNoteService.getDepartmentEventId(input.departmentId);
       await requireEventAccess(context, eventId);
 
-      return eventNoteService.createNote(context.admin!.id, input);
+      return eventNoteService.createNote(context.user!.id, input);
     },
 
     updateEventNote: async (

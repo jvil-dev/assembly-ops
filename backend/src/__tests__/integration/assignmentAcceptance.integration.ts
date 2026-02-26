@@ -17,6 +17,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
+import { createTestEvent } from '../testHelpers.js';
 import type { Application } from 'express';
 
 describe('Assignment Acceptance Operations', () => {
@@ -57,35 +58,19 @@ describe('Assignment Acceptance Operations', () => {
     adminToken = registerRes.body.data.registerUser.accessToken;
 
     // Setup event, department, volunteer, post, session
-    const templatesRes = await request(app)
+    eventId = await createTestEvent();
+
+    // Purchase department (creates EventAdmin + Department)
+    const purchaseRes = await request(app)
       .post('/graphql')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ query: `query { eventTemplates(serviceYear: 2026) { id } }` });
+      .send({
+        query: `mutation($input: PurchaseDepartmentInput!) { purchaseDepartment(input: $input) { id } }`,
+        variables: { input: { eventId, departmentType: 'ATTENDANT' } },
+      });
+    departmentId = purchaseRes.body.data.purchaseDepartment.id;
 
-    if (templatesRes.body.data.eventTemplates.length > 0) {
-      const templateId = templatesRes.body.data.eventTemplates[0].id;
-
-      // Activate event
-      const activateRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($input: ActivateEventInput!) { activateEvent(input: $input) { id } }`,
-          variables: { input: { templateId } },
-        });
-      eventId = activateRes.body.data.activateEvent.id;
-
-      // Claim department
-      const claimRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($input: ClaimDepartmentInput!) { claimDepartment(input: $input) { id } }`,
-          variables: { input: { eventId, departmentType: 'ATTENDANT' } },
-        });
-      departmentId = claimRes.body.data.claimDepartment.id;
-
-      // Create post
+    // Create post
       const postRes = await request(app)
         .post('/graphql')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -128,7 +113,7 @@ describe('Assignment Acceptance Operations', () => {
           }`,
           variables: {
             eventId,
-            input: { firstName: 'Test', lastName: 'Vol', congregation: 'Test Cong' },
+            input: { firstName: 'Test', lastName: 'Vol', congregation: `Accept Cong ${Date.now()}` },
           },
         });
       volunteerId = volunteerRes.body.data.createVolunteer.id;
@@ -153,8 +138,7 @@ describe('Assignment Acceptance Operations', () => {
           query: `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
           variables: { input: { volunteerId: volunteerLoginId, token: volunteerLoginToken } },
         });
-      volunteerToken = volunteerLoginRes.body.data.loginEventVolunteer.accessToken;
-    }
+    volunteerToken = volunteerLoginRes.body.data.loginEventVolunteer.accessToken;
   });
 
   afterAll(async () => {

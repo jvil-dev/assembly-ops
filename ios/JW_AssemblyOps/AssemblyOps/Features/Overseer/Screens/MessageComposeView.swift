@@ -166,11 +166,7 @@ struct MessageComposeView: View {
     }
 
     private var availableRecipientTypes: [MessageRecipientType] {
-        if sessionState.isEventOverseer {
-            return [.volunteer, .department, .event]
-        } else {
-            return [.volunteer, .department]
-        }
+        return [.volunteer, .department]
     }
 
     private var recipientTypeDescription: String {

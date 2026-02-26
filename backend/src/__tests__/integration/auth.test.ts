@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
+import { createTestEvent } from '../testHelpers.js';
 import prisma from '../../config/database.js';
 import type { Application } from 'express';
 
@@ -58,36 +59,24 @@ describe('Auth GraphQL', () => {
       return;
     }
 
-    // Get a template and activate event
-    const templatesRes = await authGraphqlRequest(
+    // Create a test event directly via Prisma
+    testEventId = await createTestEvent();
+
+    // Purchase a department to gain event access (needed for volunteer creation)
+    const purchaseRes = await authGraphqlRequest(
       `
-        query {
-          eventTemplates {
+        mutation Purchase($input: PurchaseDepartmentInput!) {
+          purchaseDepartment(input: $input) {
             id
-            name
           }
         }
       `,
-      {},
+      { input: { eventId: testEventId, departmentType: 'ACCOUNTS' } },
       userToken
     );
 
-    const templateId = templatesRes.body.data?.eventTemplates?.[0]?.id;
-
-    if (templateId) {
-      const eventRes = await authGraphqlRequest(
-        `
-          mutation ActivateEvent($input: ActivateEventInput!) {
-            activateEvent(input: $input) {
-              id
-            }
-          }
-        `,
-        { input: { templateId } },
-        userToken
-      );
-
-      testEventId = eventRes.body.data?.activateEvent?.id;
+    if (purchaseRes.body.errors) {
+      console.log('Purchase failed:', JSON.stringify(purchaseRes.body.errors, null, 2));
     }
   });
 
@@ -206,7 +195,7 @@ describe('Auth GraphQL', () => {
           input: {
             firstName: 'Test',
             lastName: 'Volunteer',
-            congregation: 'Test Congregation',
+            congregation: `Auth Cong ${Date.now()}`,
           },
         },
         userToken

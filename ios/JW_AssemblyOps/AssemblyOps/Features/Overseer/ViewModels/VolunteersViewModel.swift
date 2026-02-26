@@ -17,19 +17,17 @@
 //   - departmentId: Target department for picker queries
 //
 // Types:
-//   - CreateVolunteerInput: Input data for creating new volunteers
-//   - CreatedVolunteerResult: Response containing volunteer info and login credentials
+//   - AddedVolunteerResult: Response containing volunteer info and login credentials
 //   - VolunteerListItem: UI model for volunteer display
 //
 // Methods:
 //   - loadDepartmentVolunteers(eventId:departmentId:): Fetch editable department roster
 //   - loadAllVolunteers(eventId:): Fetch read-only event-wide roster
 //   - loadVolunteers(): Fetch volunteers for picker (uses departmentId property)
-//   - createVolunteer(input:): Create new volunteer via CreateVolunteerMutation
+//   - addVolunteerByUserId(userId:): Add an existing user to event by their 6-char User ID
 //
 // Visibility Rules:
 //   - Department Overseers: Edit own department, view all read-only
-//   - Event Overseers: Full access to all departments
 //
 
 import Foundation
@@ -43,6 +41,8 @@ final class VolunteersViewModel: ObservableObject {
     @Published var volunteers: [VolunteerListItem] = [] // For VolunteerPickerSheet
     @Published var roles: [RoleItem] = []
     @Published var isLoading = false
+    @Published var isAddingVolunteer = false
+    @Published var addedVolunteerCredentials: AddedVolunteerResult?
     @Published var error: String?
 
     var departmentId: String?
@@ -156,60 +156,78 @@ final class VolunteersViewModel: ObservableObject {
         }
     }
 
-    func createVolunteer(input: CreateVolunteerInput) async -> CreatedVolunteerResult? {
-        do {
-            let graphQLInput = AssemblyOpsAPI.CreateVolunteerInput(
-                firstName: input.firstName,
-                lastName: input.lastName,
-                email: input.email.flatMap { .some($0) } ?? .none,
-                phone: input.phone.flatMap { .some($0) } ?? .none,
-                congregation: input.congregation,
-                appointmentStatus: mapAppointmentStatus(input.appointmentStatus),
-                notes: input.notes.flatMap { .some($0) } ?? .none,
-                departmentId: .some(input.departmentId),
-                roleId: input.roleId.map { .some($0) } ?? .none
-            )
+    /// Add an existing user to the event by their 6-char User ID (primary overseer flow)
+    func addVolunteerByUserId(userId: String) async {
+        guard let eventId = OverseerSessionState.shared.selectedEvent?.id else {
+            error = "No active event selected."
+            return
+        }
 
-            let result = try await NetworkClient.shared.apollo.perform(
-                mutation: AssemblyOpsAPI.CreateVolunteerMutation(
-                    eventId: input.eventId,
-                    input: graphQLInput
-                )
-            )
+        let trimmed = userId.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        guard !trimmed.isEmpty else {
+            error = "Please enter a User ID."
+            return
+        }
 
-            guard let data = result.data?.createVolunteer else {
-                return nil
+        isAddingVolunteer = true
+        error = nil
+
+        let deptId: GraphQLNullable<String>
+        if let dept = OverseerSessionState.shared.claimedDepartment?.id {
+            deptId = .some(dept)
+        } else {
+            deptId = .none
+        }
+
+        NetworkClient.shared.apollo.perform(
+            mutation: AssemblyOpsAPI.AddVolunteerByUserIdMutation(
+                eventId: eventId,
+                userId: trimmed,
+                departmentId: deptId
+            )
+        ) { [weak self] result in
+            Task { @MainActor in
+                self?.isAddingVolunteer = false
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.addVolunteerByUserId {
+                        let ev = data.eventVolunteer
+                        let user = ev.user
+                        let fullName = "\(user.firstName) \(user.lastName)"
+                        self?.addedVolunteerCredentials = AddedVolunteerResult(
+                            name: fullName,
+                            volunteerId: data.volunteerId,
+                            token: data.token,
+                            inviteMessage: data.inviteMessage
+                        )
+                        // Append to department roster immediately
+                        let newItem = VolunteerListItem(
+                            id: ev.id,
+                            volunteerId: data.volunteerId,
+                            fullName: fullName,
+                            firstName: user.firstName,
+                            lastName: user.lastName,
+                            congregation: "",
+                            phone: nil,
+                            email: nil,
+                            appointmentStatus: nil,
+                            departmentId: self?.departmentId,
+                            departmentName: nil,
+                            departmentType: nil,
+                            roleId: nil,
+                            roleName: nil
+                        )
+                        self?.departmentVolunteers.append(newItem)
+                        HapticManager.shared.success()
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        self?.error = errors.first?.message ?? "Failed to add volunteer"
+                        HapticManager.shared.error()
+                    }
+                case .failure(let err):
+                    self?.error = err.localizedDescription
+                    HapticManager.shared.error()
+                }
             }
-
-            let selectedRole = roles.first { $0.id == input.roleId }
-            let newVolunteer = VolunteerListItem(
-                id: data.id,
-                volunteerId: data.volunteerId,
-                fullName: "\(data.firstName) \(data.lastName)",
-                firstName: data.firstName,
-                lastName: data.lastName,
-                congregation: data.congregation,
-                phone: nil,
-                email: nil,
-                appointmentStatus: input.appointmentStatus,
-                departmentId: input.departmentId,
-                departmentName: nil,
-                departmentType: nil,
-                roleId: input.roleId,
-                roleName: selectedRole?.name
-            )
-
-            // Add to department volunteers list
-            departmentVolunteers.append(newVolunteer)
-
-            return CreatedVolunteerResult(
-                volunteer: newVolunteer,
-                volunteerId: data.volunteerId,
-                token: data.token
-            )
-        } catch {
-            self.error = "Failed to create volunteer: \(error.localizedDescription)"
-            return nil
         }
     }
 
@@ -256,36 +274,12 @@ final class VolunteersViewModel: ObservableObject {
             roleName: volunteer.role?.name
         )
     }
-
-    private func mapAppointmentStatus(_ status: String) -> GraphQLNullable<GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>> {
-        switch status {
-        case "PUBLISHER":
-            return .some(.case(.publisher))
-        case "MINISTERIAL_SERVANT":
-            return .some(.case(.ministerialServant))
-        case "ELDER":
-            return .some(.case(.elder))
-        default:
-            return .none
-        }
-    }
 }
 
-struct CreateVolunteerInput {
-    let firstName: String
-    let lastName: String
-    let congregation: String
-    let phone: String?
-    let email: String?
-    let appointmentStatus: String
-    let notes: String?
-    let departmentId: String
-    let eventId: String
-    let roleId: String?
-}
-
-struct CreatedVolunteerResult {
-    let volunteer: VolunteerListItem
+struct AddedVolunteerResult: Identifiable {
+    let id = UUID()
+    let name: String
     let volunteerId: String
     let token: String
+    let inviteMessage: String?
 }

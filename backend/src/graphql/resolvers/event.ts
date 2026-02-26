@@ -1,22 +1,25 @@
 /**
  * Event Resolvers
  *
- * Handles event management: templates, activation, joining, departments.
+ * Handles event management: templates, department purchasing, hierarchy.
  *
  * Queries:
  *   - eventTemplates: Get available templates (optionally filtered by service year)
  *   - myEvents: Get all events the current overseer is associated with
+ *   - myAllEvents: Get all events for the current user (overseer + volunteer)
  *   - event: Get a single event by ID (requires event access)
  *   - eventDepartments: Get all departments for an event
  *   - availableDepartments: Get department types not yet claimed
  *   - eventAdmins: Get all overseers for an event (requires event access)
  *   - discoverEvents: Get public events available to join
+ *   - departmentInfo: Get detailed department info with hierarchy
  *
  * Mutations:
- *   - activateEvent: Create a real event from a template (generates join code)
- *   - joinEvent: Join an existing event using join code
- *   - claimDepartment: Claim a department as its overseer
- *   - promoteToAppAdmin: Promote a Department Overseer to App Admin (APP_ADMIN only)
+ *   - purchaseDepartment: Purchase a department (creates EventAdmin + Department + access code)
+ *   - joinDepartmentByAccessCode: Volunteer joins via access code
+ *   - setDepartmentPrivacy: Toggle department public/private
+ *   - assignHierarchyRole: Assign hierarchy role to volunteer
+ *   - removeHierarchyRole: Remove hierarchy role
  *
  * Type Resolvers:
  *   - Event: name, eventType, venue, etc. (derived from template)
@@ -24,6 +27,7 @@
  *   - EventTemplate.isActivated: Whether this overseer has activated this template
  *   - Department.volunteerCount: Counts volunteers in this department
  *   - Department.isClaimed: Whether someone has claimed this department
+ *   - Department.hierarchyRoles: Hierarchy assignments for this department
  *
  * Dependencies:
  *   - EventService (../../services/eventService.ts): Business logic
@@ -35,6 +39,7 @@ import { Context } from '../context.js';
 import { EventService } from '../../services/eventService.js';
 import { requireAdmin, requireAuth, requireUser, requireEventAccess } from '../guards/auth.js';
 import { Event, EventTemplate, EventAdmin, Department, DepartmentType } from '@prisma/client';
+import type { AssignHierarchyRoleInput } from '../validators/event.js';
 
 // All 12 department types
 const ALL_DEPARTMENT_TYPES: DepartmentType[] = [
@@ -67,7 +72,7 @@ const eventResolvers = {
     myEvents: async (_parent: unknown, _args: unknown, context: Context): Promise<EventAdmin[]> => {
       requireAdmin(context);
       const eventService = new EventService(context.prisma);
-      return eventService.getMyEvents(context.admin!.id);
+      return eventService.getMyEvents(context.user!.id);
     },
 
     myAllEvents: async (_parent: unknown, _args: unknown, context: Context) => {
@@ -138,49 +143,67 @@ const eventResolvers = {
         orderBy: { createdAt: 'desc' },
       });
     },
+
+    departmentInfo: async (
+      _parent: unknown,
+      { departmentId }: { departmentId: string },
+      context: Context
+    ) => {
+      requireAuth(context);
+      const eventService = new EventService(context.prisma);
+      return eventService.getDepartmentInfo(departmentId);
+    },
   },
 
   Mutation: {
-    activateEvent: async (
-      _parent: unknown,
-      { input }: { input: { templateId: string } },
-      context: Context
-    ) => {
-      requireAdmin(context);
-      const eventService = new EventService(context.prisma);
-      return eventService.activateEvent(input, context.admin!.id);
-    },
-
-    joinEvent: async (
-      _parent: unknown,
-      { input }: { input: { joinCode: string } },
-      context: Context
-    ) => {
-      requireAdmin(context);
-      const eventService = new EventService(context.prisma);
-      return eventService.joinEvent(input, context.admin!.id);
-    },
-
-    claimDepartment: async (
+    purchaseDepartment: async (
       _parent: unknown,
       { input }: { input: { eventId: string; departmentType: DepartmentType } },
       context: Context
     ) => {
       requireAdmin(context);
-      await requireEventAccess(context, input.eventId);
       const eventService = new EventService(context.prisma);
-      return eventService.claimDepartment(input, context.admin!.id);
+      return eventService.purchaseDepartment(input, context.user!.id);
     },
 
-    promoteToAppAdmin: async (
+    joinDepartmentByAccessCode: async (
       _parent: unknown,
-      { input }: { input: { eventId: string; adminId: string } },
+      { input }: { input: { accessCode: string } },
       context: Context
-    ): Promise<EventAdmin> => {
-      requireAdmin(context);
-      await requireEventAccess(context, input.eventId);
+    ) => {
+      requireUser(context);
       const eventService = new EventService(context.prisma);
-      return eventService.promoteToAppAdmin(input, context.admin!.id);
+      return eventService.joinDepartmentByAccessCode(input, context.user!.id);
+    },
+
+    setDepartmentPrivacy: async (
+      _parent: unknown,
+      { departmentId, isPublic }: { departmentId: string; isPublic: boolean },
+      context: Context
+    ) => {
+      requireAdmin(context);
+      const eventService = new EventService(context.prisma);
+      return eventService.setDepartmentPrivacy(departmentId, isPublic, context.user!.id);
+    },
+
+    assignHierarchyRole: async (
+      _parent: unknown,
+      { input }: { input: AssignHierarchyRoleInput },
+      context: Context
+    ) => {
+      requireAdmin(context);
+      const eventService = new EventService(context.prisma);
+      return eventService.assignHierarchyRole(input, context.user!.id);
+    },
+
+    removeHierarchyRole: async (
+      _parent: unknown,
+      { departmentId, eventVolunteerId }: { departmentId: string; eventVolunteerId: string },
+      context: Context
+    ) => {
+      requireAdmin(context);
+      const eventService = new EventService(context.prisma);
+      return eventService.removeHierarchyRole(departmentId, eventVolunteerId, context.user!.id);
     },
   },
 
@@ -201,11 +224,11 @@ const eventResolvers = {
 
   EventTemplate: {
     isActivated: async (template: EventTemplate, _args: unknown, context: Context) => {
-      if (!context.admin) return false;
+      if (!context.user) return false;
       const event = await context.prisma.event.findFirst({
         where: {
           templateId: template.id,
-          admins: { some: { userId: context.admin!.id } },
+          admins: { some: { userId: context.user!.id } },
         },
       });
       return !!event;
@@ -220,6 +243,17 @@ const eventResolvers = {
     },
     isClaimed: (dept: Department & { overseer?: EventAdmin | null }) => {
       return !!dept.overseer;
+    },
+    hierarchyRoles: async (dept: Department, _args: unknown, context: Context) => {
+      return context.prisma.departmentHierarchy.findMany({
+        where: { departmentId: dept.id },
+        include: {
+          eventVolunteer: {
+            include: { user: true },
+          },
+        },
+        orderBy: { assignedAt: 'asc' },
+      });
     },
   },
 };

@@ -14,6 +14,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
+import { createTestEvent } from '../testHelpers.js';
 import type { Application } from 'express';
 
 describe('Message Operations', () => {
@@ -57,52 +58,25 @@ describe('Message Operations', () => {
     }
     adminToken = registerRes.body.data.registerUser.accessToken;
 
-    // Setup event, department, volunteer
-    const templatesRes = await request(app)
-      .post('/graphql')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({ query: `query { eventTemplates(serviceYear: 2026) { id } }` });
+    // Create a test event directly via Prisma
+    eventId = await createTestEvent();
 
-    if (templatesRes.body.data?.eventTemplates?.length === 0) {
-      console.log('No event templates available - skipping message tests');
-      return;
-    }
-
-    const templateId = templatesRes.body.data.eventTemplates[0].id;
-
-    // Activate event
-    const activateRes = await request(app)
+    // Purchase a department to gain event access
+    const purchaseRes = await request(app)
       .post('/graphql')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
-        query: `mutation($input: ActivateEventInput!) { activateEvent(input: $input) { id } }`,
-        variables: { input: { templateId } },
-      });
-
-    // Validate event activation
-    if (!activateRes.body?.data?.activateEvent?.id) {
-      throw new Error(
-        `Event activation failed: ${JSON.stringify(activateRes.body.errors || activateRes.body)}`
-      );
-    }
-    eventId = activateRes.body.data.activateEvent.id;
-
-    // Claim department
-    const claimRes = await request(app)
-      .post('/graphql')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({
-        query: `mutation($input: ClaimDepartmentInput!) { claimDepartment(input: $input) { id } }`,
+        query: `mutation($input: PurchaseDepartmentInput!) { purchaseDepartment(input: $input) { id } }`,
         variables: { input: { eventId, departmentType: 'ATTENDANT' } },
       });
 
-    // Validate department claim
-    if (!claimRes.body?.data?.claimDepartment?.id) {
+    // Validate department purchase
+    if (!purchaseRes.body?.data?.purchaseDepartment?.id) {
       throw new Error(
-        `Department claim failed: ${JSON.stringify(claimRes.body.errors || claimRes.body)}`
+        `Department purchase failed: ${JSON.stringify(purchaseRes.body.errors || purchaseRes.body)}`
       );
     }
-    departmentId = claimRes.body.data.claimDepartment.id;
+    departmentId = purchaseRes.body.data.purchaseDepartment.id;
 
     // Create volunteer
     const volunteerRes = await request(app)
@@ -116,7 +90,7 @@ describe('Message Operations', () => {
         }`,
         variables: {
           eventId,
-          input: { firstName: 'Test', lastName: 'Volunteer', congregation: 'Test Cong' },
+          input: { firstName: 'Test', lastName: 'Volunteer', congregation: `Msg Cong ${Date.now()}` },
         },
       });
 
