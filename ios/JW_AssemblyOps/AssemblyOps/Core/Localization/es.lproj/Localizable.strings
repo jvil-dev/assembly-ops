@@ -14,6 +14,7 @@
 "common.success" = "Éxito";
 "common.retry" = "Reintentar";
 "common.search" = "Buscar";
+"common.searchFailed" = "La búsqueda falló. Verifica tu conexión.";
 "common.add" = "Agregar";
 "common.remove" = "Quitar";
 "common.copy" = "Copiar";
@@ -695,6 +696,8 @@
 "volunteer.eventDiscovery.pendingStatus.subtitle" = "Esperando aprobación del supervisor. Serás notificado una vez añadido.";
 "volunteer.joinRequest.pending" = "Solicitudes";
 
+"overseer.joinRequests.title" = "Solicitudes de Ingreso";
+"overseer.joinRequests.subtitle" = "Revisar solicitudes pendientes de voluntarios";
 "overseer.joinRequests.approve" = "Aprobar";
 "overseer.joinRequests.deny" = "Rechazar";
 
@@ -721,3 +724,155 @@
 "settings.editProfile" = "Editar Perfil";
 "settings.appearance" = "Apariencia";
 "settings.logout.confirm" = "¿Estás seguro de que deseas cerrar sesión?";
+"settings.language" = "Idioma";
+"settings.language.note" = "La aplicación se actualizará inmediatamente al cambiar de idioma.";
+"settings.archivedEvents" = "Eventos Archivados";
+"settings.archivedEvents.subtitle" = "Eventos pasados de más de 30 días";
+
+// MARK: - Sprint 6.12 — Autonomía de Departamentos y Rediseño de Buscar Eventos
+
+// Browse Events — Overseer
+"browseEvents.overseer.title" = "Selecciona un Evento";
+"browseEvents.overseer.subtitle" = "Elige un evento para adquirir tu departamento.";
+"browseEvents.empty.title" = "No Hay Eventos Disponibles";
+"browseEvents.empty.subtitle" = "Vuelve más tarde para ver próximas asambleas.";
+
+// Department Selection
+"departmentSelection.chooseTitle" = "Elige Tu Departamento";
+"departmentSelection.confirm.title" = "Adquirir Departamento";
+"departmentSelection.confirm.purchase" = "Confirmar Compra";
+"departmentSelection.confirm.message" = "¿Adquirir departamento de %@ para %@?";
+"departmentSelection.purchasing" = "Adquiriendo...";
+
+// Access Code Display
+"accessCode.title" = "Configuración del Departamento";
+"accessCode.success.title" = "¡Departamento Adquirido!";
+"accessCode.success.subtitle" = "Comparte este código de acceso con tus voluntarios.";
+"accessCode.label" = "CÓDIGO DE ACCESO";
+"accessCode.copy" = "Copiar Código";
+"accessCode.copied" = "¡Copiado!";
+"accessCode.share" = "Compartir";
+"accessCode.share.message" = "Únete al departamento de %1$@ para %2$@. Código de acceso: %3$@";
+"accessCode.shareMessage" = "Únete al departamento de %@ usando este código de acceso: %@";
+"accessCode.instructions.title" = "CÓMO COMPARTIR";
+"accessCode.instructions.step1" = "Comparte este código con los voluntarios de tu departamento";
+"accessCode.instructions.step2" = "Pueden ingresarlo en la app para unirse a tu departamento al instante";
+"accessCode.instructions.step3" = "El código no expira — compártelo en cualquier momento";
+"accessCode.instruction1" = "Comparte este código con los voluntarios de tu departamento";
+"accessCode.instruction2" = "Pueden ingresarlo en la app para unirse al instante";
+"accessCode.instruction3" = "El código no expira — compártelo en cualquier momento";
+"accessCode.done" = "Ir a Mis Eventos";
+
+// Volunteer Discovery
+"volunteerDiscovery.hero.title" = "Únete a Tu Evento";
+"volunteerDiscovery.hero.subtitle" = "Ingresa un código de acceso, comparte tu ID o busca eventos.";
+"volunteerDiscovery.accessCode.header" = "UNIÓN RÁPIDA";
+"volunteerDiscovery.accessCode.title" = "Ingresa Código de Acceso";
+"volunteerDiscovery.accessCode.description" = "¿Tienes un código de tu superintendente? Ingrésalo abajo para unirte al instante.";
+"volunteerDiscovery.accessCode.placeholder" = "XXX-XXXX";
+"volunteerDiscovery.accessCode.join" = "Unirse";
+"volunteerDiscovery.accessCode.empty" = "Por favor ingresa un código de acceso.";
+"volunteerDiscovery.accessCode.failed" = "No se pudo unir. Verifica el código e intenta de nuevo.";
+"volunteerDiscovery.userId.header" = "ALTERNATIVA";
+"volunteerDiscovery.userId.title" = "Comparte Tu ID de Usuario";
+"volunteerDiscovery.userId.description" = "Dale este ID a tu superintendente de departamento para que te agregue directamente.";
+"volunteerDiscovery.userId.copy" = "Copiar";
+"volunteerDiscovery.userId.copied" = "¡Copiado!";
+"volunteerDiscovery.orBrowse" = "o busca eventos";
+"volunteerDiscovery.empty.title" = "No Hay Eventos Disponibles";
+"volunteerDiscovery.empty.subtitle" = "Vuelve más tarde o pide un código de acceso a tu superintendente.";
+"volunteerDiscovery.joining" = "Uniéndose...";
+"volunteerDiscovery.joinSuccess.title" = "¡Bienvenido!";
+"volunteerDiscovery.joinSuccess.message" = "Has sido agregado al departamento. Regresa a Mis Eventos para comenzar.";
+
+// Department Settings
+"deptSettings.title" = "Configuración del Departamento";
+"deptSettings.loadFailed" = "No se pudo cargar la información del departamento.";
+"deptSettings.eventInfo" = "INFO DEL EVENTO";
+"deptSettings.volunteerCount" = "%d voluntarios";
+"deptSettings.accessCode" = "CÓDIGO DE ACCESO";
+"deptSettings.accessCode.subtitle" = "Comparte este código con voluntarios para que se unan a tu departamento.";
+"deptSettings.accessCode.copy" = "Copiar Código";
+"deptSettings.accessCode.copied" = "¡Copiado!";
+"deptSettings.accessCode.share" = "Compartir";
+"deptSettings.accessCode.shareMessage" = "Únete al departamento de %@ usando este código de acceso: %@";
+"deptSettings.accessCode.none" = "No se generó código de acceso.";
+"deptSettings.roster" = "NÓMINA DEL DEPARTAMENTO";
+"deptSettings.roster.overseer" = "Superintendente de Departamento";
+"deptSettings.roster.assistant" = "Superintendente Auxiliar";
+"deptSettings.roster.addAssistant" = "Agregar Superintendente Auxiliar";
+"deptSettings.roster.removeConfirm" = "¿Eliminar a este superintendente auxiliar?";
+"deptSettings.roster.removeAction" = "Eliminar";
+"deptSettings.role.assigned" = "Superintendente auxiliar asignado exitosamente.";
+"deptSettings.role.removed" = "Rol eliminado.";
+"deptSettings.privacy" = "VISIBILIDAD";
+"deptSettings.privacy.toggle" = "Departamento Público";
+"deptSettings.privacy.description" = "Cuando es público, los voluntarios pueden descubrir y solicitar unirse a este departamento.";
+"deptSettings.status" = "ESTADO DEL EVENTO";
+"deptSettings.status.completed" = "Evento completado";
+"deptSettings.status.upcoming" = "Comienza en %d días";
+"deptSettings.status.active" = "Evento activo";
+"deptSettings.picker.title" = "Asignar Asistente de Superintendente";
+"deptSettings.picker.instructions.title" = "Ingresar ID del Voluntario";
+"deptSettings.picker.instructions.body" = "Pide al voluntario su ID de usuario de 6 caracteres (visible en su pantalla de Ajustes) e ingrésalo a continuación.";
+"deptSettings.picker.idLabel" = "ID DE VOLUNTARIO";
+"deptSettings.picker.idPlaceholder" = "ej. AB12CD";
+"deptSettings.picker.assign" = "Asignar Rol";
+
+// Archived Events
+"archivedEvents.empty.title" = "No Hay Eventos Archivados";
+"archivedEvents.empty.subtitle" = "Los eventos se archivan 30 días después de que terminan.";
+
+// MARK: - Add Volunteer Sheet (Sprint 6.12 Addendum)
+"addVolunteer.title" = "Agregar Voluntario";
+"addVolunteer.or" = "o";
+"addVolunteer.accessCode.header" = "COMPARTIR CÓDIGO DE ACCESO";
+"addVolunteer.accessCode.title" = "Comparte el Código de tu Departamento";
+"addVolunteer.accessCode.description" = "Los voluntarios ingresan este código en la app para unirse a tu departamento al instante — sin aprobación.";
+"addVolunteer.accessCode.shareMessage" = "Únete a nuestro departamento usando este código de acceso: %@";
+"addVolunteer.accessCode.none" = "No hay código de acceso disponible. Adquiere tu departamento primero.";
+"addVolunteer.userId.header" = "AGREGAR MANUALMENTE";
+"addVolunteer.userId.title" = "Agregar por ID de Usuario";
+"addVolunteer.userId.description" = "Ingresa el ID de usuario de un voluntario para agregarlo directamente a tu departamento.";
+"addVolunteer.userId.placeholder" = "ej. A7X9K2";
+"addVolunteer.userId.add" = "Agregar";
+"addVolunteer.userId.hint" = "Los voluntarios pueden encontrar su ID de usuario en Configuración.";
+"addVolunteer.credentials.title" = "Credenciales";
+"addVolunteer.credentials.subtitle" = "Comparte estas credenciales de inicio de sesión con el voluntario:";
+"addVolunteer.credentials.volunteerId" = "ID de Voluntario";
+"addVolunteer.credentials.token" = "Token";
+"addVolunteer.credentials.copy" = "Copiar Credenciales";
+"addVolunteer.credentials.copied" = "Copiado al portapapeles";
+"common.copied" = "¡Copiado!";
+
+// Volunteer List empty states
+"volunteers.empty.title" = "Sin Voluntarios Aún";
+"volunteers.empty.subtitle" = "Toca + para compartir el código de acceso o agregar un voluntario por ID de usuario.";
+"volunteers.allEmpty.title" = "Sin Voluntarios en el Evento";
+"volunteers.allEmpty.subtitle" = "Ningún voluntario se ha unido a este evento aún.";
+
+// MARK: - Overseer Dashboard
+"overseer.dashboard.title" = "Panel";
+"overseer.dashboard.selectEvent" = "Seleccionar Evento";
+"overseer.dashboard.noEvent.title" = "Ningún Evento Seleccionado";
+"overseer.dashboard.noEvent.subtitle" = "Toca arriba para seleccionar un evento a gestionar";
+"overseer.dashboard.stat.volunteers" = "Voluntarios";
+"overseer.dashboard.stat.assignments" = "Asignaciones";
+"overseer.dashboard.stat.pending" = "Pendiente";
+"overseer.dashboard.stat.coverage" = "Cobertura";
+"overseer.dashboard.assignmentsOverview" = "Resumen de Asignaciones";
+"overseer.dashboard.assignmentsHint" = "Ve a la pestaña Asignaciones para ver detalles de cobertura";
+"overseer.dashboard.attendance" = "ASISTENCIA";
+"overseer.dashboard.submitCount" = "Enviar Conteo";
+"overseer.dashboard.viewSummary" = "Ver Resumen";
+
+// MARK: - Registration
+"auth.orSignUpWith" = "o regístrate con";
+"auth.termsAgreement" = "Al crear una cuenta, aceptas nuestros Términos de Servicio";
+"auth.oauth.completeRegistration" = "Completar Registro";
+"auth.oauth.subtitle" = "Solo unos detalles más para comenzar";
+"auth.privacyNote" = "Tu información se usa únicamente para la coordinación del evento";
+
+// MARK: - Overseer Mode Toggle (Settings)
+"profile.overseerMode.subtitle" = "Comprar y administrar departamentos";
+"settings.overseerMode.error" = "No se pudo actualizar. Intente de nuevo.";
