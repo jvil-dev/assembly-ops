@@ -147,7 +147,7 @@ const attendantResolvers = {
       const eventId = await attendantService.getIncidentEventId(id);
       await requireEventAccess(context, eventId);
 
-      return attendantService.resolveSafetyIncident(id, context.admin!.id, resolutionNotes);
+      return attendantService.resolveSafetyIncident(id, context.user!.id, resolutionNotes);
     },
 
     createLostPersonAlert: async (
@@ -174,7 +174,7 @@ const attendantResolvers = {
       const eventId = await attendantService.getAlertEventId(id);
       await requireEventAccess(context, eventId);
 
-      return attendantService.resolveLostPersonAlert(id, context.admin!.id, resolutionNotes);
+      return attendantService.resolveLostPersonAlert(id, context.user!.id, resolutionNotes);
     },
 
     createAttendantMeeting: async (
@@ -186,7 +186,7 @@ const attendantResolvers = {
       await requireEventAccess(context, input.eventId);
 
       const attendantService = new AttendantService(context.prisma);
-      return attendantService.createMeeting(context.admin!.id, input);
+      return attendantService.createMeeting(context.user!.id, input);
     },
 
     updateAttendantMeetingNotes: async (

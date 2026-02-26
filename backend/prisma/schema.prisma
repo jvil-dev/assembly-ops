@@ -175,22 +175,44 @@ model Congregation {
 // ─────────────────────────────────────────────
 
 model Department {
-  id              String           @id @default(cuid())
+  id              String                @id @default(cuid())
   name            String
   departmentType  DepartmentType
   description     String?
+  accessCode      String?               @unique // e.g. "ATT-7X9K", generated at purchase
+  isPublic        Boolean               @default(true) // Privacy toggle for cross-dept visibility
   eventId         String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  event           Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  event           Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
   overseer        EventAdmin?
   notes           EventNote[]
   posts           Post[]
   areas           Area[]
   eventVolunteers EventVolunteer[]
+  hierarchyRoles  DepartmentHierarchy[]
 
   @@unique([eventId, departmentType])
   @@index([eventId])
+  @@index([accessCode])
+}
+
+// ─────────────────────────────────────────────
+// DEPARTMENT HIERARCHY (roster assignments within a department)
+// ─────────────────────────────────────────────
+
+model DepartmentHierarchy {
+  id               String         @id @default(cuid())
+  departmentId     String
+  eventVolunteerId String
+  hierarchyRole    HierarchyRole
+  assignedAt       DateTime       @default(now())
+  department       Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  eventVolunteer   EventVolunteer @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
+
+  @@unique([departmentId, hierarchyRole, eventVolunteerId])
+  @@index([departmentId])
+  @@index([eventVolunteerId])
 }
 
 // ─────────────────────────────────────────────
@@ -326,6 +348,7 @@ model EventVolunteer {
   areaCaptains           AreaCaptain[]
   walkThroughCompletions WalkThroughCompletion[]
   postSessionStatuses    PostSessionStatus[]     @relation("PostSessionStatusUpdatedBy")
+  hierarchyRoles         DepartmentHierarchy[]
 
   @@unique([userId, eventId]) // One membership per user per event
   @@index([eventId])
@@ -747,8 +770,11 @@ enum DepartmentType {
 }
 
 enum EventRole {
-  APP_ADMIN
   DEPARTMENT_OVERSEER
+}
+
+enum HierarchyRole {
+  ASSISTANT_OVERSEER
 }
 
 enum EventType {

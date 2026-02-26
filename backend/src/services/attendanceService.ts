@@ -27,7 +27,7 @@
  * Called by: ../graphql/resolvers/attendance.ts
  */
 
-import { PrismaClient, AttendanceCount, EventRole } from '@prisma/client';
+import { PrismaClient, AttendanceCount } from '@prisma/client';
 import { NotFoundError, ValidationError, AuthorizationError } from '../utils/errors.js';
 import {
   SubmitAttendanceCountInput,
@@ -169,7 +169,7 @@ export class AttendanceService {
    */
   private async getSubmittingAdminId(eventId: string): Promise<string> {
     const eventAdmin = await this.prisma.eventAdmin.findFirst({
-      where: { eventId, role: EventRole.APP_ADMIN },
+      where: { eventId },
       select: { userId: true },
     });
 

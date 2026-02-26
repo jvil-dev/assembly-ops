@@ -6,24 +6,26 @@
  * Queries:
  *   - eventTemplates: Get available event templates (from HQ, seeded data)
  *   - myEvents: Get all events the current overseer has access to
+ *   - myAllEvents: Get all events for the current user (overseer + volunteer)
  *   - event: Get a single event by ID
  *   - eventDepartments: Get all departments for an event
  *   - availableDepartments: Get department types not yet claimed
- *   - eventAdmins: Get all overseers for an event (APP_ADMIN only)
+ *   - eventAdmins: Get all overseers for an event
  *   - discoverEvents: Get public events available to join
+ *   - departmentInfo: Get detailed department info with hierarchy
  *
  * Mutations:
- *   - activateEvent: Create a real event from a template
- *   - joinEvent: Join an existing event using a join code
- *   - claimDepartment: Claim a department as its overseer
- *   - promoteToAppAdmin: Promote a Department Overseer to App Admin (APP_ADMIN only)
+ *   - purchaseDepartment: Purchase a department in an event (creates EventAdmin + Department + access code)
+ *   - joinDepartmentByAccessCode: Volunteer joins a department via access code
+ *   - setDepartmentPrivacy: Toggle department public/private visibility
+ *   - assignHierarchyRole: Assign a hierarchy role (e.g. ASSISTANT_OVERSEER) to a volunteer
+ *   - removeHierarchyRole: Remove a hierarchy role assignment
  *
- * Event Lifecycle:
- *   1. Templates are seeded (Circuit Assembly 2025, etc.)
- *   2. Event Overseer activates a template → creates Event with joinCode
- *   3. Department Overseers join using the joinCode
- *   4. Department Overseers claim their department
- *   5. Overseers add volunteers, posts, sessions, assignments
+ * Department Purchase Flow:
+ *   1. Events are pre-created (seeded or via admin panel)
+ *   2. Overseer discovers event via discoverEvents
+ *   3. Overseer calls purchaseDepartment → creates EventAdmin + Department + access code
+ *   4. Volunteers join via access code or overseer invitation
  *
  * Implemented by: ../resolvers/event.ts
  */
@@ -32,22 +34,19 @@ const eventTypeDefs = `#graphql
   # INPUTS
   # ============================================
 
-  input ActivateEventInput {
-    templateId: ID!
-  }
-
-  input JoinEventInput {
-    joinCode: String!
-  }
-
-  input ClaimDepartmentInput {
+  input PurchaseDepartmentInput {
     eventId: ID!
     departmentType: DepartmentType!
   }
 
-  input PromoteToAppAdminInput {
-    eventId: ID!
-    adminId: ID!
+  input JoinDepartmentByCodeInput {
+    accessCode: String!
+  }
+
+  input AssignHierarchyRoleInput {
+    departmentId: ID!
+    eventVolunteerId: ID!
+    hierarchyRole: HierarchyRole!
   }
 
   # ============================================
@@ -68,6 +67,7 @@ const eventTypeDefs = `#graphql
     departmentId: ID
     departmentName: String
     departmentType: DepartmentType
+    departmentAccessCode: String
     # Volunteer-specific
     eventVolunteerId: ID
     volunteerId: String
@@ -85,15 +85,16 @@ const eventTypeDefs = `#graphql
     eventDepartments(eventId: ID!): [Department!]!
     availableDepartments(eventId: ID!): [DepartmentType!]!
     eventAdmins(eventId: ID!): [EventAdmin!]!
-    # Discover publicly visible events (for volunteer self-join flow)
     discoverEvents(eventType: EventType): [Event!]!
+    departmentInfo(departmentId: ID!): Department
   }
 
   extend type Mutation {
-    activateEvent(input: ActivateEventInput!): Event!
-    joinEvent(input: JoinEventInput!): EventAdmin!
-    claimDepartment(input: ClaimDepartmentInput!): Department!
-    promoteToAppAdmin(input: PromoteToAppAdminInput!): EventAdmin!
+    purchaseDepartment(input: PurchaseDepartmentInput!): Department!
+    joinDepartmentByAccessCode(input: JoinDepartmentByCodeInput!): EventVolunteerCredentials!
+    setDepartmentPrivacy(departmentId: ID!, isPublic: Boolean!): Department!
+    assignHierarchyRole(input: AssignHierarchyRoleInput!): DepartmentHierarchy!
+    removeHierarchyRole(departmentId: ID!, eventVolunteerId: ID!): Boolean!
   }
 `;
 

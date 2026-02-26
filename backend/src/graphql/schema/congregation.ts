@@ -15,5 +15,6 @@ export const congregationTypeDefs = `#graphql
         congregations(state: String!, language: String): [Congregation!]!
         congregationsByCircuit(circuitId: ID!): [Congregation!]!
         congregation(id: ID!): Congregation
+        searchCongregations(query: String!): [Congregation!]!
     }
 `;

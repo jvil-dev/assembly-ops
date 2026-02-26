@@ -29,6 +29,7 @@ export const registerUserSchema = z.object({
     .transform((v: string) => v.trim()),
   phone: z.string().optional(),
   congregation: z.string().optional(),
+  congregationId: z.string().optional(),
   appointmentStatus: z.enum(['PUBLISHER', 'MINISTERIAL_SERVANT', 'ELDER']).optional(),
   isOverseer: z.boolean().optional(),
 });

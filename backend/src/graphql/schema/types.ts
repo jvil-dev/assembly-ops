@@ -15,8 +15,11 @@ const types = `#graphql
   }
 
   enum EventRole {
-    APP_ADMIN
     DEPARTMENT_OVERSEER
+  }
+
+  enum HierarchyRole {
+    ASSISTANT_OVERSEER
   }
 
   enum DepartmentType {
@@ -132,12 +135,23 @@ const types = `#graphql
     name: String!
     departmentType: DepartmentType!
     description: String
+    accessCode: String
+    isPublic: Boolean!
     event: Event!
     overseer: EventAdmin
     posts: [Post!]!
     volunteerCount: Int!
     isClaimed: Boolean!
+    hierarchyRoles: [DepartmentHierarchy!]!
     createdAt: DateTime!
+  }
+
+  type DepartmentHierarchy {
+    id: ID!
+    department: Department!
+    eventVolunteer: Volunteer!
+    hierarchyRole: HierarchyRole!
+    assignedAt: DateTime!
   }
 
   type Role {

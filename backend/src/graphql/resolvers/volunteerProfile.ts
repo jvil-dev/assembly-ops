@@ -294,7 +294,7 @@ const volunteerProfileResolvers = {
       await requireEventAccess(context, eventId);
       const { VolunteerService } = await import('../../services/volunteerService.js');
       const volunteerService = new VolunteerService(context.prisma);
-      return volunteerService.addVolunteerByUserId(eventId, userShortId, context.admin!.id, departmentId);
+      return volunteerService.addVolunteerByUserId(eventId, userShortId, context.user!.id, departmentId);
     },
 
     regenerateVolunteerToken: async (

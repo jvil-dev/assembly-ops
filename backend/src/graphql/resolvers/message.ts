@@ -54,8 +54,8 @@ import { MessageSenderType } from '@prisma/client';
  * Works for both admin and volunteer tokens.
  */
 function resolveSenderIdentity(context: Context): SenderIdentity {
-  if (context.admin) {
-    return { senderType: 'USER' as MessageSenderType, senderId: context.admin!.id };
+  if (context.user) {
+    return { senderType: 'USER' as MessageSenderType, senderId: context.user!.id };
   }
   if (context.volunteer) {
     return { senderType: 'VOLUNTEER' as MessageSenderType, senderId: context.volunteer.id };
@@ -93,7 +93,7 @@ const messageResolvers = {
     ) => {
       requireAdmin(context);
       const messageService = new MessageService(context.prisma);
-      return messageService.getSentMessages(context.admin!.id, limit ?? 50, offset ?? 0);
+      return messageService.getSentMessages(context.user!.id, limit ?? 50, offset ?? 0);
     },
 
     myMessages: async (
@@ -169,8 +169,8 @@ const messageResolvers = {
       if (context.volunteer && context.volunteer.eventId !== eventId) {
         throw new Error('You do not have access to this event');
       }
-      // If admin, verify event access
-      if (context.admin) {
+      // If overseer, verify event access
+      if (context.user) {
         await requireEventAccess(context, eventId);
       }
 
@@ -236,7 +236,7 @@ const messageResolvers = {
 
       // Determine eventId for access control
       let eventId: string;
-      if (context.admin) {
+      if (context.user) {
         if (input.volunteerId) {
           eventId = await messageService.getVolunteerEventId(input.volunteerId);
         } else if (input.eventId) {
@@ -272,7 +272,7 @@ const messageResolvers = {
       context: Context
     ) => {
       requireAdmin(context);
-      await requireEventAccess(context, input.eventId, ['APP_ADMIN']);
+      await requireEventAccess(context, input.eventId);
       const identity = resolveSenderIdentity(context);
       const messageService = new MessageService(context.prisma);
       return messageService.sendBroadcast(identity, input);

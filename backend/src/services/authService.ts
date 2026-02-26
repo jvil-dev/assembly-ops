@@ -98,6 +98,19 @@ export class AuthService {
 
     const passwordHash = await hashPassword(validated.password);
 
+    let congregationName: string | null = validated.congregation ?? null;
+    let congregationId: string | null = null;
+    if (validated.congregationId) {
+      const cong = await this.prisma.congregation.findUnique({
+        where: { id: validated.congregationId },
+        select: { name: true, city: true },
+      });
+      if (cong) {
+        congregationId = validated.congregationId;
+        congregationName = `${cong.name} - ${cong.city}`;
+      }
+    }
+
     const user = await this.prisma.user.create({
       data: {
         userId,
@@ -106,7 +119,8 @@ export class AuthService {
         firstName: validated.firstName,
         lastName: validated.lastName,
         phone: validated.phone ?? null,
-        congregation: validated.congregation ?? null,
+        congregation: congregationName,
+        congregationId,
         appointmentStatus: validated.appointmentStatus ?? null,
         isOverseer: validated.isOverseer ?? false,
       },

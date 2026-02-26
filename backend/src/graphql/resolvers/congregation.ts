@@ -57,6 +57,23 @@ const congregationResolvers = {
         where: { id },
       });
     },
+
+    searchCongregations: async (
+      _parent: unknown,
+      { query }: { query: string },
+      context: Context
+    ): Promise<Congregation[]> => {
+      requireAuth(context);
+      const trimmed = query.trim();
+      if (trimmed.length < 3) return [];
+      return context.prisma.congregation.findMany({
+        where: {
+          name: { contains: trimmed, mode: 'insensitive' },
+        },
+        orderBy: [{ name: 'asc' }],
+        take: 20,
+      });
+    },
   },
 
   Congregation: {

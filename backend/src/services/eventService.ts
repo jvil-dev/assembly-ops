@@ -1,48 +1,47 @@
 /**
  * Event Service
  *
- * Business logic for event management: templates, activation, joining, departments.
+ * Business logic for event management: templates, department purchasing, hierarchy.
  *
  * Methods:
  *   - getEventTemplates(serviceYear?): Get available event templates
- *   - activateEvent(input, userId): Create event from template, user becomes APP_ADMIN
- *   - joinEvent(input, userId): Join event using join code as DEPARTMENT_OVERSEER
- *   - claimDepartment(input, userId): Claim a department in an event
- *   - getMyEvents(userId): Get all events this user is part of
+ *   - purchaseDepartment(input, userId): Purchase a department in an event (creates EventAdmin + Department + access code)
+ *   - joinDepartmentByAccessCode(code, userId): Volunteer joins a department via access code
+ *   - getDepartmentInfo(departmentId): Get department with overseer, hierarchy, event info
+ *   - setDepartmentPrivacy(departmentId, isPublic, userId): Toggle department privacy
+ *   - assignHierarchyRole(departmentId, eventVolunteerId, role, userId): Assign hierarchy role
+ *   - removeHierarchyRole(departmentId, eventVolunteerId, userId): Remove hierarchy role
+ *   - getMyEvents(userId): Get all events this user is part of (overseer view)
  *   - getMyAllEvents(userId): Get all events this user is part of (all roles)
  *   - getEvent(eventId): Get single event with all related data
  *   - getEventDepartments(eventId): Get departments for an event
  *   - getEventAdmins(eventId): Get all overseers for an event
- *   - promoteToAppAdmin(input, userId): Promote a Department Overseer to App Admin
- *   - discoverEvents(eventType?): Get public events available to join
  *
- * Event Lifecycle:
- *   1. HQ seeds event templates (Circuit Assembly 2025, etc.)
- *   2. Event Overseer calls activateEvent() → creates Event with unique joinCode
- *   3. Department Overseers call joinEvent() with the joinCode
- *   4. Department Overseers call claimDepartment() to claim their department
- *   5. Overseers manage volunteers, posts, sessions within their scope
+ * Department Purchase Flow:
+ *   1. Events are pre-created (seeded or via admin panel)
+ *   2. Overseer discovers event via discoverEvents query
+ *   3. Overseer calls purchaseDepartment() → creates EventAdmin + Department + access code
+ *   4. Volunteers join via access code (joinDepartmentByAccessCode) or overseer invitation
  *
- * Department Names:
- *   DEPARTMENT_NAMES constant maps enum values (ATTENDANT) to display names (Attendant).
- *   Based on CO-1 convention guidelines for standard department names.
- *
- * Authorization:
- *   - Resolvers handle auth checks before calling these methods
- *   - This service assumes the caller has verified permissions
+ * Access Code Format:
+ *   {3-CHAR-PREFIX}-{4-CHAR-RANDOM} e.g. "ATT-7X9K"
+ *   Prefix auto-assigned from department type.
+ *   Character set excludes ambiguous chars (O, 0, I, 1).
  *
  * Called by: ../graphql/resolvers/event.ts
  */
-import { PrismaClient, EventRole, DepartmentType } from '@prisma/client';
+import { PrismaClient, EventRole, DepartmentType, HierarchyRole } from '@prisma/client';
 import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '../utils/errors.js';
 import { timeStringToDate } from '../utils/time.js';
+import { generateEventVolunteerId, generateToken, hashToken } from '../utils/credentials.js';
+import { encryptField } from '../utils/encryption.js';
 import {
-  activateEventSchema,
-  joinEventSchema,
-  claimDepartmentSchema,
-  ActivateEventInput,
-  JoinEventInput,
-  ClaimDepartmentInput,
+  purchaseDepartmentSchema,
+  joinDepartmentByCodeSchema,
+  assignHierarchyRoleSchema,
+  PurchaseDepartmentInput,
+  JoinDepartmentByCodeInput,
+  AssignHierarchyRoleInput,
 } from '../graphql/validators/event.js';
 
 // Department display names
@@ -61,6 +60,33 @@ const DEPARTMENT_NAMES: Record<DepartmentType, string> = {
   TRUCKING_EQUIPMENT: 'Trucking & Equipment',
 };
 
+// 3-char prefixes for access code generation
+const DEPARTMENT_ACCESS_CODE_PREFIX: Record<DepartmentType, string> = {
+  ACCOUNTS: 'ACC',
+  ATTENDANT: 'ATT',
+  AUDIO_VIDEO: 'AUD',
+  BAPTISM: 'BAP',
+  CLEANING: 'CLN',
+  FIRST_AID: 'AID',
+  INFORMATION_VOLUNTEER_SERVICE: 'IVS',
+  INSTALLATION: 'INS',
+  LOST_FOUND_CHECKROOM: 'LFC',
+  PARKING: 'PRK',
+  ROOMING: 'ROM',
+  TRUCKING_EQUIPMENT: 'TRK',
+};
+
+// Characters for access code shortcode (excludes ambiguous: O, 0, I, 1)
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function generateShortcode(length: number): string {
+  let code = '';
+  for (let i = 0; i < length; i++) {
+    code += CODE_CHARS.charAt(Math.floor(Math.random() * CODE_CHARS.length));
+  }
+  return code;
+}
+
 export class EventService {
   constructor(private prisma: PrismaClient) {}
 
@@ -73,185 +99,50 @@ export class EventService {
     });
   }
 
-  async activateEvent(input: ActivateEventInput, adminId: string) {
-    const result = activateEventSchema.safeParse(input);
-    if (!result.success) {
-      throw new ValidationError(result.error.issues[0].message);
-    }
-
-    const { templateId } = result.data;
-
-    // Check template exists
-    const template = await this.prisma.eventTemplate.findUnique({
-      where: { id: templateId },
-    });
-
-    if (!template) {
-      throw new NotFoundError('Event template');
-    }
-
-    // Check if already activated by this admin
-    const existingEvent = await this.prisma.event.findFirst({
-      where: {
-        templateId,
-        admins: {
-          some: { userId: adminId },
-        },
-      },
-    });
-
-    if (existingEvent) {
-      throw new ConflictError('You have already activated this event');
-    }
-
-    // Create event and add admin as APP_ADMIN
-    const event = await this.prisma.event.create({
-      data: {
-        templateId,
-        admins: {
-          create: {
-            userId: adminId,
-            role: EventRole.APP_ADMIN,
-          },
-        },
-      },
-      include: {
-        template: true,
-        admins: {
-          include: { user: true },
-        },
-      },
-    });
-
-    // Auto-create default sessions based on event type
-    const dayCount = Math.round(
-      (template.endDate.getTime() - template.startDate.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1;
-
-    for (let d = 0; d < dayCount; d++) {
-      const date = new Date(template.startDate);
-      date.setDate(date.getDate() + d);
-
-      await this.prisma.session.create({
-        data: {
-          name: 'Morning',
-          date,
-          startTime: timeStringToDate('09:20'),
-          endTime: timeStringToDate('12:00'),
-          eventId: event.id,
-        },
+  /**
+   * Generate a unique access code for a department.
+   * Format: {PREFIX}-{4-char alphanumeric} e.g. "ATT-7X9K"
+   */
+  private async generateUniqueAccessCode(departmentType: DepartmentType): Promise<string> {
+    const prefix = DEPARTMENT_ACCESS_CODE_PREFIX[departmentType];
+    let attempts = 0;
+    while (attempts < 10) {
+      const code = `${prefix}-${generateShortcode(4)}`;
+      const existing = await this.prisma.department.findUnique({
+        where: { accessCode: code },
       });
-
-      await this.prisma.session.create({
-        data: {
-          name: 'Noon',
-          date,
-          startTime: timeStringToDate('12:00'),
-          endTime: timeStringToDate('13:30'),
-          eventId: event.id,
-        },
-      });
-
-      await this.prisma.session.create({
-        data: {
-          name: 'Afternoon',
-          date,
-          startTime: timeStringToDate('13:30'),
-          endTime: timeStringToDate('16:00'),
-          eventId: event.id,
-        },
-      });
+      if (!existing) return code;
+      attempts++;
     }
-
-    // Seed standard department roles (CO-1 hierarchy)
-    const defaultRoles = [
-      { name: 'Volunteer',          description: 'General department volunteer',               sortOrder: 0 },
-      { name: 'Captain',            description: 'Leads volunteers during a session or shift', sortOrder: 1 },
-      { name: 'Keyman',             description: 'Supervises a specific area or function',     sortOrder: 2 },
-      { name: 'Assistant Overseer', description: 'Assists the department overseer',            sortOrder: 3 },
-    ];
-    await Promise.all(
-      defaultRoles.map(r =>
-        this.prisma.role.create({ data: { ...r, eventId: event.id } })
-      )
-    );
-
-    return event;
+    throw new Error('Could not generate unique access code after 10 attempts');
   }
 
-  async joinEvent(input: JoinEventInput, adminId: string) {
-    const result = joinEventSchema.safeParse(input);
-    if (!result.success) {
-      throw new ValidationError(result.error.issues[0].message);
-    }
-
-    const { joinCode } = result.data;
-
-    // Find event by join code
-    const event = await this.prisma.event.findUnique({
-      where: { joinCode },
-      include: { template: true },
-    });
-
-    if (!event) {
-      throw new NotFoundError('Event with this join code');
-    }
-
-    // Check if already a member
-    const existingMembership = await this.prisma.eventAdmin.findUnique({
-      where: {
-        userId_eventId: {
-          userId: adminId,
-          eventId: event.id,
-        },
-      },
-    });
-
-    if (existingMembership) {
-      throw new ConflictError('You are already a member of this event');
-    }
-
-    // Add as member (no role yet - must claim department)
-    const eventAdmin = await this.prisma.eventAdmin.create({
-      data: {
-        userId: adminId,
-        eventId: event.id,
-        role: EventRole.DEPARTMENT_OVERSEER, // Default role until they claim
-      },
-      include: {
-        event: {
-          include: { template: true },
-        },
-        user: true,
-      },
-    });
-
-    return eventAdmin;
-  }
-
-  async claimDepartment(input: ClaimDepartmentInput, adminId: string) {
-    const result = claimDepartmentSchema.safeParse(input);
+  /**
+   * Purchase a department in an event.
+   *
+   * Creates EventAdmin (if needed) + Department + access code in one step.
+   * If the user has no EventAdmin for this event, one is created.
+   * If the user already has a department in this event, throws conflict.
+   */
+  async purchaseDepartment(input: PurchaseDepartmentInput, userId: string) {
+    const result = purchaseDepartmentSchema.safeParse(input);
     if (!result.success) {
       throw new ValidationError(result.error.issues[0].message);
     }
 
     const { eventId, departmentType } = result.data;
 
-    // Check admin is member of event
-    const eventAdmin = await this.prisma.eventAdmin.findUnique({
-      where: {
-        userId_eventId: {
-          userId: adminId,
-          eventId,
-        },
-      },
+    // Verify event exists
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+      include: { template: true },
     });
 
-    if (!eventAdmin) {
-      throw new NotFoundError('Event membership');
+    if (!event) {
+      throw new NotFoundError('Event');
     }
 
-    // Check if department already exists (already claimed)
+    // Check if department type already claimed in this event
     const existingDepartment = await this.prisma.department.findUnique({
       where: {
         eventId_departmentType: {
@@ -271,32 +162,108 @@ export class EventService {
       );
     }
 
-    // Check if admin already has a department in this event
-    if (eventAdmin.departmentId) {
-      throw new ConflictError('You have already claimed a department in this event');
+    // Get or create EventAdmin for this user + event
+    let eventAdmin = await this.prisma.eventAdmin.findUnique({
+      where: {
+        userId_eventId: {
+          userId,
+          eventId,
+        },
+      },
+    });
+
+    if (eventAdmin && eventAdmin.departmentId) {
+      throw new ConflictError('You have already purchased a department in this event');
     }
 
-    // Create department and assign overseer
+    if (!eventAdmin) {
+      eventAdmin = await this.prisma.eventAdmin.create({
+        data: {
+          userId,
+          eventId,
+          role: EventRole.DEPARTMENT_OVERSEER,
+        },
+      });
+    }
+
+    // Generate access code
+    const accessCode = await this.generateUniqueAccessCode(departmentType);
+
+    // Create department
     const department = await this.prisma.department.create({
       data: {
         name: DEPARTMENT_NAMES[departmentType],
         departmentType,
         eventId,
+        accessCode,
+        isPublic: true,
       },
     });
 
-    // Update eventAdmin with department
-    // Preserve APP_ADMIN role if already set (they can manage sessions AND a department)
+    // Link department to EventAdmin
     await this.prisma.eventAdmin.update({
       where: { id: eventAdmin.id },
       data: {
         departmentId: department.id,
-        role:
-          eventAdmin.role === EventRole.APP_ADMIN
-            ? EventRole.APP_ADMIN
-            : EventRole.DEPARTMENT_OVERSEER,
+        role: EventRole.DEPARTMENT_OVERSEER,
       },
     });
+
+    // Auto-create default sessions if this is the first department (no sessions yet)
+    const sessionCount = await this.prisma.session.count({ where: { eventId } });
+    if (sessionCount === 0) {
+      const dayCount = Math.round(
+        (event.template.endDate.getTime() - event.template.startDate.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1;
+
+      for (let d = 0; d < dayCount; d++) {
+        const date = new Date(event.template.startDate);
+        date.setDate(date.getDate() + d);
+
+        await this.prisma.session.create({
+          data: {
+            name: 'Morning',
+            date,
+            startTime: timeStringToDate('09:20'),
+            endTime: timeStringToDate('12:00'),
+            eventId,
+          },
+        });
+
+        await this.prisma.session.create({
+          data: {
+            name: 'Noon',
+            date,
+            startTime: timeStringToDate('12:00'),
+            endTime: timeStringToDate('13:30'),
+            eventId,
+          },
+        });
+
+        await this.prisma.session.create({
+          data: {
+            name: 'Afternoon',
+            date,
+            startTime: timeStringToDate('13:30'),
+            endTime: timeStringToDate('16:00'),
+            eventId,
+          },
+        });
+      }
+
+      // Seed standard department roles (CO-1 hierarchy)
+      const defaultRoles = [
+        { name: 'Volunteer',          description: 'General department volunteer',               sortOrder: 0 },
+        { name: 'Captain',            description: 'Leads volunteers during a session or shift', sortOrder: 1 },
+        { name: 'Keyman',             description: 'Supervises a specific area or function',     sortOrder: 2 },
+        { name: 'Assistant Overseer', description: 'Assists the department overseer',            sortOrder: 3 },
+      ];
+      await Promise.all(
+        defaultRoles.map(r =>
+          this.prisma.role.create({ data: { ...r, eventId } })
+        )
+      );
+    }
 
     return this.prisma.department.findUnique({
       where: { id: department.id },
@@ -309,6 +276,229 @@ export class EventService {
         },
       },
     });
+  }
+
+  /**
+   * Join a department by access code (volunteer flow).
+   * Finds the department by access code, creates EventVolunteer immediately.
+   * No approval needed — the access code is the authorization.
+   */
+  async joinDepartmentByAccessCode(input: JoinDepartmentByCodeInput, userId: string) {
+    const result = joinDepartmentByCodeSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+
+    const { accessCode } = result.data;
+
+    // Find department by access code (case-insensitive)
+    const department = await this.prisma.department.findFirst({
+      where: {
+        accessCode: {
+          equals: accessCode.toUpperCase(),
+          mode: 'insensitive',
+        },
+      },
+      include: {
+        event: { include: { template: true } },
+      },
+    });
+
+    if (!department) {
+      throw new NotFoundError('No department found with this access code');
+    }
+
+    // Check if user already has an EventVolunteer for this event
+    const existing = await this.prisma.eventVolunteer.findUnique({
+      where: {
+        userId_eventId: {
+          userId,
+          eventId: department.eventId,
+        },
+      },
+    });
+
+    if (existing) {
+      throw new ConflictError('You are already a volunteer for this event');
+    }
+
+    // Create EventVolunteer credentials
+    const volunteerId = generateEventVolunteerId();
+    const token = generateToken();
+    const tokenHash = await hashToken(token);
+
+    const eventVolunteer = await this.prisma.eventVolunteer.create({
+      data: {
+        volunteerId,
+        tokenHash,
+        encryptedToken: encryptField(token),
+        userId,
+        eventId: department.eventId,
+        departmentId: department.id,
+      },
+      include: {
+        user: true,
+        event: { include: { template: true } },
+      },
+    });
+
+    return {
+      eventVolunteer,
+      volunteerId,
+      token,
+      inviteMessage: `You've joined ${department.name} at ${eventVolunteer.event.template.name}.\n\nYour login credentials:\nVolunteer ID: ${volunteerId}\nToken: ${token}`,
+    };
+  }
+
+  /**
+   * Get detailed department info including hierarchy and event data.
+   */
+  async getDepartmentInfo(departmentId: string) {
+    const department = await this.prisma.department.findUnique({
+      where: { id: departmentId },
+      include: {
+        overseer: {
+          include: { user: true },
+        },
+        hierarchyRoles: {
+          include: {
+            eventVolunteer: {
+              include: { user: true },
+            },
+          },
+          orderBy: { assignedAt: 'asc' },
+        },
+        event: {
+          include: { template: true },
+        },
+        _count: {
+          select: { eventVolunteers: true, posts: true },
+        },
+      },
+    });
+
+    if (!department) {
+      throw new NotFoundError('Department');
+    }
+
+    return department;
+  }
+
+  /**
+   * Toggle department privacy (public/private).
+   * Only the department overseer can change this.
+   */
+  async setDepartmentPrivacy(departmentId: string, isPublic: boolean, userId: string) {
+    // Verify caller is the department overseer
+    const department = await this.prisma.department.findUnique({
+      where: { id: departmentId },
+      include: { overseer: true },
+    });
+
+    if (!department) {
+      throw new NotFoundError('Department');
+    }
+
+    if (!department.overseer || department.overseer.userId !== userId) {
+      throw new AuthorizationError('Only the department overseer can change privacy settings');
+    }
+
+    return this.prisma.department.update({
+      where: { id: departmentId },
+      data: { isPublic },
+      include: {
+        overseer: { include: { user: true } },
+      },
+    });
+  }
+
+  /**
+   * Assign a hierarchy role (e.g. ASSISTANT_OVERSEER) to a volunteer.
+   * Only the department overseer can do this.
+   */
+  async assignHierarchyRole(input: AssignHierarchyRoleInput, userId: string) {
+    const result = assignHierarchyRoleSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+
+    const { departmentId, eventVolunteerId, hierarchyRole } = result.data;
+
+    // Verify caller is the department overseer
+    const department = await this.prisma.department.findUnique({
+      where: { id: departmentId },
+      include: { overseer: true },
+    });
+
+    if (!department) {
+      throw new NotFoundError('Department');
+    }
+
+    if (!department.overseer || department.overseer.userId !== userId) {
+      throw new AuthorizationError('Only the department overseer can assign hierarchy roles');
+    }
+
+    // Verify the volunteer belongs to this department
+    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
+      where: { id: eventVolunteerId },
+    });
+
+    if (!eventVolunteer || eventVolunteer.departmentId !== departmentId) {
+      throw new ValidationError('Volunteer does not belong to this department');
+    }
+
+    // Upsert the hierarchy role
+    return this.prisma.departmentHierarchy.upsert({
+      where: {
+        departmentId_hierarchyRole_eventVolunteerId: {
+          departmentId,
+          hierarchyRole: hierarchyRole as HierarchyRole,
+          eventVolunteerId,
+        },
+      },
+      update: {},
+      create: {
+        departmentId,
+        eventVolunteerId,
+        hierarchyRole: hierarchyRole as HierarchyRole,
+      },
+      include: {
+        eventVolunteer: {
+          include: { user: true },
+        },
+        department: true,
+      },
+    });
+  }
+
+  /**
+   * Remove a hierarchy role assignment.
+   * Only the department overseer can do this.
+   */
+  async removeHierarchyRole(departmentId: string, eventVolunteerId: string, userId: string) {
+    // Verify caller is the department overseer
+    const department = await this.prisma.department.findUnique({
+      where: { id: departmentId },
+      include: { overseer: true },
+    });
+
+    if (!department) {
+      throw new NotFoundError('Department');
+    }
+
+    if (!department.overseer || department.overseer.userId !== userId) {
+      throw new AuthorizationError('Only the department overseer can remove hierarchy roles');
+    }
+
+    // Delete any hierarchy role for this volunteer in this department
+    await this.prisma.departmentHierarchy.deleteMany({
+      where: {
+        departmentId,
+        eventVolunteerId,
+      },
+    });
+
+    return true;
   }
 
   async getMyAllEvents(userId: string) {
@@ -353,6 +543,7 @@ export class EventService {
       departmentId: string | null;
       departmentName: string | null;
       departmentType: string | null;
+      departmentAccessCode: string | null;
       eventVolunteerId: string | null;
       volunteerId: string | null;
     }> = [];
@@ -367,6 +558,7 @@ export class EventService {
         departmentId: ea.department?.id ?? null,
         departmentName: ea.department?.name ?? null,
         departmentType: ea.department?.departmentType ?? null,
+        departmentAccessCode: ea.department?.accessCode ?? null,
         eventVolunteerId: null,
         volunteerId: null,
       });
@@ -383,6 +575,7 @@ export class EventService {
         departmentId: ev.department?.id ?? null,
         departmentName: ev.department?.name ?? null,
         departmentType: ev.department?.departmentType ?? null,
+        departmentAccessCode: null,
         eventVolunteerId: ev.id,
         volunteerId: ev.volunteerId,
       });
@@ -471,68 +664,5 @@ export class EventService {
       },
       orderBy: { claimedAt: 'asc' },
     });
-  }
-
-  async promoteToAppAdmin(
-    input: { eventId: string; adminId: string },
-    requestingAdminId: string,
-  ) {
-    const { eventId, adminId } = input;
-
-    // 1. Verify requesting admin is APP_ADMIN for this event
-    const requestingEventAdmin = await this.prisma.eventAdmin.findUnique({
-      where: {
-        userId_eventId: {
-          userId: requestingAdminId,
-          eventId,
-        },
-      },
-    });
-
-    if (
-      !requestingEventAdmin ||
-      requestingEventAdmin.role !== EventRole.APP_ADMIN
-    ) {
-      throw new AuthorizationError(
-        'Only App Admins can promote other admins',
-      );
-    }
-
-    // 2. Find target admin
-    const targetEventAdmin = await this.prisma.eventAdmin.findUnique({
-      where: {
-        userId_eventId: {
-          userId: adminId,
-          eventId,
-        },
-      },
-      include: {
-        user: true,
-        event: true,
-        department: true,
-      },
-    });
-
-    if (!targetEventAdmin) {
-      throw new NotFoundError('Admin not found for this event');
-    }
-
-    // 3. Check if already APP_ADMIN (idempotent)
-    if (targetEventAdmin.role === EventRole.APP_ADMIN) {
-      return targetEventAdmin;
-    }
-
-    // 4. Promote to APP_ADMIN
-    const updated = await this.prisma.eventAdmin.update({
-      where: { id: targetEventAdmin.id },
-      data: { role: EventRole.APP_ADMIN },
-      include: {
-        user: true,
-        event: true,
-        department: true,
-      },
-    });
-
-    return updated;
   }
 }

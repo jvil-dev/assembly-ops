@@ -208,7 +208,7 @@ const volunteerResolvers = {
       const eventAdmin = await context.prisma.eventAdmin.findUnique({
         where: {
           userId_eventId: {
-            userId: context.admin!.id,
+            userId: context.user!.id,
             eventId,
           },
         },
@@ -234,7 +234,7 @@ const volunteerResolvers = {
       const eventAdmin = await context.prisma.eventAdmin.findUnique({
         where: {
           userId_eventId: {
-            userId: context.admin!.id,
+            userId: context.user!.id,
             eventId: input.eventId,
           },
         },
