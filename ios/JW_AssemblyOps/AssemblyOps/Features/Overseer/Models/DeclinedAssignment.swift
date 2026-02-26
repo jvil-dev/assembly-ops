@@ -55,9 +55,9 @@ extension DeclinedAssignment {
             self.respondedAt = nil
         }
 
-        self.volunteerId = graphQL.volunteer.id
-        self.volunteerName = "\(graphQL.volunteer.firstName) \(graphQL.volunteer.lastName)"
-        self.volunteerCongregation = graphQL.volunteer.congregation
+        self.volunteerId = graphQL.volunteer?.id ?? ""
+        self.volunteerName = "\(graphQL.volunteer?.firstName ?? "") \(graphQL.volunteer?.lastName ?? "")"
+        self.volunteerCongregation = graphQL.volunteer?.congregation ?? ""
         self.postId = graphQL.post.id
         self.postName = graphQL.post.name
         self.postLocation = graphQL.post.location

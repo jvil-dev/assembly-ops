@@ -164,7 +164,7 @@ final class MessagesViewModel: ObservableObject {
         do {
             var allRecipients = try await MessagesService.shared.fetchEventParticipants(eventId: eventId)
             // Client-side safety: exclude self by ID
-            if let myId = AppState.shared.currentVolunteer?.id {
+            if let myId = AppState.shared.currentUser?.id {
                 allRecipients.removeAll { $0.id == myId }
             }
             recipients = allRecipients

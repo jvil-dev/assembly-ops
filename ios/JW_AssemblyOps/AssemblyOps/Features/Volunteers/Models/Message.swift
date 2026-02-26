@@ -10,8 +10,8 @@
 // Local model for message data from GraphQL API
 //
 // Types:
-//  - MessageSenderType: Enum for sender identity (admin/volunteer)
-//  - MessageRecipientType: Enum for message target (volunteer/department/event/admin)
+//  - MessageSenderType: Enum for sender identity (user/volunteer)
+//  - MessageRecipientType: Enum for message target (volunteer/department/event/user)
 //  - Message: Struct containing message data with formatting helpers
 //
 // Computed Properties:
@@ -147,14 +147,7 @@ extension Message {
         }
         self.createdAt = createdAt
 
-        // Prefer computed senderName from resolver, fallback to sender relation
-        if let name = graphQL.senderName {
-            self.senderName = name
-        } else if let sender = graphQL.sender {
-            self.senderName = "\(sender.firstName) \(sender.lastName)"
-        } else {
-            self.senderName = nil
-        }
+        self.senderName = graphQL.senderName
     }
 }
 

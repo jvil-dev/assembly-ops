@@ -1,0 +1,22 @@
+query MyAllEvents {
+  myAllEvents {
+    eventId
+    membershipType
+    overseerRole
+    departmentId
+    departmentName
+    departmentType
+    eventVolunteerId
+    volunteerId
+    event {
+      id
+      name
+      eventType
+      venue
+      address
+      startDate
+      endDate
+      volunteerCount
+    }
+  }
+}

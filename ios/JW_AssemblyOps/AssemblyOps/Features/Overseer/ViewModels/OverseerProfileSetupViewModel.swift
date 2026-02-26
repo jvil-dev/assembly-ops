@@ -9,7 +9,7 @@
 //
 // Manages the mandatory profile completion flow for new overseers.
 // Fetches circuits and congregations from seed data, validates form,
-// and calls updateAdminProfile mutation to persist the profile.
+// and calls updateUserProfile mutation to persist the profile.
 //
 // Properties:
 //   - firstName, lastName, phone: Form fields (pre-filled from login)
@@ -22,7 +22,7 @@
 //   1. On appear: fetch circuits from backend
 //   2. User selects circuit -> fetches congregations for that circuit
 //   3. User selects congregation -> auto-displays circuit info
-//   4. User taps Continue -> calls updateAdminProfile mutation
+//   4. User taps Continue -> calls updateUserProfile mutation
 //   5. On success -> AppState.needsProfileSetup = false
 //
 
@@ -69,12 +69,12 @@ final class OverseerProfileSetupViewModel: ObservableObject {
         selectedCongregation != nil
     }
 
-    /// Pre-fill form fields from current overseer info
+    /// Pre-fill form fields from current user info
     func prefill() {
-        if let overseer = appState.currentOverseer {
-            firstName = overseer.firstName
-            lastName = overseer.lastName
-            phone = overseer.phone ?? ""
+        if let user = appState.currentUser {
+            firstName = user.firstName
+            lastName = user.lastName
+            phone = user.phone ?? ""
         }
     }
 
@@ -151,7 +151,7 @@ final class OverseerProfileSetupViewModel: ObservableObject {
         isSaving = true
         errorMessage = nil
 
-        let input = AssemblyOpsAPI.UpdateAdminProfileInput(
+        let input = AssemblyOpsAPI.UpdateUserProfileInput(
             firstName: .some(firstName.trimmingCharacters(in: .whitespaces)),
             lastName: .some(lastName.trimmingCharacters(in: .whitespaces)),
             phone: phone.isEmpty ? .none : .some(phone.trimmingCharacters(in: .whitespaces)),
@@ -159,25 +159,28 @@ final class OverseerProfileSetupViewModel: ObservableObject {
         )
 
         NetworkClient.shared.apollo.perform(
-            mutation: AssemblyOpsAPI.UpdateAdminProfileMutation(input: input)
+            mutation: AssemblyOpsAPI.UpdateUserProfileMutation(input: input)
         ) { [weak self] result in
             Task { @MainActor in
                 switch result {
                 case .success(let graphQLResult):
-                    if let data = graphQLResult.data?.updateAdminProfile {
+                    if let data = graphQLResult.data?.updateUserProfile {
                         // Update AppState with new profile data
-                        self?.appState.currentOverseer = OverseerInfo(
-                            id: data.id,
-                            email: data.email,
-                            fullName: data.fullName,
-                            firstName: data.firstName,
-                            lastName: data.lastName,
-                            phone: data.phone,
-                            congregationId: data.congregationId,
-                            circuitId: data.congregationRef?.circuit.id,
-                            overseerType: self?.appState.currentOverseer?.overseerType ?? ""
-                        )
-                        self?.appState.needsProfileSetup = false
+                        if let current = self?.appState.currentUser {
+                            self?.appState.currentUser = UserInfo(
+                                id: current.id,
+                                userId: current.userId,
+                                email: current.email,
+                                firstName: data.firstName,
+                                lastName: data.lastName,
+                                fullName: data.fullName,
+                                phone: data.phone,
+                                congregation: data.congregation,
+                                congregationId: data.congregationId,
+                                appointmentStatus: current.appointmentStatus,
+                                isOverseer: current.isOverseer
+                            )
+                        }
                         HapticManager.shared.success()
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
                         self?.errorMessage = errors.first?.localizedDescription ?? "Failed to save profile"

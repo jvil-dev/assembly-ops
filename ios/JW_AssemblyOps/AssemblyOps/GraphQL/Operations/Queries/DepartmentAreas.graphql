@@ -23,7 +23,7 @@ query DepartmentAreas($departmentId: ID!) {
             eventVolunteer {
                 id
                 volunteerId
-                volunteerProfile {
+                user {
                     firstName
                     lastName
                 }

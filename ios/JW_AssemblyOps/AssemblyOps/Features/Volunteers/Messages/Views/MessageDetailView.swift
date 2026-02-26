@@ -147,7 +147,7 @@ struct MessageDetailView: View {
                     ConversationDetailView(
                         conversationId: conversationId,
                         otherParticipantName: message.senderName ?? "Unknown",
-                        currentUserId: AppState.shared.currentVolunteer?.id ?? AppState.shared.currentOverseer?.id
+                        currentUserId: AppState.shared.currentUser?.id
                     )
                 } label: {
                     Label("messages.reply".localized, systemImage: "arrowshape.turn.up.left")

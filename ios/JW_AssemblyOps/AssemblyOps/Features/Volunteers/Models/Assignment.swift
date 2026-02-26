@@ -85,6 +85,7 @@ struct Assignment: Identifiable, Equatable {
     let areaName: String?
     let departmentName: String
     let departmentType: String
+    let eventId: String
     let sessionName: String
     let sessionId: String
     let date: Date
@@ -215,6 +216,7 @@ extension Assignment {
         self.areaName = graphQL.post.area?.name
         self.departmentName = graphQL.post.department.name
         self.departmentType = graphQL.post.department.departmentType.rawValue
+        self.eventId = graphQL.post.department.event.id
         self.sessionName = graphQL.session.name
         self.sessionId = graphQL.session.id
 
@@ -266,6 +268,7 @@ extension Assignment {
             areaName: "East Wing",
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
+            eventId: "event-preview",
             sessionName: "Saturday Morning",
             sessionId: "session-1",
             date: Date(),
@@ -294,6 +297,7 @@ extension Assignment {
             areaName: "West Gate Area",
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
+            eventId: "event-preview",
             sessionName: "Saturday Morning",
             sessionId: "session-1",
             date: Calendar.current.date(byAdding: .day, value: 2, to: Date())!,
@@ -322,6 +326,7 @@ extension Assignment {
             areaName: "Main Entrance Area",
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
+            eventId: "event-preview",
             sessionName: "Saturday Morning",
             sessionId: "session-1",
             date: Date(),
@@ -350,6 +355,7 @@ extension Assignment {
             areaName: "Main Hall Area",
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
+            eventId: "event-preview",
             sessionName: "Saturday Afternoon",
             sessionId: "session-2",
             date: Date(),
@@ -378,6 +384,7 @@ extension Assignment {
             areaName: "East Wing",
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
+            eventId: "event-preview",
             sessionName: "Saturday Morning",
             sessionId: "session-1",
             date: Date(),
@@ -406,6 +413,7 @@ extension Assignment {
             areaName: nil,
             departmentName: "Parking",
             departmentType: "PARKING",
+            eventId: "event-preview",
             sessionName: "Sunday Morning",
             sessionId: "session-3",
             date: Calendar.current.date(byAdding: .day, value: -1, to: Date())!,
@@ -434,6 +442,7 @@ extension Assignment {
             areaName: nil,
             departmentName: "Parking",
             departmentType: "PARKING",
+            eventId: "event-preview",
             sessionName: "Friday Afternoon",
             sessionId: "session-4",
             date: Date(),

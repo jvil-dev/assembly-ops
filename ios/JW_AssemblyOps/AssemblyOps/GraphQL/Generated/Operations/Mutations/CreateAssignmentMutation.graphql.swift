@@ -45,7 +45,7 @@ extension AssemblyOpsAPI {
           .field("__typename", String.self),
           .field("id", AssemblyOpsAPI.ID.self),
           .field("isCheckedIn", Bool.self),
-          .field("volunteer", Volunteer.self),
+          .field("volunteer", Volunteer?.self),
           .field("post", Post.self),
           .field("session", Session.self),
         ] }
@@ -55,7 +55,7 @@ extension AssemblyOpsAPI {
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
         var isCheckedIn: Bool { __data["isCheckedIn"] }
-        var volunteer: Volunteer { __data["volunteer"] }
+        var volunteer: Volunteer? { __data["volunteer"] }
         var post: Post { __data["post"] }
         var session: Session { __data["session"] }
 

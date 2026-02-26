@@ -1,0 +1,200 @@
+//
+//  EventsHomeViewModel.swift
+//  AssemblyOps
+//
+//  Created by Jorge Villeda on 2/25/26.
+//
+
+// MARK: - Events Home View Model
+//
+// Loads all events for the current user (both overseer and volunteer roles)
+// via the myAllEvents query. Groups events by temporal status.
+//
+// Published:
+//   - sections: grouped event memberships (Active, Upcoming, Past)
+//   - isLoading, errorMessage
+//
+// Methods:
+//   - load(): Fetch via MyAllEventsQuery
+//   - refresh(): Pull-to-refresh
+
+import Foundation
+import Apollo
+import Combine
+
+// MARK: - Models
+
+struct EventMembershipItem: Identifiable, Hashable {
+    let id: String          // eventId
+    let eventId: String
+    let eventName: String
+    let eventType: String   // raw enum value e.g. "CIRCUIT_ASSEMBLY"
+    let venue: String
+    let address: String
+    let startDate: Date
+    let endDate: Date
+    let volunteerCount: Int
+    let membershipType: MembershipType
+    // Overseer-specific
+    let overseerRole: String?     // "APP_ADMIN" | "DEPARTMENT_OVERSEER"
+    let departmentId: String?
+    let departmentName: String?
+    let departmentType: String?
+    // Volunteer-specific
+    let eventVolunteerId: String?
+    let volunteerId: String?
+
+    enum MembershipType: String, Hashable {
+        case overseer
+        case volunteer
+    }
+
+    var dateStatus: DateStatus {
+        let now = Date()
+        // Active: starts on or before today AND ends on or after today
+        let calendar = Calendar.current
+        let startOfStartDay = calendar.startOfDay(for: startDate)
+        let endOfEndDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: endDate)) ?? endDate
+        if startOfStartDay <= now && now < endOfEndDay { return .active }
+        if startOfStartDay > now { return .future }
+        return .past
+    }
+
+    enum DateStatus: String, Hashable {
+        case active, future, past
+    }
+
+    var displayRole: String {
+        switch membershipType {
+        case .overseer:
+            if overseerRole == "APP_ADMIN" {
+                return "eventsHub.role.eventOverseer".localized
+            }
+            if let dept = departmentName {
+                return String(format: "eventsHub.role.deptOverseer".localized, dept)
+            }
+            return "eventsHub.role.deptOverseer".localized
+        case .volunteer:
+            return "eventsHub.role.volunteer".localized
+        }
+    }
+
+    var displayEventType: String {
+        switch eventType {
+        case "CIRCUIT_ASSEMBLY": return "Circuit Assembly"
+        case "REGIONAL_CONVENTION": return "Regional Convention"
+        case "SPECIAL_CONVENTION": return "Special Convention"
+        default: return eventType
+        }
+    }
+
+    var dateRangeString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        let start = formatter.string(from: startDate)
+        let end = formatter.string(from: endDate)
+        let yearFormatter = DateFormatter()
+        yearFormatter.dateFormat = "yyyy"
+        let year = yearFormatter.string(from: startDate)
+        return "\(start) – \(end), \(year)"
+    }
+}
+
+struct EventSection: Identifiable {
+    let id: String
+    let title: String
+    let items: [EventMembershipItem]
+}
+
+// MARK: - ViewModel
+
+@MainActor
+final class EventsHomeViewModel: ObservableObject {
+    @Published var sections: [EventSection] = []
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+
+    func load() {
+        isLoading = true
+        errorMessage = nil
+
+        NetworkClient.shared.apollo.fetch(
+            query: AssemblyOpsAPI.MyAllEventsQuery(),
+            cachePolicy: .fetchIgnoringCacheData
+        ) { [weak self] result in
+            Task { @MainActor in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.myAllEvents {
+                        self?.processItems(data)
+                    }
+                case .failure(let error):
+                    self?.errorMessage = error.localizedDescription
+                }
+                self?.isLoading = false
+            }
+        }
+    }
+
+    func refresh() {
+        load()
+    }
+
+    var isEmpty: Bool {
+        sections.allSatisfy { $0.items.isEmpty } && !isLoading
+    }
+
+    // MARK: - Private
+
+    private func processItems(_ raw: [AssemblyOpsAPI.MyAllEventsQuery.Data.MyAllEvent]) {
+        let items: [EventMembershipItem] = raw.compactMap { e in
+            guard
+                let start = DateUtils.parseISO8601(e.event.startDate),
+                let end = DateUtils.parseISO8601(e.event.endDate)
+            else { return nil }
+
+            let membership: EventMembershipItem.MembershipType
+            if case .case(.overseer) = e.membershipType {
+                membership = .overseer
+            } else {
+                membership = .volunteer
+            }
+
+            return EventMembershipItem(
+                id: e.eventId,
+                eventId: e.eventId,
+                eventName: e.event.name,
+                eventType: e.event.eventType.rawValue,
+                venue: e.event.venue,
+                address: e.event.address,
+                startDate: start,
+                endDate: end,
+                volunteerCount: e.event.volunteerCount,
+                membershipType: membership,
+                overseerRole: e.overseerRole?.rawValue,
+                departmentId: e.departmentId,
+                departmentName: e.departmentName,
+                departmentType: e.departmentType?.rawValue,
+                eventVolunteerId: e.eventVolunteerId,
+                volunteerId: e.volunteerId
+            )
+        }
+
+        // Group by date status
+        let active = items.filter { $0.dateStatus == .active }
+        let future = items.filter { $0.dateStatus == .future }
+        let past = items.filter { $0.dateStatus == .past }
+
+        var result: [EventSection] = []
+        if !active.isEmpty {
+            result.append(EventSection(id: "active", title: "eventsHub.section.active".localized, items: active))
+        }
+        if !future.isEmpty {
+            result.append(EventSection(id: "future", title: "eventsHub.section.upcoming".localized, items: future))
+        }
+        if !past.isEmpty {
+            result.append(EventSection(id: "past", title: "eventsHub.section.past".localized, items: past))
+        }
+        sections = result
+    }
+}

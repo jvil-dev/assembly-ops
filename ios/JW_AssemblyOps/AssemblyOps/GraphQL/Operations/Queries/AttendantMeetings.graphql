@@ -17,7 +17,7 @@ query AttendantMeetings($eventId: ID!) {
       id
       eventVolunteer {
         id
-        volunteerProfile {
+        user {
           firstName
           lastName
         }

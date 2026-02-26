@@ -75,7 +75,7 @@ struct ReportSafetyIncidentView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("common.save".localized) {
                         Task {
-                            guard let eventId = appState.currentVolunteer?.eventId else { return }
+                            guard let eventId = appState.currentEventId else { return }
                             await viewModel.reportIncident(
                                 eventId: eventId,
                                 type: selectedType.rawValue,

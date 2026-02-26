@@ -79,7 +79,7 @@ final class MessageComposeViewModel: ObservableObject {
             case .admin:
                 guard let adminId = selectedVolunteerId else { return }
                 _ = try await MessagesService.shared.sendMessage(
-                    recipientType: .admin, recipientId: adminId, eventId: eventId,
+                    recipientType: .user, recipientId: adminId, eventId: eventId,
                     subject: subjectText, body: body
                 )
                 sentCount = 1

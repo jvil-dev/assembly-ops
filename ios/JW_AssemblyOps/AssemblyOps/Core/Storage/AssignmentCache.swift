@@ -94,6 +94,7 @@ private struct CachedAssignment: Codable {
     let areaName: String?
     let departmentName: String
     let departmentType: String
+    let eventId: String
     let sessionName: String
     let sessionId: String
     let date: Date
@@ -123,6 +124,7 @@ private struct CachedAssignment: Codable {
         self.areaName = assignment.areaName
         self.departmentName = assignment.departmentName
         self.departmentType = assignment.departmentType
+        self.eventId = assignment.eventId
         self.sessionName = assignment.sessionName
         self.sessionId = assignment.sessionId
         self.date = assignment.date
@@ -150,6 +152,7 @@ private struct CachedAssignment: Codable {
             areaName: areaName,
             departmentName: departmentName,
             departmentType: departmentType,
+            eventId: eventId,
             sessionName: sessionName,
             sessionId: sessionId,
             date: date,

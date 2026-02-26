@@ -6,13 +6,9 @@ query SentMessages($limit: Int, $offset: Int) {
     recipientType
     senderType
     senderName
+    senderId
     isRead
     readAt
-    volunteer {
-      id
-      firstName
-      lastName
-    }
     createdAt
   }
 }

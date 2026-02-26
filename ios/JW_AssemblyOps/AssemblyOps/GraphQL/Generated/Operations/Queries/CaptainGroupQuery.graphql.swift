@@ -75,14 +75,14 @@ extension AssemblyOpsAPI {
           static var __selections: [ApolloAPI.Selection] { [
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
-            .field("volunteer", Volunteer.self),
+            .field("volunteer", Volunteer?.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             CaptainGroupQuery.Data.CaptainGroup.Captain.self
           ] }
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
-          var volunteer: Volunteer { __data["volunteer"] }
+          var volunteer: Volunteer? { __data["volunteer"] }
 
           /// CaptainGroup.Captain.Volunteer
           ///
@@ -120,7 +120,7 @@ extension AssemblyOpsAPI {
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
             .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
-            .field("volunteer", Volunteer.self),
+            .field("volunteer", Volunteer?.self),
             .field("checkIn", CheckIn?.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -129,7 +129,7 @@ extension AssemblyOpsAPI {
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
-          var volunteer: Volunteer { __data["volunteer"] }
+          var volunteer: Volunteer? { __data["volunteer"] }
           var checkIn: CheckIn? { __data["checkIn"] }
 
           /// CaptainGroup.Member.Volunteer

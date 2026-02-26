@@ -12,22 +12,22 @@ extension AssemblyOpsAPI {
     }
 
     init(
-      volunteerProfileId: ID,
+      userId: ID,
       eventId: ID,
       departmentId: GraphQLNullable<ID> = nil,
       roleId: GraphQLNullable<ID> = nil
     ) {
       __data = InputDict([
-        "volunteerProfileId": volunteerProfileId,
+        "userId": userId,
         "eventId": eventId,
         "departmentId": departmentId,
         "roleId": roleId
       ])
     }
 
-    var volunteerProfileId: ID {
-      get { __data["volunteerProfileId"] }
-      set { __data["volunteerProfileId"] = newValue }
+    var userId: ID {
+      get { __data["userId"] }
+      set { __data["userId"] = newValue }
     }
 
     var eventId: ID {

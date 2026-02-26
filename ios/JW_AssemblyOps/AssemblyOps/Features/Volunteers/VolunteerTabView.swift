@@ -7,8 +7,8 @@
 
 // MARK: - Volunteer Tab View
 //
-// Root navigation container for volunteer users.
-// Provides tab-based navigation between main volunteer sections.
+// Tab-based navigation for volunteers within an event context.
+// Presented via EventEntryView after tapping a volunteer event card.
 //
 // Tabs:
 //   - Home: Dashboard with event info and quick stats
@@ -44,13 +44,6 @@ struct VolunteerTabView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: VolunteerTab = .home
 
-    private var tabTintColor: Color {
-        if let deptType = appState.currentVolunteer?.departmentType {
-            return DepartmentColor.color(for: deptType)
-        }
-        return AppTheme.themeColor
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             OfflineBanner()
@@ -83,9 +76,8 @@ struct VolunteerTabView: View {
                     }
                     .tag(VolunteerTab.profile)
             }
-            .tint(tabTintColor)
-            .onChange(of: scenePhase) {
-                _, newPhase in
+            .tint(AppTheme.themeColor)
+            .onChange(of: scenePhase) { _, newPhase in
                 switch newPhase {
                 case .active:
                     messageBadgeManager.startRefreshing()

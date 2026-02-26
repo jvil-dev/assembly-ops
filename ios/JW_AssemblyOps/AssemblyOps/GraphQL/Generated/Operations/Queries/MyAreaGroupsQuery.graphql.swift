@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MyAreaGroups"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query MyAreaGroups { myAreaGroups { __typename area { __typename id name description category } captain { __typename id session { __typename id name date startTime endTime } eventVolunteer { __typename id volunteerId volunteerProfile { __typename firstName lastName } } } members { __typename postName postId assignment { __typename id status volunteer { __typename id firstName lastName congregation phone } checkIn { __typename id status checkInTime } } } } }"#
+        #"query MyAreaGroups { myAreaGroups { __typename area { __typename id name description category } captain { __typename id session { __typename id name date startTime endTime } eventVolunteer { __typename id volunteerId user { __typename firstName lastName } } } members { __typename postName postId assignment { __typename id status volunteer { __typename id firstName lastName congregation phone } checkIn { __typename id status checkInTime } } } } }"#
       ))
 
     public init() {}
@@ -135,7 +135,7 @@ extension AssemblyOpsAPI {
               .field("__typename", String.self),
               .field("id", AssemblyOpsAPI.ID.self),
               .field("volunteerId", String.self),
-              .field("volunteerProfile", VolunteerProfile.self),
+              .field("user", User.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
               MyAreaGroupsQuery.Data.MyAreaGroup.Captain.EventVolunteer.self
@@ -143,23 +143,23 @@ extension AssemblyOpsAPI {
 
             var id: AssemblyOpsAPI.ID { __data["id"] }
             var volunteerId: String { __data["volunteerId"] }
-            var volunteerProfile: VolunteerProfile { __data["volunteerProfile"] }
+            var user: User { __data["user"] }
 
-            /// MyAreaGroup.Captain.EventVolunteer.VolunteerProfile
+            /// MyAreaGroup.Captain.EventVolunteer.User
             ///
-            /// Parent Type: `VolunteerProfile`
-            struct VolunteerProfile: AssemblyOpsAPI.SelectionSet {
+            /// Parent Type: `User`
+            struct User: AssemblyOpsAPI.SelectionSet {
               let __data: DataDict
               init(_dataDict: DataDict) { __data = _dataDict }
 
-              static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.VolunteerProfile }
+              static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
               static var __selections: [ApolloAPI.Selection] { [
                 .field("__typename", String.self),
                 .field("firstName", String.self),
                 .field("lastName", String.self),
               ] }
               static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-                MyAreaGroupsQuery.Data.MyAreaGroup.Captain.EventVolunteer.VolunteerProfile.self
+                MyAreaGroupsQuery.Data.MyAreaGroup.Captain.EventVolunteer.User.self
               ] }
 
               var firstName: String { __data["firstName"] }
@@ -202,7 +202,7 @@ extension AssemblyOpsAPI {
               .field("__typename", String.self),
               .field("id", AssemblyOpsAPI.ID.self),
               .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
-              .field("volunteer", Volunteer.self),
+              .field("volunteer", Volunteer?.self),
               .field("checkIn", CheckIn?.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -211,7 +211,7 @@ extension AssemblyOpsAPI {
 
             var id: AssemblyOpsAPI.ID { __data["id"] }
             var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
-            var volunteer: Volunteer { __data["volunteer"] }
+            var volunteer: Volunteer? { __data["volunteer"] }
             var checkIn: CheckIn? { __data["checkIn"] }
 
             /// MyAreaGroup.Member.Assignment.Volunteer

@@ -264,7 +264,6 @@ final class EventSetupViewModel: ObservableObject {
     // MARK: - Complete Setup
 
     func completeSetup() {
-        appState.needsEventSetup = false
         setupComplete = true
         // Load events into session state
         Task {

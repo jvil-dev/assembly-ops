@@ -60,12 +60,7 @@ extension SentMessageItem {
         }
         self.createdAt = createdAt
 
-        // Extract recipient name from volunteer field if present
-        if let volunteer = graphQL.volunteer {
-            self.recipientName = "\(volunteer.firstName) \(volunteer.lastName)"
-        } else {
-            self.recipientName = nil
-        }
+        self.recipientName = graphQL.senderName
     }
 
     // Overload for SendMessage mutation response
@@ -82,12 +77,7 @@ extension SentMessageItem {
             return nil
         }
         self.createdAt = createdAt
-
-        if let volunteer = graphQL.volunteer {
-            self.recipientName = "\(volunteer.firstName) \(volunteer.lastName)"
-        } else {
-            self.recipientName = nil
-        }
+        self.recipientName = graphQL.senderName
     }
 
     // Overload for SendDepartmentMessage mutation response
@@ -139,10 +129,6 @@ extension SentMessageItem {
         }
         self.createdAt = createdAt
 
-        if let volunteer = graphQL.volunteer {
-            self.recipientName = "\(volunteer.firstName) \(volunteer.lastName)"
-        } else {
-            self.recipientName = nil
-        }
+        self.recipientName = graphQL.senderName
     }
 }

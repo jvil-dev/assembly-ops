@@ -56,11 +56,11 @@ struct GroupMember: Identifiable, Equatable {
 extension GroupMember {
     /// Initialize from CaptainGroup member (which is a ScheduleAssignment with nested volunteer)
     init(from graphQL: AssemblyOpsAPI.CaptainGroupQuery.Data.CaptainGroup.Member) {
-        self.id = graphQL.volunteer.id
-        self.firstName = graphQL.volunteer.firstName
-        self.lastName = graphQL.volunteer.lastName
-        self.congregation = graphQL.volunteer.congregation
-        self.phone = graphQL.volunteer.phone
+        self.id = graphQL.volunteer?.id ?? ""
+        self.firstName = graphQL.volunteer?.firstName ?? ""
+        self.lastName = graphQL.volunteer?.lastName ?? ""
+        self.congregation = graphQL.volunteer?.congregation ?? ""
+        self.phone = graphQL.volunteer?.phone
         self.assignmentId = graphQL.id
         self.assignmentStatus = AssignmentStatus(rawValue: graphQL.status.rawValue) ?? .pending
         self.isCheckedIn = graphQL.checkIn?.status.rawValue == "CHECKED_IN"

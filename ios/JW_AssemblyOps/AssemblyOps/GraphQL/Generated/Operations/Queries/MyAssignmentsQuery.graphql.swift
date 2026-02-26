@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MyAssignments"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query MyAssignments { myAssignments { __typename id status isCaptain respondedAt declineReason acceptDeadline forceAssigned post { __typename id name location capacity category area { __typename id name } department { __typename id name departmentType } } session { __typename id name date startTime endTime } checkIn { __typename id status checkInTime checkOutTime } } }"#
+        #"query MyAssignments { myAssignments { __typename id status isCaptain respondedAt declineReason acceptDeadline forceAssigned post { __typename id name location capacity category area { __typename id name } department { __typename id name departmentType event { __typename id } } } session { __typename id name date startTime endTime } checkIn { __typename id status checkInTime checkOutTime } } }"#
       ))
 
     public init() {}
@@ -127,6 +127,7 @@ extension AssemblyOpsAPI {
               .field("id", AssemblyOpsAPI.ID.self),
               .field("name", String.self),
               .field("departmentType", GraphQLEnum<AssemblyOpsAPI.DepartmentType>.self),
+              .field("event", Event.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
               MyAssignmentsQuery.Data.MyAssignment.Post.Department.self
@@ -135,6 +136,26 @@ extension AssemblyOpsAPI {
             var id: AssemblyOpsAPI.ID { __data["id"] }
             var name: String { __data["name"] }
             var departmentType: GraphQLEnum<AssemblyOpsAPI.DepartmentType> { __data["departmentType"] }
+            var event: Event { __data["event"] }
+
+            /// MyAssignment.Post.Department.Event
+            ///
+            /// Parent Type: `Event`
+            struct Event: AssemblyOpsAPI.SelectionSet {
+              let __data: DataDict
+              init(_dataDict: DataDict) { __data = _dataDict }
+
+              static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Event }
+              static var __selections: [ApolloAPI.Selection] { [
+                .field("__typename", String.self),
+                .field("id", AssemblyOpsAPI.ID.self),
+              ] }
+              static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+                MyAssignmentsQuery.Data.MyAssignment.Post.Department.Event.self
+              ] }
+
+              var id: AssemblyOpsAPI.ID { __data["id"] }
+            }
           }
         }
 

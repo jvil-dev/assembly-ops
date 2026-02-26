@@ -47,7 +47,7 @@ extension AttendanceCountItem {
     init?(from graphQL: AssemblyOpsAPI.SessionAttendanceCountsQuery.Data.SessionAttendanceCount) {
         self.id = graphQL.id
         self.count = graphQL.count
-        self.section = graphQL.section
+        self.section = nil
         self.notes = graphQL.notes
 
         self.sessionId = graphQL.session.id
@@ -62,18 +62,14 @@ extension AttendanceCountItem {
             return nil
         }
         self.createdAt = createdAt
-
-        guard let updatedAt = isoFormatter.date(from: graphQL.updatedAt) else {
-            return nil
-        }
-        self.updatedAt = updatedAt
+        self.updatedAt = createdAt
     }
 
     // Overload for EventAttendanceSummary nested section counts
     init?(from graphQL: AssemblyOpsAPI.EventAttendanceSummaryQuery.Data.EventAttendanceSummary.SectionCount, sessionId: String, sessionName: String) {
         self.id = graphQL.id
         self.count = graphQL.count
-        self.section = graphQL.section
+        self.section = nil
         self.notes = graphQL.notes
         self.sessionId = sessionId
         self.sessionName = sessionName
@@ -87,18 +83,14 @@ extension AttendanceCountItem {
             return nil
         }
         self.createdAt = createdAt
-
-        guard let updatedAt = isoFormatter.date(from: graphQL.updatedAt) else {
-            return nil
-        }
-        self.updatedAt = updatedAt
+        self.updatedAt = createdAt
     }
 
     // Overload for SubmitAttendanceCount mutation response
     init?(from graphQL: AssemblyOpsAPI.SubmitAttendanceCountMutation.Data.SubmitAttendanceCount) {
         self.id = graphQL.id
         self.count = graphQL.count
-        self.section = graphQL.section
+        self.section = nil
         self.notes = graphQL.notes
 
         self.sessionId = graphQL.session.id
@@ -154,13 +146,13 @@ struct PostAttendanceHistoryItem: Identifiable {
 extension PostAttendanceHistoryItem {
     init?(from graphQL: AssemblyOpsAPI.PostAttendanceCountsQuery.Data.PostAttendanceCount) {
         let fmt = DateUtils.isoFormatter
-        guard let updated = fmt.date(from: graphQL.updatedAt) else { return nil }
+        guard let created = fmt.date(from: graphQL.createdAt) else { return nil }
         self.id = graphQL.id
         self.count = graphQL.count
-        self.section = graphQL.section
+        self.section = nil
         self.notes = graphQL.notes
         self.sessionName = graphQL.session.name
-        self.updatedAt = updated
+        self.updatedAt = created
     }
 }
 

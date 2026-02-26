@@ -14,12 +14,14 @@ extension AssemblyOpsAPI {
     init(
       pendingOAuthToken: String,
       firstName: String,
-      lastName: String
+      lastName: String,
+      isOverseer: GraphQLNullable<Bool> = nil
     ) {
       __data = InputDict([
         "pendingOAuthToken": pendingOAuthToken,
         "firstName": firstName,
-        "lastName": lastName
+        "lastName": lastName,
+        "isOverseer": isOverseer
       ])
     }
 
@@ -36,6 +38,11 @@ extension AssemblyOpsAPI {
     var lastName: String {
       get { __data["lastName"] }
       set { __data["lastName"] = newValue }
+    }
+
+    var isOverseer: GraphQLNullable<Bool> {
+      get { __data["isOverseer"] }
+      set { __data["isOverseer"] = newValue }
     }
   }
 

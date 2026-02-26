@@ -35,6 +35,7 @@ struct OverseerProfileView: View {
     @State private var showLogoutConfirmation = false
     @State private var showEditProfile = false
     @State private var hasAppeared = false
+    @State private var copiedId = false
 
     var body: some View {
         NavigationStack {
@@ -133,7 +134,7 @@ struct OverseerProfileView: View {
         } label: {
             VStack(spacing: AppTheme.Spacing.l) {
                 // Avatar with initials
-                if let overseer = appState.currentOverseer {
+                if let overseer = appState.currentUser {
                     ZStack(alignment: .bottomTrailing) {
                         ZStack {
                             Circle()
@@ -180,6 +181,32 @@ struct OverseerProfileView: View {
                             .padding(.vertical, 6)
                             .background(AppTheme.themeColor.opacity(0.1))
                             .clipShape(Capsule())
+
+                        if let userId = appState.currentUser?.userId {
+                            Button {
+                                UIPasteboard.general.string = userId
+                                HapticManager.shared.success()
+                                copiedId = true
+                                Task { try? await Task.sleep(for: .seconds(2)); copiedId = false }
+                            } label: {
+                                HStack(spacing: AppTheme.Spacing.xs) {
+                                    Text("YOUR ID")
+                                        .font(AppTheme.Typography.captionSmall)
+                                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                                    Text(userId)
+                                        .font(.system(.body, design: .monospaced).weight(.semibold))
+                                        .foregroundStyle(AppTheme.themeColor)
+                                    Image(systemName: copiedId ? "checkmark" : "doc.on.doc")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                                }
+                                .padding(.horizontal, AppTheme.Spacing.m)
+                                .padding(.vertical, AppTheme.Spacing.s)
+                                .background(AppTheme.themeColor.opacity(0.08))
+                                .clipShape(Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
             }

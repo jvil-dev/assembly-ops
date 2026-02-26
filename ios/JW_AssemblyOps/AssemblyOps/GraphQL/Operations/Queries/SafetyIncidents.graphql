@@ -10,7 +10,7 @@ query SafetyIncidents($eventId: ID!, $resolved: Boolean) {
     }
     reportedBy {
       id
-      volunteerProfile {
+      user {
         firstName
         lastName
       }

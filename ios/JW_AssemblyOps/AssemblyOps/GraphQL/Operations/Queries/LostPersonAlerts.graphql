@@ -10,7 +10,7 @@ query LostPersonAlerts($eventId: ID!, $resolved: Boolean) {
     contactPhone
     reportedBy {
       id
-      volunteerProfile {
+      user {
         firstName
         lastName
       }

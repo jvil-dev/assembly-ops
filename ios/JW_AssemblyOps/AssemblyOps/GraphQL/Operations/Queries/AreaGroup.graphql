@@ -15,7 +15,7 @@ query AreaGroup($areaId: ID!, $sessionId: ID!) {
             eventVolunteer {
                 id
                 volunteerId
-                volunteerProfile {
+                user {
                     firstName
                     lastName
                 }

@@ -58,7 +58,7 @@ extension AssemblyOpsAPI {
           .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
           .field("declineReason", String?.self),
           .field("respondedAt", AssemblyOpsAPI.DateTime?.self),
-          .field("volunteer", Volunteer.self),
+          .field("volunteer", Volunteer?.self),
           .field("post", Post.self),
           .field("session", Session.self),
         ] }
@@ -70,7 +70,7 @@ extension AssemblyOpsAPI {
         var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
         var declineReason: String? { __data["declineReason"] }
         var respondedAt: AssemblyOpsAPI.DateTime? { __data["respondedAt"] }
-        var volunteer: Volunteer { __data["volunteer"] }
+        var volunteer: Volunteer? { __data["volunteer"] }
         var post: Post { __data["post"] }
         var session: Session { __data["session"] }
 

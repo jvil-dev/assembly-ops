@@ -48,8 +48,8 @@ extension AssemblyOpsAPI {
           .field("lastName", String.self),
           .field("email", String?.self),
           .field("phone", String?.self),
-          .field("appointmentStatus", GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>.self),
-          .field("congregation", Congregation.self),
+          .field("appointmentStatus", GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>?.self),
+          .field("congregation", Congregation?.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
           VolunteerProfilesByCircuitQuery.Data.VolunteerProfilesByCircuit.self
@@ -60,8 +60,8 @@ extension AssemblyOpsAPI {
         var lastName: String { __data["lastName"] }
         var email: String? { __data["email"] }
         var phone: String? { __data["phone"] }
-        var appointmentStatus: GraphQLEnum<AssemblyOpsAPI.AppointmentStatus> { __data["appointmentStatus"] }
-        var congregation: Congregation { __data["congregation"] }
+        var appointmentStatus: GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>? { __data["appointmentStatus"] }
+        var congregation: Congregation? { __data["congregation"] }
 
         /// VolunteerProfilesByCircuit.Congregation
         ///

@@ -3,7 +3,7 @@ mutation PromoteToAppAdmin($input: PromoteToAppAdminInput!) {
     id
     role
     claimedAt
-    admin {
+    user {
       id
       firstName
       lastName
