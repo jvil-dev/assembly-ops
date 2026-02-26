@@ -1,0 +1,13 @@
+query DiscoverEvents($eventType: EventType) {
+  discoverEvents(eventType: $eventType) {
+    id
+    name
+    eventType
+    venue
+    address
+    startDate
+    endDate
+    isPublic
+    volunteerCount
+  }
+}
