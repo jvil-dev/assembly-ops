@@ -4,7 +4,7 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI {
-  struct UpdateAdminProfileInput: InputObject {
+  struct UpdateUserProfileInput: InputObject {
     private(set) var __data: InputDict
 
     init(_ data: InputDict) {
@@ -15,12 +15,14 @@ extension AssemblyOpsAPI {
       firstName: GraphQLNullable<String> = nil,
       lastName: GraphQLNullable<String> = nil,
       phone: GraphQLNullable<String> = nil,
+      congregation: GraphQLNullable<String> = nil,
       congregationId: GraphQLNullable<ID> = nil
     ) {
       __data = InputDict([
         "firstName": firstName,
         "lastName": lastName,
         "phone": phone,
+        "congregation": congregation,
         "congregationId": congregationId
       ])
     }
@@ -38,6 +40,11 @@ extension AssemblyOpsAPI {
     var phone: GraphQLNullable<String> {
       get { __data["phone"] }
       set { __data["phone"] = newValue }
+    }
+
+    var congregation: GraphQLNullable<String> {
+      get { __data["congregation"] }
+      set { __data["congregation"] = newValue }
     }
 
     var congregationId: GraphQLNullable<ID> {

@@ -1,5 +1,5 @@
-mutation LoginWithGoogle($input: GoogleAuthInput!) {
-  loginWithGoogle(input: $input) {
+mutation LoginUser($input: LoginUserInput!) {
+  loginUser(input: $input) {
     user {
       id
       userId
@@ -7,15 +7,14 @@ mutation LoginWithGoogle($input: GoogleAuthInput!) {
       firstName
       lastName
       fullName
+      phone
+      congregation
+      congregationId
+      appointmentStatus
       isOverseer
     }
     accessToken
     refreshToken
     expiresIn
-    isNewUser
-    pendingOAuthToken
-    email
-    firstName
-    lastName
   }
 }

@@ -4,8 +4,8 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI.Objects {
-  static let AuthPayload = ApolloAPI.Object(
-    typename: "AuthPayload",
+  static let User = ApolloAPI.Object(
+    typename: "User",
     implementedInterfaces: [],
     keyFields: nil
   )

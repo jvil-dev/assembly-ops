@@ -1,91 +1,108 @@
 //
-//  OverseerRegistrationViewModel.swift
+//  RegistrationViewModel.swift
 //  AssemblyOps
 //
-//  Created by Jorge Villeda on 1/25/26.
+//  Created by Jorge Villeda on 2/24/26.
 //
 
-// MARK: - Overseer Registration View Model
+// MARK: - Registration View Model
 //
-// Handles new overseer account creation via email/password or OAuth providers.
-// Validates form input and performs RegisterUserMutation.
+// Handles new account creation for all users (overseers and volunteers).
+// Replaces OverseerRegistrationViewModel.
 //
 // Properties:
-//   - email/password/confirmPassword: Account credential fields
+//   - email/password/confirmPassword: Credential fields
 //   - firstName/lastName: Required name fields
+//   - phone/congregation: Optional profile fields
+//   - appointmentStatus: Optional publisher/MS/elder
+//   - isOverseer: Toggles overseer features on registration
 //   - isLoading: True during registration request
-//   - errorMessage: User-facing error for failed registration
-//   - showOAuthRegistration: Triggers OAuth completion flow
-//   - pendingOAuthData: Temporary data for OAuth users completing registration
+//   - errorMessage: User-facing error text
+//   - showOAuthRegistration: Triggers OAuthRegistrationView
+//   - pendingOAuthData: Temporary data for OAuth new users
 //
 // Validation:
-//   - Email must not be empty
-//   - Password must be 8+ characters and match confirmation
-//   - First name and last name are required
+//   - Email non-empty, password 8+ chars, passwords match, name non-empty
 //
 // Methods:
-//   - register(): Create account via RegisterUserMutation
+//   - register(): Create account via registerUser mutation
 //   - signInWithGoogle()/signInWithApple(): OAuth registration flows
-//
-// Flow:
-//   1. User fills form or uses OAuth
-//   2. On success: AppState.didLoginAsOverseer() logs user in
-//   3. On OAuth new user: Shows OAuthRegistrationView for profile completion
-//
 
 import Foundation
-import AuthenticationServices
 import Combine
 import Apollo
+import AuthenticationServices
 
 @MainActor
-final class OverseerRegistrationViewModel: ObservableObject {
+final class RegistrationViewModel: ObservableObject {
     @Published var email = ""
     @Published var password = ""
     @Published var confirmPassword = ""
     @Published var firstName = ""
     @Published var lastName = ""
+    @Published var phone = ""
+    @Published var congregation = ""
+    @Published var appointmentStatus: String? = nil
+    @Published var isOverseer: Bool = false
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
-    @Published var showOAuthRegistration = false
+    @Published var showOAuthRegistration: Bool = false
     @Published var pendingOAuthData: PendingOAuthData?
-    
+
     struct PendingOAuthData {
         let pendingToken: String
         let email: String
         let firstName: String
         let lastName: String
     }
-    
-    private var appState = AppState.shared
-    
+
+    private let appState = AppState.shared
+
     var isFormValid: Bool {
         !email.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !password.isEmpty &&
-        password == confirmPassword &&
         password.count >= 8 &&
+        password == confirmPassword &&
         !firstName.trimmingCharacters(in: .whitespaces).isEmpty &&
         !lastName.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     var passwordsMatch: Bool {
-        password == confirmPassword
+        confirmPassword.isEmpty || password == confirmPassword
     }
-    
-    // MARK: - Email/Password Registration
-    
+
+    var passwordStrengthMet: Bool {
+        password.count >= 8
+    }
+
+    // MARK: - Registration
+
     func register() {
         guard isFormValid else { return }
-
         isLoading = true
         errorMessage = nil
+
+        let appointmentStatusEnum: GraphQLNullable<GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>>
+        if let status = appointmentStatus,
+           let enumValue = AssemblyOpsAPI.AppointmentStatus(rawValue: status) {
+            appointmentStatusEnum = .some(.case(enumValue))
+        } else {
+            appointmentStatusEnum = .none
+        }
+
+        let phoneValue: GraphQLNullable<String> = phone.trimmingCharacters(in: .whitespaces).isEmpty
+            ? .none : .some(phone.trimmingCharacters(in: .whitespaces))
+        let congregationValue: GraphQLNullable<String> = congregation.trimmingCharacters(in: .whitespaces).isEmpty
+            ? .none : .some(congregation.trimmingCharacters(in: .whitespaces))
 
         let input = AssemblyOpsAPI.RegisterUserInput(
             email: email.lowercased().trimmingCharacters(in: .whitespaces),
             password: password,
             firstName: firstName.trimmingCharacters(in: .whitespaces),
             lastName: lastName.trimmingCharacters(in: .whitespaces),
-            isOverseer: .some(true)
+            phone: phoneValue,
+            congregation: congregationValue,
+            appointmentStatus: appointmentStatusEnum,
+            isOverseer: isOverseer ? .some(true) : .none
         )
 
         NetworkClient.shared.apollo.perform(
@@ -115,21 +132,21 @@ final class OverseerRegistrationViewModel: ObservableObject {
                             expiresIn: data.expiresIn
                         )
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
-                        self?.errorMessage = errors.first?.localizedDescription ?? "Registration failed"
+                        self?.errorMessage = errors.first?.message ?? "Registration failed"
                     }
-                case .failure: self?.errorMessage = "Unable to connect. Please try again."
+                case .failure:
+                    self?.errorMessage = "Unable to connect. Please try again."
                 }
                 self?.isLoading = false
             }
         }
     }
-    
-    //MARK: - OAuth Registration (resuse from OverseerLoginViewModel)
-    
+
+    // MARK: - OAuth
+
     func signInWithGoogle() {
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let rootVC = scene.windows.first?.rootViewController else { return }
-
         Task {
             isLoading = true
             errorMessage = nil
@@ -137,7 +154,7 @@ final class OverseerRegistrationViewModel: ObservableObject {
                 let idToken = try await OAuthService.shared.signInWithGoogle(presenting: rootVC)
                 handleGoogleLogin(idToken: idToken)
             } catch {
-                if (error as NSError).code != -5 { // Not cancelled
+                if (error as NSError).code != -5 {
                     errorMessage = "Google sign-in failed"
                 }
                 isLoading = false
@@ -153,7 +170,6 @@ final class OverseerRegistrationViewModel: ObservableObject {
                 let result = try await OAuthService.shared.signInWithApple()
                 handleAppleLogin(result: result)
             } catch let error as ASAuthorizationError where error.code == .canceled {
-                // User cancelled
                 isLoading = false
             } catch {
                 errorMessage = "Apple sign-in failed"
@@ -161,14 +177,12 @@ final class OverseerRegistrationViewModel: ObservableObject {
             }
         }
     }
-    
-    // MARK: - OAuth Handlers
 
     private func handleGoogleLogin(idToken: String) {
-        let input = AssemblyOpsAPI.GoogleAuthInput(idToken: idToken)
-
         NetworkClient.shared.apollo.perform(
-            mutation: AssemblyOpsAPI.LoginWithGoogleMutation(input: input)
+            mutation: AssemblyOpsAPI.LoginWithGoogleMutation(
+                input: AssemblyOpsAPI.GoogleAuthInput(idToken: idToken)
+            )
         ) { [weak self] result in
             Task { @MainActor in
                 switch result {
@@ -176,31 +190,16 @@ final class OverseerRegistrationViewModel: ObservableObject {
                     if let data = graphQLResult.data?.loginWithGoogle {
                         self?.processOAuthResponse(
                             isNewUser: data.isNewUser,
-                            user: data.user.map { u in
-                                UserInfo(
-                                    id: u.id,
-                                    userId: u.userId,
-                                    email: u.email,
-                                    firstName: u.firstName,
-                                    lastName: u.lastName,
-                                    fullName: u.fullName,
-                                    phone: nil,
-                                    congregation: nil,
-                                    congregationId: nil,
-                                    appointmentStatus: nil,
-                                    isOverseer: u.isOverseer
-                                )
-                            },
                             accessToken: data.accessToken,
                             refreshToken: data.refreshToken,
                             expiresIn: data.expiresIn,
                             pendingOAuthToken: data.pendingOAuthToken,
                             email: data.email,
-                            firstName: data.firstName,
-                            lastName: data.lastName
+                            firstName: data.firstName ?? "",
+                            lastName: data.lastName ?? ""
                         )
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
-                        self?.errorMessage = errors.first?.localizedDescription ?? "Registration failed"
+                        self?.errorMessage = errors.first?.message ?? "Sign-in failed"
                     }
                 case .failure:
                     self?.errorMessage = "Unable to connect. Please try again."
@@ -216,7 +215,6 @@ final class OverseerRegistrationViewModel: ObservableObject {
             firstName: result.firstName.map { .some($0) } ?? .none,
             lastName: result.lastName.map { .some($0) } ?? .none
         )
-
         NetworkClient.shared.apollo.perform(
             mutation: AssemblyOpsAPI.LoginWithAppleMutation(input: input)
         ) { [weak self] result in
@@ -226,31 +224,16 @@ final class OverseerRegistrationViewModel: ObservableObject {
                     if let data = graphQLResult.data?.loginWithApple {
                         self?.processOAuthResponse(
                             isNewUser: data.isNewUser,
-                            user: data.user.map { u in
-                                UserInfo(
-                                    id: u.id,
-                                    userId: u.userId,
-                                    email: u.email,
-                                    firstName: u.firstName,
-                                    lastName: u.lastName,
-                                    fullName: u.fullName,
-                                    phone: nil,
-                                    congregation: nil,
-                                    congregationId: nil,
-                                    appointmentStatus: nil,
-                                    isOverseer: u.isOverseer
-                                )
-                            },
                             accessToken: data.accessToken,
                             refreshToken: data.refreshToken,
                             expiresIn: data.expiresIn,
                             pendingOAuthToken: data.pendingOAuthToken,
                             email: data.email,
-                            firstName: data.firstName,
-                            lastName: data.lastName
+                            firstName: data.firstName ?? "",
+                            lastName: data.lastName ?? ""
                         )
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
-                        self?.errorMessage = errors.first?.localizedDescription ?? "Registration failed"
+                        self?.errorMessage = errors.first?.message ?? "Sign-in failed"
                     }
                 case .failure:
                     self?.errorMessage = "Unable to connect. Please try again."
@@ -262,35 +245,21 @@ final class OverseerRegistrationViewModel: ObservableObject {
 
     private func processOAuthResponse(
         isNewUser: Bool,
-        user: UserInfo?,
         accessToken: String?,
         refreshToken: String?,
         expiresIn: Int?,
         pendingOAuthToken: String?,
         email: String,
-        firstName: String?,
-        lastName: String?
+        firstName: String,
+        lastName: String
     ) {
-        if isNewUser {
-            // Navigate to OAuth registration view to complete profile
-            pendingOAuthData = PendingOAuthData(
-                pendingToken: pendingOAuthToken ?? "",
-                email: email,
-                firstName: firstName ?? "",
-                lastName: lastName ?? ""
-            )
-            showOAuthRegistration = true
-        } else if let user = user,
-                  let accessToken = accessToken,
-                  let refreshToken = refreshToken,
-                  let expiresIn = expiresIn {
-            // Existing user - log them in
-            appState.didLogin(
-                user: user,
-                accessToken: accessToken,
-                refreshToken: refreshToken,
-                expiresIn: expiresIn
-            )
-        }
+        // For registration flow, always treat as new user needing profile completion
+        pendingOAuthData = PendingOAuthData(
+            pendingToken: pendingOAuthToken ?? "",
+            email: email,
+            firstName: firstName,
+            lastName: lastName
+        )
+        showOAuthRegistration = true
     }
 }

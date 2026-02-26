@@ -4,7 +4,7 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI {
-  struct RegisterAdminInput: InputObject {
+  struct LoginUserInput: InputObject {
     private(set) var __data: InputDict
 
     init(_ data: InputDict) {
@@ -13,15 +13,11 @@ extension AssemblyOpsAPI {
 
     init(
       email: String,
-      password: String,
-      firstName: String,
-      lastName: String
+      password: String
     ) {
       __data = InputDict([
         "email": email,
-        "password": password,
-        "firstName": firstName,
-        "lastName": lastName
+        "password": password
       ])
     }
 
@@ -33,16 +29,6 @@ extension AssemblyOpsAPI {
     var password: String {
       get { __data["password"] }
       set { __data["password"] = newValue }
-    }
-
-    var firstName: String {
-      get { __data["firstName"] }
-      set { __data["firstName"] = newValue }
-    }
-
-    var lastName: String {
-      get { __data["lastName"] }
-      set { __data["lastName"] = newValue }
     }
   }
 

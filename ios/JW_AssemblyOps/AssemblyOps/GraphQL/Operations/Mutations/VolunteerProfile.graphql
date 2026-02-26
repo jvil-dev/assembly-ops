@@ -1,24 +1,9 @@
-mutation CreateVolunteerProfile($input: CreateVolunteerProfileInput!) {
-  createVolunteerProfile(input: $input) {
-    id
-    firstName
-    lastName
-    email
-    phone
-    appointmentStatus
-    congregation {
-      id
-      name
-    }
-  }
-}
-
 mutation AddVolunteerToEvent($input: AddVolunteerToEventInput!) {
   addVolunteerToEvent(input: $input) {
     eventVolunteer {
       id
       volunteerId
-      volunteerProfile {
+      user {
         id
         firstName
         lastName
@@ -30,12 +15,35 @@ mutation AddVolunteerToEvent($input: AddVolunteerToEventInput!) {
   }
 }
 
-mutation CreateAndAddVolunteer($input: CreateAndAddVolunteerInput!) {
-  createAndAddVolunteer(input: $input) {
+mutation AddVolunteerByUserId($eventId: ID!, $userId: String!, $departmentId: ID) {
+  addVolunteerByUserId(eventId: $eventId, userId: $userId, departmentId: $departmentId) {
     eventVolunteer {
       id
       volunteerId
-      volunteerProfile {
+      user {
+        id
+        userId
+        firstName
+        lastName
+      }
+      department {
+        id
+        name
+        departmentType
+      }
+    }
+    volunteerId
+    token
+    inviteMessage
+  }
+}
+
+mutation RegenerateVolunteerToken($eventVolunteerId: ID!) {
+  regenerateVolunteerToken(eventVolunteerId: $eventVolunteerId) {
+    eventVolunteer {
+      id
+      volunteerId
+      user {
         id
         firstName
         lastName

@@ -4,16 +4,16 @@
 @_exported import ApolloAPI
 
 extension AssemblyOpsAPI {
-  class UpdateAdminProfileMutation: GraphQLMutation {
-    static let operationName: String = "UpdateAdminProfile"
+  class UpdateUserProfileMutation: GraphQLMutation {
+    static let operationName: String = "UpdateUserProfile"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation UpdateAdminProfile($input: UpdateAdminProfileInput!) { updateAdminProfile(input: $input) { __typename id email firstName lastName fullName phone congregationId congregationRef { __typename id name city state circuit { __typename id code } } } }"#
+        #"mutation UpdateUserProfile($input: UpdateUserProfileInput!) { updateUserProfile(input: $input) { __typename id userId email firstName lastName fullName phone congregation congregationId isOverseer congregationRef { __typename id name city state circuit { __typename id code } } } }"#
       ))
 
-    public var input: UpdateAdminProfileInput
+    public var input: UpdateUserProfileInput
 
-    public init(input: UpdateAdminProfileInput) {
+    public init(input: UpdateUserProfileInput) {
       self.input = input
     }
 
@@ -25,47 +25,53 @@ extension AssemblyOpsAPI {
 
       static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Mutation }
       static var __selections: [ApolloAPI.Selection] { [
-        .field("updateAdminProfile", UpdateAdminProfile.self, arguments: ["input": .variable("input")]),
+        .field("updateUserProfile", UpdateUserProfile.self, arguments: ["input": .variable("input")]),
       ] }
       static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-        UpdateAdminProfileMutation.Data.self
+        UpdateUserProfileMutation.Data.self
       ] }
 
-      var updateAdminProfile: UpdateAdminProfile { __data["updateAdminProfile"] }
+      var updateUserProfile: UpdateUserProfile { __data["updateUserProfile"] }
 
-      /// UpdateAdminProfile
+      /// UpdateUserProfile
       ///
-      /// Parent Type: `Admin`
-      struct UpdateAdminProfile: AssemblyOpsAPI.SelectionSet {
+      /// Parent Type: `User`
+      struct UpdateUserProfile: AssemblyOpsAPI.SelectionSet {
         let __data: DataDict
         init(_dataDict: DataDict) { __data = _dataDict }
 
-        static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Admin }
+        static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
         static var __selections: [ApolloAPI.Selection] { [
           .field("__typename", String.self),
           .field("id", AssemblyOpsAPI.ID.self),
+          .field("userId", String.self),
           .field("email", String.self),
           .field("firstName", String.self),
           .field("lastName", String.self),
           .field("fullName", String.self),
           .field("phone", String?.self),
+          .field("congregation", String?.self),
           .field("congregationId", AssemblyOpsAPI.ID?.self),
+          .field("isOverseer", Bool.self),
           .field("congregationRef", CongregationRef?.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-          UpdateAdminProfileMutation.Data.UpdateAdminProfile.self
+          UpdateUserProfileMutation.Data.UpdateUserProfile.self
         ] }
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
+        var userId: String { __data["userId"] }
         var email: String { __data["email"] }
         var firstName: String { __data["firstName"] }
         var lastName: String { __data["lastName"] }
         var fullName: String { __data["fullName"] }
         var phone: String? { __data["phone"] }
+        var congregation: String? { __data["congregation"] }
         var congregationId: AssemblyOpsAPI.ID? { __data["congregationId"] }
+        var isOverseer: Bool { __data["isOverseer"] }
         var congregationRef: CongregationRef? { __data["congregationRef"] }
 
-        /// UpdateAdminProfile.CongregationRef
+        /// UpdateUserProfile.CongregationRef
         ///
         /// Parent Type: `Congregation`
         struct CongregationRef: AssemblyOpsAPI.SelectionSet {
@@ -82,7 +88,7 @@ extension AssemblyOpsAPI {
             .field("circuit", Circuit.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-            UpdateAdminProfileMutation.Data.UpdateAdminProfile.CongregationRef.self
+            UpdateUserProfileMutation.Data.UpdateUserProfile.CongregationRef.self
           ] }
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
@@ -91,7 +97,7 @@ extension AssemblyOpsAPI {
           var state: String { __data["state"] }
           var circuit: Circuit { __data["circuit"] }
 
-          /// UpdateAdminProfile.CongregationRef.Circuit
+          /// UpdateUserProfile.CongregationRef.Circuit
           ///
           /// Parent Type: `Circuit`
           struct Circuit: AssemblyOpsAPI.SelectionSet {
@@ -105,7 +111,7 @@ extension AssemblyOpsAPI {
               .field("code", String.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-              UpdateAdminProfileMutation.Data.UpdateAdminProfile.CongregationRef.Circuit.self
+              UpdateUserProfileMutation.Data.UpdateUserProfile.CongregationRef.Circuit.self
             ] }
 
             var id: AssemblyOpsAPI.ID { __data["id"] }

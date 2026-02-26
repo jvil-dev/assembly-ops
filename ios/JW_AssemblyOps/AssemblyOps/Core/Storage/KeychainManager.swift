@@ -14,7 +14,7 @@
 //   - accessToken: JWT for API authorization (15 min expiry)
 //   - refreshToken: Long-lived token for obtaining new access tokens (7 day expiry)
 //   - expiresAt: Timestamp when access token expires
-//   - volunteerId: Current volunteer's ID
+//   - userId: Current user's internal ID
 //
 // Properties:
 //   - isLoggedIn: True if both tokens are present
@@ -31,7 +31,7 @@
 //
 // Dependencies: None (uses Security framework directly)
 //
-// Used by: AppState, NetworkClient, LoginViewModel
+// Used by: AppState, NetworkClient
 
 import Foundation
 import Security
@@ -46,7 +46,6 @@ final class KeychainManager {
         static let accessToken = "accessToken"
         static let refreshToken = "refreshToken"
         static let expiresAt = "expiresAt"
-        static let volunteerId = "volunteerId"
     }
     
     private init() {}
@@ -73,21 +72,16 @@ final class KeychainManager {
         }
     }
     
-    var volunteerId: String? {
-        get { getString(for: Keys.volunteerId) }
-        set { setString(newValue, for: Keys.volunteerId) }
+    var userId: String? {
+        get { getString(for: "userId") }
+        set { setString(newValue, for: "userId") }
     }
-    
+
     var overseerId: String? {
         get { getString(for: "overseerId") }
         set { setString(newValue, for: "overseerId") }
     }
-    
-    var userType: String? {
-        get { getString(for: "userType") }
-        set { setString(newValue, for: "userType") }
-    }
-    
+
     // MARK: - Convenience
     
     var isLoggedIn: Bool {
@@ -110,9 +104,8 @@ final class KeychainManager {
         accessToken = nil
         refreshToken = nil
         tokenExpiresAt = nil
-        volunteerId = nil
+        userId = nil
         overseerId = nil
-        userType = nil
     }
     
     // MARK: - Private Helpers

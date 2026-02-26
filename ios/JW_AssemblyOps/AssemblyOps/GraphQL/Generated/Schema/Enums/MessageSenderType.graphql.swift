@@ -5,7 +5,7 @@ import ApolloAPI
 
 extension AssemblyOpsAPI {
   enum MessageSenderType: String, EnumType {
-    case admin = "ADMIN"
+    case user = "USER"
     case volunteer = "VOLUNTEER"
   }
 

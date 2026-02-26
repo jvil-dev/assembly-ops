@@ -1,0 +1,11 @@
+mutation SetOverseerMode($isOverseer: Boolean!) {
+  setOverseerMode(isOverseer: $isOverseer) {
+    id
+    userId
+    email
+    firstName
+    lastName
+    fullName
+    isOverseer
+  }
+}

@@ -1,14 +1,16 @@
-mutation LoginAdmin($input: LoginAdminInput!) {
-  loginAdmin(input: $input) {
-    admin {
+mutation RegisterUser($input: RegisterUserInput!) {
+  registerUser(input: $input) {
+    user {
       id
+      userId
       email
       firstName
       lastName
       fullName
       phone
       congregation
-      congregationId
+      appointmentStatus
+      isOverseer
     }
     accessToken
     refreshToken

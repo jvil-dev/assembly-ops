@@ -4,7 +4,7 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI {
-  struct CreateVolunteerProfileInput: InputObject {
+  struct RegisterUserInput: InputObject {
     private(set) var __data: InputDict
 
     init(_ data: InputDict) {
@@ -12,23 +12,35 @@ extension AssemblyOpsAPI {
     }
 
     init(
+      email: String,
+      password: String,
       firstName: String,
       lastName: String,
-      email: GraphQLNullable<String> = nil,
       phone: GraphQLNullable<String> = nil,
+      congregation: GraphQLNullable<String> = nil,
       appointmentStatus: GraphQLNullable<GraphQLEnum<AppointmentStatus>> = nil,
-      notes: GraphQLNullable<String> = nil,
-      congregationId: ID
+      isOverseer: GraphQLNullable<Bool> = nil
     ) {
       __data = InputDict([
+        "email": email,
+        "password": password,
         "firstName": firstName,
         "lastName": lastName,
-        "email": email,
         "phone": phone,
+        "congregation": congregation,
         "appointmentStatus": appointmentStatus,
-        "notes": notes,
-        "congregationId": congregationId
+        "isOverseer": isOverseer
       ])
+    }
+
+    var email: String {
+      get { __data["email"] }
+      set { __data["email"] = newValue }
+    }
+
+    var password: String {
+      get { __data["password"] }
+      set { __data["password"] = newValue }
     }
 
     var firstName: String {
@@ -41,14 +53,14 @@ extension AssemblyOpsAPI {
       set { __data["lastName"] = newValue }
     }
 
-    var email: GraphQLNullable<String> {
-      get { __data["email"] }
-      set { __data["email"] = newValue }
-    }
-
     var phone: GraphQLNullable<String> {
       get { __data["phone"] }
       set { __data["phone"] = newValue }
+    }
+
+    var congregation: GraphQLNullable<String> {
+      get { __data["congregation"] }
+      set { __data["congregation"] = newValue }
     }
 
     var appointmentStatus: GraphQLNullable<GraphQLEnum<AppointmentStatus>> {
@@ -56,14 +68,9 @@ extension AssemblyOpsAPI {
       set { __data["appointmentStatus"] = newValue }
     }
 
-    var notes: GraphQLNullable<String> {
-      get { __data["notes"] }
-      set { __data["notes"] = newValue }
-    }
-
-    var congregationId: ID {
-      get { __data["congregationId"] }
-      set { __data["congregationId"] = newValue }
+    var isOverseer: GraphQLNullable<Bool> {
+      get { __data["isOverseer"] }
+      set { __data["isOverseer"] = newValue }
     }
   }
 

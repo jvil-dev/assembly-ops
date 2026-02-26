@@ -1,21 +1,25 @@
 query Me {
-    me {
+  me {
+    id
+    userId
+    email
+    firstName
+    lastName
+    fullName
+    phone
+    congregation
+    congregationId
+    appointmentStatus
+    isOverseer
+    congregationRef {
+      id
+      name
+      city
+      state
+      circuit {
         id
-        email
-        firstName
-        lastName
-        fullName
-        phone
-        congregationId
-        congregationRef {
-            id
-            name
-            city
-            state
-            circuit {
-                id
-                code
-            }
-        }
+        code
+      }
     }
+  }
 }

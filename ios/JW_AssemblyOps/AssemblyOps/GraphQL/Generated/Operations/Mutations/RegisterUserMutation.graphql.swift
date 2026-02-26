@@ -4,16 +4,16 @@
 @_exported import ApolloAPI
 
 extension AssemblyOpsAPI {
-  class RegisterAdminMutation: GraphQLMutation {
-    static let operationName: String = "RegisterAdmin"
+  class RegisterUserMutation: GraphQLMutation {
+    static let operationName: String = "RegisterUser"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation RegisterAdmin($input: RegisterAdminInput!) { registerAdmin(input: $input) { __typename admin { __typename id email firstName lastName fullName } accessToken refreshToken expiresIn } }"#
+        #"mutation RegisterUser($input: RegisterUserInput!) { registerUser(input: $input) { __typename user { __typename id userId email firstName lastName fullName phone congregation appointmentStatus isOverseer } accessToken refreshToken expiresIn } }"#
       ))
 
-    public var input: RegisterAdminInput
+    public var input: RegisterUserInput
 
-    public init(input: RegisterAdminInput) {
+    public init(input: RegisterUserInput) {
       self.input = input
     }
 
@@ -25,63 +25,73 @@ extension AssemblyOpsAPI {
 
       static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Mutation }
       static var __selections: [ApolloAPI.Selection] { [
-        .field("registerAdmin", RegisterAdmin.self, arguments: ["input": .variable("input")]),
+        .field("registerUser", RegisterUser.self, arguments: ["input": .variable("input")]),
       ] }
       static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-        RegisterAdminMutation.Data.self
+        RegisterUserMutation.Data.self
       ] }
 
-      var registerAdmin: RegisterAdmin { __data["registerAdmin"] }
+      var registerUser: RegisterUser { __data["registerUser"] }
 
-      /// RegisterAdmin
+      /// RegisterUser
       ///
-      /// Parent Type: `AuthPayload`
-      struct RegisterAdmin: AssemblyOpsAPI.SelectionSet {
+      /// Parent Type: `UserAuthPayload`
+      struct RegisterUser: AssemblyOpsAPI.SelectionSet {
         let __data: DataDict
         init(_dataDict: DataDict) { __data = _dataDict }
 
-        static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.AuthPayload }
+        static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.UserAuthPayload }
         static var __selections: [ApolloAPI.Selection] { [
           .field("__typename", String.self),
-          .field("admin", Admin.self),
+          .field("user", User.self),
           .field("accessToken", String.self),
           .field("refreshToken", String.self),
           .field("expiresIn", Int.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-          RegisterAdminMutation.Data.RegisterAdmin.self
+          RegisterUserMutation.Data.RegisterUser.self
         ] }
 
-        var admin: Admin { __data["admin"] }
+        var user: User { __data["user"] }
         var accessToken: String { __data["accessToken"] }
         var refreshToken: String { __data["refreshToken"] }
         var expiresIn: Int { __data["expiresIn"] }
 
-        /// RegisterAdmin.Admin
+        /// RegisterUser.User
         ///
-        /// Parent Type: `Admin`
-        struct Admin: AssemblyOpsAPI.SelectionSet {
+        /// Parent Type: `User`
+        struct User: AssemblyOpsAPI.SelectionSet {
           let __data: DataDict
           init(_dataDict: DataDict) { __data = _dataDict }
 
-          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Admin }
+          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
           static var __selections: [ApolloAPI.Selection] { [
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
+            .field("userId", String.self),
             .field("email", String.self),
             .field("firstName", String.self),
             .field("lastName", String.self),
             .field("fullName", String.self),
+            .field("phone", String?.self),
+            .field("congregation", String?.self),
+            .field("appointmentStatus", GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>?.self),
+            .field("isOverseer", Bool.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-            RegisterAdminMutation.Data.RegisterAdmin.Admin.self
+            RegisterUserMutation.Data.RegisterUser.User.self
           ] }
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
+          var userId: String { __data["userId"] }
           var email: String { __data["email"] }
           var firstName: String { __data["firstName"] }
           var lastName: String { __data["lastName"] }
           var fullName: String { __data["fullName"] }
+          var phone: String? { __data["phone"] }
+          var congregation: String? { __data["congregation"] }
+          var appointmentStatus: GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>? { __data["appointmentStatus"] }
+          var isOverseer: Bool { __data["isOverseer"] }
         }
       }
     }
