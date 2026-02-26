@@ -1,0 +1,9 @@
+mutation PurchaseDepartment($input: PurchaseDepartmentInput!) {
+  purchaseDepartment(input: $input) {
+    id
+    name
+    departmentType
+    accessCode
+    isPublic
+  }
+}

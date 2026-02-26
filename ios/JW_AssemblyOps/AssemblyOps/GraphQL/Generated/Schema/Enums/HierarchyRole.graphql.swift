@@ -4,8 +4,8 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI {
-  enum EventRole: String, EnumType {
-    case departmentOverseer = "DEPARTMENT_OVERSEER"
+  enum HierarchyRole: String, EnumType {
+    case assistantOverseer = "ASSISTANT_OVERSEER"
   }
 
 }

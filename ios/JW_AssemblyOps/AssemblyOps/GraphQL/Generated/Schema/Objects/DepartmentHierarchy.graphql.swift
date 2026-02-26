@@ -4,8 +4,8 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI.Objects {
-  static let CreatedVolunteer = ApolloAPI.Object(
-    typename: "CreatedVolunteer",
+  static let DepartmentHierarchy = ApolloAPI.Object(
+    typename: "DepartmentHierarchy",
     implementedInterfaces: [],
     keyFields: nil
   )

@@ -8,6 +8,7 @@ query MyAllEvents {
     departmentType
     eventVolunteerId
     volunteerId
+    departmentAccessCode
     event {
       id
       name
