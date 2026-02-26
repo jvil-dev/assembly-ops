@@ -96,22 +96,6 @@ const areaResolvers = {
         where: { id: eventVolunteerId },
       });
 
-      if (!eventVolunteer) {
-        // Fallback: old Volunteer auth — find EventVolunteer via volunteerId
-        const volunteer = await context.prisma.volunteer.findUnique({
-          where: { id: context.volunteer!.id },
-        });
-
-        if (volunteer) {
-          const evMatch = await context.prisma.eventVolunteer.findFirst({
-            where: { volunteerId: volunteer.volunteerId },
-          });
-          if (evMatch) {
-            eventVolunteerId = evMatch.id;
-          }
-        }
-      }
-
       const areaService = new AreaService(context.prisma);
       return areaService.getMyAreaGroups(eventVolunteerId);
     },

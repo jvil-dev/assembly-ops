@@ -27,7 +27,7 @@ const bodyField = z
   .transform((v: string) => v.trim())
   .pipe(z.string().min(1, 'Message body is required').max(5000, 'Message too long'));
 
-const messageSenderType = z.enum(['ADMIN', 'VOLUNTEER']);
+const messageSenderType = z.enum(['USER', 'VOLUNTEER']);
 
 // Existing schemas (updated for bi-directional support)
 export const sendMessageSchema = z.object({
@@ -55,7 +55,7 @@ export const messageFilterSchema = z.object({
   isRead: z.boolean().optional(),
   senderId: z.string().optional(),
   senderType: messageSenderType.optional(),
-  recipientType: z.enum(['VOLUNTEER', 'DEPARTMENT', 'EVENT', 'ADMIN']).optional(),
+  recipientType: z.enum(['VOLUNTEER', 'DEPARTMENT', 'EVENT', 'USER']).optional(),
   search: z.string().max(200).optional(),
 });
 

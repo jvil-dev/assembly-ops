@@ -5,7 +5,7 @@
  * Used for CO-24 reporting with section-based counting.
  *
  * Authorization:
- *   - All operations require Admin auth + event access
+ *   - All operations require Overseer auth + event access
  *   - Typically used by Attendant department overseers
  *
  * Query Resolvers:
@@ -21,7 +21,7 @@
  *
  * Type Resolvers:
  *   - AttendanceCount.session: Resolve related session
- *   - AttendanceCount.submittedBy: Resolve admin who submitted
+ *   - AttendanceCount.submittedBy: Resolve overseer who submitted
  *
  * Used by: ./index.ts (resolver composition)
  */
@@ -162,20 +162,6 @@ const attendanceResolvers = {
           include: { department: true },
         });
 
-        if (!eventVolunteer) {
-          // Fallback: legacy Volunteer auth — bridge via shared volunteerId
-          const volunteer = await context.prisma.volunteer.findUnique({
-            where: { id: context.volunteer.id },
-          });
-
-          if (volunteer) {
-            eventVolunteer = await context.prisma.eventVolunteer.findFirst({
-              where: { volunteerId: volunteer.volunteerId, eventId },
-              include: { department: true },
-            });
-          }
-        }
-
         if (!eventVolunteer || eventVolunteer.department?.departmentType !== 'ATTENDANT') {
           throw new AuthorizationError('Only attendant volunteers can submit counts');
         }
@@ -188,7 +174,7 @@ const attendanceResolvers = {
       const eventId = await attendanceService.getSessionEventId(input.sessionId);
       await requireEventAccess(context, eventId);
 
-      return attendanceService.submitAttendanceCount(context.admin.id, input);
+      return attendanceService.submitAttendanceCount(context.admin!.id, input);
     },
 
     updateAttendanceCount: async (
@@ -232,7 +218,7 @@ const attendanceResolvers = {
       context: Context
     ) => {
       if (parent.submittedBy) return parent.submittedBy;
-      return context.prisma.admin.findUnique({
+      return context.prisma.user.findUnique({
         where: { id: parent.submittedById },
       });
     },

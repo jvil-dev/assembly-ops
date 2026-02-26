@@ -5,7 +5,7 @@
  * Used for CO-24 reporting at assemblies and conventions.
  *
  * Methods:
- *   - submitAttendanceCount(adminId, input): Record count for session/section
+ *   - submitAttendanceCount(userId, input): Record count for session/section
  *   - updateAttendanceCount(id, input): Update an existing count
  *   - deleteAttendanceCount(id): Remove a count record
  *   - getAttendanceCount(id): Get single count by ID
@@ -21,7 +21,7 @@
  *
  * Business Rules:
  *   - One count per session+section combination (upsert on conflict)
- *   - Only admins with event access can submit/update/delete
+ *   - Only overseers with event access can submit/update/delete
  *   - Counts ordered by session date and time for reports
  *
  * Called by: ../graphql/resolvers/attendance.ts
@@ -170,14 +170,14 @@ export class AttendanceService {
   private async getSubmittingAdminId(eventId: string): Promise<string> {
     const eventAdmin = await this.prisma.eventAdmin.findFirst({
       where: { eventId, role: EventRole.APP_ADMIN },
-      select: { adminId: true },
+      select: { userId: true },
     });
 
     if (!eventAdmin) {
       throw new NotFoundError('Event overseer');
     }
 
-    return eventAdmin.adminId;
+    return eventAdmin.userId;
   }
 
   /**

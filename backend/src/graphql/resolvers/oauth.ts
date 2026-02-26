@@ -11,7 +11,7 @@ export const oauthResolvers = {
       const service = new OAuthService(context.prisma);
       const result = await service.loginWithGoogle(input.idToken);
       return {
-        admin: result.admin || null,
+        user: result.user || null,
         accessToken: result.tokens?.accessToken || null,
         refreshToken: result.tokens?.refreshToken || null,
         expiresIn: result.tokens?.expiresIn || null,
@@ -43,7 +43,7 @@ export const oauthResolvers = {
         input.lastName
       );
       return {
-        admin: result.admin || null,
+        user: result.user || null,
         accessToken: result.tokens?.accessToken || null,
         refreshToken: result.tokens?.refreshToken || null,
         expiresIn: result.tokens?.expiresIn || null,
@@ -64,8 +64,7 @@ export const oauthResolvers = {
           pendingOAuthToken: string;
           firstName: string;
           lastName: string;
-          phone?: string;
-          congregation: string;
+          isOverseer?: boolean;
         };
       },
       context: Context
@@ -73,7 +72,7 @@ export const oauthResolvers = {
       const service = new OAuthService(context.prisma);
       const result = await service.completeOAuthRegistration(input);
       return {
-        admin: result.admin,
+        user: result.user,
         accessToken: result.tokens.accessToken,
         refreshToken: result.tokens.refreshToken,
         expiresIn: result.tokens.expiresIn,

@@ -37,13 +37,6 @@ const assignmentTypeDefs = `#graphql
   # ENUMS
   # ============================================
 
-  enum AssignmentStatus {
-    PENDING
-    ACCEPTED
-    DECLINED
-    AUTO_DECLINED
-  }
-
   # ============================================
   # TYPES
   # ============================================
@@ -93,22 +86,6 @@ const assignmentTypeDefs = `#graphql
   type CoverageCheckIn {
     id: ID!
     checkInTime: DateTime!
-  }
-
-  type ScheduleAssignment {
-    id: ID!
-    volunteer: Volunteer!
-    post: Post!
-    session: Session!
-    status: AssignmentStatus!
-    isCaptain: Boolean!
-    respondedAt: DateTime
-    declineReason: String
-    acceptDeadline: DateTime
-    forceAssigned: Boolean!
-    checkIn: CheckIn
-    createdAt: DateTime!
-    updatedAt: DateTime!
   }
 
   type CaptainGroup {

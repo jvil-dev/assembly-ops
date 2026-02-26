@@ -4,13 +4,9 @@
  * Manages refresh token lifecycle: creation, validation, rotation, and revocation.
  * Refresh tokens are stored in the database to enable server-side invalidation.
  *
- * Methods:
- *   - createRefreshToken(token, userId, userType): Store a new refresh token
- *   - revokeRefreshToken(token): Mark a token as revoked
- *   - revokeAllUserTokens(userId, userType): Revoke ALL tokens for a user (logout everywhere)
- *   - rotateRefreshToken(oldToken, ...): Issue new tokens, revoke old one
- *   - validateRefreshToken(token): Check if token is valid (not revoked, not expired)
- *   - cleanupExpiredTokens(): Delete old/revoked tokens (housekeeping)
+ * Token Types:
+ *   - 'user': All registered users (volunteers and overseers) — stored via userId FK
+ *   - 'eventVolunteer': Printed-card event-day credentials — stored via eventVolunteerId FK
  *
  * Token Rotation:
  *   Each time a refresh token is used, it's revoked and a new one is issued.
@@ -21,12 +17,7 @@
  *   - Access token: 15 minutes (stored only on client)
  *   - Refresh token: 7 days (stored in database)
  *
- * Security:
- *   - Tokens are stored hashed in the database
- *   - Revoked tokens are kept until cleanup (to detect reuse)
- *   - Token reuse triggers full session invalidation
- *
- * Called by: AuthService, VolunteerService
+ * Called by: AuthService
  */
 import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
@@ -44,7 +35,7 @@ export class TokenService {
   async createRefreshToken(
     token: string,
     userId: string,
-    userType: 'admin' | 'volunteer' | 'eventVolunteer'
+    userType: 'user' | 'eventVolunteer'
   ): Promise<void> {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
@@ -53,8 +44,7 @@ export class TokenService {
       data: {
         token: this.hashToken(token),
         expiresAt,
-        adminId: userType === 'admin' ? userId : null,
-        volunteerId: userType === 'volunteer' ? userId : null,
+        userId: userType === 'user' ? userId : null,
         eventVolunteerId: userType === 'eventVolunteer' ? userId : null,
       },
     });
@@ -67,39 +57,18 @@ export class TokenService {
     });
   }
 
-  async revokeAllUserTokens(
-    userId: string,
-    userType: 'admin' | 'volunteer' | 'eventVolunteer'
-  ): Promise<void> {
-    let where: { adminId?: string; volunteerId?: string; eventVolunteerId?: string; revoked: boolean };
+  async revokeAllUserTokens(userId: string, userType: 'user' | 'eventVolunteer'): Promise<void> {
+    const where =
+      userType === 'user'
+        ? { userId, revoked: false }
+        : { eventVolunteerId: userId, revoked: false };
 
-    if (userType === 'admin') {
-      where = { adminId: userId, revoked: false };
-    } else if (userType === 'volunteer') {
-      where = { volunteerId: userId, revoked: false };
-    } else {
-      where = { eventVolunteerId: userId, revoked: false };
-    }
-
-    await this.prisma.refreshToken.updateMany({
-      where,
-      data: { revoked: true },
-    });
+    await this.prisma.refreshToken.updateMany({ where, data: { revoked: true } });
   }
 
-  async deleteAllUserTokens(
-    userId: string,
-    userType: 'admin' | 'volunteer' | 'eventVolunteer'
-  ): Promise<void> {
-    let where: { adminId?: string; volunteerId?: string; eventVolunteerId?: string };
-
-    if (userType === 'admin') {
-      where = { adminId: userId };
-    } else if (userType === 'volunteer') {
-      where = { volunteerId: userId };
-    } else {
-      where = { eventVolunteerId: userId };
-    }
+  async deleteAllUserTokens(userId: string, userType: 'user' | 'eventVolunteer'): Promise<void> {
+    const where =
+      userType === 'user' ? { userId } : { eventVolunteerId: userId };
 
     await this.prisma.refreshToken.deleteMany({ where });
   }
@@ -107,38 +76,26 @@ export class TokenService {
   async rotateRefreshToken(
     oldToken: string,
     userId: string,
-    userType: 'admin' | 'volunteer' | 'eventVolunteer',
-    email?: string
+    userType: 'user' | 'eventVolunteer',
+    email?: string,
+    isOverseer?: boolean
   ): Promise<TokenPair | null> {
     const storedToken = await this.prisma.refreshToken.findUnique({
       where: { token: this.hashToken(oldToken) },
     });
 
-    if (!storedToken) {
-      return null;
-    }
+    if (!storedToken) return null;
 
     if (storedToken.revoked) {
-      // Token reuse detected - revoke all user tokens
       await this.revokeAllUserTokens(userId, userType);
       return null;
     }
 
-    if (storedToken.expiresAt < new Date()) {
-      return null;
-    }
+    if (storedToken.expiresAt < new Date()) return null;
 
-    // Delete all user tokens to prevent collision on rapid refresh
     await this.deleteAllUserTokens(userId, userType);
 
-    // Generate new tokens
-    const tokens = generateTokens({
-      sub: userId,
-      type: userType,
-      email,
-    });
-
-    // Store new refresh token
+    const tokens = generateTokens({ sub: userId, type: userType, email, isOverseer });
     await this.createRefreshToken(tokens.refreshToken, userId, userType);
 
     return tokens;
@@ -146,7 +103,7 @@ export class TokenService {
 
   async validateRefreshToken(token: string): Promise<{
     userId: string;
-    userType: 'admin' | 'volunteer' | 'eventVolunteer';
+    userType: 'user' | 'eventVolunteer';
   } | null> {
     try {
       const payload = verifyRefreshToken(token);
@@ -159,10 +116,7 @@ export class TokenService {
         return null;
       }
 
-      return {
-        userId: payload.sub,
-        userType: payload.type,
-      };
+      return { userId: payload.sub, userType: payload.type };
     } catch {
       return null;
     }
@@ -170,9 +124,7 @@ export class TokenService {
 
   async cleanupExpiredTokens(): Promise<number> {
     const result = await this.prisma.refreshToken.deleteMany({
-      where: {
-        OR: [{ expiresAt: { lt: new Date() } }, { revoked: true }],
-      },
+      where: { OR: [{ expiresAt: { lt: new Date() } }, { revoked: true }] },
     });
     return result.count;
   }

@@ -95,7 +95,7 @@ export class AreaService {
         captains: {
           include: {
             session: true,
-            eventVolunteer: { include: { volunteerProfile: true } },
+            eventVolunteer: { include: { user: true } },
           },
         },
       },
@@ -144,7 +144,7 @@ export class AreaService {
         captains: {
           include: {
             session: true,
-            eventVolunteer: { include: { volunteerProfile: true } },
+            eventVolunteer: { include: { user: true } },
           },
         },
       },
@@ -172,7 +172,7 @@ export class AreaService {
         captains: {
           include: {
             session: true,
-            eventVolunteer: { include: { volunteerProfile: true } },
+            eventVolunteer: { include: { user: true } },
           },
         },
         _count: { select: { posts: true } },
@@ -194,7 +194,7 @@ export class AreaService {
         captains: {
           include: {
             session: true,
-            eventVolunteer: { include: { volunteerProfile: true } },
+            eventVolunteer: { include: { user: true } },
           },
         },
         _count: { select: { posts: true } },
@@ -277,24 +277,7 @@ export class AreaService {
       where: { id: eventVolunteerId },
     });
 
-    if (!volunteer) {
-      // Try looking up via legacy Volunteer model → find matching EventVolunteer
-      const legacyVolunteer = await this.prisma.volunteer.findUnique({
-        where: { id: eventVolunteerId },
-      });
-      if (legacyVolunteer) {
-        const ev = await this.prisma.eventVolunteer.findFirst({
-          where: {
-            volunteerId: legacyVolunteer.volunteerId,
-            eventId: area.department.eventId,
-          },
-        });
-        if (ev) {
-          volunteer = ev;
-          resolvedEventVolunteerId = ev.id;
-        }
-      }
-    }
+    // No legacy volunteer fallback — EventVolunteer is the canonical record
 
     if (!volunteer) throw new NotFoundError('EventVolunteer');
 
@@ -314,7 +297,7 @@ export class AreaService {
       include: {
         area: true,
         session: true,
-        eventVolunteer: { include: { volunteerProfile: true } },
+        eventVolunteer: { include: { user: true } },
       },
     });
   }
@@ -365,7 +348,7 @@ export class AreaService {
       include: {
         area: true,
         session: true,
-        eventVolunteer: { include: { volunteerProfile: true } },
+        eventVolunteer: { include: { user: true } },
       },
     });
 
@@ -379,8 +362,7 @@ export class AreaService {
       include: {
         post: true,
         session: true,
-        volunteer: true,
-        eventVolunteer: { include: { volunteerProfile: true } },
+        eventVolunteer: { include: { user: true } },
         checkIn: true,
       },
       orderBy: [{ post: { sortOrder: 'asc' } }, { createdAt: 'asc' }],
@@ -408,7 +390,7 @@ export class AreaService {
           },
         },
         session: true,
-        eventVolunteer: { include: { volunteerProfile: true } },
+        eventVolunteer: { include: { user: true } },
       },
       orderBy: [{ session: { date: 'asc' } }, { session: { startTime: 'asc' } }],
     });
@@ -426,8 +408,7 @@ export class AreaService {
           include: {
             post: true,
             session: true,
-            volunteer: true,
-            eventVolunteer: { include: { volunteerProfile: true } },
+                eventVolunteer: { include: { user: true } },
             checkIn: true,
           },
           orderBy: [{ post: { sortOrder: 'asc' } }, { createdAt: 'asc' }],

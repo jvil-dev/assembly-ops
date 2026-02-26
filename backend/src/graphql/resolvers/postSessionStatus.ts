@@ -27,21 +27,8 @@ async function resolveEventVolunteer(
   });
   if (ev) return ev.id;
 
-  const volunteer = await context.prisma.volunteer.findUnique({
-    where: { id: context.volunteer!.id },
-  });
-  if (!volunteer) {
-    throw new AuthorizationError('Volunteer not found');
-  }
-
-  const eventVolunteer = await context.prisma.eventVolunteer.findFirst({
-    where: { volunteerId: volunteer.volunteerId },
-  });
-  if (!eventVolunteer) {
-    throw new AuthorizationError('Event volunteer not found');
-  }
-
-  return eventVolunteer.id;
+  // legacy volunteer bridge removed — volunteer model no longer exists
+  throw new AuthorizationError('Event volunteer not found');
 }
 
 const postSessionStatusResolvers = {

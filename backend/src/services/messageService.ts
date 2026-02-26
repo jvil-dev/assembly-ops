@@ -5,15 +5,15 @@
  * and conversation threads.
  *
  * Existing methods (updated for dual-auth):
- *   - sendMessage: Send to individual (admin or volunteer sender)
- *   - sendDepartmentMessage: Broadcast to department (admin only)
- *   - sendBroadcast: Broadcast to event (admin only)
+ *   - sendMessage: Send to individual (overseer or volunteer sender)
+ *   - sendDepartmentMessage: Broadcast to department (overseer only)
+ *   - sendBroadcast: Broadcast to event (overseer only)
  *   - getInboxMessages: Get messages for any user (was getVolunteerMessages)
  *   - getUnreadCount: Get unread count for any user
  *   - markAsRead: Mark single message as read (any user)
  *   - markAllAsRead: Mark all as read (any user)
  *   - getMessage: Get message by ID
- *   - getSentMessages: Get sent messages (admin)
+ *   - getSentMessages: Get sent messages (overseer)
  *   - softDeleteMessage: Soft delete (was hard delete)
  *
  * New methods:
@@ -82,28 +82,27 @@ export class MessageService {
       throw new ValidationError('You cannot send a message to yourself');
     }
 
-    if (recipientType === 'ADMIN' && recipientId) {
+    if (recipientType === 'USER' && recipientId) {
       // Sending to an admin — create a message with ADMIN recipientType
-      const admin = await this.prisma.admin.findUnique({
+      const user = await this.prisma.user.findUnique({
         where: { id: recipientId },
         select: { id: true },
       });
-      if (!admin) throw new NotFoundError('Admin');
+      if (!user) throw new NotFoundError('User');
 
       return this.prisma.message.create({
         data: {
           subject,
           body,
-          recipientType: RecipientType.ADMIN,
+          recipientType: RecipientType.USER,
           recipientId: recipientId,
           eventId,
           senderType: sender.senderType,
-          senderAdminId: sender.senderType === 'ADMIN' ? sender.senderId : null,
+          senderUserId: sender.senderType === 'USER' ? sender.senderId : null,
           senderVolId: sender.senderType === 'VOLUNTEER' ? sender.senderId : null,
           // Legacy fields for backward compat
-          senderId: sender.senderType === 'ADMIN' ? sender.senderId : null,
         },
-        include: { senderAdmin: true, volunteer: true, event: true },
+        include: { senderUser: true, event: true },
       });
     }
 
@@ -111,19 +110,13 @@ export class MessageService {
     const volId = targetVolunteerId || recipientId;
     if (!volId) throw new ValidationError('Volunteer ID or recipient ID is required');
 
-    // Verify volunteer exists
-    const volunteer = await this.prisma.volunteer.findUnique({
+    // Verify eventVolunteer exists
+    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
       where: { id: volId },
-      select: { id: true, volunteerId: true, eventId: true },
+      select: { id: true, eventId: true },
     });
 
-    if (!volunteer) throw new NotFoundError('Volunteer');
-
-    // Resolve matching EventVolunteer
-    const eventVolunteer = await this.prisma.eventVolunteer.findFirst({
-      where: { volunteerId: volunteer.volunteerId, eventId: volunteer.eventId },
-      select: { id: true },
-    });
+    if (!eventVolunteer) throw new NotFoundError('EventVolunteer');
 
     return this.prisma.message.create({
       data: {
@@ -131,16 +124,13 @@ export class MessageService {
         body,
         recipientType: RecipientType.VOLUNTEER,
         recipientId: volId,
-        eventId: volunteer.eventId,
+        eventId: eventVolunteer.eventId,
         senderType: sender.senderType,
-        senderAdminId: sender.senderType === 'ADMIN' ? sender.senderId : null,
+        senderUserId: sender.senderType === 'USER' ? sender.senderId : null,
         senderVolId: sender.senderType === 'VOLUNTEER' ? sender.senderId : null,
-        // Legacy fields
-        senderId: sender.senderType === 'ADMIN' ? sender.senderId : null,
-        volunteerId: volId,
-        eventVolunteerId: eventVolunteer?.id ?? null,
+        eventVolunteerId: volId,
       },
-      include: { senderAdmin: true, volunteer: true, event: true },
+      include: { senderUser: true, event: true },
     });
   }
 
@@ -161,22 +151,22 @@ export class MessageService {
     const department = await this.prisma.department.findUnique({
       where: { id: departmentId },
       include: {
-        volunteers: { select: { id: true, volunteerId: true } },
+        eventVolunteers: { select: { id: true, userId: true } },
         event: { select: { id: true } },
       },
     });
 
     if (!department) throw new NotFoundError('Department');
-    if (department.volunteers.length === 0) return [];
+    if (department.eventVolunteers.length === 0) return [];
 
     const eventVolunteers = await this.prisma.eventVolunteer.findMany({
       where: { departmentId },
-      select: { id: true, volunteerId: true },
+      select: { id: true, userId: true },
     });
-    const evMap = new Map(eventVolunteers.map((ev) => [ev.volunteerId, ev.id]));
+    const evMap = new Map(eventVolunteers.map((ev) => [ev.userId, ev.id]));
 
     const messages = await this.prisma.$transaction(
-      department.volunteers.map((volunteer) =>
+      department.eventVolunteers.map((volunteer) =>
         this.prisma.message.create({
           data: {
             subject,
@@ -185,13 +175,11 @@ export class MessageService {
             recipientId: departmentId,
             eventId: department.event.id,
             senderType: sender.senderType,
-            senderAdminId: sender.senderType === 'ADMIN' ? sender.senderId : null,
+            senderUserId: sender.senderType === 'USER' ? sender.senderId : null,
             senderVolId: sender.senderType === 'VOLUNTEER' ? sender.senderId : null,
-            senderId: sender.senderType === 'ADMIN' ? sender.senderId : null,
-            volunteerId: volunteer.id,
-            eventVolunteerId: evMap.get(volunteer.volunteerId) ?? null,
+            eventVolunteerId: evMap.get(volunteer.userId) ?? null,
           },
-          include: { senderAdmin: true, volunteer: true, event: true },
+          include: { senderUser: true, event: true },
         })
       )
     );
@@ -213,21 +201,21 @@ export class MessageService {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
       include: {
-        volunteers: { select: { id: true, volunteerId: true } },
+        eventVolunteers: { select: { id: true, userId: true } },
       },
     });
 
     if (!event) throw new NotFoundError('Event');
-    if (event.volunteers.length === 0) return [];
+    if (event.eventVolunteers.length === 0) return [];
 
     const eventVolunteers = await this.prisma.eventVolunteer.findMany({
       where: { eventId },
-      select: { id: true, volunteerId: true },
+      select: { id: true, userId: true },
     });
-    const evMap = new Map(eventVolunteers.map((ev) => [ev.volunteerId, ev.id]));
+    const evMap = new Map(eventVolunteers.map((ev) => [ev.userId, ev.id]));
 
     const messages = await this.prisma.$transaction(
-      event.volunteers.map((volunteer) =>
+      event.eventVolunteers.map((volunteer) =>
         this.prisma.message.create({
           data: {
             subject,
@@ -236,13 +224,11 @@ export class MessageService {
             recipientId: eventId,
             eventId,
             senderType: sender.senderType,
-            senderAdminId: sender.senderType === 'ADMIN' ? sender.senderId : null,
+            senderUserId: sender.senderType === 'USER' ? sender.senderId : null,
             senderVolId: sender.senderType === 'VOLUNTEER' ? sender.senderId : null,
-            senderId: sender.senderType === 'ADMIN' ? sender.senderId : null,
-            volunteerId: volunteer.id,
-            eventVolunteerId: evMap.get(volunteer.volunteerId) ?? null,
+            eventVolunteerId: evMap.get(volunteer.userId) ?? null,
           },
-          include: { senderAdmin: true, volunteer: true, event: true },
+          include: { senderUser: true, event: true },
         })
       )
     );
@@ -266,18 +252,15 @@ export class MessageService {
     };
 
     if (identity.senderType === 'VOLUNTEER') {
-      where.OR = [
-        { volunteerId: identity.senderId },
-        { eventVolunteerId: identity.senderId },
-      ];
+      where.eventVolunteerId = identity.senderId;
     } else {
       // Admin inbox: messages sent TO this admin
-      where.recipientType = RecipientType.ADMIN;
+      where.recipientType = RecipientType.USER;
       where.recipientId = identity.senderId;
     }
 
     if (filter?.isRead !== undefined) where.isRead = filter.isRead;
-    if (filter?.senderId) where.senderId = filter.senderId;
+    if (filter?.senderId) where.senderUserId = filter.senderId;
     if (filter?.search) {
       where.AND = [
         {
@@ -292,9 +275,8 @@ export class MessageService {
     return this.prisma.message.findMany({
       where,
       include: {
-        senderAdmin: true,
-        senderVol: { include: { volunteerProfile: true } },
-        sender: true,
+        senderUser: true,
+        senderVol: { include: { user: true } },
         event: true,
       },
       orderBy: { createdAt: 'desc' },
@@ -313,12 +295,9 @@ export class MessageService {
     };
 
     if (identity.senderType === 'VOLUNTEER') {
-      where.OR = [
-        { volunteerId: identity.senderId },
-        { eventVolunteerId: identity.senderId },
-      ];
+      where.eventVolunteerId = identity.senderId;
     } else {
-      where.recipientType = RecipientType.ADMIN;
+      where.recipientType = RecipientType.USER;
       where.recipientId = identity.senderId;
     }
 
@@ -338,10 +317,9 @@ export class MessageService {
     // Check ownership: volunteer recipient OR admin recipient
     const isRecipient =
       (identity.senderType === 'VOLUNTEER' &&
-        (message.volunteerId === identity.senderId ||
-          message.eventVolunteerId === identity.senderId)) ||
-      (identity.senderType === 'ADMIN' &&
-        message.recipientType === RecipientType.ADMIN &&
+        message.eventVolunteerId === identity.senderId) ||
+      (identity.senderType === 'USER' &&
+        message.recipientType === RecipientType.USER &&
         message.recipientId === identity.senderId);
 
     if (!isRecipient) {
@@ -351,14 +329,14 @@ export class MessageService {
     if (message.isRead) {
       return this.prisma.message.findUnique({
         where: { id: messageId },
-        include: { senderAdmin: true, sender: true, event: true },
+        include: { senderUser: true, event: true },
       }) as Promise<Message>;
     }
 
     return this.prisma.message.update({
       where: { id: messageId },
       data: { isRead: true, readAt: new Date() },
-      include: { senderAdmin: true, sender: true, event: true },
+      include: { senderUser: true, event: true },
     });
   }
 
@@ -374,12 +352,9 @@ export class MessageService {
     if (eventId) where.eventId = eventId;
 
     if (identity.senderType === 'VOLUNTEER') {
-      where.OR = [
-        { volunteerId: identity.senderId },
-        { eventVolunteerId: identity.senderId },
-      ];
+      where.eventVolunteerId = identity.senderId;
     } else {
-      where.recipientType = RecipientType.ADMIN;
+      where.recipientType = RecipientType.USER;
       where.recipientId = identity.senderId;
     }
 
@@ -398,10 +373,8 @@ export class MessageService {
     return this.prisma.message.findUnique({
       where: { id: messageId },
       include: {
-        senderAdmin: true,
-        senderVol: { include: { volunteerProfile: true } },
-        sender: true,
-        volunteer: true,
+        senderUser: true,
+        senderVol: { include: { user: true } },
         event: true,
         conversation: true,
       },
@@ -414,10 +387,10 @@ export class MessageService {
   async getSentMessages(senderId: string, limit = 50, offset = 0) {
     return this.prisma.message.findMany({
       where: {
-        OR: [{ senderId }, { senderAdminId: senderId }],
+        senderUserId: senderId,
         deletedBySender: false,
       },
-      include: { volunteer: true, event: true },
+      include: { event: true },
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,
@@ -439,16 +412,15 @@ export class MessageService {
 
     // Determine if the user is the sender or recipient
     const isSender =
-      (identity.senderType === 'ADMIN' &&
-        (message.senderAdminId === identity.senderId || message.senderId === identity.senderId)) ||
+      (identity.senderType === 'USER' &&
+        message.senderUserId === identity.senderId) ||
       (identity.senderType === 'VOLUNTEER' && message.senderVolId === identity.senderId);
 
     const isRecipient =
       (identity.senderType === 'VOLUNTEER' &&
-        (message.volunteerId === identity.senderId ||
-          message.eventVolunteerId === identity.senderId)) ||
-      (identity.senderType === 'ADMIN' &&
-        message.recipientType === RecipientType.ADMIN &&
+        message.eventVolunteerId === identity.senderId) ||
+      (identity.senderType === 'USER' &&
+        message.recipientType === RecipientType.USER &&
         message.recipientId === identity.senderId);
 
     if (!isSender && !isRecipient) {
@@ -630,8 +602,8 @@ export class MessageService {
           take: 1,
           orderBy: { createdAt: 'desc' },
           include: {
-            senderAdmin: true,
-            senderVol: { include: { volunteerProfile: true } },
+            senderUser: true,
+            senderVol: { include: { user: true } },
           },
         },
       },
@@ -666,8 +638,8 @@ export class MessageService {
     return this.prisma.message.findMany({
       where: { conversationId },
       include: {
-        senderAdmin: true,
-        senderVol: { include: { volunteerProfile: true } },
+        senderUser: true,
+        senderVol: { include: { user: true } },
       },
       orderBy: { createdAt: 'asc' },
       take: limit,
@@ -746,38 +718,29 @@ export class MessageService {
 
     const { volunteerIds, subject, body, eventId } = result.data;
 
-    // Verify all volunteers exist
-    const volunteers = await this.prisma.volunteer.findMany({
-      where: { id: { in: volunteerIds } },
-      select: { id: true, volunteerId: true, eventId: true },
+    // Verify all eventVolunteers exist
+    const eventVolunteers2 = await this.prisma.eventVolunteer.findMany({
+      where: { id: { in: volunteerIds }, eventId },
+      select: { id: true },
     });
 
-    if (volunteers.length === 0) throw new ValidationError('No valid volunteers found');
-
-    // Build EventVolunteer lookup
-    const evs = await this.prisma.eventVolunteer.findMany({
-      where: { eventId, volunteerId: { in: volunteers.map((v) => v.volunteerId) } },
-      select: { id: true, volunteerId: true },
-    });
-    const evMap = new Map(evs.map((ev) => [ev.volunteerId, ev.id]));
+    if (eventVolunteers2.length === 0) throw new ValidationError('No valid volunteers found');
 
     const messages = await this.prisma.$transaction(
-      volunteers.map((volunteer) =>
+      eventVolunteers2.map((ev) =>
         this.prisma.message.create({
           data: {
             subject,
             body,
             recipientType: RecipientType.VOLUNTEER,
-            recipientId: volunteer.id,
+            recipientId: ev.id,
             eventId,
             senderType: sender.senderType,
-            senderAdminId: sender.senderType === 'ADMIN' ? sender.senderId : null,
+            senderUserId: sender.senderType === 'USER' ? sender.senderId : null,
             senderVolId: sender.senderType === 'VOLUNTEER' ? sender.senderId : null,
-            senderId: sender.senderType === 'ADMIN' ? sender.senderId : null,
-            volunteerId: volunteer.id,
-            eventVolunteerId: evMap.get(volunteer.volunteerId) ?? null,
+            eventVolunteerId: ev.id,
           },
-          include: { senderAdmin: true, volunteer: true, event: true },
+          include: { senderUser: true, event: true },
         })
       )
     );
@@ -806,16 +769,14 @@ export class MessageService {
       identity.senderType === 'VOLUNTEER'
         ? {
             OR: [
-              { volunteerId: identity.senderId },
               { eventVolunteerId: identity.senderId },
               { senderVolId: identity.senderId },
             ],
           }
         : {
             OR: [
-              { senderAdminId: identity.senderId },
-              { senderId: identity.senderId },
-              { recipientType: RecipientType.ADMIN, recipientId: identity.senderId },
+              { senderUserId: identity.senderId },
+              { recipientType: RecipientType.USER, recipientId: identity.senderId },
             ],
           };
 
@@ -835,9 +796,8 @@ export class MessageService {
         ],
       },
       include: {
-        senderAdmin: true,
-        senderVol: { include: { volunteerProfile: true } },
-        sender: true,
+        senderUser: true,
+        senderVol: { include: { user: true } },
         event: true,
         conversation: true,
       },
@@ -870,8 +830,8 @@ export class MessageService {
     });
 
     const recipientType =
-      otherParticipant?.participantType === 'ADMIN'
-        ? RecipientType.ADMIN
+      otherParticipant?.participantType === 'USER'
+        ? RecipientType.USER
         : RecipientType.VOLUNTEER;
 
     const message = await this.prisma.message.create({
@@ -882,9 +842,8 @@ export class MessageService {
         eventId,
         conversationId,
         senderType: sender.senderType,
-        senderAdminId: sender.senderType === 'ADMIN' ? sender.senderId : null,
+        senderUserId: sender.senderType === 'USER' ? sender.senderId : null,
         senderVolId: sender.senderType === 'VOLUNTEER' ? sender.senderId : null,
-        senderId: sender.senderType === 'ADMIN' ? sender.senderId : null,
         // Set volunteer FK if recipient is a volunteer (for legacy compat)
         eventVolunteerId:
           recipientType === RecipientType.VOLUNTEER
@@ -892,8 +851,8 @@ export class MessageService {
             : null,
       },
       include: {
-        senderAdmin: true,
-        senderVol: { include: { volunteerProfile: true } },
+        senderUser: true,
+        senderVol: { include: { user: true } },
       },
     });
 
@@ -919,14 +878,14 @@ export class MessageService {
   /**
    * Get volunteer's eventId for access control
    */
-  async getVolunteerEventId(volunteerId: string): Promise<string> {
-    const volunteer = await this.prisma.volunteer.findUnique({
-      where: { id: volunteerId },
+  async getVolunteerEventId(eventVolunteerId: string): Promise<string> {
+    const ev = await this.prisma.eventVolunteer.findUnique({
+      where: { id: eventVolunteerId },
       select: { eventId: true },
     });
 
-    if (!volunteer) throw new NotFoundError('Volunteer');
-    return volunteer.eventId;
+    if (!ev) throw new NotFoundError('EventVolunteer');
+    return ev.eventId;
   }
 
   /**

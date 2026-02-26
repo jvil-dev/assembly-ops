@@ -1,30 +1,9 @@
 /**
  * GraphQL Core Types
  *
- * This file defines all the data types that can be queried or returned by the API.
- * These map to your Prisma models but are specifically for GraphQL.
- *
- * Why separate from Prisma?
- *   - GraphQL types define what the CLIENT sees
- *   - Prisma models define what the DATABASE stores
- *   - You might hide fields (like passwordHash) or add computed fields (like fullName)
- *
- * Enums:
- *   - EventType: CIRCUIT_ASSEMBLY, REGIONAL_CONVENTION, SPECIAL_CONVENTION
- *   - EventRole: APP_ADMIN, DEPARTMENT_OVERSEER
- *   - DepartmentType: The 12 convention departments (ATTENDANT, PARKING, etc.)
- *   - AppointmentStatus: PUBLISHER, MINISTERIAL_SERVANT, ELDER
- *   - RecipientType: For messages - VOLUNTEER, DEPARTMENT, or EVENT
- *
- * Core Types:
- *   - Admin: Overseers who manage events
- *   - Event: The assembly/convention being managed
- *   - Department: One of 12 work areas (Attendant, Parking, etc.)
- *   - Volunteer: People assigned to work at posts
- *   - Post: Physical locations/positions within a department
- *   - Session: Time blocks during the event
- *   - ScheduleAssignment: Links a Volunteer to a Post for a Session
- *   - CheckIn: Records when a volunteer checked in/out
+ * Defines all data types that can be queried or returned by the API.
+ * Admin model is replaced by User. VolunteerProfile is replaced by User.
+ * All overseers and volunteers share the same User type.
  *
  * Used by: ./index.ts (combined into full schema)
  */
@@ -65,11 +44,11 @@ const types = `#graphql
     VOLUNTEER
     DEPARTMENT
     EVENT
-    ADMIN
+    USER
   }
 
   enum MessageSenderType {
-    ADMIN
+    USER
     VOLUNTEER
   }
 
@@ -77,6 +56,12 @@ const types = `#graphql
     CHECKED_IN
     CHECKED_OUT
     NO_SHOW
+  }
+
+  enum JoinRequestStatus {
+    PENDING
+    APPROVED
+    DENIED
   }
 
   type EventTemplate {
@@ -97,8 +82,9 @@ const types = `#graphql
     createdAt: DateTime!
   }
 
-  type Admin {
+  type User {
     id: ID!
+    userId: String!
     email: String!
     firstName: String!
     lastName: String!
@@ -107,6 +93,8 @@ const types = `#graphql
     congregation: String
     congregationId: ID
     congregationRef: Congregation
+    appointmentStatus: AppointmentStatus
+    isOverseer: Boolean!
     eventRoles: [EventAdmin!]!
     createdAt: DateTime!
   }
@@ -115,11 +103,11 @@ const types = `#graphql
     id: ID!
     template: EventTemplate!
     joinCode: String!
+    isPublic: Boolean!
     admins: [EventAdmin!]!
     departments: [Department!]!
     sessions: [Session!]!
     roles: [Role!]!
-    volunteers: [Volunteer!]!
     volunteerCount: Int!
     name: String!
     eventType: EventType!
@@ -132,7 +120,7 @@ const types = `#graphql
 
   type EventAdmin {
     id: ID!
-    admin: Admin!
+    user: User!
     event: Event!
     role: EventRole!
     department: Department
@@ -147,7 +135,6 @@ const types = `#graphql
     event: Event!
     overseer: EventAdmin
     posts: [Post!]!
-    volunteers: [Volunteer!]!
     volunteerCount: Int!
     isClaimed: Boolean!
     createdAt: DateTime!
@@ -159,7 +146,6 @@ const types = `#graphql
     description: String
     sortOrder: Int!
     event: Event!
-    volunteers: [Volunteer!]!
     createdAt: DateTime!
   }
 
@@ -210,12 +196,27 @@ const types = `#graphql
 
   type ScheduleAssignment {
     id: ID!
-    volunteer: Volunteer!
+    eventVolunteer: EventVolunteer
+    volunteer: Volunteer
     post: Post!
     session: Session!
     checkIn: CheckIn
     isCheckedIn: Boolean!
+    isCaptain: Boolean!
+    status: AssignmentStatus!
+    respondedAt: DateTime
+    declineReason: String
+    acceptDeadline: DateTime
+    forceAssigned: Boolean!
     createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
+  enum AssignmentStatus {
+    PENDING
+    ACCEPTED
+    DECLINED
+    AUTO_DECLINED
   }
 
   type CheckIn {
@@ -225,7 +226,7 @@ const types = `#graphql
     checkOutTime: DateTime
     notes: String
     assignment: ScheduleAssignment!
-    checkedInBy: Admin
+    checkedInBy: User
     createdAt: DateTime!
   }
 
@@ -240,8 +241,6 @@ const types = `#graphql
     isRead: Boolean!
     readAt: DateTime
     event: Event!
-    sender: Admin
-    volunteer: Volunteer
     conversation: Conversation
     createdAt: DateTime!
   }
@@ -267,10 +266,13 @@ const types = `#graphql
   type AttendanceCount {
     id: ID!
     count: Int!
+    section: String
     notes: String
     session: Session!
+    post: Post
     createdAt: DateTime!
-    submittedBy: Admin!
+    updatedAt: DateTime!
+    submittedBy: User!
   }
 
   type EventNote {
@@ -278,9 +280,20 @@ const types = `#graphql
     title: String
     body: String!
     department: Department!
-    createdBy: Admin!
+    createdBy: User!
     createdAt: DateTime!
     updatedAt: DateTime!
+  }
+
+  type EventJoinRequest {
+    id: ID!
+    eventId: String!
+    user: User!
+    departmentType: DepartmentType
+    status: JoinRequestStatus!
+    note: String
+    createdAt: DateTime!
+    resolvedAt: DateTime
   }
 `;
 

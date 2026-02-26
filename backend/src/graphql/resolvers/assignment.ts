@@ -5,7 +5,7 @@
  * Handles the connection between GraphQL queries/mutations and AssignmentService.
  *
  * Authorization:
- *   - Most operations require Admin auth + event access
+ *   - Most operations require Overseer auth + event access
  *   - myAssignments, acceptAssignment, declineAssignment require Volunteer auth
  *   - Captain check-in requires volunteer to be a captain
  *
@@ -13,7 +13,7 @@
  *   - assignment, assignments: Get assignments by ID or event
  *   - volunteerAssignments, sessionAssignments, postAssignments: Filtered queries
  *   - myAssignments: Volunteer's own schedule (with optional status filter)
- *   - pendingAssignments, declinedAssignments: Admin queries for assignment status
+ *   - pendingAssignments, declinedAssignments: Overseer queries for assignment status
  *   - captainGroup: Get volunteers at same post/session as captain
  *   - departmentCoverage, departmentCoverageGaps: Coverage matrix (ACCEPTED only)
  *
@@ -21,7 +21,7 @@
  *   - createAssignment: Create single (PENDING status)
  *   - createAssignments: Bulk create
  *   - acceptAssignment, declineAssignment: Volunteer response to assignment
- *   - forceAssignment: Admin bypasses acceptance (auto-ACCEPTED)
+ *   - forceAssignment: Overseer bypasses acceptance (auto-ACCEPTED)
  *   - setCaptain: Designate assignment as captain
  *   - captainCheckIn: Captain checks in group member
  *   - updateAssignment, deleteAssignment: Modify or remove
@@ -95,7 +95,7 @@ const assignmentResolvers = {
         return context.prisma.scheduleAssignment.findMany({
           where: { postId: { in: posts.map((p) => p.id) } },
           include: {
-            volunteer: true,
+            eventVolunteer: true,
             post: { include: { department: true } },
             session: true,
             checkIn: true,
@@ -158,13 +158,13 @@ const assignmentResolvers = {
       // Get captain assignment
       const captainAssignment = await context.prisma.scheduleAssignment.findFirst({
         where: {
-          volunteerId: context.volunteer.id,
+          eventVolunteerId: context.volunteer.id,
           postId,
           sessionId,
           isCaptain: true,
         },
         include: {
-          volunteer: true,
+          eventVolunteer: { include: { user: true } },
           post: { include: { department: true } },
           session: true,
           checkIn: true,
@@ -383,15 +383,30 @@ const assignmentResolvers = {
   },
 
   ScheduleAssignment: {
+    // Map eventVolunteer → volunteer for backward-compatible GraphQL Volunteer type
     volunteer: async (
-      parent: ScheduleAssignment & { volunteer?: unknown },
+      parent: ScheduleAssignment & { eventVolunteer?: unknown },
       _args: unknown,
       context: Context
     ) => {
-      if (parent.volunteer) return parent.volunteer;
-      if (!parent.volunteerId) return null;
-      return context.prisma.volunteer.findUnique({
-        where: { id: parent.volunteerId },
+      if (parent.eventVolunteer) return parent.eventVolunteer;
+      if (!parent.eventVolunteerId) return null;
+      return context.prisma.eventVolunteer.findUnique({
+        where: { id: parent.eventVolunteerId },
+        include: { user: true },
+      });
+    },
+
+    eventVolunteer: async (
+      parent: ScheduleAssignment & { eventVolunteer?: unknown },
+      _args: unknown,
+      context: Context
+    ) => {
+      if (parent.eventVolunteer) return parent.eventVolunteer;
+      if (!parent.eventVolunteerId) return null;
+      return context.prisma.eventVolunteer.findUnique({
+        where: { id: parent.eventVolunteerId },
+        include: { user: true },
       });
     },
 

@@ -40,13 +40,14 @@ const REFRESH_TOKEN_EXPIRY = '7d';
 
 export interface AccessTokenPayload extends JwtPayload {
   sub: string;
-  type: 'admin' | 'volunteer' | 'eventVolunteer';
+  type: 'user' | 'eventVolunteer';
   email?: string;
+  isOverseer?: boolean;
 }
 
 export interface RefreshTokenPayload extends JwtPayload {
   sub: string;
-  type: 'admin' | 'volunteer' | 'eventVolunteer';
+  type: 'user' | 'eventVolunteer';
 }
 
 export interface TokenPair {
@@ -57,8 +58,9 @@ export interface TokenPair {
 
 export function generateTokens(payload: {
   sub: string;
-  type: 'admin' | 'volunteer' | 'eventVolunteer';
+  type: 'user' | 'eventVolunteer';
   email?: string;
+  isOverseer?: boolean;
 }): TokenPair {
   const accessTokenOptions: SignOptions = {
     expiresIn: ACCESS_TOKEN_EXPIRY,
@@ -69,7 +71,7 @@ export function generateTokens(payload: {
   };
 
   const accessToken = jwt.sign(
-    { sub: payload.sub, type: payload.type, email: payload.email },
+    { sub: payload.sub, type: payload.type, email: payload.email, isOverseer: payload.isOverseer },
     JWT_SECRET,
     accessTokenOptions
   );

@@ -36,30 +36,30 @@ export class OAuthService {
           providerId: userInfo.providerId,
         },
       },
-      include: { admin: true },
+      include: { user: true },
     });
 
     if (connection) {
       // Existing user
-      const tokens = await this.issueTokens(connection.admin);
-      return { admin: connection.admin, tokens, isNewUser: false, email: userInfo.email };
+      const tokens = await this.issueTokens(connection.user);
+      return { user: connection.user, tokens, isNewUser: false, email: userInfo.email };
     }
 
-    // Check if email matches existing admin
-    const existingAdmin = await this.prisma.admin.findUnique({ where: { email: userInfo.email } });
+    // Check if email matches existing user
+    const existingUser = await this.prisma.user.findUnique({ where: { email: userInfo.email } });
 
-    if (existingAdmin) {
+    if (existingUser) {
       // Autolink OAuth to existing account
       await this.prisma.oAuthConnection.create({
         data: {
           provider,
           providerId: userInfo.providerId,
           encryptedEmail: encryptField(userInfo.email),
-          adminId: existingAdmin.id,
+          userId: existingUser.id,
         },
       });
-      const tokens = await this.issueTokens(existingAdmin);
-      return { admin: existingAdmin, tokens, isNewUser: false, email: userInfo.email };
+      const tokens = await this.issueTokens(existingUser);
+      return { user: existingUser, tokens, isNewUser: false, email: userInfo.email };
     }
 
     // New user - return pending token
@@ -81,17 +81,38 @@ export class OAuthService {
     pendingOAuthToken: string;
     firstName: string;
     lastName: string;
+    isOverseer?: boolean;
   }) {
     const pending = verifyPendingOAuthToken(input.pendingOAuthToken);
     if (!pending) throw new AuthenticationError('Invalid or expired registration token');
 
-    const admin = await this.prisma.$transaction(async (tx) => {
-      const newAdmin = await tx.admin.create({
+    const user = await this.prisma.$transaction(async (tx) => {
+      // Check if a user with this email already exists (e.g. registered via email/password)
+      const existingUser = await tx.user.findUnique({ where: { email: pending.email } });
+
+      if (existingUser) {
+        // Link OAuth connection to existing account
+        await tx.oAuthConnection.create({
+          data: {
+            provider: pending.provider,
+            providerId: pending.providerId,
+            encryptedEmail: encryptField(pending.email),
+            userId: existingUser.id,
+          },
+        });
+        return existingUser;
+      }
+
+      const { generateUserId } = await import('../utils/credentials.js');
+      const newUserId = generateUserId();
+      const newUser = await tx.user.create({
         data: {
+          userId: newUserId,
           email: pending.email,
           passwordHash: null,
           firstName: input.firstName,
           lastName: input.lastName,
+          isOverseer: input.isOverseer ?? false,
         },
       });
       await tx.oAuthConnection.create({
@@ -99,20 +120,20 @@ export class OAuthService {
           provider: pending.provider,
           providerId: pending.providerId,
           encryptedEmail: encryptField(pending.email),
-          adminId: newAdmin.id,
+          userId: newUser.id,
         },
       });
-      return newAdmin;
+      return newUser;
     });
 
-    const tokens = await this.issueTokens(admin);
-    return { admin, tokens };
+    const tokens = await this.issueTokens(user);
+    return { user, tokens };
   }
 
   private async issueTokens(admin: { id: string; email: string }) {
-    await this.tokenService.deleteAllUserTokens(admin.id, 'admin');
-    const tokens = generateTokens({ sub: admin.id, type: 'admin', email: admin.email });
-    await this.tokenService.createRefreshToken(tokens.refreshToken, admin.id, 'admin');
+    await this.tokenService.deleteAllUserTokens(admin.id, 'user');
+    const tokens = generateTokens({ sub: admin.id, type: 'user', email: admin.email });
+    await this.tokenService.createRefreshToken(tokens.refreshToken, admin.id, 'user');
     return tokens;
   }
 }

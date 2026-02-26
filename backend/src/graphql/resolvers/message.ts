@@ -2,11 +2,11 @@
  * Message Resolvers
  *
  * GraphQL resolvers for bi-directional messaging operations.
- * Supports both admin and volunteer senders/recipients.
+ * Supports both overseer and volunteer senders/recipients.
  *
  * Queries:
  *   - message: Get message by ID (any auth)
- *   - sentMessages: Get messages sent by admin
+ *   - sentMessages: Get messages sent by overseer
  *   - myMessages: Get inbox for any user
  *   - unreadMessageCount: Get unread count for any user
  *   - myConversations: Get conversation threads
@@ -15,9 +15,9 @@
  *
  * Mutations:
  *   - sendMessage: Send to individual (any user)
- *   - sendDepartmentMessage: Broadcast to department (admin)
+ *   - sendDepartmentMessage: Broadcast to department (overseer)
  *   - sendBroadcast: Broadcast to event (event overseer)
- *   - sendMultiMessage: Send to multiple volunteers (admin)
+ *   - sendMultiMessage: Send to multiple volunteers (overseer)
  *   - startConversation: Create DM thread
  *   - sendConversationMessage: Reply in thread
  *   - markMessageRead: Mark message as read (any user)
@@ -28,10 +28,10 @@
  *
  * Type resolvers:
  *   - Message.senderName: Computed from senderAdmin or senderVol
- *   - Message.senderId: Computed from senderAdminId or senderVolId
+ *   - Message.senderId: Computed from senderUserId or senderVolId
  *   - Conversation.lastMessage: Most recent message in thread
  *   - Conversation.unreadCount: Unread messages for current user
- *   - ConversationParticipant.displayName: Computed from Admin or EventVolunteer
+ *   - ConversationParticipant.displayName: Computed from User or EventVolunteer
  */
 import { Context } from '../context.js';
 import { MessageService, SenderIdentity } from '../../services/messageService.js';
@@ -55,7 +55,7 @@ import { MessageSenderType } from '@prisma/client';
  */
 function resolveSenderIdentity(context: Context): SenderIdentity {
   if (context.admin) {
-    return { senderType: 'ADMIN' as MessageSenderType, senderId: context.admin.id };
+    return { senderType: 'USER' as MessageSenderType, senderId: context.admin!.id };
   }
   if (context.volunteer) {
     return { senderType: 'VOLUNTEER' as MessageSenderType, senderId: context.volunteer.id };
@@ -74,7 +74,7 @@ const messageResolvers = {
 
       // Check ownership: sender, direct recipient, or broadcast recipient
       const isSender =
-        (msg.senderAdminId && msg.senderAdminId === identity.senderId) ||
+        (msg.senderUserId && msg.senderUserId === identity.senderId) ||
         (msg.senderVolId && msg.senderVolId === identity.senderId);
       const isRecipient = msg.recipientId === identity.senderId;
       const isBroadcast = msg.recipientType === 'EVENT' || msg.recipientType === 'DEPARTMENT';
@@ -93,7 +93,7 @@ const messageResolvers = {
     ) => {
       requireAdmin(context);
       const messageService = new MessageService(context.prisma);
-      return messageService.getSentMessages(context.admin.id, limit ?? 50, offset ?? 0);
+      return messageService.getSentMessages(context.admin!.id, limit ?? 50, offset ?? 0);
     },
 
     myMessages: async (
@@ -178,44 +178,32 @@ const messageResolvers = {
       const excludeAdminIds = new Set<string>();
       const excludeVolunteerIds = new Set<string>();
 
-      if (identity.senderType === 'ADMIN') {
+      if (identity.senderType === 'USER') {
         excludeAdminIds.add(identity.senderId);
       } else if (identity.senderType === 'VOLUNTEER') {
         excludeVolunteerIds.add(identity.senderId);
 
-        // Also check legacy Volunteer table in case senderId is a legacy Volunteer.id
-        const legacyVol = await context.prisma.volunteer.findUnique({
-          where: { id: identity.senderId },
-          select: { volunteerId: true },
-        });
-        if (legacyVol) {
-          const matchingEv = await context.prisma.eventVolunteer.findFirst({
-            where: { eventId, volunteerId: legacyVol.volunteerId },
-            select: { id: true },
-          });
-          if (matchingEv) excludeVolunteerIds.add(matchingEv.id);
-        }
       }
 
       // Fetch admins for this event
       const eventAdmins = await context.prisma.eventAdmin.findMany({
         where: { eventId },
-        include: { admin: { select: { id: true, firstName: true, lastName: true } } },
+        include: { user: { select: { id: true, firstName: true, lastName: true } } },
       });
 
       // Fetch event volunteers
       const eventVolunteers = await context.prisma.eventVolunteer.findMany({
         where: { eventId },
-        include: { volunteerProfile: { select: { id: true, firstName: true, lastName: true } } },
+        include: { user: { select: { id: true, firstName: true, lastName: true } } },
       });
 
       const participants: Array<{ id: string; displayName: string; isAdmin: boolean }> = [];
 
       for (const ea of eventAdmins) {
-        if (excludeAdminIds.has(ea.admin.id)) continue;
+        if (excludeAdminIds.has(ea.user.id)) continue;
         participants.push({
-          id: ea.admin.id,
-          displayName: `${ea.admin.firstName} ${ea.admin.lastName}`,
+          id: ea.user.id,
+          displayName: `${ea.user.firstName} ${ea.user.lastName}`,
           isAdmin: true,
         });
       }
@@ -224,7 +212,7 @@ const messageResolvers = {
         if (excludeVolunteerIds.has(ev.id)) continue;
         participants.push({
           id: ev.id,
-          displayName: `${ev.volunteerProfile.firstName} ${ev.volunteerProfile.lastName}`,
+          displayName: `${ev.user.firstName} ${ev.user.lastName}`,
           isAdmin: false,
         });
       }
@@ -377,11 +365,11 @@ const messageResolvers = {
   Message: {
     senderName: async (parent: Record<string, unknown>, _args: unknown, context: Context) => {
       // Try new sender fields first
-      if (parent.senderAdminId) {
-        const admin = (parent as Record<string, unknown>).senderAdmin as Record<string, string> | null;
+      if (parent.senderUserId) {
+        const admin = (parent as Record<string, unknown>).senderUser as Record<string, string> | null;
         if (admin) return `${admin.firstName} ${admin.lastName}`;
-        const fetched = await context.prisma.admin.findUnique({
-          where: { id: parent.senderAdminId as string },
+        const fetched = await context.prisma.user.findUnique({
+          where: { id: parent.senderUserId as string },
           select: { firstName: true, lastName: true },
         });
         return fetched ? `${fetched.firstName} ${fetched.lastName}` : 'Unknown';
@@ -389,20 +377,20 @@ const messageResolvers = {
       if (parent.senderVolId) {
         const senderVol = parent.senderVol as Record<string, unknown> | null;
         if (senderVol) {
-          const profile = senderVol.volunteerProfile as Record<string, string> | null;
+          const profile = senderVol.user as Record<string, string> | null;
           if (profile) return `${profile.firstName} ${profile.lastName}`;
         }
         const fetched = await context.prisma.eventVolunteer.findUnique({
           where: { id: parent.senderVolId as string },
-          include: { volunteerProfile: true },
+          include: { user: true },
         });
-        return fetched ? `${fetched.volunteerProfile.firstName} ${fetched.volunteerProfile.lastName}` : 'Unknown';
+        return fetched ? `${fetched.user.firstName} ${fetched.user.lastName}` : 'Unknown';
       }
       // Legacy fallback
       if (parent.senderId) {
         const sender = parent.sender as Record<string, string> | null;
         if (sender) return `${sender.firstName} ${sender.lastName}`;
-        const fetched = await context.prisma.admin.findUnique({
+        const fetched = await context.prisma.user.findUnique({
           where: { id: parent.senderId as string },
           select: { firstName: true, lastName: true },
         });
@@ -412,7 +400,7 @@ const messageResolvers = {
     },
 
     senderId: (parent: Record<string, unknown>) => {
-      return parent.senderAdminId || parent.senderVolId || parent.senderId || null;
+      return parent.senderUserId || parent.senderVolId || parent.senderId || null;
     },
 
     conversation: async (parent: Record<string, unknown>, _args: unknown, context: Context) => {
@@ -434,8 +422,8 @@ const messageResolvers = {
         where: { conversationId: parent.id as string },
         orderBy: { createdAt: 'desc' },
         include: {
-          senderAdmin: true,
-          senderVol: { include: { volunteerProfile: true } },
+          senderUser: true,
+          senderVol: { include: { user: true } },
         },
       });
     },
@@ -451,7 +439,7 @@ const messageResolvers = {
       });
       if (!participant) return 0;
 
-      const senderField = identity.senderType === 'ADMIN' ? 'senderAdminId' : 'senderVolId';
+      const senderField = identity.senderType === 'USER' ? 'senderUserId' : 'senderVolId';
       return context.prisma.message.count({
         where: {
           conversationId: parent.id as string,
@@ -474,8 +462,8 @@ const messageResolvers = {
       const type = parent.participantType as string;
       const id = parent.participantId as string;
 
-      if (type === 'ADMIN') {
-        const admin = await context.prisma.admin.findUnique({
+      if (type === 'USER') {
+        const admin = await context.prisma.user.findUnique({
           where: { id },
           select: { firstName: true, lastName: true },
         });
@@ -484,9 +472,9 @@ const messageResolvers = {
 
       const ev = await context.prisma.eventVolunteer.findUnique({
         where: { id },
-        include: { volunteerProfile: true },
+        include: { user: true },
       });
-      return ev ? `${ev.volunteerProfile.firstName} ${ev.volunteerProfile.lastName}` : 'Unknown';
+      return ev ? `${ev.user.firstName} ${ev.user.lastName}` : 'Unknown';
     },
   },
 };

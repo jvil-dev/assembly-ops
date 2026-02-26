@@ -5,8 +5,8 @@
  * lost person alerts, and meetings.
  *
  * Authorization:
- *   - Meeting management: Admin auth + event access
- *   - Safety incidents/lost persons: Volunteer (report) or Admin (resolve)
+ *   - Meeting management: Overseer auth + event access
+ *   - Safety incidents/lost persons: Volunteer (report) or Overseer (resolve)
  *
  * Query Resolvers:
  *   - safetyIncidents(eventId, resolved?): Safety incidents for an event
@@ -16,9 +16,9 @@
  *
  * Mutation Resolvers:
  *   - reportSafetyIncident: Volunteer reports incident
- *   - resolveSafetyIncident: Admin resolves incident
+ *   - resolveSafetyIncident: Overseer resolves incident
  *   - createLostPersonAlert: Volunteer reports lost person
- *   - resolveLostPersonAlert: Admin resolves alert
+ *   - resolveLostPersonAlert: Overseer resolves alert
  *   - createAttendantMeeting: Create a meeting
  *   - updateAttendantMeetingNotes: Update meeting notes
  *   - deleteAttendantMeeting: Remove a meeting
@@ -46,36 +46,14 @@ import { AuthorizationError } from '../../utils/errors.js';
  */
 async function resolveAttendantVolunteer(
   context: Context,
-  eventId: string
+  _eventId: string
 ): Promise<{ volunteerId: string; eventVolunteerId: string }> {
-  // Try as EventVolunteer first (new auth — context.volunteer.id = EventVolunteer.id)
-  let eventVolunteer = await context.prisma.eventVolunteer.findUnique({
+  const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
     where: { id: context.volunteer!.id },
     include: { department: true },
   });
 
-  if (!eventVolunteer) {
-    // Fallback: old Volunteer auth — bridge via shared volunteerId
-    const volunteer = await context.prisma.volunteer.findUnique({
-      where: { id: context.volunteer!.id },
-      include: { department: true },
-    });
-
-    if (!volunteer || volunteer.department?.departmentType !== 'ATTENDANT') {
-      throw new AuthorizationError('Only attendant volunteers can access this feature');
-    }
-
-    eventVolunteer = await context.prisma.eventVolunteer.findFirst({
-      where: { volunteerId: volunteer.volunteerId, eventId },
-      include: { department: true },
-    });
-
-    if (!eventVolunteer) {
-      throw new AuthorizationError('Volunteer not found for this event');
-    }
-  }
-
-  if (eventVolunteer.department?.departmentType !== 'ATTENDANT') {
+  if (!eventVolunteer || eventVolunteer.department?.departmentType !== 'ATTENDANT') {
     throw new AuthorizationError('Only attendant volunteers can access this feature');
   }
 
@@ -169,7 +147,7 @@ const attendantResolvers = {
       const eventId = await attendantService.getIncidentEventId(id);
       await requireEventAccess(context, eventId);
 
-      return attendantService.resolveSafetyIncident(id, context.admin.id, resolutionNotes);
+      return attendantService.resolveSafetyIncident(id, context.admin!.id, resolutionNotes);
     },
 
     createLostPersonAlert: async (
@@ -196,7 +174,7 @@ const attendantResolvers = {
       const eventId = await attendantService.getAlertEventId(id);
       await requireEventAccess(context, eventId);
 
-      return attendantService.resolveLostPersonAlert(id, context.admin.id, resolutionNotes);
+      return attendantService.resolveLostPersonAlert(id, context.admin!.id, resolutionNotes);
     },
 
     createAttendantMeeting: async (
@@ -208,7 +186,7 @@ const attendantResolvers = {
       await requireEventAccess(context, input.eventId);
 
       const attendantService = new AttendantService(context.prisma);
-      return attendantService.createMeeting(context.admin.id, input);
+      return attendantService.createMeeting(context.admin!.id, input);
     },
 
     updateAttendantMeetingNotes: async (

@@ -6,12 +6,10 @@
  * Schemas:
  *   - createVolunteerSchema: Single volunteer creation
  *   - createVolunteersSchema: Bulk volunteer creation (array of volunteers)
- *   - loginVolunteerSchema: Volunteer login (volunteerId + token)
  *
  * Transformations:
  *   - Names: trimmed
  *   - Email: lowercase + trimmed
- *   - volunteerId/token: UPPERCASE + trimmed (for case-insensitive matching)
  *
  * Optional fields:
  *   - email, phone, notes: Can be null or omitted (.nullish())
@@ -62,17 +60,6 @@ export const createVolunteersSchema = z.object({
   volunteers: z.array(createVolunteerSchema).min(1, 'At least one volunteer required'),
 });
 
-export const loginVolunteerSchema = z.object({
-  volunteerId: z
-    .string()
-    .min(1, 'Volunteer ID is required')
-    .transform((v: string) => v.toUpperCase().trim()),
-  token: z
-    .string()
-    .min(1, 'Token is required')
-    .transform((v: string) => v.trim()),
-});
-
 export const updateMyProfileSchema = z.object({
   phone: z
     .string()
@@ -87,5 +74,4 @@ export const updateMyProfileSchema = z.object({
 
 export type CreateVolunteerInput = z.infer<typeof createVolunteerSchema>;
 export type CreateVolunteersInput = z.infer<typeof createVolunteersSchema>;
-export type LoginVolunteerInput = z.infer<typeof loginVolunteerSchema>;
 export type UpdateMyProfileInput = z.infer<typeof updateMyProfileSchema>;
