@@ -55,7 +55,7 @@ struct EventEntryView: View {
 
     private func setupContext() async {
         if membership.membershipType == .overseer {
-            await OverseerSessionState.shared.loadForEvent(membership)
+            OverseerSessionState.shared.loadForEvent(membership)
         } else {
             // Set volunteer context for HomeViewModel and other volunteer views
             appState.currentEventId = membership.eventId

@@ -37,7 +37,7 @@ enum DepartmentColor {
         case "COMMITTEE":
             return Color("Department: Committee")
         case "FIRST_AID", "FIRSTAID":
-            return Color("Department: First Aid")
+            return Color("Department: FirstAid")
             
         // Assigned colors
         case "BAPTISM":
