@@ -1,31 +1,7 @@
 /**
  * GraphQL Volunteer Schema
  *
- * Defines volunteer management queries and mutations.
- *
- * Types:
- *   - CreatedVolunteer: Returned when creating a volunteer (includes login credentials)
- *   - VolunteerAuthPayload: Returned when volunteer logs in
- *   - VolunteerCredentials: Just the volunteerId + token (for regeneration)
- *
- * Queries:
- *   - volunteer: Get a single volunteer by ID
- *   - volunteers: Get all volunteers for an event, optionally filtered by department
- *   - myVolunteerProfile: Get the logged-in volunteer's own profile
- *
- * Mutations:
- *   - createVolunteer: Add one volunteer to an event (returns login credentials)
- *   - createVolunteers: Bulk add multiple volunteers
- *   - updateVolunteer: Update volunteer details
- *   - deleteVolunteer: Remove a volunteer
- *   - regenerateVolunteerCredentials: Generate new login credentials
- *   - loginVolunteer: Volunteer logs in with volunteerId + token
- *
- * Volunteer Auth Flow:
- *   1. Overseer creates volunteer → gets volunteerId + token
- *   2. Volunteer receives credentials (printed card, SMS, etc.)
- *   3. Volunteer logs in with credentials → gets JWT
- *   4. Volunteer can view assignments and check in
+ * Volunteer management and join request operations.
  *
  * Implemented by: ../resolvers/volunteer.ts
  */
@@ -41,13 +17,6 @@ const volunteerTypeDefs = `#graphql
     firstName: String!
     lastName: String!
     congregation: String!
-  }
-
-  type VolunteerAuthPayload {
-    volunteer: Volunteer!
-    accessToken: String!
-    refreshToken: String!
-    expiresIn: Int!
   }
 
   type VolunteerCredentials {
@@ -93,11 +62,6 @@ const volunteerTypeDefs = `#graphql
     email: String
   }
 
-  input LoginVolunteerInput {
-    volunteerId: String!
-    token: String!
-  }
-
   # ============================================
   # QUERIES & MUTATIONS
   # ============================================
@@ -108,6 +72,10 @@ const volunteerTypeDefs = `#graphql
     myVolunteerProfile: Volunteer
     volunteerToken(id: ID!): String!
     roles(eventId: ID!): [Role!]!
+    # Join requests (user's own)
+    myJoinRequests: [EventJoinRequest!]!
+    # Join requests (overseer view)
+    eventJoinRequests(eventId: ID!, status: JoinRequestStatus): [EventJoinRequest!]!
   }
 
   extend type Mutation {
@@ -116,8 +84,12 @@ const volunteerTypeDefs = `#graphql
     updateVolunteer(id: ID!, input: UpdateVolunteerInput!): Volunteer!
     deleteVolunteer(id: ID!): Boolean!
     regenerateVolunteerCredentials(id: ID!): VolunteerCredentials!
-    loginVolunteer(input: LoginVolunteerInput!): VolunteerAuthPayload!
     updateMyProfile(input: UpdateMyProfileInput!): Volunteer!
+    # Join requests
+    requestToJoinEvent(eventId: ID!, departmentType: DepartmentType, note: String): EventJoinRequest!
+    cancelJoinRequest(requestId: ID!): Boolean!
+    approveJoinRequest(requestId: ID!): EventVolunteerCredentials!
+    denyJoinRequest(requestId: ID!, reason: String): EventJoinRequest!
   }
 `;
 
