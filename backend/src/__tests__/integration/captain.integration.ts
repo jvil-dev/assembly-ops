@@ -4,7 +4,7 @@
  * Tests for captain designation and group check-in capabilities.
  *
  * Test Coverage:
- *   - setCaptain: Admin designates assignment as captain
+ *   - setCaptain: Overseer designates assignment as captain
  *   - captainGroup: Returns volunteers at same post/session
  *   - captainCheckIn: Captain can check in group members
  *
@@ -15,6 +15,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
+import { createTestEvent } from '../testHelpers.js';
 import type { Application } from 'express';
 
 describe('Captain Operations', () => {
@@ -57,161 +58,146 @@ describe('Captain Operations', () => {
 
     adminToken = registerRes.body.data.registerUser.accessToken;
 
-    // Setup event, department, post, session
-    const templatesRes = await request(app)
+    // Create a test event directly via Prisma
+    eventId = await createTestEvent();
+
+    // Purchase a department to gain event access
+    const purchaseRes = await request(app)
       .post('/graphql')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ query: `query { eventTemplates(serviceYear: 2026) { id } }` });
+      .send({
+        query: `mutation($input: PurchaseDepartmentInput!) { purchaseDepartment(input: $input) { id } }`,
+        variables: { input: { eventId, departmentType: 'ATTENDANT' } },
+      });
+    departmentId = purchaseRes.body.data.purchaseDepartment.id;
 
-    if (templatesRes.body.data.eventTemplates.length > 0) {
-      const templateId = templatesRes.body.data.eventTemplates[0].id;
+    const postRes = await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        query: `mutation($departmentId: ID!, $input: CreatePostInput!) { createPost(departmentId: $departmentId, input: $input) { id } }`,
+        variables: {
+          departmentId,
+          input: { name: 'Captain Post', capacity: 5 },
+        },
+      });
+    postId = postRes.body.data.createPost.id;
 
-      const activateRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($input: ActivateEventInput!) { activateEvent(input: $input) { id } }`,
-          variables: { input: { templateId } },
-        });
-      eventId = activateRes.body.data.activateEvent.id;
-
-      const claimRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($input: ClaimDepartmentInput!) { claimDepartment(input: $input) { id } }`,
-          variables: { input: { eventId, departmentType: 'ATTENDANT' } },
-        });
-      departmentId = claimRes.body.data.claimDepartment.id;
-
-      const postRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($departmentId: ID!, $input: CreatePostInput!) { createPost(departmentId: $departmentId, input: $input) { id } }`,
-          variables: {
-            departmentId,
-            input: { name: 'Captain Post', capacity: 5 },
+    const sessionRes = await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        query: `mutation($eventId: ID!, $input: CreateSessionInput!) { createSession(eventId: $eventId, input: $input) { id } }`,
+        variables: {
+          eventId,
+          input: {
+            name: 'Captain Session',
+            date: '2026-03-18T00:00:00Z',
+            startTime: '09:00',
+            endTime: '12:00',
           },
-        });
-      postId = postRes.body.data.createPost.id;
+        },
+      });
+    sessionId = sessionRes.body.data.createSession.id;
 
-      const sessionRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($eventId: ID!, $input: CreateSessionInput!) { createSession(eventId: $eventId, input: $input) { id } }`,
-          variables: {
-            eventId,
-            input: {
-              name: 'Captain Session',
-              date: '2026-03-18T00:00:00Z',
-              startTime: '09:00',
-              endTime: '12:00',
-            },
-          },
-        });
-      sessionId = sessionRes.body.data.createSession.id;
+    // Create captain volunteer
+    const captainRes = await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        query: `mutation($eventId: ID!, $input: CreateVolunteerInput!) {
+          createVolunteer(eventId: $eventId, input: $input) {
+            id token volunteerId
+          }
+        }`,
+        variables: {
+          eventId,
+          input: { firstName: 'Captain', lastName: 'Vol', congregation: `Captain Cong ${Date.now()}` },
+        },
+      });
+    captainVolunteerId = captainRes.body.data.createVolunteer.id;
+    const captainLoginId = captainRes.body.data.createVolunteer.volunteerId;
+    const captainLoginToken = captainRes.body.data.createVolunteer.token;
 
-      // Create captain volunteer
-      const captainRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($eventId: ID!, $input: CreateVolunteerInput!) {
-            createVolunteer(eventId: $eventId, input: $input) {
-              id token volunteerId
-            }
-          }`,
-          variables: {
-            eventId,
-            input: { firstName: 'Captain', lastName: 'Vol', congregation: 'Test Cong' },
-          },
-        });
-      captainVolunteerId = captainRes.body.data.createVolunteer.id;
-      const captainLoginId = captainRes.body.data.createVolunteer.volunteerId;
-      const captainLoginToken = captainRes.body.data.createVolunteer.token;
+    // Create member volunteer
+    const memberRes = await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        query: `mutation($eventId: ID!, $input: CreateVolunteerInput!) {
+          createVolunteer(eventId: $eventId, input: $input) {
+            id token volunteerId
+          }
+        }`,
+        variables: {
+          eventId,
+          input: { firstName: 'Member', lastName: 'Vol', congregation: `Captain Cong ${Date.now()}` },
+        },
+      });
+    memberVolunteerId = memberRes.body.data.createVolunteer.id;
+    const memberLoginId = memberRes.body.data.createVolunteer.volunteerId;
+    const memberLoginToken = memberRes.body.data.createVolunteer.token;
 
-      // Create member volunteer
-      const memberRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($eventId: ID!, $input: CreateVolunteerInput!) {
-            createVolunteer(eventId: $eventId, input: $input) {
-              id token volunteerId
-            }
-          }`,
-          variables: {
-            eventId,
-            input: { firstName: 'Member', lastName: 'Vol', congregation: 'Test Cong' },
-          },
-        });
-      memberVolunteerId = memberRes.body.data.createVolunteer.id;
-      const memberLoginId = memberRes.body.data.createVolunteer.volunteerId;
-      const memberLoginToken = memberRes.body.data.createVolunteer.token;
+    // Assign both to department
+    await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        query: `mutation($volunteerId: ID!, $departmentId: ID!) {
+          assignVolunteerToDepartment(volunteerId: $volunteerId, departmentId: $departmentId) { id }
+        }`,
+        variables: { volunteerId: captainVolunteerId, departmentId },
+      });
 
-      // Assign both to department
-      await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($volunteerId: ID!, $departmentId: ID!) {
-            assignVolunteerToDepartment(volunteerId: $volunteerId, departmentId: $departmentId) { id }
-          }`,
-          variables: { volunteerId: captainVolunteerId, departmentId },
-        });
+    await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        query: `mutation($volunteerId: ID!, $departmentId: ID!) {
+          assignVolunteerToDepartment(volunteerId: $volunteerId, departmentId: $departmentId) { id }
+        }`,
+        variables: { volunteerId: memberVolunteerId, departmentId },
+      });
 
-      await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($volunteerId: ID!, $departmentId: ID!) {
-            assignVolunteerToDepartment(volunteerId: $volunteerId, departmentId: $departmentId) { id }
-          }`,
-          variables: { volunteerId: memberVolunteerId, departmentId },
-        });
+    // Login both volunteers
+    const captainLoginRes = await request(app)
+      .post('/graphql')
+      .send({
+        query: `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
+        variables: { input: { volunteerId: captainLoginId, token: captainLoginToken } },
+      });
+    captainToken = captainLoginRes.body.data.loginEventVolunteer.accessToken;
 
-      // Login both volunteers
-      const captainLoginRes = await request(app)
-        .post('/graphql')
-        .send({
-          query: `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
-          variables: { input: { volunteerId: captainLoginId, token: captainLoginToken } },
-        });
-      captainToken = captainLoginRes.body.data.loginEventVolunteer.accessToken;
+    // Member login reserved for future test: verify members can't perform captain operations
+    await request(app)
+      .post('/graphql')
+      .send({
+        query: `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
+        variables: { input: { volunteerId: memberLoginId, token: memberLoginToken } },
+      });
 
-      // Member login reserved for future test: verify members can't perform captain operations
-      await request(app)
-        .post('/graphql')
-        .send({
-          query: `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
-          variables: { input: { volunteerId: memberLoginId, token: memberLoginToken } },
-        });
+    // Create assignments (force-assign to skip acceptance flow for test setup)
+    const captainAssignRes = await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        query: `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { id } }`,
+        variables: {
+          input: { volunteerId: captainVolunteerId, postId, sessionId, isCaptain: true },
+        },
+      });
+    captainAssignmentId = captainAssignRes.body.data.forceAssignment.id;
 
-      // Create assignments (force-assign to skip acceptance flow for test setup)
-      const captainAssignRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { id } }`,
-          variables: {
-            input: { volunteerId: captainVolunteerId, postId, sessionId, isCaptain: true },
-          },
-        });
-      captainAssignmentId = captainAssignRes.body.data.forceAssignment.id;
-
-      const memberAssignRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { id } }`,
-          variables: {
-            input: { volunteerId: memberVolunteerId, postId, sessionId },
-          },
-        });
-      memberAssignmentId = memberAssignRes.body.data.forceAssignment.id;
-    }
+    const memberAssignRes = await request(app)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        query: `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { id } }`,
+        variables: {
+          input: { volunteerId: memberVolunteerId, postId, sessionId },
+        },
+      });
+    memberAssignmentId = memberAssignRes.body.data.forceAssignment.id;
   });
 
   afterAll(async () => {

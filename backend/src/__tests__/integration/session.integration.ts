@@ -6,8 +6,9 @@
  * All departments share the same sessions within an event.
  *
  * Test Setup:
- *   1. Register a new admin (becomes APP_ADMIN)
- *   2. Fetch event templates and activate an event
+ *   1. Register a new overseer user
+ *   2. Create a test event via Prisma
+ *   3. Purchase a department (creates sessions on first purchase)
  *
  * Tests:
  *   - createSession: Create single session with name, date, startTime, endTime
@@ -15,12 +16,11 @@
  *   - sessions: Query sessions by eventId with assignmentCount
  *
  * Authorization:
- *   Session mutations require APP_ADMIN role.
- *
- * TODO: Add updateSession and deleteSession tests
+ *   Session mutations require authenticated overseer with event access.
  */
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
+import { createTestEvent } from '../testHelpers.js';
 import type { Application } from 'express';
 
 let app: Application;
@@ -33,7 +33,7 @@ describe('Session Operations', () => {
     app = await createTestApp();
     const email = `session-test-${Date.now()}@example.com`;
 
-    // Register user (overseer)
+    // Register overseer user
     const registerRes = await request(app)
       .post('/graphql')
       .send({
@@ -61,33 +61,28 @@ describe('Session Operations', () => {
     }
     accessToken = registerRes.body.data.registerUser.accessToken;
 
-    // Get template and activate event
-    const templatesRes = await request(app)
+    // Create a test event directly via Prisma
+    eventId = await createTestEvent();
+
+    // Purchase a department to gain event access (also auto-creates sessions)
+    await request(app)
       .post('/graphql')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
-        query: `query { eventTemplates(serviceYear: 2026) { id } }`,
-      });
-
-    if (templatesRes.body.data.eventTemplates.length > 0) {
-      const templateId = templatesRes.body.data.eventTemplates[0].id;
-
-      const activateRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          query: `
-            mutation Activate($input: ActivateEventInput!) {
-              activateEvent(input: $input) {
-                id
-              }
+        query: `
+          mutation Purchase($input: PurchaseDepartmentInput!) {
+            purchaseDepartment(input: $input) {
+              id
             }
-          `,
-          variables: { input: { templateId } },
-        });
-
-      eventId = activateRes.body.data.activateEvent.id;
-    }
+          }
+        `,
+        variables: {
+          input: {
+            eventId,
+            departmentType: 'ACCOUNTS',
+          },
+        },
+      });
   });
 
   afterAll(async () => {
@@ -130,7 +125,6 @@ describe('Session Operations', () => {
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
       expect(response.body.data.createSession.name).toBe('Saturday Morning');
-      // sessionId = response.body.data.createSession.id;
     });
   });
 

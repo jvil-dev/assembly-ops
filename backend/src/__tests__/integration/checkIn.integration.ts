@@ -6,7 +6,7 @@
  * Test Coverage:
  *   - Volunteer check-in to assignment (requires ACCEPTED status)
  *   - Volunteer check-out from assignment
- *   - Admin check-in on behalf of volunteer (can override status)
+ *   - Overseer check-in on behalf of volunteer (can override status)
  *   - Mark volunteer as no-show
  *   - Check-in statistics query
  *
@@ -16,6 +16,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
+import { createTestEvent } from '../testHelpers.js';
 import type { Application } from 'express';
 
 let app: Application;
@@ -66,43 +67,20 @@ describe('Check-In Operations', () => {
     }
     adminToken = registerRes.body.data.registerUser.accessToken;
 
-    // Get event template
-    const templatesRes = await authRequest(
-      `query { eventTemplates(serviceYear: 2026) { id } }`,
-      {},
-      adminToken
-    );
+    // Create a test event directly via Prisma
+    eventId = await createTestEvent();
 
-    if (!templatesRes.body.data?.eventTemplates?.length) {
-      console.log('No event templates available');
-      return;
-    }
-
-    const templateId = templatesRes.body.data.eventTemplates[0].id;
-
-    // Activate event
-    const activateRes = await authRequest(
-      `mutation($input: ActivateEventInput!) { activateEvent(input: $input) { id } }`,
-      { input: { templateId } },
-      adminToken
-    );
-    if (activateRes.body.errors) {
-      console.error('Activate failed:', activateRes.body.errors);
-      return;
-    }
-    eventId = activateRes.body.data.activateEvent.id;
-
-    // Claim department
-    const claimRes = await authRequest(
-      `mutation($input: ClaimDepartmentInput!) { claimDepartment(input: $input) { id } }`,
+    // Purchase a department to gain event access
+    const purchaseRes = await authRequest(
+      `mutation($input: PurchaseDepartmentInput!) { purchaseDepartment(input: $input) { id } }`,
       { input: { eventId, departmentType: 'ATTENDANT' } },
       adminToken
     );
-    if (claimRes.body.errors) {
-      console.error('Claim failed:', claimRes.body.errors);
+    if (purchaseRes.body.errors) {
+      console.error('Purchase failed:', purchaseRes.body.errors);
       return;
     }
-    departmentId = claimRes.body.data.claimDepartment.id;
+    departmentId = purchaseRes.body.data.purchaseDepartment.id;
 
     // Create post
     const postRes = await authRequest(
@@ -149,7 +127,7 @@ describe('Check-In Operations', () => {
       }`,
       {
         eventId,
-        input: { firstName: 'Test', lastName: 'Volunteer', congregation: 'Test Cong' },
+        input: { firstName: 'Test', lastName: 'Volunteer', congregation: `CheckIn Cong ${Date.now()}` },
       },
       adminToken
     );
@@ -180,7 +158,7 @@ describe('Check-In Operations', () => {
       }`,
       {
         eventId,
-        input: { firstName: 'NoShow', lastName: 'Volunteer', congregation: 'Test Cong' },
+        input: { firstName: 'NoShow', lastName: 'Volunteer', congregation: `CheckIn Cong ${Date.now()}` },
       },
       adminToken
     );
@@ -349,7 +327,7 @@ describe('Check-In Operations', () => {
         }`,
         {
           eventId,
-          input: { firstName: 'NoShow', lastName: 'Test', congregation: 'Test Cong' },
+          input: { firstName: 'NoShow', lastName: 'Test', congregation: `CheckIn Cong ${Date.now()}` },
         },
         adminToken
       );

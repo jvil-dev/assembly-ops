@@ -19,6 +19,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
+import { createTestEvent } from '../testHelpers.js';
 import type { Application } from 'express';
 
 describe('Attendance Count Operations', () => {
@@ -55,24 +56,18 @@ describe('Attendance Count Operations', () => {
     adminToken = registerRes.body.data.registerUser.accessToken;
 
     // Setup event and session
-    const templatesRes = await request(app)
+    eventId = await createTestEvent();
+
+    // Purchase department to gain event access
+    await request(app)
       .post('/graphql')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ query: `query { eventTemplates(serviceYear: 2026) { id } }` });
+      .send({
+        query: `mutation($input: PurchaseDepartmentInput!) { purchaseDepartment(input: $input) { id } }`,
+        variables: { input: { eventId, departmentType: 'ATTENDANT' } },
+      });
 
-    if (templatesRes.body.data.eventTemplates.length > 0) {
-      const templateId = templatesRes.body.data.eventTemplates[0].id;
-
-      const activateRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($input: ActivateEventInput!) { activateEvent(input: $input) { id } }`,
-          variables: { input: { templateId } },
-        });
-      eventId = activateRes.body.data.activateEvent.id;
-
-      const sessionRes = await request(app)
+    const sessionRes = await request(app)
         .post('/graphql')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -87,8 +82,7 @@ describe('Attendance Count Operations', () => {
             },
           },
         });
-      sessionId = sessionRes.body.data.createSession.id;
-    }
+    sessionId = sessionRes.body.data.createSession.id;
   });
 
   afterAll(async () => {
