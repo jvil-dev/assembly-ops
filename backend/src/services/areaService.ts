@@ -272,8 +272,8 @@ export class AreaService {
     if (!session) throw new NotFoundError('Session');
 
     // Try to find EventVolunteer directly first, then fall back to legacy Volunteer lookup
-    let resolvedEventVolunteerId = eventVolunteerId;
-    let volunteer = await this.prisma.eventVolunteer.findUnique({
+    const resolvedEventVolunteerId = eventVolunteerId;
+    const volunteer = await this.prisma.eventVolunteer.findUnique({
       where: { id: eventVolunteerId },
     });
 
