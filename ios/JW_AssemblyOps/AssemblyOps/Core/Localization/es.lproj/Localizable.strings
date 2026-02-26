@@ -103,6 +103,7 @@
 "tab.schedule" = "Horario";
 "tab.messages" = "Mensajes";
 "tab.profile" = "Perfil";
+"tab.findEvent" = "Buscar Evento";
 "tab.dashboard" = "Panel";
 "tab.volunteers" = "Voluntarios";
 "tab.assignments" = "Asignaciones";
@@ -677,3 +678,46 @@
 "language.select" = "Seleccionar Idioma";
 "language.english" = "English";
 "language.spanish" = "Español";
+
+// MARK: - Sprint 6.11 — Unified Auth & Volunteer Discovery
+"auth.signin" = "Iniciar Sesión";
+"auth.createAccount" = "Crear Cuenta";
+"auth.useCredentials" = "Usar credenciales impresas";
+"auth.isOverseer.toggle" = "Sirvo como Supervisor de Departamento";
+"auth.isOverseer.explainer" = "Tendrás acceso a herramientas de gestión de eventos";
+"auth.duplicate.email" = "Ya existe una cuenta con este correo.";
+"auth.duplicate.trySignIn" = "Intenta iniciar sesión.";
+
+"volunteer.eventDiscovery.requestToJoin" = "Solicitar Unirse";
+"volunteer.eventDiscovery.inviteOnly" = "Solo por Invitación";
+"volunteer.eventDiscovery.requestSent" = "¡Solicitud enviada!";
+"volunteer.eventDiscovery.pendingStatus.title" = "Solicitud Pendiente";
+"volunteer.eventDiscovery.pendingStatus.subtitle" = "Esperando aprobación del supervisor. Serás notificado una vez añadido.";
+"volunteer.joinRequest.pending" = "Solicitudes";
+
+"overseer.joinRequests.approve" = "Aprobar";
+"overseer.joinRequests.deny" = "Rechazar";
+
+"event.regional.inviteOnly" = "Las convenciones regionales son solo por invitación";
+
+"profile.overseerMode" = "Modo Supervisor";
+
+// MARK: - Sprint 6.11 Part A — Events Hub
+"eventsHub.title" = "Mis Eventos";
+"eventsHub.section.active" = "Activos";
+"eventsHub.section.upcoming" = "Próximos";
+"eventsHub.section.past" = "Pasados";
+"eventsHub.empty.title" = "Sin Eventos Aún";
+"eventsHub.empty.subtitle" = "Toca + para descubrir y unirte a una asamblea.";
+"eventsHub.browse" = "Buscar Eventos";
+"eventsHub.role.eventOverseer" = "Superintendente de Evento";
+"eventsHub.role.deptOverseer" = "Superintendente de %@";
+"eventsHub.role.volunteer" = "Voluntario";
+"eventsHub.status.active" = "Activo Ahora";
+"eventsHub.loading" = "Cargando evento...";
+
+// Settings
+"settings.title" = "Configuración";
+"settings.editProfile" = "Editar Perfil";
+"settings.appearance" = "Apariencia";
+"settings.logout.confirm" = "¿Estás seguro de que deseas cerrar sesión?";
