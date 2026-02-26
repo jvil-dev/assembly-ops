@@ -32,13 +32,13 @@ describe('Attendance Count Operations', () => {
     app = await createTestApp();
     const email = `attendance-test-${Date.now()}@example.com`;
 
-    // Register admin
+    // Register user (overseer)
     const registerRes = await request(app)
       .post('/graphql')
       .send({
         query: `
-          mutation Register($input: RegisterAdminInput!) {
-            registerAdmin(input: $input) { accessToken }
+          mutation Register($input: RegisterUserInput!) {
+            registerUser(input: $input) { accessToken }
           }
         `,
         variables: {
@@ -47,11 +47,12 @@ describe('Attendance Count Operations', () => {
             password: 'TestPassword123',
             firstName: 'Attendance',
             lastName: 'Tester',
+            isOverseer: true,
           },
         },
       });
 
-    adminToken = registerRes.body.data.registerAdmin.accessToken;
+    adminToken = registerRes.body.data.registerUser.accessToken;
 
     // Setup event and session
     const templatesRes = await request(app)

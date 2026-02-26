@@ -16,32 +16,33 @@ const authGraphqlRequest = (query: string, variables: object, token: string) =>
     .set('Authorization', `Bearer ${token}`);
 
 describe('Auth GraphQL', () => {
-  let adminToken: string;
-  let adminEmail: string;
+  let userToken: string;
+  let userEmail: string;
   let testEventId: string;
   let testVolunteerId: string;
   let testVolunteerToken: string;
 
   beforeAll(async () => {
     app = await createTestApp();
-    adminEmail = `test-${Date.now()}@test.com`;
+    userEmail = `test-${Date.now()}@test.com`;
 
-    // Register admin
+    // Register user
     const registerRes = await graphqlRequest(
       `
-        mutation RegisterAdmin($input: RegisterAdminInput!) {
-          registerAdmin(input: $input) {
+        mutation RegisterUser($input: RegisterUserInput!) {
+          registerUser(input: $input) {
             accessToken
-            admin { id }
+            user { id }
           }
         }
       `,
       {
         input: {
-          email: adminEmail,
+          email: userEmail,
           password: 'Test123!',
           firstName: 'Test',
-          lastName: 'Admin',
+          lastName: 'User',
+          isOverseer: true,
         },
       }
     );
@@ -50,10 +51,10 @@ describe('Auth GraphQL', () => {
       console.log('Register errors:', JSON.stringify(registerRes.body.errors, null, 2));
     }
 
-    adminToken = registerRes.body.data?.registerAdmin?.accessToken;
+    userToken = registerRes.body.data?.registerUser?.accessToken;
 
-    if (!adminToken) {
-      console.log('No admin token - registration failed');
+    if (!userToken) {
+      console.log('No user token - registration failed');
       return;
     }
 
@@ -68,7 +69,7 @@ describe('Auth GraphQL', () => {
         }
       `,
       {},
-      adminToken
+      userToken
     );
 
     const templateId = templatesRes.body.data?.eventTemplates?.[0]?.id;
@@ -83,7 +84,7 @@ describe('Auth GraphQL', () => {
           }
         `,
         { input: { templateId } },
-        adminToken
+        userToken
       );
 
       testEventId = eventRes.body.data?.activateEvent?.id;
@@ -95,31 +96,31 @@ describe('Auth GraphQL', () => {
     if (testEventId) {
       await prisma.event.delete({ where: { id: testEventId } }).catch(() => {});
     }
-    // Delete attendance counts submitted by test admins (FK constraint)
-    const testAdmins = await prisma.admin.findMany({
+    // Delete attendance counts submitted by test users (FK constraint)
+    const testUsers = await prisma.user.findMany({
       where: { email: { contains: 'test-' } },
       select: { id: true },
     });
-    if (testAdmins.length > 0) {
+    if (testUsers.length > 0) {
       await prisma.attendanceCount.deleteMany({
-        where: { submittedById: { in: testAdmins.map((a) => a.id) } },
+        where: { submittedById: { in: testUsers.map((u) => u.id) } },
       });
     }
-    await prisma.admin.deleteMany({ where: { email: { contains: 'test-' } } });
+    await prisma.user.deleteMany({ where: { email: { contains: 'test-' } } });
     await closeTestApp();
     await prisma.$disconnect();
   });
 
-  describe('Admin Auth', () => {
-    it('should register a new admin', async () => {
+  describe('User Auth', () => {
+    it('should register a new user', async () => {
       const res = await graphqlRequest(
         `
-          mutation RegisterAdmin($input: RegisterAdminInput!) {
-            registerAdmin(input: $input) {
+          mutation RegisterUser($input: RegisterUserInput!) {
+            registerUser(input: $input) {
               accessToken
               refreshToken
               expiresIn
-              admin { id email firstName }
+              user { id email firstName }
             }
           }
         `,
@@ -128,44 +129,44 @@ describe('Auth GraphQL', () => {
             email: `another-${Date.now()}@test.com`,
             password: 'Test123!',
             firstName: 'Another',
-            lastName: 'Admin',
+            lastName: 'User',
           },
         }
       );
 
       expect(res.body.errors).toBeUndefined();
-      expect(res.body.data.registerAdmin.accessToken).toBeDefined();
-      expect(res.body.data.registerAdmin.admin.firstName).toBe('Another');
+      expect(res.body.data.registerUser.accessToken).toBeDefined();
+      expect(res.body.data.registerUser.user.firstName).toBe('Another');
     });
 
-    it('should login existing admin', async () => {
+    it('should login existing user', async () => {
       const res = await graphqlRequest(
         `
-          mutation LoginAdmin($input: LoginAdminInput!) {
-            loginAdmin(input: $input) {
+          mutation LoginUser($input: LoginUserInput!) {
+            loginUser(input: $input) {
               accessToken
               refreshToken
-              admin { email }
+              user { email }
             }
           }
         `,
         {
           input: {
-            email: adminEmail,
+            email: userEmail,
             password: 'Test123!',
           },
         }
       );
 
       expect(res.body.errors).toBeUndefined();
-      expect(res.body.data.loginAdmin.accessToken).toBeDefined();
+      expect(res.body.data.loginUser.accessToken).toBeDefined();
     });
 
-    it('should reject invalid admin credentials', async () => {
+    it('should reject invalid user credentials', async () => {
       const res = await graphqlRequest(
         `
-          mutation LoginAdmin($input: LoginAdminInput!) {
-            loginAdmin(input: $input) {
+          mutation LoginUser($input: LoginUserInput!) {
+            loginUser(input: $input) {
               accessToken
             }
           }
@@ -184,8 +185,8 @@ describe('Auth GraphQL', () => {
 
   describe('Volunteer Auth', () => {
     beforeAll(async () => {
-      if (!testEventId || !adminToken) {
-        console.log('Skipping volunteer tests - no event or admin token');
+      if (!testEventId || !userToken) {
+        console.log('Skipping volunteer tests - no event or user token');
         return;
       }
 
@@ -208,7 +209,7 @@ describe('Auth GraphQL', () => {
             congregation: 'Test Congregation',
           },
         },
-        adminToken
+        userToken
       );
 
       if (volunteerRes.body.errors) {
@@ -227,15 +228,13 @@ describe('Auth GraphQL', () => {
 
       const res = await graphqlRequest(
         `
-          mutation LoginVolunteer($input: LoginVolunteerInput!) {
-            loginVolunteer(input: $input) {
+          mutation LoginEventVolunteer($input: LoginEventVolunteerInput!) {
+            loginEventVolunteer(input: $input) {
               accessToken
               refreshToken
               expiresIn
-              volunteer {
+              eventVolunteer {
                 id
-                firstName
-                lastName
               }
             }
           }
@@ -249,15 +248,14 @@ describe('Auth GraphQL', () => {
       );
 
       expect(res.body.errors).toBeUndefined();
-      expect(res.body.data.loginVolunteer.accessToken).toBeDefined();
-      expect(res.body.data.loginVolunteer.volunteer.firstName).toBe('Test');
+      expect(res.body.data.loginEventVolunteer.accessToken).toBeDefined();
     });
 
     it('should reject invalid volunteer credentials', async () => {
       const res = await graphqlRequest(
         `
-          mutation LoginVolunteer($input: LoginVolunteerInput!) {
-            loginVolunteer(input: $input) {
+          mutation LoginEventVolunteer($input: LoginEventVolunteerInput!) {
+            loginEventVolunteer(input: $input) {
               accessToken
             }
           }

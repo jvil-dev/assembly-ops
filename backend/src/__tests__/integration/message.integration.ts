@@ -29,13 +29,13 @@ describe('Message Operations', () => {
     app = await createTestApp();
     const email = `message-test-${Date.now()}@example.com`;
 
-    // Register admin
+    // Register user (overseer)
     const registerRes = await request(app)
       .post('/graphql')
       .send({
         query: `
-          mutation Register($input: RegisterAdminInput!) {
-            registerAdmin(input: $input) { accessToken }
+          mutation Register($input: RegisterUserInput!) {
+            registerUser(input: $input) { accessToken }
           }
         `,
         variables: {
@@ -44,17 +44,18 @@ describe('Message Operations', () => {
             password: 'TestPassword123',
             firstName: 'Message',
             lastName: 'Tester',
+            isOverseer: true,
           },
         },
       });
 
-    // Validate admin registration response
-    if (!registerRes.body?.data?.registerAdmin?.accessToken) {
+    // Validate user registration response
+    if (!registerRes.body?.data?.registerUser?.accessToken) {
       throw new Error(
-        `Admin registration failed: ${JSON.stringify(registerRes.body.errors || registerRes.body)}`
+        `User registration failed: ${JSON.stringify(registerRes.body.errors || registerRes.body)}`
       );
     }
-    adminToken = registerRes.body.data.registerAdmin.accessToken;
+    adminToken = registerRes.body.data.registerUser.accessToken;
 
     // Setup event, department, volunteer
     const templatesRes = await request(app)
@@ -155,17 +156,17 @@ describe('Message Operations', () => {
     const volunteerLoginRes = await request(app)
       .post('/graphql')
       .send({
-        query: `mutation($input: LoginVolunteerInput!) { loginVolunteer(input: $input) { accessToken } }`,
+        query: `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
         variables: { input: { volunteerId: volunteerLoginId, token: volunteerLoginToken } },
       });
 
     // Validate volunteer login
-    if (!volunteerLoginRes.body?.data?.loginVolunteer?.accessToken) {
+    if (!volunteerLoginRes.body?.data?.loginEventVolunteer?.accessToken) {
       throw new Error(
         `Volunteer login failed: ${JSON.stringify(volunteerLoginRes.body.errors || volunteerLoginRes.body)}`
       );
     }
-    volunteerToken = volunteerLoginRes.body.data.loginVolunteer.accessToken;
+    volunteerToken = volunteerLoginRes.body.data.loginEventVolunteer.accessToken;
   });
 
   afterAll(async () => {

@@ -39,8 +39,8 @@ describe('Event Operations', () => {
       .post('/graphql')
       .send({
         query: `
-          mutation Register($input: RegisterAdminInput!) {
-            registerAdmin(input: $input) {
+          mutation Register($input: RegisterUserInput!) {
+            registerUser(input: $input) {
               accessToken
             }
           }
@@ -51,6 +51,7 @@ describe('Event Operations', () => {
             password: 'TestPassword123!',
             firstName: 'Event',
             lastName: 'Tester',
+            isOverseer: true,
           },
         },
       });
@@ -59,7 +60,7 @@ describe('Event Operations', () => {
       console.error('Register failed:', registerRes.body.errors);
       return;
     }
-    accessToken = registerRes.body.data.registerAdmin.accessToken;
+    accessToken = registerRes.body.data.registerUser.accessToken;
   });
 
   afterAll(async () => {
@@ -116,7 +117,7 @@ describe('Event Operations', () => {
                 eventType
                 admins {
                   role
-                  admin { email }
+                  user { email }
                 }
               }
             }
@@ -196,10 +197,10 @@ describe('Event Operations', () => {
         .post('/graphql')
         .send({
           query: `
-            mutation Register($input: RegisterAdminInput!) {
-              registerAdmin(input: $input) {
+            mutation Register($input: RegisterUserInput!) {
+              registerUser(input: $input) {
                 accessToken
-                admin { id }
+                user { id }
               }
             }
           `,
@@ -209,12 +210,13 @@ describe('Event Operations', () => {
               password: 'TestPassword123!',
               firstName: 'Department',
               lastName: 'Overseer',
+              isOverseer: true,
             },
           },
         });
 
-      secondAdminToken = registerRes.body.data.registerAdmin.accessToken;
-      secondAdminId = registerRes.body.data.registerAdmin.admin.id;
+      secondAdminToken = registerRes.body.data.registerUser.accessToken;
+      secondAdminId = registerRes.body.data.registerUser.user.id;
 
       // Have second admin join the event
       await request(app)
@@ -283,7 +285,7 @@ describe('Event Operations', () => {
               promoteToAppAdmin(input: $input) {
                 id
                 role
-                admin {
+                user {
                   id
                   firstName
                   lastName
@@ -302,7 +304,7 @@ describe('Event Operations', () => {
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
       expect(response.body.data.promoteToAppAdmin.role).toBe('APP_ADMIN');
-      expect(response.body.data.promoteToAppAdmin.admin.id).toBe(secondAdminId);
+      expect(response.body.data.promoteToAppAdmin.user.id).toBe(secondAdminId);
     });
 
     it('should be idempotent - promoting already app admin is safe', async () => {
@@ -348,10 +350,10 @@ describe('Event Operations', () => {
         .post('/graphql')
         .send({
           query: `
-            mutation Register($input: RegisterAdminInput!) {
-              registerAdmin(input: $input) {
+            mutation Register($input: RegisterUserInput!) {
+              registerUser(input: $input) {
                 accessToken
-                admin { id }
+                user { id }
               }
             }
           `,
@@ -361,12 +363,13 @@ describe('Event Operations', () => {
               password: 'TestPassword123!',
               firstName: 'Third',
               lastName: 'Admin',
+              isOverseer: true,
             },
           },
         });
 
-      const thirdToken = registerRes.body.data.registerAdmin.accessToken;
-      const thirdId = registerRes.body.data.registerAdmin.admin.id;
+      const thirdToken = registerRes.body.data.registerUser.accessToken;
+      const thirdId = registerRes.body.data.registerUser.user.id;
 
       // Get join code
       const eventResponse = await request(app)
