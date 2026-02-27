@@ -103,7 +103,6 @@
 "tab.home" = "Home";
 "tab.schedule" = "Schedule";
 "tab.messages" = "Messages";
-"tab.profile" = "Profile";
 "tab.findEvent" = "Find Event";
 "tab.dashboard" = "Dashboard";
 "tab.volunteers" = "Volunteers";
@@ -657,23 +656,9 @@
 "messages.template.importantNotice.subject" = "Important Notice";
 "messages.template.importantNotice.body" = "Please read this important notice carefully and follow any instructions provided.";
 
-// MARK: - Profile
-"profile.title" = "Profile";
-"profile.section.department" = "DEPARTMENT";
-"profile.section.contact" = "CONTACT INFO";
-"profile.section.event" = "EVENT";
+// MARK: - Profile (used by SettingsView)
 "profile.logout" = "Log Out";
 "profile.logout.confirm" = "Are you sure you want to log out?";
-"profile.section.language" = "LANGUAGE";
-"profile.edit.cancel" = "Cancel";
-"profile.edit.save" = "Save";
-"profile.edit.phone" = "Phone number";
-"profile.edit.email" = "Email address";
-"profile.edit.noContact" = "Tap the pencil to add contact info";
-
-// MARK: - Overseer Profile
-"overseer.profile.section.event" = "CURRENT EVENT";
-"overseer.profile.section.department" = "DEPARTMENT";
 
 // Language
 "language.select" = "Select Language";
@@ -736,6 +721,10 @@
 "browseEvents.overseer.subtitle" = "Choose an event to purchase your department.";
 "browseEvents.empty.title" = "No Events Available";
 "browseEvents.empty.subtitle" = "Check back later for upcoming assemblies.";
+"browseEvents.section.circuitAssemblies" = "Circuit Assemblies";
+"browseEvents.section.conventions" = "Conventions";
+"browseEvents.search.placeholder" = "Search by city, venue, or date...";
+"browseEvents.search.noResults" = "No conventions match your search.";
 
 // Department Selection
 "departmentSelection.chooseTitle" = "Choose Your Department";
@@ -876,3 +865,7 @@
 // MARK: - Overseer Mode Toggle (Settings)
 "profile.overseerMode.subtitle" = "Purchase and manage departments";
 "settings.overseerMode.error" = "Failed to update. Please try again.";
+
+// MARK: - Congregation Search
+"registration.congregation.searchHint" = "Enter search text to find results.";
+"registration.congregation.noResults" = "No congregations found.";

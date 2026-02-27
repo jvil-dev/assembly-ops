@@ -8,7 +8,7 @@
 // MARK: - Browse Events View
 //
 // Role-aware wrapper pushed from EventsHomeView's "+" button.
-//   - Overseers → OverseerDepartmentBrowseView (select event → purchase dept)
+//   - Overseers → DepartmentBrowseView (select event → purchase dept)
 //   - Volunteers → VolunteerEventDiscoveryView (access code + browse)
 //
 // Already inside EventsHomeView's NavigationStack, so child views
@@ -22,10 +22,7 @@ struct BrowseEventsView: View {
 
     var body: some View {
         if appState.isOverseer {
-            OverseerDepartmentBrowseView()
-                .navigationDestination(for: DiscoverableEvent.self) { event in
-                    DepartmentSelectionView(event: event)
-                }
+            DepartmentBrowseView()
         } else {
             VolunteerEventDiscoveryView()
         }

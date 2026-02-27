@@ -45,9 +45,9 @@ final class AppState: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var isLoading: Bool = true
     @Published var currentUser: UserInfo?
-    /// True when a volunteer has active event context (set by EventEntryView).
+    /// True when a volunteer has active event context (set by EventTabView).
     @Published var hasVolunteerEventMembership: Bool = false
-    /// The eventId for the volunteer's current event. Set by EventEntryView.
+    /// The eventId for the volunteer's current event. Set by EventTabView.
     @Published var currentEventId: String?
 
     var isOverseer: Bool {
@@ -161,6 +161,7 @@ final class AppState: ObservableObject {
             id: user.id, userId: user.userId, email: user.email,
             firstName: user.firstName, lastName: user.lastName, fullName: user.fullName,
             phone: user.phone, congregation: user.congregation, congregationId: user.congregationId,
+            circuitCode: user.circuitCode, circuitId: user.circuitId,
             appointmentStatus: user.appointmentStatus, isOverseer: isOverseer
         )
     }
@@ -191,6 +192,8 @@ struct UserInfo: Identifiable {
     let phone: String?
     let congregation: String?
     let congregationId: String?
+    let circuitCode: String?
+    let circuitId: String?
     let appointmentStatus: String?
     let isOverseer: Bool
 
@@ -218,6 +221,8 @@ extension UserInfo {
         self.phone = me.phone
         self.congregation = me.congregation
         self.congregationId = me.congregationId
+        self.circuitCode = me.congregationRef?.circuit.code
+        self.circuitId = me.congregationRef?.circuit.id
         self.appointmentStatus = me.appointmentStatus?.rawValue
         self.isOverseer = me.isOverseer
     }

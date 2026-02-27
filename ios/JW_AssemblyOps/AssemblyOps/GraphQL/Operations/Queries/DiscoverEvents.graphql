@@ -1,12 +1,15 @@
-query DiscoverEvents($eventType: EventType) {
-  discoverEvents(eventType: $eventType) {
+query DiscoverEvents($eventType: EventType, $state: String, $language: String, $circuitCode: String) {
+  discoverEvents(eventType: $eventType, state: $state, language: $language, circuitCode: $circuitCode) {
     id
     name
     eventType
+    circuit
+    state
     venue
     address
     startDate
     endDate
+    theme
     isPublic
     volunteerCount
   }

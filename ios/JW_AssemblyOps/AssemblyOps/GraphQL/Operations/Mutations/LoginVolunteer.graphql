@@ -16,9 +16,7 @@ mutation LoginVolunteer($input: LoginEventVolunteerInput!) {
         venue
         startDate
         endDate
-        template {
-          theme
-        }
+        theme
       }
       department {
         id

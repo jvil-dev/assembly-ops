@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "RegisterUser"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation RegisterUser($input: RegisterUserInput!) { registerUser(input: $input) { __typename user { __typename id userId email firstName lastName fullName phone congregation appointmentStatus isOverseer } accessToken refreshToken expiresIn } }"#
+        #"mutation RegisterUser($input: RegisterUserInput!) { registerUser(input: $input) { __typename user { __typename id userId email firstName lastName fullName phone congregation congregationId appointmentStatus isOverseer congregationRef { __typename id name state circuit { __typename id code } } } accessToken refreshToken expiresIn } }"#
       ))
 
     public var input: RegisterUserInput
@@ -75,8 +75,10 @@ extension AssemblyOpsAPI {
             .field("fullName", String.self),
             .field("phone", String?.self),
             .field("congregation", String?.self),
+            .field("congregationId", AssemblyOpsAPI.ID?.self),
             .field("appointmentStatus", GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>?.self),
             .field("isOverseer", Bool.self),
+            .field("congregationRef", CongregationRef?.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             RegisterUserMutation.Data.RegisterUser.User.self
@@ -90,8 +92,56 @@ extension AssemblyOpsAPI {
           var fullName: String { __data["fullName"] }
           var phone: String? { __data["phone"] }
           var congregation: String? { __data["congregation"] }
+          var congregationId: AssemblyOpsAPI.ID? { __data["congregationId"] }
           var appointmentStatus: GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>? { __data["appointmentStatus"] }
           var isOverseer: Bool { __data["isOverseer"] }
+          var congregationRef: CongregationRef? { __data["congregationRef"] }
+
+          /// RegisterUser.User.CongregationRef
+          ///
+          /// Parent Type: `Congregation`
+          struct CongregationRef: AssemblyOpsAPI.SelectionSet {
+            let __data: DataDict
+            init(_dataDict: DataDict) { __data = _dataDict }
+
+            static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Congregation }
+            static var __selections: [ApolloAPI.Selection] { [
+              .field("__typename", String.self),
+              .field("id", AssemblyOpsAPI.ID.self),
+              .field("name", String.self),
+              .field("state", String.self),
+              .field("circuit", Circuit.self),
+            ] }
+            static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+              RegisterUserMutation.Data.RegisterUser.User.CongregationRef.self
+            ] }
+
+            var id: AssemblyOpsAPI.ID { __data["id"] }
+            var name: String { __data["name"] }
+            var state: String { __data["state"] }
+            var circuit: Circuit { __data["circuit"] }
+
+            /// RegisterUser.User.CongregationRef.Circuit
+            ///
+            /// Parent Type: `Circuit`
+            struct Circuit: AssemblyOpsAPI.SelectionSet {
+              let __data: DataDict
+              init(_dataDict: DataDict) { __data = _dataDict }
+
+              static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Circuit }
+              static var __selections: [ApolloAPI.Selection] { [
+                .field("__typename", String.self),
+                .field("id", AssemblyOpsAPI.ID.self),
+                .field("code", String.self),
+              ] }
+              static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+                RegisterUserMutation.Data.RegisterUser.User.CongregationRef.Circuit.self
+              ] }
+
+              var id: AssemblyOpsAPI.ID { __data["id"] }
+              var code: String { __data["code"] }
+            }
+          }
         }
       }
     }

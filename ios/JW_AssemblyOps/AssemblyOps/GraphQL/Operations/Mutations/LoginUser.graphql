@@ -12,6 +12,15 @@ mutation LoginUser($input: LoginUserInput!) {
       congregationId
       appointmentStatus
       isOverseer
+      congregationRef {
+        id
+        name
+        state
+        circuit {
+          id
+          code
+        }
+      }
     }
     accessToken
     refreshToken

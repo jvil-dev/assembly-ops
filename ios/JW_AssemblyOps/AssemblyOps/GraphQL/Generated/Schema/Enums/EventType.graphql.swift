@@ -5,7 +5,8 @@ import ApolloAPI
 
 extension AssemblyOpsAPI {
   enum EventType: String, EnumType {
-    case circuitAssembly = "CIRCUIT_ASSEMBLY"
+    case circuitAssemblyCo = "CIRCUIT_ASSEMBLY_CO"
+    case circuitAssemblyBr = "CIRCUIT_ASSEMBLY_BR"
     case regionalConvention = "REGIONAL_CONVENTION"
     case specialConvention = "SPECIAL_CONVENTION"
   }

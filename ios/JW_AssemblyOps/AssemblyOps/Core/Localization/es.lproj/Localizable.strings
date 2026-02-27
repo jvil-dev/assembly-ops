@@ -103,7 +103,7 @@
 "tab.home" = "Inicio";
 "tab.schedule" = "Horario";
 "tab.messages" = "Mensajes";
-"tab.profile" = "Perfil";
+
 "tab.findEvent" = "Buscar Evento";
 "tab.dashboard" = "Panel";
 "tab.volunteers" = "Voluntarios";
@@ -657,23 +657,9 @@
 "messages.template.importantNotice.subject" = "Aviso Importante";
 "messages.template.importantNotice.body" = "Por favor lee este aviso importante con atención y sigue las instrucciones proporcionadas.";
 
-// MARK: - Perfil
-"profile.title" = "Perfil";
-"profile.section.department" = "DEPARTAMENTO";
-"profile.section.contact" = "INFORMACIÓN DE CONTACTO";
-"profile.section.event" = "EVENTO";
+// MARK: - Perfil (used by SettingsView)
 "profile.logout" = "Cerrar Sesión";
 "profile.logout.confirm" = "¿Estás seguro de que deseas cerrar sesión?";
-"profile.section.language" = "IDIOMA";
-"profile.edit.cancel" = "Cancelar";
-"profile.edit.save" = "Guardar";
-"profile.edit.phone" = "Número de teléfono";
-"profile.edit.email" = "Correo electrónico";
-"profile.edit.noContact" = "Toca el lápiz para agregar información de contacto";
-
-// MARK: - Perfil del Superintendente
-"overseer.profile.section.event" = "EVENTO ACTUAL";
-"overseer.profile.section.department" = "DEPARTAMENTO";
 
 // Idioma
 "language.select" = "Seleccionar Idioma";
@@ -736,6 +722,10 @@
 "browseEvents.overseer.subtitle" = "Elige un evento para adquirir tu departamento.";
 "browseEvents.empty.title" = "No Hay Eventos Disponibles";
 "browseEvents.empty.subtitle" = "Vuelve más tarde para ver próximas asambleas.";
+"browseEvents.section.circuitAssemblies" = "Asambleas de Circuito";
+"browseEvents.section.conventions" = "Convenciones";
+"browseEvents.search.placeholder" = "Buscar por ciudad, lugar o fecha...";
+"browseEvents.search.noResults" = "Ninguna convención coincide con tu búsqueda.";
 
 // Department Selection
 "departmentSelection.chooseTitle" = "Elige Tu Departamento";
@@ -876,3 +866,7 @@
 // MARK: - Overseer Mode Toggle (Settings)
 "profile.overseerMode.subtitle" = "Comprar y administrar departamentos";
 "settings.overseerMode.error" = "No se pudo actualizar. Intente de nuevo.";
+
+// MARK: - Búsqueda de Congregación
+"registration.congregation.searchHint" = "Ingresa texto para buscar resultados.";
+"registration.congregation.noResults" = "No se encontraron congregaciones.";
