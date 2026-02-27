@@ -38,7 +38,7 @@
  */
 import { Context } from '../context.js';
 import { VolunteerService, CreatedVolunteer } from '../../services/volunteerService.js';
-import { requireAdmin, requireAuth, requireOverseer, requireUser, requireVolunteer, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireOverseer, requireUser, requireEventAccess } from '../guards/auth.js';
 import {
   CreateVolunteerInput,
   CreateVolunteersInput,
@@ -94,43 +94,24 @@ const volunteerResolvers = {
     },
 
     myVolunteerProfile: async (_parent: unknown, _args: unknown, context: Context) => {
-      requireAuth(context);
+      requireUser(context);
 
-      // Two auth paths:
-      //   eventVolunteer JWT → look up by EventVolunteer.id directly
-      //   user JWT           → find the most recent EventVolunteer for this user
-      let eventVolunteer;
-      if (context.volunteer) {
-        eventVolunteer = await context.prisma.eventVolunteer.findUnique({
-          where: { id: context.volunteer.id },
-          include: {
-            user: true,
-            event: { include: { template: true } },
-            department: true,
-            role: true,
-          },
-        });
-      } else {
-        // context.user is guaranteed by requireAuth above
-        eventVolunteer = await context.prisma.eventVolunteer.findFirst({
-          where: { userId: context.user!.id },
-          orderBy: { createdAt: 'desc' },
-          include: {
-            user: true,
-            event: { include: { template: true } },
-            department: true,
-            role: true,
-          },
-        });
-      }
+      const eventVolunteer = await context.prisma.eventVolunteer.findFirst({
+        where: { userId: context.user!.id },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: true,
+          event: true,
+          department: true,
+          role: true,
+        },
+      });
 
       if (!eventVolunteer) return null;
 
-      // Map EventVolunteer to Volunteer-compatible shape for GraphQL
       const user = eventVolunteer.user;
       return {
         id: eventVolunteer.id,
-        volunteerId: eventVolunteer.volunteerId,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -146,24 +127,6 @@ const volunteerResolvers = {
         assignments: [],
         createdAt: eventVolunteer.createdAt,
       };
-    },
-
-    volunteerToken: async (_parent: unknown, { id }: { id: string }, context: Context) => {
-      requireAdmin(context);
-
-      const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
-        where: { id },
-        select: { eventId: true },
-      });
-
-      if (!eventVolunteer) {
-        throw new Error('Volunteer not found');
-      }
-
-      await requireEventAccess(context, eventVolunteer.eventId);
-
-      const volunteerService = new VolunteerService(context.prisma);
-      return volunteerService.getVolunteerToken(id);
     },
 
     roles: async (_parent: unknown, { eventId }: { eventId: string }, context: Context) => {
@@ -282,66 +245,30 @@ const volunteerResolvers = {
       return volunteerService.deleteVolunteer(id);
     },
 
-    regenerateVolunteerCredentials: async (
-      _parent: unknown,
-      { id }: { id: string },
-      context: Context
-    ) => {
-      requireAdmin(context);
-
-      // Get EventVolunteer to check event access
-      const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
-        where: { id },
-        select: { eventId: true },
-      });
-
-      if (eventVolunteer) {
-        await requireEventAccess(context, eventVolunteer.eventId);
-      }
-
-      const volunteerService = new VolunteerService(context.prisma);
-      return volunteerService.regenerateCredentials(id);
-    },
-
     updateMyProfile: async (
       _parent: unknown,
       { input }: { input: UpdateMyProfileInput },
       context: Context
     ) => {
-      requireAuth(context);
+      requireUser(context);
 
       const validated = updateMyProfileSchema.parse(input);
 
-      // Find the EventVolunteer for this caller
-      let eventVolunteer;
-      if (context.volunteer) {
-        eventVolunteer = await context.prisma.eventVolunteer.findUnique({
-          where: { id: context.volunteer.id },
-          include: {
-            user: true,
-            event: { include: { template: true } },
-            department: true,
-            role: true,
-          },
-        });
-      } else {
-        eventVolunteer = await context.prisma.eventVolunteer.findFirst({
-          where: { userId: context.user!.id },
-          orderBy: { createdAt: 'desc' },
-          include: {
-            user: true,
-            event: { include: { template: true } },
-            department: true,
-            role: true,
-          },
-        });
-      }
+      const eventVolunteer = await context.prisma.eventVolunteer.findFirst({
+        where: { userId: context.user!.id },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: true,
+          event: true,
+          department: true,
+          role: true,
+        },
+      });
 
       if (!eventVolunteer) {
         throw new Error('Volunteer not found');
       }
 
-      // Update the User profile (shared across events)
       const updatedUser = await context.prisma.user.update({
         where: { id: eventVolunteer.userId },
         data: {
@@ -350,10 +277,8 @@ const volunteerResolvers = {
         },
       });
 
-      // Return compatible shape
       return {
         id: eventVolunteer.id,
-        volunteerId: eventVolunteer.volunteerId,
         firstName: updatedUser.firstName,
         lastName: updatedUser.lastName,
         email: updatedUser.email,

@@ -3,7 +3,6 @@
  *
  * Tests for volunteer-related GraphQL operations.
  * Volunteers are event participants who join via access code or by User ID.
- * Authenticated via generated volunteerId + token credentials (no password).
  *
  * Test Setup:
  *   1. Register a new overseer user
@@ -13,14 +12,11 @@
  * Tests:
  *   - createVolunteer: Legacy admin-only flow (still supported)
  *   - addVolunteerByUserId: Primary overseer flow — add existing user by short ID
- *   - loginEventVolunteer: Authenticate with volunteerId + token
- *   - volunteerToken: Query decrypted token (overseer-only, AES-256-GCM)
- *   - regenerateVolunteerCredentials: Generate new volunteerId + token
  *   - volunteers: Query event volunteers list
+ *   - join requests: requestToJoinEvent, approveJoinRequest, denyJoinRequest
  *
  * Authorization:
  *   - Volunteer mutations require authenticated overseer with event access
- *   - volunteerToken requires overseer authentication
  */
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
@@ -32,8 +28,6 @@ let app: Application;
 describe('Volunteer Operations', () => {
   let accessToken: string;
   let eventId: string;
-  let volunteerId: string; // Internal DB id (EventVolunteer)
-  let volunteerCredentials: { volunteerId: string; token: string };
   let secondUserShortId: string; // 6-char userId of a second user for addVolunteerByUserId test
 
   beforeAll(async () => {
@@ -144,10 +138,9 @@ describe('Volunteer Operations', () => {
             mutation Create($eventId: ID!, $input: CreateVolunteerInput!) {
               createVolunteer(eventId: $eventId, input: $input) {
                 id
-                volunteerId
-                token
                 firstName
                 lastName
+                congregation
               }
             }
           `,
@@ -163,14 +156,10 @@ describe('Volunteer Operations', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.createVolunteer.volunteerId).toMatch(/^[A-Z0-9]{6}$/);
-      expect(response.body.data.createVolunteer.token).toBeDefined();
-
-      volunteerId = response.body.data.createVolunteer.id;
-      volunteerCredentials = {
-        volunteerId: response.body.data.createVolunteer.volunteerId,
-        token: response.body.data.createVolunteer.token,
-      };
+      expect(response.body.data.createVolunteer.id).toBeDefined();
+      expect(response.body.data.createVolunteer.firstName).toBe('Test');
+      expect(response.body.data.createVolunteer.lastName).toBe('Volunteer');
+      expect(response.body.data.createVolunteer.congregation).toBeDefined();
     });
   });
 
@@ -188,15 +177,10 @@ describe('Volunteer Operations', () => {
           query: `
             mutation AddByUserId($eventId: ID!, $userId: String!) {
               addVolunteerByUserId(eventId: $eventId, userId: $userId) {
-                volunteerId
-                token
-                inviteMessage
-                eventVolunteer {
-                  id
-                  user {
-                    firstName
-                    lastName
-                  }
+                id
+                user {
+                  firstName
+                  lastName
                 }
               }
             }
@@ -210,10 +194,8 @@ describe('Volunteer Operations', () => {
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
       const result = response.body.data.addVolunteerByUserId;
-      expect(result.volunteerId).toMatch(/^[A-Z0-9]{6}$/);
-      expect(result.token).toBeDefined();
-      expect(result.inviteMessage).toBeDefined();
-      expect(result.eventVolunteer.user.firstName).toBe('Second');
+      expect(result.id).toBeDefined();
+      expect(result.user.firstName).toBe('Second');
     });
 
     it('should reject adding the same user twice to the same event', async () => {
@@ -229,7 +211,7 @@ describe('Volunteer Operations', () => {
           query: `
             mutation AddByUserId($eventId: ID!, $userId: String!) {
               addVolunteerByUserId(eventId: $eventId, userId: $userId) {
-                volunteerId
+                id
               }
             }
           `,
@@ -240,129 +222,6 @@ describe('Volunteer Operations', () => {
         });
 
       expect(response.body.errors).toBeDefined();
-    });
-  });
-
-  describe('loginEventVolunteer', () => {
-    it('should login with valid credentials', async () => {
-      if (!volunteerCredentials) {
-        console.log('Skipping - no credentials available');
-        return;
-      }
-
-      const response = await request(app)
-        .post('/graphql')
-        .send({
-          query: `
-            mutation Login($input: LoginEventVolunteerInput!) {
-              loginEventVolunteer(input: $input) {
-                eventVolunteer {
-                  id
-                }
-                accessToken
-                refreshToken
-              }
-            }
-          `,
-          variables: { input: volunteerCredentials },
-        });
-
-      expect(response.status).toBe(200);
-      expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.loginEventVolunteer.accessToken).toBeDefined();
-    });
-  });
-
-  describe('volunteerToken', () => {
-    it('should return decrypted token matching creation token', async () => {
-      if (!volunteerId || !volunteerCredentials) {
-        console.log('Skipping - no volunteer created');
-        return;
-      }
-
-      const response = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          query: `
-            query VolunteerToken($id: ID!) {
-              volunteerToken(id: $id)
-            }
-          `,
-          variables: { id: volunteerId },
-        });
-
-      expect(response.status).toBe(200);
-      expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.volunteerToken).toBe(volunteerCredentials.token);
-    });
-
-    it('should reject unauthenticated requests', async () => {
-      if (!volunteerId) {
-        console.log('Skipping - no volunteer created');
-        return;
-      }
-
-      const response = await request(app)
-        .post('/graphql')
-        .send({
-          query: `
-            query VolunteerToken($id: ID!) {
-              volunteerToken(id: $id)
-            }
-          `,
-          variables: { id: volunteerId },
-        });
-
-      expect(response.body.errors).toBeDefined();
-    });
-  });
-
-  describe('regenerateVolunteerCredentials', () => {
-    it('should regenerate and return new credentials', async () => {
-      if (!volunteerId) {
-        console.log('Skipping - no volunteer created');
-        return;
-      }
-
-      const response = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          query: `
-            mutation Regenerate($id: ID!) {
-              regenerateVolunteerCredentials(id: $id) {
-                volunteerId
-                token
-              }
-            }
-          `,
-          variables: { id: volunteerId },
-        });
-
-      expect(response.status).toBe(200);
-      expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.regenerateVolunteerCredentials.volunteerId).toMatch(/^[A-Z0-9]{6}$/);
-      expect(response.body.data.regenerateVolunteerCredentials.token).toBeDefined();
-      expect(response.body.data.regenerateVolunteerCredentials.token).toHaveLength(8);
-
-      // Verify the new token is retrievable via volunteerToken query
-      const tokenResponse = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          query: `
-            query VolunteerToken($id: ID!) {
-              volunteerToken(id: $id)
-            }
-          `,
-          variables: { id: volunteerId },
-        });
-
-      expect(tokenResponse.body.errors).toBeUndefined();
-      expect(tokenResponse.body.data.volunteerToken).toBe(
-        response.body.data.regenerateVolunteerCredentials.token
-      );
     });
   });
 
@@ -381,7 +240,6 @@ describe('Volunteer Operations', () => {
             query Volunteers($eventId: ID!) {
               volunteers(eventId: $eventId) {
                 id
-                volunteerId
                 firstName
                 lastName
                 congregation
@@ -467,8 +325,7 @@ describe('Volunteer Operations', () => {
           query: `
             mutation Approve($requestId: ID!) {
               approveJoinRequest(requestId: $requestId) {
-                volunteerId
-                token
+                id
               }
             }
           `,
@@ -477,8 +334,7 @@ describe('Volunteer Operations', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.approveJoinRequest.volunteerId).toBeDefined();
-      expect(response.body.data.approveJoinRequest.token).toBeDefined();
+      expect(response.body.data.approveJoinRequest.id).toBeDefined();
     });
 
     it('should allow the overseer to deny a join request', async () => {

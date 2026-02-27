@@ -1,7 +1,9 @@
 /**
  * Volunteer Service
  *
- * Business logic for volunteer management: create, update, delete, login, credentials.
+ * Business logic for volunteer management within events.
+ * Volunteers authenticate as Users (email/password or OAuth).
+ * EventVolunteer is a per-event membership record — no credentials.
  *
  * Methods:
  *   - createVolunteer(eventId, input, departmentId?): Create single volunteer
@@ -10,25 +12,12 @@
  *   - getEventVolunteers(eventId, departmentId?): List volunteers for event/department
  *   - updateVolunteer(id, input): Update volunteer details
  *   - deleteVolunteer(id): Remove volunteer
- *   - regenerateCredentials(id): Generate new login credentials (invalidates old ones)
- *
- * Volunteer Credentials:
- *   - volunteerId: 8-character alphanumeric ID (e.g., "ABC12345")
- *   - token: 6-character alphanumeric token (e.g., "XY7890")
- *   - tokenHash: bcrypt hash of the token stored in database
- *   - Plain token is ONLY returned when creating/regenerating (never stored)
- *
- * CreatedVolunteer Interface:
- *   When creating a volunteer, we return the plain token (for printing/sending).
- *   This is the ONLY time the plain token is available.
  *
  * Called by: ../graphql/resolvers/volunteer.ts
  */
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError, ValidationError } from '../utils/errors.js';
-import { generateEventVolunteerId, generateToken, hashToken, decryptToken } from '../utils/credentials.js';
-import { encryptField } from '../utils/encryption.js';
-import { TokenService } from './tokenService.js';
+import { generateUserId } from '../utils/credentials.js';
 import {
   createVolunteerSchema,
   createVolunteersSchema,
@@ -38,19 +27,13 @@ import {
 
 export interface CreatedVolunteer {
   id: string;
-  volunteerId: string;
-  token: string; // Plain token - only returned on creation
   firstName: string;
   lastName: string;
   congregation: string;
 }
 
 export class VolunteerService {
-  private tokenService: TokenService;
-
-  constructor(private prisma: PrismaClient) {
-    this.tokenService = new TokenService(prisma);
-  }
+  constructor(private prisma: PrismaClient) {}
 
   async createVolunteer(
     eventId: string,
@@ -67,17 +50,11 @@ export class VolunteerService {
     // Verify event exists and get event type for ID prefix
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
-      include: { template: true },
     });
 
     if (!event) {
       throw new NotFoundError('Event');
     }
-
-    // Generate volunteer credentials
-    const volunteerId = generateEventVolunteerId();
-    const token = generateToken();
-    const tokenHash = await hashToken(token);
 
     const deptId = departmentId || validated.departmentId;
 
@@ -85,7 +62,7 @@ export class VolunteerService {
     const eventVolunteer = await this.prisma.$transaction(async (tx) => {
       // Find or create Congregation for User
       const congregationRecord = await this.findOrCreateCongregation(
-        tx, validated.congregation, event.template.circuitId
+        tx, validated.congregation, event.circuitId
       );
 
       // Find or create User (persistent across events)
@@ -94,13 +71,11 @@ export class VolunteerService {
         : null;
 
       if (!user) {
-        // Generate a unique userId for the User record
-        const { generateUserId } = await import('../utils/credentials.js');
         const newUserId = generateUserId();
         user = await tx.user.create({
           data: {
             userId: newUserId,
-            email: validated.email ?? `${volunteerId}@placeholder.assemblyops.io`,
+            email: validated.email ?? `${newUserId}@placeholder.assemblyops.io`,
             firstName: validated.firstName,
             lastName: validated.lastName,
             phone: validated.phone,
@@ -111,12 +86,9 @@ export class VolunteerService {
         });
       }
 
-      // EventVolunteer (per-event credential record)
+      // EventVolunteer (per-event membership record)
       const ev = await tx.eventVolunteer.create({
         data: {
-          volunteerId,
-          tokenHash,
-          encryptedToken: encryptField(token),
           userId: user.id,
           eventId,
           departmentId: deptId,
@@ -130,8 +102,6 @@ export class VolunteerService {
 
     return {
       id: eventVolunteer.id,
-      volunteerId: eventVolunteer.volunteerId,
-      token, // Plain token to give to volunteer
       firstName: eventVolunteer.user.firstName,
       lastName: eventVolunteer.user.lastName,
       congregation: eventVolunteer.user.congregation ?? validated.congregation,
@@ -152,7 +122,6 @@ export class VolunteerService {
     // Verify event exists and get event type for ID prefix
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
-      include: { template: true },
     });
 
     if (!event) {
@@ -162,14 +131,11 @@ export class VolunteerService {
     const createdVolunteers: CreatedVolunteer[] = [];
 
     for (const volunteerInput of volunteers) {
-      const volId = generateEventVolunteerId();
-      const volToken = generateToken();
-      const volTokenHash = await hashToken(volToken);
       const deptId = volunteerInput.departmentId || defaultDepartmentId;
 
       const eventVolunteer = await this.prisma.$transaction(async (tx) => {
         const congregationRecord = await this.findOrCreateCongregation(
-          tx, volunteerInput.congregation, event.template.circuitId
+          tx, volunteerInput.congregation, event.circuitId
         );
 
         let user = volunteerInput.email
@@ -177,12 +143,11 @@ export class VolunteerService {
           : null;
 
         if (!user) {
-          const { generateUserId } = await import('../utils/credentials.js');
           const newUserId = generateUserId();
           user = await tx.user.create({
             data: {
               userId: newUserId,
-              email: volunteerInput.email ?? `${volId}@placeholder.assemblyops.io`,
+              email: volunteerInput.email ?? `${newUserId}@placeholder.assemblyops.io`,
               firstName: volunteerInput.firstName,
               lastName: volunteerInput.lastName,
               phone: volunteerInput.phone,
@@ -195,9 +160,6 @@ export class VolunteerService {
 
         const ev = await tx.eventVolunteer.create({
           data: {
-            volunteerId: volId,
-            tokenHash: volTokenHash,
-            encryptedToken: encryptField(volToken),
             userId: user.id,
             eventId,
             departmentId: deptId,
@@ -211,8 +173,6 @@ export class VolunteerService {
 
       createdVolunteers.push({
         id: eventVolunteer.id,
-        volunteerId: eventVolunteer.volunteerId,
-        token: volToken,
         firstName: eventVolunteer.user.firstName,
         lastName: eventVolunteer.user.lastName,
         congregation: eventVolunteer.user.congregation ?? volunteerInput.congregation,
@@ -227,9 +187,7 @@ export class VolunteerService {
       where: { id: volunteerId },
       include: {
         user: true,
-        event: {
-          include: { template: true },
-        },
+        event: true,
         department: true,
         role: true,
         assignments: {
@@ -315,55 +273,6 @@ export class VolunteerService {
     return true;
   }
 
-  async regenerateCredentials(volunteerId: string): Promise<{
-    volunteerId: string;
-    token: string;
-  }> {
-    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
-      where: { id: volunteerId },
-    });
-
-    if (!eventVolunteer) {
-      throw new NotFoundError('Volunteer');
-    }
-
-    const newVolunteerId = generateEventVolunteerId();
-    const token = generateToken();
-    const tokenHash = await hashToken(token);
-    await this.prisma.eventVolunteer.update({
-      where: { id: volunteerId },
-      data: {
-        volunteerId: newVolunteerId,
-        tokenHash,
-        encryptedToken: encryptField(token),
-      },
-    });
-
-    // Revoke any existing refresh tokens
-    await this.tokenService.revokeAllUserTokens(volunteerId, 'eventVolunteer');
-
-    return {
-      volunteerId: newVolunteerId,
-      token,
-    };
-  }
-
-  async getVolunteerToken(volunteerId: string): Promise<string> {
-    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
-      where: { id: volunteerId },
-    });
-
-    if (!eventVolunteer) {
-      throw new NotFoundError('Volunteer');
-    }
-
-    if (!eventVolunteer.encryptedToken) {
-      throw new NotFoundError('Token not available for this volunteer');
-    }
-
-    return decryptToken(eventVolunteer.encryptedToken);
-  }
-
   /**
    * Request to join an event as a volunteer.
    * Circuit Assembly events: creates a PENDING join request.
@@ -377,7 +286,6 @@ export class VolunteerService {
   ) {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
-      include: { template: true },
     });
 
     if (!event) {
@@ -386,8 +294,8 @@ export class VolunteerService {
 
     // Regional and special conventions are invite-only
     if (
-      event.template.eventType === 'REGIONAL_CONVENTION' ||
-      event.template.eventType === 'SPECIAL_CONVENTION'
+      event.eventType === 'REGIONAL_CONVENTION' ||
+      event.eventType === 'SPECIAL_CONVENTION'
     ) {
       throw new ValidationError(
         'Regional and special convention events are invite-only. Please contact your department overseer.'
@@ -422,7 +330,7 @@ export class VolunteerService {
           resolvedAt: null,
           resolvedById: null,
         },
-        include: { user: true, event: { include: { template: true } } },
+        include: { user: true, event: true },
       });
     }
 
@@ -433,7 +341,7 @@ export class VolunteerService {
         departmentType: departmentType as any,
         note,
       },
-      include: { user: true, event: { include: { template: true } } },
+      include: { user: true, event: true },
     });
   }
 
@@ -469,7 +377,7 @@ export class VolunteerService {
   async approveJoinRequest(requestId: string, adminUserId: string) {
     const request = await this.prisma.eventJoinRequest.findUnique({
       where: { id: requestId },
-      include: { user: true, event: { include: { template: true } } },
+      include: { user: true, event: true },
     });
 
     if (!request) {
@@ -479,10 +387,6 @@ export class VolunteerService {
     if (request.status !== 'PENDING') {
       throw new ValidationError('Only pending requests can be approved.');
     }
-
-    const volunteerId = generateEventVolunteerId();
-    const token = generateToken();
-    const tokenHash = await hashToken(token);
 
     return this.prisma.$transaction(async (tx) => {
       // Mark request approved
@@ -495,25 +399,16 @@ export class VolunteerService {
         },
       });
 
-      // Create EventVolunteer record
+      // Create EventVolunteer membership record
       const eventVolunteer = await tx.eventVolunteer.create({
         data: {
-          volunteerId,
-          tokenHash,
-          encryptedToken: encryptField(token),
           userId: request.userId,
           eventId: request.eventId,
-          departmentId: undefined,
         },
-        include: { user: true, event: { include: { template: true } } },
+        include: { user: true, event: true },
       });
 
-      return {
-        eventVolunteer,
-        volunteerId,
-        token,
-        inviteMessage: `Hi ${request.user.firstName}! Your request to join ${request.event.template.name} has been approved.\n\nYour login credentials:\nVolunteer ID: ${volunteerId}\nToken: ${token}`,
-      };
+      return eventVolunteer;
     });
   }
 
@@ -541,7 +436,7 @@ export class VolunteerService {
         resolvedById: adminUserId,
         note: reason || request.note,
       },
-      include: { user: true, event: { include: { template: true } } },
+      include: { user: true, event: true },
     });
   }
 
@@ -572,28 +467,16 @@ export class VolunteerService {
       throw new ValidationError('This user is already a volunteer for this event.');
     }
 
-    const volunteerId = generateEventVolunteerId();
-    const token = generateToken();
-    const tokenHash = await hashToken(token);
-
     const eventVolunteer = await this.prisma.eventVolunteer.create({
       data: {
-        volunteerId,
-        tokenHash,
-        encryptedToken: encryptField(token),
         userId: user.id,
         eventId,
         departmentId,
       },
-      include: { user: true, event: { include: { template: true } } },
+      include: { user: true, event: true },
     });
 
-    return {
-      eventVolunteer,
-      volunteerId,
-      token,
-      inviteMessage: `Hi ${user.firstName}! You've been added to ${eventVolunteer.event.template.name}.\n\nYour login credentials:\nVolunteer ID: ${volunteerId}\nToken: ${token}`,
-    };
+    return eventVolunteer;
   }
 
   /**
@@ -616,7 +499,7 @@ export class VolunteerService {
   async getMyJoinRequests(userId: string) {
     return this.prisma.eventJoinRequest.findMany({
       where: { userId },
-      include: { event: { include: { template: true } } },
+      include: { event: true },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -653,7 +536,6 @@ export class VolunteerService {
     return tx.congregation.create({
       data: {
         name: congregationName,
-        city: 'Unknown',
         state: 'Unknown',
         circuitId: resolvedCircuitId,
       },

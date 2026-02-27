@@ -6,19 +6,16 @@
  *   requireUser()        — any authenticated User (volunteer or overseer)
  *   requireOverseer()    — User with isOverseer === true
  *   requireAdmin()       — alias for requireOverseer() (backward compat)
- *   requireVolunteer()   — EventVolunteer printed-card session
- *   requireAuth()        — any authenticated caller (user or eventVolunteer)
+ *   requireAppAdmin()    — User with isAppAdmin === true
+ *   requireAuth()        — alias for requireUser()
  *   requireEventAccess() — overseer must belong to the event (with optional role check)
  *
- * Usage:
- *   myResolver: async (_, args, context) => {
- *     requireOverseer(context);
- *     // ...
- *   }
+ * Helpers:
+ *   resolveUserEventVolunteer() — look up the current user's EventVolunteer for an event
  */
 import { Context } from '../context.js';
 import { AuthenticationError, AuthorizationError } from '../../utils/errors.js';
-import { EventRole } from '@prisma/client';
+import { EventRole, PrismaClient } from '@prisma/client';
 
 export function requireUser(
   context: Context
@@ -39,6 +36,17 @@ export function requireOverseer(
   }
 }
 
+export function requireAppAdmin(
+  context: Context
+): asserts context is Context & { user: NonNullable<Context['user']> } {
+  if (!context.user) {
+    throw new AuthenticationError('You must be logged in');
+  }
+  if (!context.user.isAppAdmin) {
+    throw new AuthorizationError('App admin access required');
+  }
+}
+
 // Backward-compat alias — existing resolvers calling requireAdmin() still work
 export function requireAdmin(
   context: Context
@@ -46,16 +54,9 @@ export function requireAdmin(
   requireOverseer(context);
 }
 
-export function requireVolunteer(
-  context: Context
-): asserts context is Context & { volunteer: NonNullable<Context['volunteer']> } {
-  if (!context.volunteer) {
-    throw new AuthenticationError('You must be logged in as an event volunteer');
-  }
-}
-
+// Alias for requireUser — all callers are Users now
 export function requireAuth(context: Context): void {
-  if (!context.user && !context.volunteer) {
+  if (!context.user) {
     throw new AuthenticationError('You must be logged in');
   }
 }
@@ -80,4 +81,25 @@ export async function requireEventAccess(
   if (allowedRoles && !allowedRoles.includes(eventAdmin.role)) {
     throw new AuthorizationError('You do not have permission for this action');
   }
+}
+
+/**
+ * Look up the current user's EventVolunteer for a given event.
+ * Used by resolvers that need the EventVolunteer ID (assignments, check-ins, etc.)
+ */
+export async function resolveUserEventVolunteer(
+  userId: string,
+  eventId: string,
+  prisma: PrismaClient
+): Promise<{ id: string; departmentId: string | null }> {
+  const ev = await prisma.eventVolunteer.findUnique({
+    where: { userId_eventId: { userId, eventId } },
+    select: { id: true, departmentId: true },
+  });
+
+  if (!ev) {
+    throw new AuthorizationError('You are not a volunteer for this event');
+  }
+
+  return ev;
 }

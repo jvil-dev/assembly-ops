@@ -15,7 +15,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
-import { createTestEvent } from '../testHelpers.js';
+import { createTestEvent, createTestVolunteerUser } from '../testHelpers.js';
 import type { Application } from 'express';
 
 describe('Captain Operations', () => {
@@ -100,81 +100,15 @@ describe('Captain Operations', () => {
       });
     sessionId = sessionRes.body.data.createSession.id;
 
-    // Create captain volunteer
-    const captainRes = await request(app)
-      .post('/graphql')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({
-        query: `mutation($eventId: ID!, $input: CreateVolunteerInput!) {
-          createVolunteer(eventId: $eventId, input: $input) {
-            id token volunteerId
-          }
-        }`,
-        variables: {
-          eventId,
-          input: { firstName: 'Captain', lastName: 'Vol', congregation: `Captain Cong ${Date.now()}` },
-        },
-      });
-    captainVolunteerId = captainRes.body.data.createVolunteer.id;
-    const captainLoginId = captainRes.body.data.createVolunteer.volunteerId;
-    const captainLoginToken = captainRes.body.data.createVolunteer.token;
+    // Create captain volunteer user (registers User + creates EventVolunteer in department)
+    const captainResult = await createTestVolunteerUser(app, eventId, departmentId);
+    captainToken = captainResult.accessToken;
+    captainVolunteerId = captainResult.eventVolunteerId;
 
-    // Create member volunteer
-    const memberRes = await request(app)
-      .post('/graphql')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({
-        query: `mutation($eventId: ID!, $input: CreateVolunteerInput!) {
-          createVolunteer(eventId: $eventId, input: $input) {
-            id token volunteerId
-          }
-        }`,
-        variables: {
-          eventId,
-          input: { firstName: 'Member', lastName: 'Vol', congregation: `Captain Cong ${Date.now()}` },
-        },
-      });
-    memberVolunteerId = memberRes.body.data.createVolunteer.id;
-    const memberLoginId = memberRes.body.data.createVolunteer.volunteerId;
-    const memberLoginToken = memberRes.body.data.createVolunteer.token;
-
-    // Assign both to department
-    await request(app)
-      .post('/graphql')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({
-        query: `mutation($volunteerId: ID!, $departmentId: ID!) {
-          assignVolunteerToDepartment(volunteerId: $volunteerId, departmentId: $departmentId) { id }
-        }`,
-        variables: { volunteerId: captainVolunteerId, departmentId },
-      });
-
-    await request(app)
-      .post('/graphql')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({
-        query: `mutation($volunteerId: ID!, $departmentId: ID!) {
-          assignVolunteerToDepartment(volunteerId: $volunteerId, departmentId: $departmentId) { id }
-        }`,
-        variables: { volunteerId: memberVolunteerId, departmentId },
-      });
-
-    // Login both volunteers
-    const captainLoginRes = await request(app)
-      .post('/graphql')
-      .send({
-        query: `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
-        variables: { input: { volunteerId: captainLoginId, token: captainLoginToken } },
-      });
-    captainToken = captainLoginRes.body.data.loginEventVolunteer.accessToken;
-
-    // Member login reserved for future test: verify members can't perform captain operations
-    await request(app)
-      .post('/graphql')
-      .send({
-        query: `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
-        variables: { input: { volunteerId: memberLoginId, token: memberLoginToken } },
-      });
+    // Create member volunteer user (registers User + creates EventVolunteer in department)
+    const memberResult = await createTestVolunteerUser(app, eventId, departmentId);
+    // memberResult.accessToken reserved for future test: verify members can't perform captain operations
+    memberVolunteerId = memberResult.eventVolunteerId;
 
     // Create assignments (force-assign to skip acceptance flow for test setup)
     const captainAssignRes = await request(app)

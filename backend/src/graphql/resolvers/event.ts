@@ -38,7 +38,7 @@
 import { Context } from '../context.js';
 import { EventService } from '../../services/eventService.js';
 import { requireAdmin, requireAuth, requireUser, requireEventAccess } from '../guards/auth.js';
-import { Event, EventTemplate, EventAdmin, Department, DepartmentType } from '@prisma/client';
+import { Event, EventAdmin, Department, DepartmentType } from '@prisma/client';
 import type { AssignHierarchyRoleInput } from '../validators/event.js';
 
 // All 12 department types
@@ -59,16 +59,6 @@ const ALL_DEPARTMENT_TYPES: DepartmentType[] = [
 
 const eventResolvers = {
   Query: {
-    eventTemplates: async (
-      _parent: unknown,
-      { serviceYear }: { serviceYear?: number },
-      context: Context
-    ): Promise<EventTemplate[]> => {
-      requireAuth(context);
-      const eventService = new EventService(context.prisma);
-      return eventService.getEventTemplates(serviceYear);
-    },
-
     myEvents: async (_parent: unknown, _args: unknown, context: Context): Promise<EventAdmin[]> => {
       requireAdmin(context);
       const eventService = new EventService(context.prisma);
@@ -129,18 +119,24 @@ const eventResolvers = {
 
     discoverEvents: async (
       _parent: unknown,
-      { eventType }: { eventType?: string },
+      { eventType, state, language, circuitCode }: { eventType?: string; state?: string; language?: string; circuitCode?: string },
       context: Context
     ) => {
       requireAuth(context);
       const where: Record<string, unknown> = { isPublic: true };
-      if (eventType) {
-        where.template = { eventType };
+      if (eventType) where.eventType = eventType;
+      if (state) where.state = state;
+      if (language) where.language = language;
+      if (circuitCode) {
+        where.OR = [
+          { circuit: circuitCode },
+          { circuit: null },
+        ];
       }
       return context.prisma.event.findMany({
         where,
-        include: { template: true, admins: true, departments: true, sessions: true, roles: true },
-        orderBy: { createdAt: 'desc' },
+        include: { admins: true, departments: true, sessions: true, roles: true },
+        orderBy: { startDate: 'asc' },
       });
     },
 
@@ -208,30 +204,11 @@ const eventResolvers = {
   },
 
   Event: {
-    name: (event: Event & { template: EventTemplate }) => event.template.name,
-    eventType: (event: Event & { template: EventTemplate }) => event.template.eventType,
-    venue: (event: Event & { template: EventTemplate }) => event.template.venue,
-    address: (event: Event & { template: EventTemplate }) => event.template.address,
-    startDate: (event: Event & { template: EventTemplate }) => event.template.startDate,
-    endDate: (event: Event & { template: EventTemplate }) => event.template.endDate,
     volunteerCount: async (event: Event, _args: unknown, context: Context) => {
       const count = await context.prisma.eventVolunteer.count({
         where: { eventId: event.id },
       });
       return count;
-    },
-  },
-
-  EventTemplate: {
-    isActivated: async (template: EventTemplate, _args: unknown, context: Context) => {
-      if (!context.user) return false;
-      const event = await context.prisma.event.findFirst({
-        where: {
-          templateId: template.id,
-          admins: { some: { userId: context.user!.id } },
-        },
-      });
-      return !!event;
     },
   },
 

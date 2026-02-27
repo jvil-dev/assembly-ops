@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
-import { createTestEvent } from '../testHelpers.js';
+import { createTestEvent, createTestVolunteerUser } from '../testHelpers.js';
 import type { Application } from 'express';
 
 describe('Message Operations', () => {
@@ -78,69 +78,10 @@ describe('Message Operations', () => {
     }
     departmentId = purchaseRes.body.data.purchaseDepartment.id;
 
-    // Create volunteer
-    const volunteerRes = await request(app)
-      .post('/graphql')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({
-        query: `mutation($eventId: ID!, $input: CreateVolunteerInput!) {
-          createVolunteer(eventId: $eventId, input: $input) {
-            id token volunteerId
-          }
-        }`,
-        variables: {
-          eventId,
-          input: { firstName: 'Test', lastName: 'Volunteer', congregation: `Msg Cong ${Date.now()}` },
-        },
-      });
-
-    // Validate volunteer creation
-    if (!volunteerRes.body?.data?.createVolunteer?.id) {
-      throw new Error(
-        `Volunteer creation failed: ${JSON.stringify(volunteerRes.body.errors || volunteerRes.body)}`
-      );
-    }
-    volunteerId = volunteerRes.body.data.createVolunteer.id;
-    const volunteerLoginId = volunteerRes.body.data.createVolunteer.volunteerId;
-    const volunteerLoginToken = volunteerRes.body.data.createVolunteer.token;
-
-    if (!volunteerLoginId || !volunteerLoginToken) {
-      throw new Error('Volunteer creation did not return volunteerId or token');
-    }
-
-    // Assign volunteer to department
-    const assignRes = await request(app)
-      .post('/graphql')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({
-        query: `mutation($id: ID!, $input: UpdateVolunteerInput!) {
-          updateVolunteer(id: $id, input: $input) { id department { id } }
-        }`,
-        variables: { id: volunteerId, input: { departmentId } },
-      });
-
-    // Validate assignment
-    if (!assignRes.body?.data?.updateVolunteer?.id) {
-      throw new Error(
-        `Volunteer assignment failed: ${JSON.stringify(assignRes.body.errors || assignRes.body)}`
-      );
-    }
-
-    // Login as volunteer
-    const volunteerLoginRes = await request(app)
-      .post('/graphql')
-      .send({
-        query: `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
-        variables: { input: { volunteerId: volunteerLoginId, token: volunteerLoginToken } },
-      });
-
-    // Validate volunteer login
-    if (!volunteerLoginRes.body?.data?.loginEventVolunteer?.accessToken) {
-      throw new Error(
-        `Volunteer login failed: ${JSON.stringify(volunteerLoginRes.body.errors || volunteerLoginRes.body)}`
-      );
-    }
-    volunteerToken = volunteerLoginRes.body.data.loginEventVolunteer.accessToken;
+    // Create volunteer user (registers User + creates EventVolunteer in department)
+    const { accessToken: volToken, eventVolunteerId } = await createTestVolunteerUser(app, eventId, departmentId);
+    volunteerToken = volToken;
+    volunteerId = eventVolunteerId;
   });
 
   afterAll(async () => {

@@ -25,18 +25,6 @@ const authTypeDefs = `#graphql
     success: Boolean!
   }
 
-  type EventVolunteerAuthPayload {
-    eventVolunteer: EventVolunteer!
-    accessToken: String!
-    refreshToken: String!
-    expiresIn: Int!
-  }
-
-  input LoginEventVolunteerInput {
-    volunteerId: String!
-    token: String!
-  }
-
   input RegisterUserInput {
     email: String!
     password: String!
@@ -73,7 +61,6 @@ const authTypeDefs = `#graphql
   extend type Mutation {
     registerUser(input: RegisterUserInput!): UserAuthPayload!
     loginUser(input: LoginUserInput!): UserAuthPayload!
-    loginEventVolunteer(input: LoginEventVolunteerInput!): EventVolunteerAuthPayload!
     refreshToken(input: RefreshTokenInput!): TokenPayload!
     logoutUser(refreshToken: String!): LogoutPayload!
     logoutAllSessions: LogoutPayload!

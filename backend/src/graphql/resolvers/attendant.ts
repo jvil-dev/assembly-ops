@@ -27,7 +27,7 @@
  */
 import { Context } from '../context.js';
 import { AttendantService } from '../../services/attendantService.js';
-import { requireAdmin, requireAuth, requireVolunteer, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireEventAccess, resolveUserEventVolunteer } from '../guards/auth.js';
 import { decryptField } from '../../utils/encryption.js';
 import {
   ReportSafetyIncidentInput,
@@ -37,19 +37,18 @@ import {
 import { AuthorizationError } from '../../utils/errors.js';
 
 /**
- * Helper: resolve the EventVolunteer record for the authenticated volunteer.
+ * Helper: resolve the EventVolunteer record for the authenticated user.
  *
- * Supports two auth paths:
- *   1. New auth (eventVolunteer token): context.volunteer.id IS the EventVolunteer.id
- *   2. Old auth (volunteer token): context.volunteer.id is legacy Volunteer.id —
- *      bridge to EventVolunteer via shared `volunteerId` field
+ * Looks up the user's EventVolunteer for the given event and verifies
+ * they belong to the ATTENDANT department.
  */
 async function resolveAttendantVolunteer(
   context: Context,
-  _eventId: string
-): Promise<{ volunteerId: string; eventVolunteerId: string }> {
+  eventId: string
+): Promise<{ eventVolunteerId: string }> {
+  if (!context.user) throw new AuthorizationError('You must be logged in');
   const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
-    where: { id: context.volunteer!.id },
+    where: { userId_eventId: { userId: context.user.id, eventId } },
     include: { department: true },
   });
 
@@ -57,7 +56,7 @@ async function resolveAttendantVolunteer(
     throw new AuthorizationError('Only attendant volunteers can access this feature');
   }
 
-  return { volunteerId: eventVolunteer.volunteerId, eventVolunteerId: eventVolunteer.id };
+  return { eventVolunteerId: eventVolunteer.id };
 }
 
 const attendantResolvers = {
@@ -68,11 +67,11 @@ const attendantResolvers = {
       context: Context
     ) => {
       requireAuth(context);
-      if (context.volunteer) {
+      const eventAdmin = await context.prisma.eventAdmin.findUnique({
+        where: { userId_eventId: { userId: context.user!.id, eventId } },
+      });
+      if (!eventAdmin) {
         await resolveAttendantVolunteer(context, eventId);
-      } else {
-        requireAdmin(context);
-        await requireEventAccess(context, eventId);
       }
 
       const attendantService = new AttendantService(context.prisma);
@@ -85,11 +84,11 @@ const attendantResolvers = {
       context: Context
     ) => {
       requireAuth(context);
-      if (context.volunteer) {
+      const eventAdmin = await context.prisma.eventAdmin.findUnique({
+        where: { userId_eventId: { userId: context.user!.id, eventId } },
+      });
+      if (!eventAdmin) {
         await resolveAttendantVolunteer(context, eventId);
-      } else {
-        requireAdmin(context);
-        await requireEventAccess(context, eventId);
       }
 
       const attendantService = new AttendantService(context.prisma);
@@ -113,7 +112,7 @@ const attendantResolvers = {
       { eventId }: { eventId: string },
       context: Context
     ) => {
-      requireVolunteer(context);
+      requireAuth(context);
 
       const { eventVolunteerId } = await resolveAttendantVolunteer(context, eventId);
 
@@ -128,7 +127,7 @@ const attendantResolvers = {
       { input }: { input: ReportSafetyIncidentInput },
       context: Context
     ) => {
-      requireVolunteer(context);
+      requireAuth(context);
 
       const { eventVolunteerId } = await resolveAttendantVolunteer(context, input.eventId);
 
@@ -155,7 +154,7 @@ const attendantResolvers = {
       { input }: { input: CreateLostPersonAlertInput },
       context: Context
     ) => {
-      requireVolunteer(context);
+      requireAuth(context);
 
       const { eventVolunteerId } = await resolveAttendantVolunteer(context, input.eventId);
 

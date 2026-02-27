@@ -16,7 +16,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
-import { createTestEvent } from '../testHelpers.js';
+import { createTestEvent, createTestVolunteerUser } from '../testHelpers.js';
 import type { Application } from 'express';
 
 let app: Application;
@@ -118,26 +118,10 @@ describe('Check-In Operations', () => {
     }
     sessionId = sessionRes.body.data.createSession.id;
 
-    // Create volunteer
-    const volunteerRes = await authRequest(
-      `mutation($eventId: ID!, $input: CreateVolunteerInput!) {
-        createVolunteer(eventId: $eventId, input: $input) {
-          id token volunteerId
-        }
-      }`,
-      {
-        eventId,
-        input: { firstName: 'Test', lastName: 'Volunteer', congregation: `CheckIn Cong ${Date.now()}` },
-      },
-      adminToken
-    );
-    if (volunteerRes.body.errors) {
-      console.error('Volunteer failed:', volunteerRes.body.errors);
-      return;
-    }
-    volunteerId = volunteerRes.body.data.createVolunteer.id;
-    const volunteerLoginId = volunteerRes.body.data.createVolunteer.volunteerId;
-    const volunteerLoginToken = volunteerRes.body.data.createVolunteer.token;
+    // Create volunteer user (registers User + creates EventVolunteer)
+    const { accessToken: volToken, eventVolunteerId } = await createTestVolunteerUser(app, eventId);
+    volunteerToken = volToken;
+    volunteerId = eventVolunteerId;
 
     // Create assignment with ACCEPTED status (forceAssignment)
     const assignmentRes = await authRequest(
@@ -174,16 +158,6 @@ describe('Check-In Operations', () => {
       }
     }
 
-    // Login as volunteer
-    const volunteerLoginRes = await graphqlRequest(
-      `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
-      { input: { volunteerId: volunteerLoginId, token: volunteerLoginToken } }
-    );
-    if (volunteerLoginRes.body.errors) {
-      console.error('Volunteer login failed:', volunteerLoginRes.body.errors);
-      return;
-    }
-    volunteerToken = volunteerLoginRes.body.data.loginEventVolunteer.accessToken;
   });
 
   afterAll(async () => {

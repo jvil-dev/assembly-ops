@@ -12,23 +12,23 @@
  */
 import { Context } from '../context.js';
 import { PostSessionStatusService } from '../../services/postSessionStatusService.js';
-import { requireAuth, requireVolunteer } from '../guards/auth.js';
+import { requireAuth } from '../guards/auth.js';
 import { UpdatePostSessionStatusInput } from '../validators/postSessionStatus.js';
 import { AuthorizationError } from '../../utils/errors.js';
 
 /**
- * Resolve EventVolunteer for authenticated volunteer (dual-auth bridge).
+ * Resolve EventVolunteer for authenticated user.
  */
 async function resolveEventVolunteer(
   context: Context
 ): Promise<string> {
-  const ev = await context.prisma.eventVolunteer.findUnique({
-    where: { id: context.volunteer!.id },
+  if (!context.user) throw new AuthorizationError('You must be logged in');
+  const ev = await context.prisma.eventVolunteer.findFirst({
+    where: { userId: context.user.id },
+    orderBy: { createdAt: 'desc' },
   });
-  if (ev) return ev.id;
-
-  // legacy volunteer bridge removed — volunteer model no longer exists
-  throw new AuthorizationError('Event volunteer not found');
+  if (!ev) throw new AuthorizationError('Event volunteer not found');
+  return ev.id;
 }
 
 const postSessionStatusResolvers = {
@@ -62,7 +62,7 @@ const postSessionStatusResolvers = {
       { input }: { input: UpdatePostSessionStatusInput },
       context: Context
     ) => {
-      requireVolunteer(context);
+      requireAuth(context);
       const eventVolunteerId = await resolveEventVolunteer(context);
 
       // Verify volunteer is assigned to this post in this session

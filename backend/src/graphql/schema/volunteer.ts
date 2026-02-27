@@ -12,16 +12,9 @@ const volunteerTypeDefs = `#graphql
 
   type CreatedVolunteer {
     id: ID!
-    volunteerId: String!
-    token: String!
     firstName: String!
     lastName: String!
     congregation: String!
-  }
-
-  type VolunteerCredentials {
-    volunteerId: String!
-    token: String!
   }
 
   # ============================================
@@ -70,7 +63,6 @@ const volunteerTypeDefs = `#graphql
     volunteer(id: ID!): Volunteer
     volunteers(eventId: ID!, departmentId: ID): [Volunteer!]!
     myVolunteerProfile: Volunteer
-    volunteerToken(id: ID!): String!
     roles(eventId: ID!): [Role!]!
     # Join requests (user's own)
     myJoinRequests: [EventJoinRequest!]!
@@ -83,12 +75,11 @@ const volunteerTypeDefs = `#graphql
     createVolunteers(input: CreateVolunteersInput!): [CreatedVolunteer!]!
     updateVolunteer(id: ID!, input: UpdateVolunteerInput!): Volunteer!
     deleteVolunteer(id: ID!): Boolean!
-    regenerateVolunteerCredentials(id: ID!): VolunteerCredentials!
     updateMyProfile(input: UpdateMyProfileInput!): Volunteer!
     # Join requests
     requestToJoinEvent(eventId: ID!, departmentType: DepartmentType, note: String): EventJoinRequest!
     cancelJoinRequest(requestId: ID!): Boolean!
-    approveJoinRequest(requestId: ID!): EventVolunteerCredentials!
+    approveJoinRequest(requestId: ID!): EventVolunteer!
     denyJoinRequest(requestId: ID!, reason: String): EventJoinRequest!
   }
 `;

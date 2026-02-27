@@ -39,6 +39,7 @@ import { areaTypeDefs } from './area.js';
 import { walkThroughTypeDefs } from './walkThrough.js';
 import { postSessionStatusTypeDefs } from './postSessionStatus.js';
 import { facilityLocationTypeDefs } from './facilityLocation.js';
+import adminTypeDefs from './admin.js';
 
 const baseTypeDefs = `#graphql
   scalar DateTime
@@ -80,6 +81,7 @@ const typeDefs = [
   walkThroughTypeDefs,
   postSessionStatusTypeDefs,
   facilityLocationTypeDefs,
+  adminTypeDefs,
 ];
 
 export default typeDefs;

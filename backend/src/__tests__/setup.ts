@@ -7,6 +7,7 @@ import { expressMiddleware } from '@as-integrations/express5';
 import typeDefs from '../graphql/schema/index.js';
 import resolvers from '../graphql/resolvers/index.js';
 import { createContext, Context } from '../graphql/context.js';
+import { cleanupTestData } from './testHelpers.js';
 
 let app: express.Application;
 let server: ApolloServer<Context>;
@@ -37,5 +38,6 @@ export async function createTestApp() {
 }
 
 export async function closeTestApp() {
+  await cleanupTestData();
   if (server) await server.stop();
 }

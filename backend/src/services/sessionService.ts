@@ -145,9 +145,7 @@ export class SessionService {
     return this.prisma.session.findUnique({
       where: { id: sessionId },
       include: {
-        event: {
-          include: { template: true },
-        },
+        event: true,
         _count: {
           select: { assignments: true },
         },

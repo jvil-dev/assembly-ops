@@ -66,8 +66,8 @@ const circuitResolvers = {
       });
     },
 
-    eventTemplates: async (circuit: Circuit, _args: unknown, context: Context) => {
-      return context.prisma.eventTemplate.findMany({
+    events: async (circuit: Circuit, _args: unknown, context: Context) => {
+      return context.prisma.event.findMany({
         where: { circuitId: circuit.id },
         orderBy: { startDate: 'desc' },
       });

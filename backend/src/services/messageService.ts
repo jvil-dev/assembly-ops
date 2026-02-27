@@ -237,9 +237,9 @@ export class MessageService {
   }
 
   /**
-   * Get inbox messages for any user (volunteers or admins).
-   * For volunteers: messages where they are the recipient.
-   * For admins: messages where recipientType=ADMIN and recipientId matches.
+   * Get inbox messages for a user.
+   * Finds messages sent directly to the user (recipientType=USER) OR
+   * sent to any of the user's EventVolunteer records.
    */
   async getInboxMessages(
     identity: SenderIdentity,
@@ -247,17 +247,24 @@ export class MessageService {
     limit = 50,
     offset = 0
   ) {
+    // Find all EventVolunteer IDs for this user
+    const evIds = await this.prisma.eventVolunteer.findMany({
+      where: { userId: identity.senderId },
+      select: { id: true },
+    });
+    const eventVolunteerIds = evIds.map((e) => e.id);
+
+    const recipientConditions: Prisma.MessageWhereInput[] = [
+      { recipientType: RecipientType.USER, recipientId: identity.senderId },
+    ];
+    if (eventVolunteerIds.length > 0) {
+      recipientConditions.push({ eventVolunteerId: { in: eventVolunteerIds } });
+    }
+
     const where: Prisma.MessageWhereInput = {
       deletedByRecipient: false,
+      OR: recipientConditions,
     };
-
-    if (identity.senderType === 'VOLUNTEER') {
-      where.eventVolunteerId = identity.senderId;
-    } else {
-      // Admin inbox: messages sent TO this admin
-      where.recipientType = RecipientType.USER;
-      where.recipientId = identity.senderId;
-    }
 
     if (filter?.isRead !== undefined) where.isRead = filter.isRead;
     if (filter?.senderId) where.senderUserId = filter.senderId;
@@ -286,22 +293,29 @@ export class MessageService {
   }
 
   /**
-   * Get unread message count for any user
+   * Get unread message count for a user
    */
   async getUnreadCount(identity: SenderIdentity): Promise<number> {
-    const where: Prisma.MessageWhereInput = {
-      isRead: false,
-      deletedByRecipient: false,
-    };
+    const evIds = await this.prisma.eventVolunteer.findMany({
+      where: { userId: identity.senderId },
+      select: { id: true },
+    });
+    const eventVolunteerIds = evIds.map((e) => e.id);
 
-    if (identity.senderType === 'VOLUNTEER') {
-      where.eventVolunteerId = identity.senderId;
-    } else {
-      where.recipientType = RecipientType.USER;
-      where.recipientId = identity.senderId;
+    const recipientConditions: Prisma.MessageWhereInput[] = [
+      { recipientType: RecipientType.USER, recipientId: identity.senderId },
+    ];
+    if (eventVolunteerIds.length > 0) {
+      recipientConditions.push({ eventVolunteerId: { in: eventVolunteerIds } });
     }
 
-    return this.prisma.message.count({ where });
+    return this.prisma.message.count({
+      where: {
+        isRead: false,
+        deletedByRecipient: false,
+        OR: recipientConditions,
+      },
+    });
   }
 
   /**
@@ -314,13 +328,18 @@ export class MessageService {
 
     if (!message) throw new NotFoundError('Message');
 
-    // Check ownership: volunteer recipient OR admin recipient
-    const isRecipient =
-      (identity.senderType === 'VOLUNTEER' &&
-        message.eventVolunteerId === identity.senderId) ||
-      (identity.senderType === 'USER' &&
-        message.recipientType === RecipientType.USER &&
-        message.recipientId === identity.senderId);
+    // Check ownership: direct USER recipient OR message to user's EventVolunteer
+    let isRecipient =
+      message.recipientType === RecipientType.USER &&
+      message.recipientId === identity.senderId;
+
+    if (!isRecipient && message.eventVolunteerId) {
+      const ev = await this.prisma.eventVolunteer.findUnique({
+        where: { id: message.eventVolunteerId },
+        select: { userId: true },
+      });
+      isRecipient = ev?.userId === identity.senderId;
+    }
 
     if (!isRecipient) {
       throw new AuthorizationError('This message does not belong to you');
@@ -344,19 +363,26 @@ export class MessageService {
    * Mark all messages as read for a user within an event
    */
   async markAllAsRead(identity: SenderIdentity, eventId?: string): Promise<number> {
+    const evIds = await this.prisma.eventVolunteer.findMany({
+      where: { userId: identity.senderId },
+      select: { id: true },
+    });
+    const eventVolunteerIds = evIds.map((e) => e.id);
+
+    const recipientConditions: Prisma.MessageWhereInput[] = [
+      { recipientType: RecipientType.USER, recipientId: identity.senderId },
+    ];
+    if (eventVolunteerIds.length > 0) {
+      recipientConditions.push({ eventVolunteerId: { in: eventVolunteerIds } });
+    }
+
     const where: Prisma.MessageWhereInput = {
       isRead: false,
       deletedByRecipient: false,
+      OR: recipientConditions,
     };
 
     if (eventId) where.eventId = eventId;
-
-    if (identity.senderType === 'VOLUNTEER') {
-      where.eventVolunteerId = identity.senderId;
-    } else {
-      where.recipientType = RecipientType.USER;
-      where.recipientId = identity.senderId;
-    }
 
     const result = await this.prisma.message.updateMany({
       where,
@@ -411,17 +437,19 @@ export class MessageService {
     if (!message) throw new NotFoundError('Message');
 
     // Determine if the user is the sender or recipient
-    const isSender =
-      (identity.senderType === 'USER' &&
-        message.senderUserId === identity.senderId) ||
-      (identity.senderType === 'VOLUNTEER' && message.senderVolId === identity.senderId);
+    const isSender = message.senderUserId === identity.senderId;
 
-    const isRecipient =
-      (identity.senderType === 'VOLUNTEER' &&
-        message.eventVolunteerId === identity.senderId) ||
-      (identity.senderType === 'USER' &&
-        message.recipientType === RecipientType.USER &&
-        message.recipientId === identity.senderId);
+    let isRecipient =
+      message.recipientType === RecipientType.USER &&
+      message.recipientId === identity.senderId;
+
+    if (!isRecipient && message.eventVolunteerId) {
+      const ev = await this.prisma.eventVolunteer.findUnique({
+        where: { id: message.eventVolunteerId },
+        select: { userId: true },
+      });
+      isRecipient = ev?.userId === identity.senderId;
+    }
 
     if (!isSender && !isRecipient) {
       throw new AuthorizationError('You cannot delete this message');

@@ -15,8 +15,8 @@ import { Context } from '../context.js';
 import {
   requireAdmin,
   requireAuth,
-  requireVolunteer,
   requireEventAccess,
+  resolveUserEventVolunteer,
 } from '../guards/auth.js';
 import { AreaService } from '../../services/areaService.js';
 import type {
@@ -87,14 +87,15 @@ const areaResolvers = {
       _args: unknown,
       context: Context
     ) => {
-      requireVolunteer(context);
+      requireAuth(context);
 
-      // Resolve the eventVolunteerId — try direct first, then bridge
-      let eventVolunteerId = context.volunteer!.id;
-
-      const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
-        where: { id: eventVolunteerId },
+      // Get the user's most recent EventVolunteer
+      const eventVolunteer = await context.prisma.eventVolunteer.findFirst({
+        where: { userId: context.user!.id },
+        orderBy: { createdAt: 'desc' },
       });
+      if (!eventVolunteer) return [];
+      const eventVolunteerId = eventVolunteer.id;
 
       const areaService = new AreaService(context.prisma);
       return areaService.getMyAreaGroups(eventVolunteerId);

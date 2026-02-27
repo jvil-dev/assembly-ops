@@ -101,12 +101,18 @@ const attendanceResolvers = {
       context: Context
     ) => {
       requireAuth(context);
-      if (context.volunteer) {
-        if (context.volunteer.eventId !== eventId) {
+      // Check if user has admin access or is a volunteer for this event
+      const eventAdmin = await context.prisma.eventAdmin.findUnique({
+        where: { userId_eventId: { userId: context.user!.id, eventId } },
+      });
+      if (!eventAdmin) {
+        // Not an admin — check if they're a volunteer for this event
+        const ev = await context.prisma.eventVolunteer.findUnique({
+          where: { userId_eventId: { userId: context.user!.id, eventId } },
+        });
+        if (!ev) {
           throw new AuthorizationError('You do not have access to this event');
         }
-      } else {
-        await requireEventAccess(context, eventId);
       }
       return context.prisma.session.findMany({
         where: { eventId },
@@ -128,12 +134,17 @@ const attendanceResolvers = {
         throw new AuthorizationError('Post not found');
       }
       const eventId = post.department.eventId;
-      if (context.volunteer) {
-        if (context.volunteer.eventId !== eventId) {
+      // Check if user has admin access or is a volunteer for this event
+      const eventAdmin = await context.prisma.eventAdmin.findUnique({
+        where: { userId_eventId: { userId: context.user!.id, eventId } },
+      });
+      if (!eventAdmin) {
+        const ev = await context.prisma.eventVolunteer.findUnique({
+          where: { userId_eventId: { userId: context.user!.id, eventId } },
+        });
+        if (!ev) {
           throw new AuthorizationError('You do not have access to this event');
         }
-      } else {
-        await requireEventAccess(context, eventId);
       }
       return context.prisma.attendanceCount.findMany({
         where: { postId },
@@ -151,30 +162,29 @@ const attendanceResolvers = {
     ) => {
       requireAuth(context);
       const attendanceService = new AttendanceService(context.prisma);
+      const eventId = await attendanceService.getSessionEventId(input.sessionId);
 
-      // Volunteer path: attendant-only, section-scoped
-      if (context.volunteer) {
-        const eventId = await attendanceService.getSessionEventId(input.sessionId);
+      // Check if user is an event admin
+      const eventAdmin = await context.prisma.eventAdmin.findUnique({
+        where: { userId_eventId: { userId: context.user!.id, eventId } },
+      });
 
-        // Try as EventVolunteer first (new auth — context.volunteer.id = EventVolunteer.id)
-        let eventVolunteer = await context.prisma.eventVolunteer.findUnique({
-          where: { id: context.volunteer.id },
-          include: { department: true },
-        });
-
-        if (!eventVolunteer || eventVolunteer.department?.departmentType !== 'ATTENDANT') {
-          throw new AuthorizationError('Only attendant volunteers can submit counts');
-        }
-
-        return attendanceService.submitVolunteerAttendanceCount(eventVolunteer.id, input);
+      if (eventAdmin) {
+        // Admin path
+        return attendanceService.submitAttendanceCount(context.user!.id, input);
       }
 
-      // Admin path: existing behavior
-      requireAdmin(context);
-      const eventId = await attendanceService.getSessionEventId(input.sessionId);
-      await requireEventAccess(context, eventId);
+      // Volunteer path: must be attendant department member
+      const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
+        where: { userId_eventId: { userId: context.user!.id, eventId } },
+        include: { department: true },
+      });
 
-      return attendanceService.submitAttendanceCount(context.user!.id, input);
+      if (!eventVolunteer || eventVolunteer.department?.departmentType !== 'ATTENDANT') {
+        throw new AuthorizationError('Only attendant volunteers can submit counts');
+      }
+
+      return attendanceService.submitVolunteerAttendanceCount(eventVolunteer.id, input);
     },
 
     updateAttendanceCount: async (

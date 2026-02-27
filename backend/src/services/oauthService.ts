@@ -82,9 +82,25 @@ export class OAuthService {
     firstName: string;
     lastName: string;
     isOverseer?: boolean;
+    congregation?: string;
+    congregationId?: string;
   }) {
     const pending = verifyPendingOAuthToken(input.pendingOAuthToken);
     if (!pending) throw new AuthenticationError('Invalid or expired registration token');
+
+    // Resolve congregation name from ID if provided
+    let congregationName: string | null = input.congregation ?? null;
+    let congregationId: string | null = null;
+    if (input.congregationId) {
+      const cong = await this.prisma.congregation.findUnique({
+        where: { id: input.congregationId },
+        select: { name: true },
+      });
+      if (cong) {
+        congregationId = input.congregationId;
+        congregationName = cong.name;
+      }
+    }
 
     const user = await this.prisma.$transaction(async (tx) => {
       // Check if a user with this email already exists (e.g. registered via email/password)
@@ -113,6 +129,8 @@ export class OAuthService {
           firstName: input.firstName,
           lastName: input.lastName,
           isOverseer: input.isOverseer ?? false,
+          congregation: congregationName,
+          congregationId,
         },
       });
       await tx.oAuthConnection.create({
@@ -131,9 +149,9 @@ export class OAuthService {
   }
 
   private async issueTokens(admin: { id: string; email: string }) {
-    await this.tokenService.deleteAllUserTokens(admin.id, 'user');
+    await this.tokenService.deleteAllUserTokens(admin.id);
     const tokens = generateTokens({ sub: admin.id, type: 'user', email: admin.email });
-    await this.tokenService.createRefreshToken(tokens.refreshToken, admin.id, 'user');
+    await this.tokenService.createRefreshToken(tokens.refreshToken, admin.id);
     return tokens;
   }
 }

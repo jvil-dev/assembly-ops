@@ -4,10 +4,6 @@
  * Manages refresh token lifecycle: creation, validation, rotation, and revocation.
  * Refresh tokens are stored in the database to enable server-side invalidation.
  *
- * Token Types:
- *   - 'user': All registered users (volunteers and overseers) — stored via userId FK
- *   - 'eventVolunteer': Printed-card event-day credentials — stored via eventVolunteerId FK
- *
  * Token Rotation:
  *   Each time a refresh token is used, it's revoked and a new one is issued.
  *   If a revoked token is used again (token reuse), ALL user tokens are revoked.
@@ -32,11 +28,7 @@ export class TokenService {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  async createRefreshToken(
-    token: string,
-    userId: string,
-    userType: 'user' | 'eventVolunteer'
-  ): Promise<void> {
+  async createRefreshToken(token: string, userId: string): Promise<void> {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
 
@@ -44,8 +36,7 @@ export class TokenService {
       data: {
         token: this.hashToken(token),
         expiresAt,
-        userId: userType === 'user' ? userId : null,
-        eventVolunteerId: userType === 'eventVolunteer' ? userId : null,
+        userId,
       },
     });
   }
@@ -57,28 +48,23 @@ export class TokenService {
     });
   }
 
-  async revokeAllUserTokens(userId: string, userType: 'user' | 'eventVolunteer'): Promise<void> {
-    const where =
-      userType === 'user'
-        ? { userId, revoked: false }
-        : { eventVolunteerId: userId, revoked: false };
-
-    await this.prisma.refreshToken.updateMany({ where, data: { revoked: true } });
+  async revokeAllUserTokens(userId: string): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revoked: false },
+      data: { revoked: true },
+    });
   }
 
-  async deleteAllUserTokens(userId: string, userType: 'user' | 'eventVolunteer'): Promise<void> {
-    const where =
-      userType === 'user' ? { userId } : { eventVolunteerId: userId };
-
-    await this.prisma.refreshToken.deleteMany({ where });
+  async deleteAllUserTokens(userId: string): Promise<void> {
+    await this.prisma.refreshToken.deleteMany({ where: { userId } });
   }
 
   async rotateRefreshToken(
     oldToken: string,
     userId: string,
-    userType: 'user' | 'eventVolunteer',
     email?: string,
-    isOverseer?: boolean
+    isOverseer?: boolean,
+    isAppAdmin?: boolean
   ): Promise<TokenPair | null> {
     const storedToken = await this.prisma.refreshToken.findUnique({
       where: { token: this.hashToken(oldToken) },
@@ -87,23 +73,23 @@ export class TokenService {
     if (!storedToken) return null;
 
     if (storedToken.revoked) {
-      await this.revokeAllUserTokens(userId, userType);
+      await this.revokeAllUserTokens(userId);
       return null;
     }
 
     if (storedToken.expiresAt < new Date()) return null;
 
-    await this.deleteAllUserTokens(userId, userType);
+    await this.deleteAllUserTokens(userId);
 
-    const tokens = generateTokens({ sub: userId, type: userType, email, isOverseer });
-    await this.createRefreshToken(tokens.refreshToken, userId, userType);
+    const tokens = generateTokens({ sub: userId, type: 'user', email, isOverseer, isAppAdmin });
+    await this.createRefreshToken(tokens.refreshToken, userId);
 
     return tokens;
   }
 
   async validateRefreshToken(token: string): Promise<{
     userId: string;
-    userType: 'user' | 'eventVolunteer';
+    userType: 'user';
   } | null> {
     try {
       const payload = verifyRefreshToken(token);

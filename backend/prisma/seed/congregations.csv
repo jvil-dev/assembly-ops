@@ -1,44 +1,219 @@
-name,city,state,circuitCode,language
-English - Revere,Revere,MA,MA-1,en
-Malden,Malden,MA,MA-1,en
-Metropolitan,Boston,MA,MA-1,en
-West - Lynn,Lynn,MA,MA-1,en
-Shawmut,Boston,MA,MA-2,en
-East - Lynn,Lynn,MA,MA-1,en
-Franklin Field,Boston,MA,MA-2,en
-Blue Hills,Boston,MA,MA-2,en
-South End,Boston,MA,MA-2,en
-Washington Park,Boston,MA,MA-2,en
-Cambridge,Cambridge,MA,MA-1,en
-English - Saugus,Saugus,MA,MA-1,en
-Stoneham,Stoneham,MA,MA-1,en
-Jamaica Plain English,Boston,MA,MA-2,en
-English - Somerville,Somerville,MA,MA-1,en
-Mattapan,Boston,MA,MA-2,en
-Quincy,Quincy,MA,MA-2,en
-Holbrook,Holbrook,MA,MA-2,en
-East Boston Spanish,Boston,MA,MA-10-S,es
-Spanish - Chelsea,Chelsea,MA,MA-10-S,es
-Spanish - Revere,Revere,MA,MA-10-S,es
-Central Spanish,Boston,MA,MA-6-S,es
-Spanish - Roxbury,Roxbury,MA,MA-6-S,es
-Spanish - Lynn,Lynn,MA,MA-10-S,es
-Dorchester Spanish,Boston,MA,MA-6-S,es
-Jamaica Plain Spanish,Boston,MA,MA-6-S,es
-Spanish - Somerville,Somerville,MA,MA-6-S,es
-Fellsway Spanish,Stoneham,MA,MA-10-S,es
-Spanish - Peabody,Peabody,MA,MA-10-S,es
-Spanish - Newton,Newton,MA,MA-15-S,es
-Spanish - Brockton,Brockton,MA,MA-6-S,es
-Central Spanish,Lawrence,MA,MA-10-S,es
-South Spanish,Lawrence,MA,MA-10-S,es
-Arlington Park Spanish,Lawrence,MA,MA-10-S,es
-Southeast Spanish,Lawrence,MA,MA-10-S,es
-North Spanish,Lawrence,MA,MA-10-S,es
-Spanish - Framingham,Framingham,MA,MA-15-S,es
-Spanish - Lowell,Lowell,MA,MA-10-S,es
-Spanish - Methuen,Methuen,MA,MA-10-S,es
-Jackson Spanish,Lawrence,MA,MA-10-S,es
-Spanish - Haverhill,Haverhill,MA,MA-10-S,es
-Spanish - Pawtucket,Pawtucket,RI,MA-6-S,es
-Broad Street Spanish,Nashua,NH,MA-10-S,es
+name,state,circuitCode,language
+Italian - Boston MA,Massachusetts,CT-3-B-I,it
+Burlington - MA,Massachusetts,MA-1,en
+Cambridge - MA,Massachusetts,MA-1,en
+East - Lynn MA,Massachusetts,MA-1,en
+English - Lawrence MA,Massachusetts,MA-1,en
+English - Peabody MA,Massachusetts,MA-1,en
+English - Revere MA,Massachusetts,MA-1,en
+English - Saugus MA,Massachusetts,MA-1,en
+English - Somerville MA,Massachusetts,MA-1,en
+Gloucester - MA,Massachusetts,MA-1,en
+Lexington - MA,Massachusetts,MA-1,en
+Malden - MA,Massachusetts,MA-1,en
+Metropolitan - Boston MA,Massachusetts,MA-1,en
+Salem - MA,Massachusetts,MA-1,en
+Stoneham - MA,Massachusetts,MA-1,en
+West - Lynn MA,Massachusetts,MA-1,en
+Wilmington - MA,Massachusetts,MA-1,en
+Broad Street Spanish - Nashua NH,New Hampshire,MA-10-S,es
+Central Spanish - Lawrence MA,Massachusetts,MA-10-S,es
+East Boston Spanish - Boston MA,Massachusetts,MA-10-S,es
+Fellsway Spanish - Stoneham MA,Massachusetts,MA-10-S,es
+Jackson Spanish - Lawrence MA,Massachusetts,MA-10-S,es
+North Spanish - Lawrence MA,Massachusetts,MA-10-S,es
+South Spanish - Lawrence MA,Massachusetts,MA-10-S,es
+Southeast Spanish - Lawrence MA,Massachusetts,MA-10-S,es
+Spanish - Haverhill MA,Massachusetts,MA-10-S,es
+Spanish - Lowell MA,Massachusetts,MA-10-S,es
+Spanish - Lynn MA,Massachusetts,MA-10-S,es
+Spanish - Manchester NH,New Hampshire,MA-10-S,es
+Spanish - Methuen MA,Massachusetts,MA-10-S,es
+Spanish - Peabody MA,Massachusetts,MA-10-S,es
+Spanish - Revere MA,Massachusetts,MA-10-S,es
+Central - Brockton MA,Massachusetts,MA-11,en
+Dighton - MA,Massachusetts,MA-11,en
+East Campello - Brockton MA,Massachusetts,MA-11,en
+Franklin - MA,Massachusetts,MA-11,en
+Mansfield - MA,Massachusetts,MA-11,en
+North Attleboro - MA,Massachusetts,MA-11,en
+Sharon - MA,Massachusetts,MA-11,en
+Stoughton - MA,Massachusetts,MA-11,en
+Burncoat - Worcester MA,Massachusetts,MA-13,en
+Central - Leominster MA,Massachusetts,MA-13,en
+Central - Worcester MA,Massachusetts,MA-13,en
+Douglas - MA,Massachusetts,MA-13,en
+English - Ashland MA,Massachusetts,MA-13,en
+English - Northbourough MA,Massachusetts,MA-13,en
+Leicester - MA,Massachusetts,MA-13,en
+Northbridge - MA,Massachusetts,MA-13,en
+Oxford - MA,Massachusetts,MA-13,en
+South English - Worcester MA,Massachusetts,MA-13,en
+Webster - MA,Massachusetts,MA-13,en
+West - Worcester MA,Massachusetts,MA-13,en
+Canton Haitian Creole - Stoughton MA,Massachusetts,MA-14-CR,ht
+Central Haitian Creole - Boston MA,Massachusetts,MA-14-CR,ht
+Central Haitian Creole - New Bedford MA,Massachusetts,MA-14-CR,ht
+Haitian Creole - Brockton MA,Massachusetts,MA-14-CR,ht
+Haitian Creole - Mattapan MA,Massachusetts,MA-14-CR,ht
+Haitian Creole - Somerville MA,Massachusetts,MA-14-CR,ht
+North Haitian Creole - Lawrence MA,Massachusetts,MA-14-CR,ht
+Pearl Haitian Creole - Stoughton MA,Massachusetts,MA-14-CR,ht
+South Haitian Creole - Boston MA,Massachusetts,MA-14-CR,ht
+Summer Haitian Creole - Rockland MA,Massachusetts,MA-14-CR,ht
+West Haitian Creole - Lowell MA,Massachusetts,MA-14-CR,ht
+West Haitian Creole - Worcester MA,Massachusetts,MA-14-CR,ht
+Feeding Hills Spanish - Agawam MA,Massachusetts,MA-15-S,es
+Mount Tom Spanish - Holyoke MA,Massachusetts,MA-15-S,es
+Parker Spanish - Springfield MA,Massachusetts,MA-15-S,es
+South Spanish - Springfield MA,Massachusetts,MA-15-S,es
+South Spanish - Worcester MA,Massachusetts,MA-15-S,es
+Spanish - Chicopee MA,Massachusetts,MA-15-S,es
+Spanish - Fitchburg MA,Massachusetts,MA-15-S,es
+Spanish - Framingham MA,Massachusetts,MA-15-S,es
+Spanish - Leominster MA,Massachusetts,MA-15-S,es
+Spanish - Newton MA,Massachusetts,MA-15-S,es
+Spanish - Northborough MA,Massachusetts,MA-15-S,es
+West Spanish - Springfield MA,Massachusetts,MA-15-S,es
+Blue Hills - Boston MA,Massachusetts,MA-2,en
+Bridgewater - MA,Massachusetts,MA-2,en
+Brighton - Boston MA,Massachusetts,MA-2,en
+Cummins - Boston MA,Massachusetts,MA-2,en
+English - Newton MA,Massachusetts,MA-2,en
+Franklin Field - Boston MA,Massachusetts,MA-2,en
+Holbrook - MA,Massachusetts,MA-2,en
+Hyde Park - Boston MA,Massachusetts,MA-2,en
+Jamaica Plain English - Boston MA,Massachusetts,MA-2,en
+Mattapan - Boston MA,Massachusetts,MA-2,en
+Quincy - MA,Massachusetts,MA-2,en
+Rockland - MA,Massachusetts,MA-2,en
+Shawmut - Boston MA,Massachusetts,MA-2,en
+South End - Boston MA,Massachusetts,MA-2,en
+Washington Park - Boston MA,Massachusetts,MA-2,en
+Amherst - MA,Massachusetts,MA-3,en
+East - Westfield MA,Massachusetts,MA-3,en
+English - Holyoke MA,Massachusetts,MA-3,en
+Feeding Hills - Agawam MA,Massachusetts,MA-3,en
+Great Barrington - MA,Massachusetts,MA-3,en
+Greenfield - MA,Massachusetts,MA-3,en
+Keene - NH,New Hampshire,MA-3,en
+Lee - MA,Massachusetts,MA-3,en
+North Adams - MA,Massachusetts,MA-3,en
+Northampton - MA,Massachusetts,MA-3,en
+Orange - MA,Massachusetts,MA-3,en
+Pittsfield - MA,Massachusetts,MA-3,en
+Shelbourne Falls - MA,Massachusetts,MA-3,en
+West - Westfield MA,Massachusetts,MA-3,en
+West Swanzey - NH,New Hampshire,MA-3,en
+Central Spanish - Boston MA,Massachusetts,MA-6-S,es
+Dorchester Spanish - Boston MA,Massachusetts,MA-6-S,es
+Jamaica Plain Spanish - Boston MA,Massachusetts,MA-6-S,es
+Spanish - Brockton MA,Massachusetts,MA-6-S,es
+Spanish - New Bedford MA,Massachusetts,MA-6-S,es
+Spanish - Roxbury MA,Massachusetts,MA-6-S,es
+Spanish - Somerville MA,Massachusetts,MA-6-S,es
+Spanish - Tiverton RI,Rhode Island,MA-6-S,es
+Central Portuguese - Leominster MA,Massachusetts,MA-7-A-T,pt
+Portuguese - Ashland MA,Massachusetts,MA-7-A-T,pt
+Portuguese - Fall River MA,Massachusetts,MA-7-A-T,pt
+Portuguese - Hyannis MA,Massachusetts,MA-7-A-T,pt
+Portuguese - Lowell MA,Massachusetts,MA-7-A-T,pt
+Portuguese - New Bedford MA,Massachusetts,MA-7-A-T,pt
+Portuguese - Randolph MA,Massachusetts,MA-7-A-T,pt
+Portuguese - Saugus MA,Massachusetts,MA-7-A-T,pt
+Portuguese - Taunton MA,Massachusetts,MA-7-A-T,pt
+Portuguese - Worcester MA,Massachusetts,MA-7-A-T,pt
+West Portuguese - Boston MA,Massachusetts,MA-7-A-T,pt
+Central Kabuverdianu - Boston MA,Massachusetts,MA-7-B-KBV,kea
+Central Kabuverdianu - New Bedford MA,Massachusetts,MA-7-B-KBV,kea
+Dorchester Kabuverdianu - Boston MA,Massachusetts,MA-7-B-KBV,kea
+East Kabuverdianu - Brockton MA,Massachusetts,MA-7-B-KBV,kea
+North Kabuverdianu - Taunton MA,Massachusetts,MA-7-B-KBV,kea
+South Kabuverdianu - Brockton MA,Massachusetts,MA-7-B-KBV,kea
+East - Tiverton RI,Rhode Island,MA-8,en
+Eastham - MA,Massachusetts,MA-8,en
+English - Buzzards Bay MA,Massachusetts,MA-8,en
+English - New Bedford MA,Massachusetts,MA-8,en
+Fairhaven - MA,Massachusetts,MA-8,en
+Harwich - MA,Massachusetts,MA-8,en
+Hyannis - MA,Massachusetts,MA-8,en
+Martha's Vineyard - MA,Massachusetts,MA-8,en
+Mashpee - MA,Massachusetts,MA-8,en
+Middleboro - MA,Massachusetts,MA-8,en
+Nantucket - MA,Massachusetts,MA-8,en
+North - Fall River MA,Massachusetts,MA-8,en
+North Dartmouth - MA,Massachusetts,MA-8,en
+Plymouth - MA,Massachusetts,MA-8,en
+Sandwich - MA,Massachusetts,MA-8,en
+Waquoit - East Falmouth MA,Massachusetts,MA-8,en
+Wareham - MA,Massachusetts,MA-8,en
+West - Falmouth MA,Massachusetts,MA-8,en
+West - Tiverton RI,Rhode Island,MA-8,en
+Acres - Springfield MA,Massachusetts,MA-9,en
+College Square - Springfield MA,Massachusetts,MA-9,en
+East - Chicopee MA,Massachusetts,MA-9,en
+East Longmeadow - Springfield MA,Massachusetts,MA-9,en
+Forest Park - Springfield MA,Massachusetts,MA-9,en
+Liberty Heights - Springfield MA,Massachusetts,MA-9,en
+Ludlow - MA,Massachusetts,MA-9,en
+North English - Springfield MA,Massachusetts,MA-9,en
+Palmer - MA,Massachusetts,MA-9,en
+Quinebaugh Valley - Southbridge MA,Massachusetts,MA-9,en
+Ware - MA,Massachusetts,MA-9,en
+West - Chicopee MA,Massachusetts,MA-9,en
+Amesbury - MA,Massachusetts,ME-2,en
+Dover - NH,New Hampshire,ME-2,en
+English - Methuen MA,Massachusetts,ME-2,en
+Exeter - NH,New Hampshire,ME-2,en
+Newburyport - MA,Massachusetts,ME-2,en
+North - Haverhill MA,Massachusetts,ME-2,en
+Portsmouth - NH,New Hampshire,ME-2,en
+South - Haverhill MA,Massachusetts,ME-2,en
+Norway - ME,Maine,ME-3,en
+Chelmsford - MA,Massachusetts,NH-1,en
+English - Fitchburg MA,Massachusetts,NH-1,en
+Gardner - MA,Massachusetts,NH-1,en
+Highlands - Lowell MA,Massachusetts,NH-1,en
+Maynard - MA,Massachusetts,NH-1,en
+Pepperell - MA,Massachusetts,NH-1,en
+Whalom - Leominster MA,Massachusetts,NH-1,en
+Derry - NH,New Hampshire,NH-1-A,en
+English - Nashua NH,New Hampshire,NH-1-A,en
+Goffstown - NH,New Hampshire,NH-1-A,en
+Hollis - NH,New Hampshire,NH-1-A,en
+Hudson - NH,New Hampshire,NH-1-A,en
+Londonderry - NH,New Hampshire,NH-1-A,en
+Merrimack - NH,New Hampshire,NH-1-A,en
+North - Manchester NH,New Hampshire,NH-1-A,en
+South - Manchester NH,New Hampshire,NH-1-A,en
+West - Manchester NH,New Hampshire,NH-1-A,en
+Wilton - NH,New Hampshire,NH-1-A,en
+Cambodian - Lowell MA,Massachusetts,NH-1-B-CB,bas
+Campton - NH,New Hampshire,NH-2,en
+Claremont - NH,New Hampshire,NH-2,en
+East - Concord NH,New Hampshire,NH-2,en
+Gorham - NH,New Hampshire,NH-2,en
+Lancaster - NH,New Hampshire,NH-2,en
+Lebanon - NH,New Hampshire,NH-2,en
+Madison - NH,New Hampshire,NH-2,en
+Meredith - NH,New Hampshire,NH-2,en
+North - Franklin NH,New Hampshire,NH-2,en
+North - Rochester NH,New Hampshire,NH-2,en
+Pembroke - NH,New Hampshire,NH-2,en
+South - Franklin NH,New Hampshire,NH-2,en
+West - Concord NH,New Hampshire,NH-2,en
+Wilmont - NH,New Hampshire,NH-2,en
+Wolfeboro - NH,New Hampshire,NH-2,en
+Woodsville - NH,New Hampshire,NH-2,en
+Central French - Boston MA,Massachusetts,NY-20-F,fr
+County Sign Language - New Bedford MA,Massachusetts,NY-42-B-ASL,ase
+Sign Language - Cranston RI,Rhode Island,NY-42-B-ASL,ase
+Sign Language - Lawrence MA,Massachusetts,NY-42-B-ASL,ase
+West Sign Language - Hartford CT,Conneticut,NY-42-B-ASL,ase
+Central Mandarin Chinese - Boston MA,Massachusetts,NY-44-A-CHM,ch
+Central Armenian - Boston MA,Massachusetts,NY-45-U,hy
+Russian - Boston MA,Massachusetts,NY-45-U,ru
+Twi - Worcester MA,Massachusetts,NY-49-A-TW,tw
+Merrimack River Swahili (Congo) - Concord NH,New Hampshire,NY-50-A-SW,sw
+Pioneer Valley Swahili - Springfield MA,Massachusetts,NY-50-A-SW,sw
+Parkview - Providence RI,Rhode Island,RI-1,en

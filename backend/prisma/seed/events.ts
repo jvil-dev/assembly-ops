@@ -1,8 +1,9 @@
 /**
- * Seed script for EventTemplate data.
- * Reads event_templates.csv and upserts each row into the EventTemplate table.
+ * Seed script for Event data.
+ * Reads events.csv and upserts each row directly into the Event table.
  * Resolves circuit code to circuitId via Circuit lookup.
- * CSV columns: eventType, circuit, region, serviceYear, name, theme,
+ * Derives state from region (e.g. "US-MA" → "MA").
+ * CSV columns: eventType, circuitCode, region, serviceYear, name, theme,
  *              themeScripture, venue, address, startDate, endDate, language
  */
 
@@ -14,21 +15,25 @@ import { parseCSV } from './parseCSV.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export async function seedEventTemplates() {
-  const csvPath = resolve(__dirname, 'event_templates.csv');
+export async function seedEvents() {
+  const csvPath = resolve(__dirname, 'events.csv');
   const rows = parseCSV(csvPath);
 
   if (rows.length === 0) {
-    console.log('No event template data in CSV, skipping...');
+    console.log('No event data in CSV, skipping...');
     return;
   }
 
-  console.log(`Seeding ${rows.length} event templates...`);
+  console.log(`Seeding ${rows.length} events...`);
 
   for (const row of rows) {
     const eventType = row.eventType as EventType;
     const circuit = row.circuitCode || null;
     const startDate = new Date(row.startDate);
+    const language = row.language || 'en';
+
+    // Derive state from region (e.g. "US-MA" → "MA")
+    const state = row.region.startsWith('US-') ? row.region.substring(3) : null;
 
     // Look up circuitId if circuitCode is provided
     let circuitId: string | null = null;
@@ -39,35 +44,37 @@ export async function seedEventTemplates() {
       if (circuitRecord) {
         circuitId = circuitRecord.id;
       } else {
-        console.warn(`  Circuit ${row.circuitCode} not found for template "${row.name}"`);
+        console.warn(`  Circuit ${row.circuitCode} not found for event "${row.name}"`);
       }
     }
 
-    await prisma.eventTemplate.upsert({
+    await prisma.event.upsert({
       where: {
-        eventType_circuit_startDate: {
+        eventType_venue_startDate_language: {
           eventType,
-          circuit: circuit ?? '',
+          venue: row.venue,
           startDate,
+          language,
         },
       },
       update: {
+        circuit,
+        circuitId,
         region: row.region,
+        state,
         serviceYear: parseInt(row.serviceYear, 10),
         name: row.name,
         theme: row.theme || null,
         themeScripture: row.themeScripture || null,
-        venue: row.venue,
         address: row.address,
         endDate: new Date(row.endDate),
-        language: row.language || 'en',
-        circuitId,
       },
       create: {
         eventType,
         circuit,
         circuitId,
         region: row.region,
+        state,
         serviceYear: parseInt(row.serviceYear, 10),
         name: row.name,
         theme: row.theme || null,
@@ -76,10 +83,10 @@ export async function seedEventTemplates() {
         address: row.address,
         startDate,
         endDate: new Date(row.endDate),
-        language: row.language || 'en',
+        language,
       },
     });
   }
 
-  console.log(`Seeded ${rows.length} event templates`);
+  console.log(`Seeded ${rows.length} events`);
 }

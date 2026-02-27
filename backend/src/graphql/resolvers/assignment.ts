@@ -35,7 +35,7 @@ import { ScheduleAssignment } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { Context } from '../context.js';
 import { AssignmentService } from '../../services/assignmentService.js';
-import { requireAdmin, requireVolunteer, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireEventAccess, resolveUserEventVolunteer } from '../guards/auth.js';
 import {
   CreateAssignmentInput,
   UpdateAssignmentInput,
@@ -115,10 +115,15 @@ const assignmentResolvers = {
       return assignmentService.getVolunteerAssignments(volunteerId);
     },
 
-    myAssignments: async (_parent: unknown, { status }: { status?: string }, context: Context) => {
-      requireVolunteer(context);
+    myAssignments: async (
+      _parent: unknown,
+      { status, eventId }: { status?: string; eventId: string },
+      context: Context
+    ) => {
+      requireAuth(context);
+      const ev = await resolveUserEventVolunteer(context.user!.id, eventId, context.prisma);
       const assignmentService = new AssignmentService(context.prisma);
-      return assignmentService.getVolunteerAssignments(context.volunteer.id, status);
+      return assignmentService.getVolunteerAssignments(ev.id, status);
     },
 
     pendingAssignments: async (
@@ -152,13 +157,21 @@ const assignmentResolvers = {
       { postId, sessionId }: { postId: string; sessionId: string },
       context: Context
     ) => {
-      requireVolunteer(context);
+      requireAuth(context);
+
+      const session = await context.prisma.session.findUnique({
+        where: { id: sessionId },
+        select: { eventId: true },
+      });
+      if (!session) return null;
+      const ev = await resolveUserEventVolunteer(context.user!.id, session.eventId, context.prisma);
+
       const assignmentService = new AssignmentService(context.prisma);
 
       // Get captain assignment
       const captainAssignment = await context.prisma.scheduleAssignment.findFirst({
         where: {
-          eventVolunteerId: context.volunteer.id,
+          eventVolunteerId: ev.id,
           postId,
           sessionId,
           isCaptain: true,
@@ -176,7 +189,7 @@ const assignmentResolvers = {
       }
 
       const members = await assignmentService.getCaptainGroup(
-        context.volunteer.id,
+        ev.id,
         postId,
         sessionId
       );
@@ -308,9 +321,15 @@ const assignmentResolvers = {
       { input }: { input: AcceptAssignmentInput },
       context: Context
     ) => {
-      requireVolunteer(context);
+      requireAuth(context);
+      const assignment = await context.prisma.scheduleAssignment.findUnique({
+        where: { id: input.assignmentId },
+        include: { session: { select: { eventId: true } } },
+      });
+      if (!assignment) throw new Error('Assignment not found');
+      const ev = await resolveUserEventVolunteer(context.user!.id, assignment.session.eventId, context.prisma);
       const assignmentService = new AssignmentService(context.prisma);
-      return assignmentService.acceptAssignment(context.volunteer.id, input);
+      return assignmentService.acceptAssignment(ev.id, input);
     },
 
     declineAssignment: async (
@@ -318,9 +337,15 @@ const assignmentResolvers = {
       { input }: { input: DeclineAssignmentInput },
       context: Context
     ) => {
-      requireVolunteer(context);
+      requireAuth(context);
+      const assignment = await context.prisma.scheduleAssignment.findUnique({
+        where: { id: input.assignmentId },
+        include: { session: { select: { eventId: true } } },
+      });
+      if (!assignment) throw new Error('Assignment not found');
+      const ev = await resolveUserEventVolunteer(context.user!.id, assignment.session.eventId, context.prisma);
       const assignmentService = new AssignmentService(context.prisma);
-      return assignmentService.declineAssignment(context.volunteer.id, input);
+      return assignmentService.declineAssignment(ev.id, input);
     },
 
     // Overseer actions
@@ -376,9 +401,15 @@ const assignmentResolvers = {
       { input }: { input: CaptainCheckInInput },
       context: Context
     ) => {
-      requireVolunteer(context);
+      requireAuth(context);
+      const assignment = await context.prisma.scheduleAssignment.findUnique({
+        where: { id: input.assignmentId },
+        include: { session: { select: { eventId: true } } },
+      });
+      if (!assignment) throw new Error('Assignment not found');
+      const ev = await resolveUserEventVolunteer(context.user!.id, assignment.session.eventId, context.prisma);
       const assignmentService = new AssignmentService(context.prisma);
-      return assignmentService.captainCheckIn(context.volunteer.id, input);
+      return assignmentService.captainCheckIn(ev.id, input);
     },
   },
 

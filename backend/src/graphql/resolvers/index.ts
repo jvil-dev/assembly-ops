@@ -44,6 +44,7 @@ import areaResolvers from './area.js';
 import walkThroughResolvers from './walkThrough.js';
 import postSessionStatusResolvers from './postSessionStatus.js';
 import facilityLocationResolvers from './facilityLocation.js';
+import adminResolvers from './admin.js';
 
 const baseResolvers = {
   DateTime: DateTimeResolver,
@@ -95,6 +96,7 @@ const resolvers = {
     ...walkThroughResolvers.Query,
     ...postSessionStatusResolvers.Query,
     ...facilityLocationResolvers.Query,
+    ...adminResolvers.Query,
   },
 
   Mutation: {
@@ -116,11 +118,11 @@ const resolvers = {
     ...walkThroughResolvers.Mutation,
     ...postSessionStatusResolvers.Mutation,
     ...facilityLocationResolvers.Mutation,
+    ...adminResolvers.Mutation,
   },
 
   User: authResolvers.User,
   Event: eventResolvers.Event,
-  EventTemplate: eventResolvers.EventTemplate,
   Department: eventResolvers.Department,
   Post: postResolvers.Post,
   Session: sessionResolvers.Session,

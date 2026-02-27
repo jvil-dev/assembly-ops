@@ -17,7 +17,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp, closeTestApp } from '../setup.js';
-import { createTestEvent } from '../testHelpers.js';
+import { createTestEvent, createTestVolunteerUser } from '../testHelpers.js';
 import type { Application } from 'express';
 
 describe('Assignment Acceptance Operations', () => {
@@ -101,44 +101,10 @@ describe('Assignment Acceptance Operations', () => {
         });
       sessionId = sessionRes.body.data.createSession.id;
 
-      // Create volunteer
-      const volunteerRes = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($eventId: ID!, $input: CreateVolunteerInput!) {
-            createVolunteer(eventId: $eventId, input: $input) {
-              id token volunteerId
-            }
-          }`,
-          variables: {
-            eventId,
-            input: { firstName: 'Test', lastName: 'Vol', congregation: `Accept Cong ${Date.now()}` },
-          },
-        });
-      volunteerId = volunteerRes.body.data.createVolunteer.id;
-      const volunteerLoginId = volunteerRes.body.data.createVolunteer.volunteerId;
-      const volunteerLoginToken = volunteerRes.body.data.createVolunteer.token;
-
-      // Assign volunteer to department
-      await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          query: `mutation($volunteerId: ID!, $departmentId: ID!) {
-            assignVolunteerToDepartment(volunteerId: $volunteerId, departmentId: $departmentId) { id }
-          }`,
-          variables: { volunteerId, departmentId },
-        });
-
-      // Login as volunteer
-      const volunteerLoginRes = await request(app)
-        .post('/graphql')
-        .send({
-          query: `mutation($input: LoginEventVolunteerInput!) { loginEventVolunteer(input: $input) { accessToken } }`,
-          variables: { input: { volunteerId: volunteerLoginId, token: volunteerLoginToken } },
-        });
-    volunteerToken = volunteerLoginRes.body.data.loginEventVolunteer.accessToken;
+      // Create volunteer user (registers User + creates EventVolunteer in department)
+      const { accessToken: volToken, eventVolunteerId } = await createTestVolunteerUser(app, eventId, departmentId);
+      volunteerToken = volToken;
+      volunteerId = eventVolunteerId;
   });
 
   afterAll(async () => {

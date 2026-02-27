@@ -78,32 +78,6 @@ describe('Event Operations', () => {
     await closeTestApp();
   });
 
-  describe('eventTemplates', () => {
-    it('should return list of templates', async () => {
-      const response = await request(app)
-        .post('/graphql')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          query: `
-            query {
-              eventTemplates(serviceYear: 2026) {
-                id
-                name
-                eventType
-                circuit
-                venue
-                startDate
-              }
-            }
-          `,
-        });
-
-      expect(response.status).toBe(200);
-      expect(response.body.errors).toBeUndefined();
-      expect(Array.isArray(response.body.data.eventTemplates)).toBe(true);
-    });
-  });
-
   describe('discoverEvents', () => {
     it('should return public events', async () => {
       const response = await request(app)
@@ -304,8 +278,10 @@ describe('Event Operations', () => {
           query: `
             mutation JoinByCode($input: JoinDepartmentByCodeInput!) {
               joinDepartmentByAccessCode(input: $input) {
-                volunteerId
-                token
+                id
+                department {
+                  id
+                }
               }
             }
           `,
@@ -316,8 +292,8 @@ describe('Event Operations', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.joinDepartmentByAccessCode.volunteerId).toBeDefined();
-      expect(response.body.data.joinDepartmentByAccessCode.token).toBeDefined();
+      expect(response.body.data.joinDepartmentByAccessCode.id).toBeDefined();
+      expect(response.body.data.joinDepartmentByAccessCode.department.id).toBeDefined();
     });
 
     it('should reject invalid access code', async () => {
@@ -328,7 +304,7 @@ describe('Event Operations', () => {
           query: `
             mutation JoinByCode($input: JoinDepartmentByCodeInput!) {
               joinDepartmentByAccessCode(input: $input) {
-                volunteerId
+                id
               }
             }
           `,
@@ -548,7 +524,7 @@ describe('Event Operations', () => {
           query: `
             mutation JoinByCode($input: JoinDepartmentByCodeInput!) {
               joinDepartmentByAccessCode(input: $input) {
-                volunteerId
+                id
               }
             }
           `,
@@ -563,7 +539,7 @@ describe('Event Operations', () => {
           query: `
             mutation JoinByCode($input: JoinDepartmentByCodeInput!) {
               joinDepartmentByAccessCode(input: $input) {
-                volunteerId
+                id
               }
             }
           `,
@@ -642,7 +618,7 @@ describe('Event Operations', () => {
           query: `
             mutation JoinByCode($input: JoinDepartmentByCodeInput!) {
               joinDepartmentByAccessCode(input: $input) {
-                volunteerId
+                id
               }
             }
           `,

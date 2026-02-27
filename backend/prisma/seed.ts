@@ -1,16 +1,13 @@
 /// <reference types="node" />
-import { seedCircuits } from './seed/circuits.js';
 import { seedCongregations } from './seed/congregations.js';
-import { seedEventTemplates } from './seed/event_templates.js';
+import { seedEvents } from './seed/events.js';
 
 async function main() {
   console.log('Starting seed...\n');
 
-  // Seed in order: circuits → congregations → event templates
-  // (congregations reference circuits, templates reference circuits)
-  await seedCircuits();
+  // Seed in order: congregations (auto-derives circuits) → events
   await seedCongregations();
-  await seedEventTemplates();
+  await seedEvents();
 
   console.log('\nSeed complete!');
 }
