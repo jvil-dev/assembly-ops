@@ -46,12 +46,6 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token is required'),
 });
 
-export const loginEventVolunteerSchema = z.object({
-  volunteerId: z.string().min(1, 'Volunteer ID is required'),
-  token: z.string().min(1, 'Token is required'),
-});
-
 export type RegisterUserInput = z.infer<typeof registerUserSchema>;
 export type LoginUserInput = z.infer<typeof loginUserSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
-export type LoginEventVolunteerInput = z.infer<typeof loginEventVolunteerSchema>;

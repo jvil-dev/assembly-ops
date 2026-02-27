@@ -54,13 +54,8 @@ import { MessageSenderType } from '@prisma/client';
  * Works for both admin and volunteer tokens.
  */
 function resolveSenderIdentity(context: Context): SenderIdentity {
-  if (context.user) {
-    return { senderType: 'USER' as MessageSenderType, senderId: context.user!.id };
-  }
-  if (context.volunteer) {
-    return { senderType: 'VOLUNTEER' as MessageSenderType, senderId: context.volunteer.id };
-  }
-  throw new Error('You must be logged in');
+  if (!context.user) throw new Error('You must be logged in');
+  return { senderType: 'USER' as MessageSenderType, senderId: context.user.id };
 }
 
 const messageResolvers = {
@@ -164,26 +159,11 @@ const messageResolvers = {
     ) => {
       requireAuth(context);
       const identity = resolveSenderIdentity(context);
-
-      // If volunteer, verify they belong to this event
-      if (context.volunteer && context.volunteer.eventId !== eventId) {
-        throw new Error('You do not have access to this event');
-      }
-      // If overseer, verify event access
-      if (context.user) {
-        await requireEventAccess(context, eventId);
-      }
+      await requireEventAccess(context, eventId);
 
       // Exclude self by ID only (not by name — different people can share a name)
       const excludeAdminIds = new Set<string>();
-      const excludeVolunteerIds = new Set<string>();
-
-      if (identity.senderType === 'USER') {
-        excludeAdminIds.add(identity.senderId);
-      } else if (identity.senderType === 'VOLUNTEER') {
-        excludeVolunteerIds.add(identity.senderId);
-
-      }
+      excludeAdminIds.add(identity.senderId);
 
       // Fetch admins for this event
       const eventAdmins = await context.prisma.eventAdmin.findMany({
@@ -209,7 +189,6 @@ const messageResolvers = {
       }
 
       for (const ev of eventVolunteers) {
-        if (excludeVolunteerIds.has(ev.id)) continue;
         participants.push({
           id: ev.id,
           displayName: `${ev.user.firstName} ${ev.user.lastName}`,
@@ -236,19 +215,14 @@ const messageResolvers = {
 
       // Determine eventId for access control
       let eventId: string;
-      if (context.user) {
-        if (input.volunteerId) {
-          eventId = await messageService.getVolunteerEventId(input.volunteerId);
-        } else if (input.eventId) {
-          eventId = input.eventId;
-        } else {
-          throw new Error('Event ID or volunteer ID is required');
-        }
-        await requireEventAccess(context, eventId);
+      if (input.volunteerId) {
+        eventId = await messageService.getVolunteerEventId(input.volunteerId);
+      } else if (input.eventId) {
+        eventId = input.eventId;
       } else {
-        // Volunteer sender — use their own eventId from context
-        eventId = context.volunteer!.eventId;
+        throw new Error('Event ID or volunteer ID is required');
       }
+      await requireEventAccess(context, eventId);
 
       return messageService.sendMessage(identity, input, eventId);
     },

@@ -38,7 +38,7 @@ final class ArchivedEventsViewModel: ObservableObject {
 
         var displayEventType: String {
             switch eventType {
-            case "CIRCUIT_ASSEMBLY": return "Circuit Assembly"
+            case "CIRCUIT_ASSEMBLY_CO", "CIRCUIT_ASSEMBLY_BR": return "Circuit Assembly"
             case "REGIONAL_CONVENTION": return "Regional Convention"
             case "SPECIAL_CONVENTION": return "Special Convention"
             default: return eventType

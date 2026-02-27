@@ -8,27 +8,12 @@
  *   - Access Token (15 min): Short-lived, used for API authorization
  *   - Refresh Token (7 days): Long-lived, used to get new access tokens
  *
- * Functions:
- *   - generateTokens(payload): Create access + refresh token pair
- *   - verifyAccessToken(token): Verify and decode access token
- *   - verifyRefreshToken(token): Verify and decode refresh token
- *   - extractTokenFromHeader(header): Extract token from "Bearer <token>"
- *
  * Payload Structure:
- *   - sub: User ID (admin or volunteer)
- *   - type: 'admin' or 'volunteer'
- *   - email: Only for admins (used in token refresh)
+ *   - sub: User ID
+ *   - type: 'user'
+ *   - email, isOverseer, isAppAdmin: User metadata
  *
- * Environment Variables:
- *   - JWT_SECRET: Secret for access tokens
- *   - JWT_REFRESH_SECRET: Secret for refresh tokens
- *
- * Security:
- *   - Never log or expose tokens
- *   - Use HTTPS in production
- *   - Refresh tokens are also stored in DB for revocation
- *
- * Used by: AuthService, VolunteerService, context.ts
+ * Used by: AuthService, context.ts
  */
 import jwt, { SignOptions, JwtPayload } from 'jsonwebtoken';
 
@@ -40,14 +25,15 @@ const REFRESH_TOKEN_EXPIRY = '7d';
 
 export interface AccessTokenPayload extends JwtPayload {
   sub: string;
-  type: 'user' | 'eventVolunteer';
+  type: 'user';
   email?: string;
   isOverseer?: boolean;
+  isAppAdmin?: boolean;
 }
 
 export interface RefreshTokenPayload extends JwtPayload {
   sub: string;
-  type: 'user' | 'eventVolunteer';
+  type: 'user';
 }
 
 export interface TokenPair {
@@ -58,9 +44,10 @@ export interface TokenPair {
 
 export function generateTokens(payload: {
   sub: string;
-  type: 'user' | 'eventVolunteer';
+  type: 'user';
   email?: string;
   isOverseer?: boolean;
+  isAppAdmin?: boolean;
 }): TokenPair {
   const accessTokenOptions: SignOptions = {
     expiresIn: ACCESS_TOKEN_EXPIRY,
@@ -71,7 +58,7 @@ export function generateTokens(payload: {
   };
 
   const accessToken = jwt.sign(
-    { sub: payload.sub, type: payload.type, email: payload.email, isOverseer: payload.isOverseer },
+    { sub: payload.sub, type: payload.type, email: payload.email, isOverseer: payload.isOverseer, isAppAdmin: payload.isAppAdmin },
     JWT_SECRET,
     accessTokenOptions
   );

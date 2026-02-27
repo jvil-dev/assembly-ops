@@ -84,6 +84,8 @@ final class UnifiedLoginViewModel: ObservableObject {
                             phone: data.user.phone,
                             congregation: data.user.congregation,
                             congregationId: data.user.congregationId,
+                            circuitCode: data.user.congregationRef?.circuit.code,
+                            circuitId: data.user.congregationRef?.circuit.id,
                             appointmentStatus: data.user.appointmentStatus?.rawValue,
                             isOverseer: data.user.isOverseer
                         )
@@ -245,6 +247,8 @@ final class UnifiedLoginViewModel: ObservableObject {
                 phone: nil,
                 congregation: nil,
                 congregationId: nil,
+                circuitCode: nil,
+                circuitId: nil,
                 appointmentStatus: nil,
                 isOverseer: payload.isOverseer
             )

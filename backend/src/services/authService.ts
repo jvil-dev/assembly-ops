@@ -10,7 +10,6 @@
  *   - loginWithGoogle(idToken): OAuth login/registration via Google
  *   - loginWithApple(identityToken, firstName?, lastName?): OAuth login via Apple
  *   - completeOAuthRegistration(input): Complete OAuth new-user registration
- *   - loginEventVolunteer(volunteerId, token): Event-day printed-card login (legacy path)
  *   - refreshToken(token): Exchange refresh token for new access token
  *   - logout(token): Invalidate a specific refresh token
  *   - updateProfile(userId, input): Patch user profile fields
@@ -18,7 +17,6 @@
  *
  * JWT Payload:
  *   { sub: user.id, type: 'user', email, isOverseer }
- *   { sub: eventVolunteer.id, type: 'eventVolunteer' }  ← for printed-card sessions
  *
  * Called by: ../graphql/resolvers/auth.ts
  */
@@ -28,7 +26,6 @@ import { generateTokens, TokenPair } from '../utils/jwt.js';
 import { TokenService } from './tokenService.js';
 import { AuthenticationError, ConflictError, ValidationError } from '../utils/errors.js';
 import { generateUserId } from '../utils/credentials.js';
-import { verifyToken } from '../utils/credentials.js';
 import { verifyGoogleToken, verifyAppleToken } from '../utils/oauthVerifiers.js';
 import { generatePendingOAuthToken, verifyPendingOAuthToken } from '../utils/pendingOAuth.js';
 import { encryptField } from '../utils/encryption.js';
@@ -103,11 +100,11 @@ export class AuthService {
     if (validated.congregationId) {
       const cong = await this.prisma.congregation.findUnique({
         where: { id: validated.congregationId },
-        select: { name: true, city: true },
+        select: { name: true },
       });
       if (cong) {
         congregationId = validated.congregationId;
-        congregationName = `${cong.name} - ${cong.city}`;
+        congregationName = cong.name;
       }
     }
 
@@ -267,37 +264,6 @@ export class AuthService {
   }
 
   // ─────────────────────────────────────────────
-  // EVENT VOLUNTEER (printed-card legacy login)
-  // ─────────────────────────────────────────────
-
-  async loginEventVolunteer(volunteerId: string, token: string) {
-    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
-      where: { volunteerId },
-      include: {
-        user: { select: { id: true, firstName: true, lastName: true } },
-        event: { include: { template: { select: { name: true } } } },
-        department: { select: { id: true, name: true, departmentType: true } },
-      },
-    });
-
-    if (!eventVolunteer) {
-      throw new AuthenticationError('Invalid volunteer ID or token');
-    }
-
-    const isValid = await verifyToken(token, eventVolunteer.tokenHash);
-    if (!isValid) {
-      throw new AuthenticationError('Invalid volunteer ID or token');
-    }
-
-    await this.tokenService.deleteAllUserTokens(eventVolunteer.id, 'eventVolunteer');
-
-    const tokens = generateTokens({ sub: eventVolunteer.id, type: 'eventVolunteer' });
-    await this.tokenService.createRefreshToken(tokens.refreshToken, eventVolunteer.id, 'eventVolunteer');
-
-    return { eventVolunteer, tokens };
-  }
-
-  // ─────────────────────────────────────────────
   // TOKEN MANAGEMENT
   // ─────────────────────────────────────────────
 
@@ -305,21 +271,17 @@ export class AuthService {
     const validation = await this.tokenService.validateRefreshToken(refreshToken);
     if (!validation) return null;
 
-    if (validation.userType === 'user') {
-      const user = await this.prisma.user.findUnique({
-        where: { id: validation.userId },
-        select: { email: true, isOverseer: true },
-      });
-      return this.tokenService.rotateRefreshToken(
-        refreshToken,
-        validation.userId,
-        'user',
-        user?.email,
-        user?.isOverseer
-      );
-    }
-
-    return this.tokenService.rotateRefreshToken(refreshToken, validation.userId, 'eventVolunteer');
+    const user = await this.prisma.user.findUnique({
+      where: { id: validation.userId },
+      select: { email: true, isOverseer: true, isAppAdmin: true },
+    });
+    return this.tokenService.rotateRefreshToken(
+      refreshToken,
+      validation.userId,
+      user?.email,
+      user?.isOverseer,
+      user?.isAppAdmin
+    );
   }
 
   async logout(refreshToken: string): Promise<boolean> {
@@ -349,16 +311,17 @@ export class AuthService {
     if (input.congregationId != null) {
       const cong = await this.prisma.congregation.findUnique({
         where: { id: input.congregationId },
-        select: { name: true, city: true },
+        select: { name: true },
       });
       if (!cong) throw new ValidationError('Congregation not found');
       data.congregationId = input.congregationId;
-      data.congregation = `${cong.name} - ${cong.city}`;
+      data.congregation = cong.name;
     } else if (input.congregation !== undefined) {
       data.congregation = input.congregation;
     }
 
-    return this.prisma.user.update({ where: { id: userId }, data });
+    const result = await this.prisma.user.update({ where: { id: userId }, data });
+    return result;
   }
 
   async setOverseerMode(userId: string, isOverseer: boolean) {
@@ -369,15 +332,16 @@ export class AuthService {
   // INTERNAL HELPERS
   // ─────────────────────────────────────────────
 
-  private async issueTokens(user: { id: string; email: string; isOverseer: boolean }) {
-    await this.tokenService.deleteAllUserTokens(user.id, 'user');
+  private async issueTokens(user: { id: string; email: string; isOverseer: boolean; isAppAdmin?: boolean }) {
+    await this.tokenService.deleteAllUserTokens(user.id);
     const tokens = generateTokens({
       sub: user.id,
       type: 'user',
       email: user.email,
       isOverseer: user.isOverseer,
+      isAppAdmin: user.isAppAdmin,
     });
-    await this.tokenService.createRefreshToken(tokens.refreshToken, user.id, 'user');
+    await this.tokenService.createRefreshToken(tokens.refreshToken, user.id);
     return tokens;
   }
 }

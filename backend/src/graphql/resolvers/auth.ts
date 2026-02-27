@@ -10,7 +10,6 @@
  * Mutations:
  *   - registerUser: Creates a new user account, returns tokens
  *   - loginUser: Authenticates with email/password, returns tokens
- *   - loginEventVolunteer: Legacy printed-card login (volunteerId + token)
  *   - refreshToken: Exchanges refresh token for new access token
  *   - logoutUser: Invalidates a specific refresh token
  *   - logoutAllSessions: Invalidates ALL refresh tokens for this user
@@ -32,11 +31,6 @@ import {
   RegisterUserInput,
   LoginUserInput,
 } from '../validators/auth.js';
-
-export interface LoginEventVolunteerInput {
-  volunteerId: string;
-  token: string;
-}
 
 export interface UpdateUserProfileInput {
   firstName?: string | null;
@@ -90,22 +84,6 @@ const authResolvers = {
 
       return {
         user: result.user,
-        accessToken: result.tokens.accessToken,
-        refreshToken: result.tokens.refreshToken,
-        expiresIn: result.tokens.expiresIn,
-      };
-    },
-
-    loginEventVolunteer: async (
-      _parent: unknown,
-      { input }: { input: LoginEventVolunteerInput },
-      context: Context
-    ) => {
-      const authService = new AuthService(context.prisma);
-      const result = await authService.loginEventVolunteer(input.volunteerId, input.token);
-
-      return {
-        eventVolunteer: result.eventVolunteer,
         accessToken: result.tokens.accessToken,
         refreshToken: result.tokens.refreshToken,
         expiresIn: result.tokens.expiresIn,

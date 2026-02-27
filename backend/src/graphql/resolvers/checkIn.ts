@@ -17,7 +17,7 @@
  */
 import { Context } from '../context.js';
 import { CheckInService } from '../../services/checkInService.js';
-import { requireAdmin, requireVolunteer, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireEventAccess, resolveUserEventVolunteer } from '../guards/auth.js';
 import {
   CheckInInput,
   CheckOutInput,
@@ -78,17 +78,29 @@ const checkInResolvers = {
 
   Mutation: {
     checkIn: async (_parent: unknown, { input }: { input: CheckInInput }, context: Context) => {
-      requireVolunteer(context);
+      requireAuth(context);
+      const assignment = await context.prisma.scheduleAssignment.findUnique({
+        where: { id: input.assignmentId },
+        include: { session: { select: { eventId: true } } },
+      });
+      if (!assignment) throw new Error('Assignment not found');
+      const ev = await resolveUserEventVolunteer(context.user!.id, assignment.session.eventId, context.prisma);
 
       const checkInService = new CheckInService(context.prisma);
-      return checkInService.checkIn(context.volunteer.id, input);
+      return checkInService.checkIn(ev.id, input);
     },
 
     checkOut: async (_parent: unknown, { input }: { input: CheckOutInput }, context: Context) => {
-      requireVolunteer(context);
+      requireAuth(context);
+      const assignment = await context.prisma.scheduleAssignment.findUnique({
+        where: { id: input.assignmentId },
+        include: { session: { select: { eventId: true } } },
+      });
+      if (!assignment) throw new Error('Assignment not found');
+      const ev = await resolveUserEventVolunteer(context.user!.id, assignment.session.eventId, context.prisma);
 
       const checkInService = new CheckInService(context.prisma);
-      return checkInService.checkOut(context.volunteer.id, input);
+      return checkInService.checkOut(ev.id, input);
     },
 
     adminCheckIn: async (

@@ -15,7 +15,6 @@
 //   - firstName/lastName: Required name fields
 //   - phone/congregation: Optional profile fields
 //   - appointmentStatus: Optional publisher/MS/elder
-//   - isOverseer: Toggles overseer features on registration
 //   - isLoading: True during registration request
 //   - errorMessage: User-facing error text
 //   - showOAuthRegistration: Triggers OAuthRegistrationView
@@ -44,7 +43,6 @@ final class RegistrationViewModel: ObservableObject {
     @Published var congregationName = ""  // display name set by CongregationSearchField
     @Published var congregationId: String? = nil  // DB id set on selection
     @Published var appointmentStatus: String? = nil
-    @Published var isOverseer: Bool = false
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var showOAuthRegistration: Bool = false
@@ -105,7 +103,7 @@ final class RegistrationViewModel: ObservableObject {
             congregation: congregationValue,
             congregationId: congregationIdValue,
             appointmentStatus: appointmentStatusEnum,
-            isOverseer: isOverseer ? .some(true) : .none
+            isOverseer: .none
         )
 
         NetworkClient.shared.apollo.perform(
@@ -124,7 +122,9 @@ final class RegistrationViewModel: ObservableObject {
                             fullName: data.user.fullName,
                             phone: data.user.phone,
                             congregation: data.user.congregation,
-                            congregationId: nil,
+                            congregationId: data.user.congregationId,
+                            circuitCode: data.user.congregationRef?.circuit.code,
+                            circuitId: data.user.congregationRef?.circuit.id,
                             appointmentStatus: data.user.appointmentStatus?.rawValue,
                             isOverseer: data.user.isOverseer
                         )

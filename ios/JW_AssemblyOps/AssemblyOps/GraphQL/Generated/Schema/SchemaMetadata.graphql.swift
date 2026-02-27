@@ -54,7 +54,6 @@ extension AssemblyOpsAPI {
       case "EventAdmin": return AssemblyOpsAPI.Objects.EventAdmin
       case "EventJoinRequest": return AssemblyOpsAPI.Objects.EventJoinRequest
       case "EventParticipant": return AssemblyOpsAPI.Objects.EventParticipant
-      case "EventTemplate": return AssemblyOpsAPI.Objects.EventTemplate
       case "EventVolunteer": return AssemblyOpsAPI.Objects.EventVolunteer
       case "EventVolunteerAuthPayload": return AssemblyOpsAPI.Objects.EventVolunteerAuthPayload
       case "EventVolunteerCredentials": return AssemblyOpsAPI.Objects.EventVolunteerCredentials

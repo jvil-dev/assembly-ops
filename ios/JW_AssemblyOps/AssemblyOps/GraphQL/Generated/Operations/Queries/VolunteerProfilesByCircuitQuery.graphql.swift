@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "VolunteerProfilesByCircuit"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query VolunteerProfilesByCircuit($circuitId: ID!) { volunteerProfilesByCircuit(circuitId: $circuitId) { __typename id firstName lastName email phone appointmentStatus congregation { __typename id name city } } }"#
+        #"query VolunteerProfilesByCircuit($circuitId: ID!) { volunteerProfilesByCircuit(circuitId: $circuitId) { __typename id firstName lastName email phone appointmentStatus congregation { __typename id name } } }"#
       ))
 
     public var circuitId: ID
@@ -75,7 +75,6 @@ extension AssemblyOpsAPI {
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
             .field("name", String.self),
-            .field("city", String.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             VolunteerProfilesByCircuitQuery.Data.VolunteerProfilesByCircuit.Congregation.self
@@ -83,7 +82,6 @@ extension AssemblyOpsAPI {
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var name: String { __data["name"] }
-          var city: String { __data["city"] }
         }
       }
     }

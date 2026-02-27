@@ -14,7 +14,6 @@ export const volunteerProfileTypeDefs = `#graphql
 
   type EventVolunteer {
     id: ID!
-    volunteerId: String!
     user: User!
     event: Event!
     department: Department
@@ -22,13 +21,6 @@ export const volunteerProfileTypeDefs = `#graphql
     assignments: [ScheduleAssignment!]!
     createdAt: DateTime!
     updatedAt: DateTime!
-  }
-
-  type EventVolunteerCredentials {
-    eventVolunteer: EventVolunteer!
-    volunteerId: String!
-    token: String!
-    inviteMessage: String!
   }
 
   input AddVolunteerToEventInput {
@@ -44,13 +36,11 @@ export const volunteerProfileTypeDefs = `#graphql
     searchVolunteerProfiles(query: String!, circuitId: ID): [VolunteerProfile!]!
     volunteerProfile(id: ID!): VolunteerProfile
     eventVolunteer(id: ID!): EventVolunteer
-    eventVolunteerByVolunteerId(volunteerId: String!): EventVolunteer
   }
 
   extend type Mutation {
-    addVolunteerToEvent(input: AddVolunteerToEventInput!): EventVolunteerCredentials!
+    addVolunteerToEvent(input: AddVolunteerToEventInput!): EventVolunteer!
     removeVolunteerFromEvent(eventVolunteerId: ID!): Boolean!
-    addVolunteerByUserId(eventId: ID!, userId: String!, departmentId: ID): EventVolunteerCredentials!
-    regenerateVolunteerToken(eventVolunteerId: ID!): EventVolunteerCredentials!
+    addVolunteerByUserId(eventId: ID!, userId: String!, departmentId: ID): EventVolunteer!
   }
 `;

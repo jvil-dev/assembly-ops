@@ -9,7 +9,8 @@
  */
 const types = `#graphql
   enum EventType {
-    CIRCUIT_ASSEMBLY
+    CIRCUIT_ASSEMBLY_CO
+    CIRCUIT_ASSEMBLY_BR
     REGIONAL_CONVENTION
     SPECIAL_CONVENTION
   }
@@ -67,24 +68,6 @@ const types = `#graphql
     DENIED
   }
 
-  type EventTemplate {
-    id: ID!
-    eventType: EventType!
-    circuit: String
-    region: String!
-    serviceYear: Int!
-    name: String!
-    theme: String
-    themeScripture: String
-    venue: String!
-    address: String!
-    startDate: DateTime!
-    endDate: DateTime!
-    language: String!
-    isActivated: Boolean!
-    createdAt: DateTime!
-  }
-
   type User {
     id: ID!
     userId: String!
@@ -98,13 +81,27 @@ const types = `#graphql
     congregationRef: Congregation
     appointmentStatus: AppointmentStatus
     isOverseer: Boolean!
+    isAppAdmin: Boolean!
     eventRoles: [EventAdmin!]!
     createdAt: DateTime!
   }
 
   type Event {
     id: ID!
-    template: EventTemplate!
+    eventType: EventType!
+    name: String!
+    circuit: String
+    circuitId: ID
+    region: String!
+    state: String
+    serviceYear: Int!
+    theme: String
+    themeScripture: String
+    venue: String!
+    address: String!
+    startDate: DateTime!
+    endDate: DateTime!
+    language: String!
     joinCode: String!
     isPublic: Boolean!
     admins: [EventAdmin!]!
@@ -112,12 +109,6 @@ const types = `#graphql
     sessions: [Session!]!
     roles: [Role!]!
     volunteerCount: Int!
-    name: String!
-    eventType: EventType!
-    venue: String!
-    address: String!
-    startDate: DateTime!
-    endDate: DateTime!
     createdAt: DateTime!
   }
 
@@ -165,7 +156,6 @@ const types = `#graphql
 
   type Volunteer {
     id: ID!
-    volunteerId: String!
     firstName: String!
     lastName: String!
     fullName: String!

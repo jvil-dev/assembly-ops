@@ -22,6 +22,7 @@ model User {
   congregation      String? // Free-text congregation name (optional)
   congregationId    String? // FK to Congregation (optional)
   isOverseer        Boolean            @default(false) // Future monetization gate
+  isAppAdmin        Boolean            @default(false)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
@@ -147,7 +148,7 @@ model Circuit {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   congregations  Congregation[]
-  eventTemplates EventTemplate[]
+  events         Event[]
 
   @@index([region])
   @@index([language])
@@ -156,7 +157,6 @@ model Circuit {
 model Congregation {
   id        String   @id @default(cuid())
   name      String
-  city      String
   state     String
   language  String   @default("E")
   circuitId String
@@ -165,7 +165,7 @@ model Congregation {
   circuit   Circuit  @relation(fields: [circuitId], references: [id], onDelete: Cascade)
   users     User[]
 
-  @@unique([name, city, state])
+  @@unique([name, state])
   @@index([circuitId])
   @@index([state, language])
 }
@@ -220,15 +220,31 @@ model DepartmentHierarchy {
 // ─────────────────────────────────────────────
 
 model Event {
-  id                     String                  @id @default(cuid())
-  templateId             String
-  joinCode               String                  @unique @default(cuid())
-  isPublic               Boolean                 @default(true) // Controls visibility in discoverEvents
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  acceptDeadlineDays     Int                     @default(5)
+  id                 String    @id @default(cuid())
+  // --- Absorbed from EventTemplate ---
+  eventType          EventType
+  name               String
+  circuit            String? // Readable circuit code (assemblies only)
+  circuitId          String? // FK to Circuit (assemblies only)
+  region             String // e.g. "US-MA"
+  state              String? // Derived from region, for convention discovery
+  serviceYear        Int
+  theme              String?
+  themeScripture     String?
+  venue              String
+  address            String
+  startDate          DateTime
+  endDate            DateTime
+  language           String    @default("en")
+  // --- Existing Event fields ---
+  joinCode           String    @unique @default(cuid())
+  isPublic           Boolean   @default(true) // Controls visibility in discoverEvents
+  acceptDeadlineDays Int       @default(5)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  // --- Relations ---
+  circuitRef             Circuit?                @relation(fields: [circuitId], references: [id])
   departments            Department[]
-  template               EventTemplate           @relation(fields: [templateId], references: [id])
   admins                 EventAdmin[]
   notes                  EventNote[]
   messages               Message[]
@@ -243,8 +259,12 @@ model Event {
   conversations          Conversation[]
   joinRequests           EventJoinRequest[]
 
+  @@unique([eventType, venue, startDate, language])
   @@index([joinCode])
-  @@index([templateId])
+  @@index([circuitId])
+  @@index([region])
+  @@index([serviceYear])
+  @@index([state])
 }
 
 // ─────────────────────────────────────────────
@@ -289,45 +309,12 @@ model EventNote {
 }
 
 // ─────────────────────────────────────────────
-// EVENT TEMPLATE
-// ─────────────────────────────────────────────
-
-model EventTemplate {
-  id             String    @id @default(cuid())
-  eventType      EventType
-  circuit        String? // Keep for seed data backward compat
-  circuitId      String? // FK to Circuit
-  region         String
-  serviceYear    Int
-  name           String
-  theme          String?
-  themeScripture String?
-  venue          String
-  address        String
-  startDate      DateTime
-  endDate        DateTime
-  language       String    @default("en")
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  events         Event[]
-  circuitRef     Circuit?  @relation(fields: [circuitId], references: [id])
-
-  @@unique([eventType, circuit, startDate])
-  @@index([region])
-  @@index([serviceYear])
-  @@index([circuitId])
-}
-
-// ─────────────────────────────────────────────
-// EVENT VOLUNTEER (per-event credential record)
+// EVENT VOLUNTEER (per-event membership record)
 // ─────────────────────────────────────────────
 
 model EventVolunteer {
   id             String               @id @default(cuid())
-  volunteerId    String               @unique // Per-event credential ID (no longer CA/RC prefix for new records)
-  tokenHash      String // bcrypt hash for auth
-  encryptedToken String // AES-256-GCM encrypted token for overseer retrieval
-  userId         String // FK to User (was volunteerProfileId)
+  userId         String // FK to User
   eventId        String
   departmentId   String?
   roleId         String?
@@ -341,7 +328,6 @@ model EventVolunteer {
   checkIns       CheckIn[]
   sentMessages       Message[]            @relation("MessageSenderVol")
   legacyMessages     Message[]            @relation("MessageLegacyRecipient")
-  refreshTokens      RefreshToken[]
   safetyIncidents        SafetyIncident[]
   lostPersonAlerts       LostPersonAlert[]
   meetingAttendances     MeetingAttendance[]
@@ -516,18 +502,15 @@ model Post {
 // ─────────────────────────────────────────────
 
 model RefreshToken {
-  id               String         @id @default(cuid())
-  token            String         @unique
-  expiresAt        DateTime
-  revoked          Boolean        @default(false)
-  userId           String? // Unified FK (covers all user types)
-  eventVolunteerId String? // For EventVolunteer (printed-card) sessions
-  createdAt        DateTime       @default(now())
-  user             User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  eventVolunteer   EventVolunteer? @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  userId    String // FK to User
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([eventVolunteerId])
   @@index([expiresAt])
   @@index([token])
 }
@@ -778,9 +761,10 @@ enum HierarchyRole {
 }
 
 enum EventType {
-  CIRCUIT_ASSEMBLY
-  REGIONAL_CONVENTION
-  SPECIAL_CONVENTION
+  CIRCUIT_ASSEMBLY_CO // Assembly with Circuit Overseer (1 day)
+  CIRCUIT_ASSEMBLY_BR // Assembly with Branch Representative (1 day)
+  REGIONAL_CONVENTION // Regional Convention (3 days)
+  SPECIAL_CONVENTION // Special Convention (3 days)
 }
 
 enum JoinRequestStatus {

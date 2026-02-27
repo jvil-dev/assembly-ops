@@ -15,12 +15,10 @@
 //   - Email, Password, Confirm Password (required)
 //   - Phone, Congregation (optional)
 //   - Appointment Status picker (optional)
-//   - "I am serving as a Department Overseer" toggle
 //
 // Features:
 //   - Password match indicator
 //   - Google/Apple sign-up
-//   - Overseer toggle with explainer
 
 import SwiftUI
 import AuthenticationServices
@@ -48,17 +46,14 @@ struct RegistrationView: View {
                 optionalCard
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
 
-                overseerCard
+                oauthSection
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
 
-                oauthSection
+                registerButton
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
 
-                registerButton
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
-
                 termsCaption
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.3)
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
             }
             .screenPadding()
             .padding(.top, AppTheme.Spacing.l)
@@ -265,35 +260,6 @@ struct RegistrationView: View {
                 .pickerStyle(.menu)
                 .tint(AppTheme.themeColor)
             }
-        }
-        .cardPadding()
-        .themedCard(scheme: colorScheme)
-    }
-
-    // MARK: - Overseer Toggle Card
-
-    private var overseerCard: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            Toggle(isOn: $viewModel.isOverseer) {
-                HStack(spacing: AppTheme.Spacing.m) {
-                    Image(systemName: "shield.fill")
-                        .foregroundStyle(AppTheme.themeColor)
-                        .frame(width: 24)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(NSLocalizedString("auth.isOverseer.toggle", comment: ""))
-                            .font(AppTheme.Typography.body)
-                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        if viewModel.isOverseer {
-                            Text(NSLocalizedString("auth.isOverseer.explainer", comment: ""))
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.themeColor)
-                                .transition(.opacity)
-                        }
-                    }
-                }
-            }
-            .tint(AppTheme.themeColor)
-            .animation(.easeInOut(duration: 0.2), value: viewModel.isOverseer)
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)

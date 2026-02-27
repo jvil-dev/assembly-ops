@@ -8,6 +8,17 @@ mutation CompleteOAuthRegistration($input: CompleteOAuthRegistrationInput!) {
       lastName
       fullName
       isOverseer
+      congregation
+      congregationId
+      congregationRef {
+        id
+        name
+        state
+        circuit {
+          id
+          code
+        }
+      }
     }
     accessToken
     refreshToken

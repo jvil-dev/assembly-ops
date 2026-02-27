@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "CongregationsByCircuit"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query CongregationsByCircuit($circuitId: ID!) { congregationsByCircuit(circuitId: $circuitId) { __typename id name city state language } }"#
+        #"query CongregationsByCircuit($circuitId: ID!) { congregationsByCircuit(circuitId: $circuitId) { __typename id name state language } }"#
       ))
 
     public var circuitId: ID
@@ -45,7 +45,6 @@ extension AssemblyOpsAPI {
           .field("__typename", String.self),
           .field("id", AssemblyOpsAPI.ID.self),
           .field("name", String.self),
-          .field("city", String.self),
           .field("state", String.self),
           .field("language", String.self),
         ] }
@@ -55,7 +54,6 @@ extension AssemblyOpsAPI {
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
         var name: String { __data["name"] }
-        var city: String { __data["city"] }
         var state: String { __data["state"] }
         var language: String { __data["language"] }
       }

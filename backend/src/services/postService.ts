@@ -194,9 +194,7 @@ export class PostService {
         area: true,
         department: {
           include: {
-            event: {
-              include: { template: true },
-            },
+            event: true,
           },
         },
         _count: {

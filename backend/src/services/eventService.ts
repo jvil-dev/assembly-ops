@@ -33,8 +33,6 @@
 import { PrismaClient, EventRole, DepartmentType, HierarchyRole } from '@prisma/client';
 import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '../utils/errors.js';
 import { timeStringToDate } from '../utils/time.js';
-import { generateEventVolunteerId, generateToken, hashToken } from '../utils/credentials.js';
-import { encryptField } from '../utils/encryption.js';
 import {
   purchaseDepartmentSchema,
   joinDepartmentByCodeSchema,
@@ -90,15 +88,6 @@ function generateShortcode(length: number): string {
 export class EventService {
   constructor(private prisma: PrismaClient) {}
 
-  async getEventTemplates(serviceYear?: number) {
-    const where = serviceYear ? { serviceYear } : {};
-
-    return this.prisma.eventTemplate.findMany({
-      where,
-      orderBy: { startDate: 'asc' },
-    });
-  }
-
   /**
    * Generate a unique access code for a department.
    * Format: {PREFIX}-{4-char alphanumeric} e.g. "ATT-7X9K"
@@ -135,7 +124,6 @@ export class EventService {
     // Verify event exists
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
-      include: { template: true },
     });
 
     if (!event) {
@@ -213,11 +201,11 @@ export class EventService {
     const sessionCount = await this.prisma.session.count({ where: { eventId } });
     if (sessionCount === 0) {
       const dayCount = Math.round(
-        (event.template.endDate.getTime() - event.template.startDate.getTime()) / (1000 * 60 * 60 * 24)
+        (event.endDate.getTime() - event.startDate.getTime()) / (1000 * 60 * 60 * 24)
       ) + 1;
 
       for (let d = 0; d < dayCount; d++) {
-        const date = new Date(event.template.startDate);
+        const date = new Date(event.startDate);
         date.setDate(date.getDate() + d);
 
         await this.prisma.session.create({
@@ -271,9 +259,7 @@ export class EventService {
         overseer: {
           include: { user: true },
         },
-        event: {
-          include: { template: true },
-        },
+        event: true,
       },
     });
   }
@@ -300,7 +286,7 @@ export class EventService {
         },
       },
       include: {
-        event: { include: { template: true } },
+        event: true,
       },
     });
 
@@ -322,32 +308,20 @@ export class EventService {
       throw new ConflictError('You are already a volunteer for this event');
     }
 
-    // Create EventVolunteer credentials
-    const volunteerId = generateEventVolunteerId();
-    const token = generateToken();
-    const tokenHash = await hashToken(token);
-
+    // Create EventVolunteer membership record
     const eventVolunteer = await this.prisma.eventVolunteer.create({
       data: {
-        volunteerId,
-        tokenHash,
-        encryptedToken: encryptField(token),
         userId,
         eventId: department.eventId,
         departmentId: department.id,
       },
       include: {
         user: true,
-        event: { include: { template: true } },
+        event: true,
       },
     });
 
-    return {
-      eventVolunteer,
-      volunteerId,
-      token,
-      inviteMessage: `You've joined ${department.name} at ${eventVolunteer.event.template.name}.\n\nYour login credentials:\nVolunteer ID: ${volunteerId}\nToken: ${token}`,
-    };
+    return eventVolunteer;
   }
 
   /**
@@ -368,9 +342,7 @@ export class EventService {
           },
           orderBy: { assignedAt: 'asc' },
         },
-        event: {
-          include: { template: true },
-        },
+        event: true,
         _count: {
           select: { eventVolunteers: true, posts: true },
         },
@@ -508,14 +480,13 @@ export class EventService {
       include: {
         event: {
           include: {
-            template: true,
             departments: true,
             _count: { select: { eventVolunteers: true } },
           },
         },
         department: true,
       },
-      orderBy: { event: { template: { startDate: 'asc' } } },
+      orderBy: { event: { startDate: 'asc' } },
     });
 
     // 2. Fetch volunteer memberships
@@ -524,13 +495,12 @@ export class EventService {
       include: {
         event: {
           include: {
-            template: true,
             _count: { select: { eventVolunteers: true } },
           },
         },
         department: true,
       },
-      orderBy: { event: { template: { startDate: 'asc' } } },
+      orderBy: { event: { startDate: 'asc' } },
     });
 
     // 3. Merge, de-duplicate by eventId (overseer role wins if both exist)
@@ -545,7 +515,6 @@ export class EventService {
       departmentType: string | null;
       departmentAccessCode: string | null;
       eventVolunteerId: string | null;
-      volunteerId: string | null;
     }> = [];
 
     for (const ea of eventAdmins) {
@@ -560,7 +529,6 @@ export class EventService {
         departmentType: ea.department?.departmentType ?? null,
         departmentAccessCode: ea.department?.accessCode ?? null,
         eventVolunteerId: null,
-        volunteerId: null,
       });
     }
 
@@ -577,7 +545,6 @@ export class EventService {
         departmentType: ev.department?.departmentType ?? null,
         departmentAccessCode: null,
         eventVolunteerId: ev.id,
-        volunteerId: ev.volunteerId,
       });
     }
 
@@ -590,7 +557,6 @@ export class EventService {
       include: {
         event: {
           include: {
-            template: true,
             departments: true,
             _count: {
               select: { eventVolunteers: true },
@@ -601,9 +567,7 @@ export class EventService {
       },
       orderBy: {
         event: {
-          template: {
-            startDate: 'asc',
-          },
+          startDate: 'asc',
         },
       },
     });
@@ -615,7 +579,6 @@ export class EventService {
     return this.prisma.event.findUnique({
       where: { id: eventId },
       include: {
-        template: true,
         admins: {
           include: {
             user: true,

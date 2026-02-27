@@ -2,7 +2,6 @@ query Congregations($state: String!, $language: String) {
   congregations(state: $state, language: $language) {
     id
     name
-    city
     state
     language
     circuit {
@@ -16,7 +15,6 @@ query CongregationsByCircuit($circuitId: ID!) {
   congregationsByCircuit(circuitId: $circuitId) {
     id
     name
-    city
     state
     language
   }
@@ -26,7 +24,6 @@ query SearchCongregations($query: String!) {
   searchCongregations(query: $query) {
     id
     name
-    city
     state
   }
 }

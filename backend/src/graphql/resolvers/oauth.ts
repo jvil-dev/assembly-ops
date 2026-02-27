@@ -65,6 +65,8 @@ export const oauthResolvers = {
           firstName: string;
           lastName: string;
           isOverseer?: boolean;
+          congregation?: string;
+          congregationId?: string;
         };
       },
       context: Context

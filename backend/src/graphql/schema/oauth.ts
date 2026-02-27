@@ -32,6 +32,8 @@ export const oauthTypeDefs = `#graphql
     firstName: String!
     lastName: String!
     isOverseer: Boolean
+    congregation: String
+    congregationId: ID
   }
 
   extend type Mutation {

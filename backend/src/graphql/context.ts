@@ -2,11 +2,9 @@
  * GraphQL Context
  *
  * Created fresh for each request. Identifies the caller via JWT and
- * attaches user or eventVolunteer info for guards and resolvers to use.
+ * attaches user info for guards and resolvers to use.
  *
- * Token types:
- *   'user'           → logged-in User (volunteer or overseer) → context.user
- *   'eventVolunteer' → printed-card event-day session         → context.volunteer
+ * Token type: 'user' → logged-in User (volunteer or overseer) → context.user
  */
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
@@ -18,21 +16,15 @@ export interface UserContext {
   userId: string; // 6-char permanent ID
   email: string;
   isOverseer: boolean;
-}
-
-export interface VolunteerContext {
-  id: string;
-  eventId: string;
-  departmentId?: string;
+  isAppAdmin: boolean;
 }
 
 export interface Context {
   prisma: PrismaClient;
   req: Request;
   res: Response;
-  user?: UserContext;         // Logged-in User (volunteer or overseer)
-  volunteer?: VolunteerContext; // EventVolunteer printed-card session
-  // Legacy aliases kept so existing guards/resolvers compile during migration
+  user?: UserContext;
+  // Legacy alias kept so existing guards/resolvers compile during migration
   admin?: UserContext;
 }
 
@@ -54,25 +46,12 @@ export async function createContext({
     if (payload.type === 'user') {
       const user = await prisma.user.findUnique({
         where: { id: payload.sub },
-        select: { id: true, userId: true, email: true, isOverseer: true },
+        select: { id: true, userId: true, email: true, isOverseer: true, isAppAdmin: true },
       });
 
       if (user) {
         context.user = user;
         context.admin = user; // backward-compat alias
-      }
-    } else if (payload.type === 'eventVolunteer') {
-      const ev = await prisma.eventVolunteer.findUnique({
-        where: { id: payload.sub },
-        select: { id: true, eventId: true, departmentId: true },
-      });
-
-      if (ev) {
-        context.volunteer = {
-          id: ev.id,
-          eventId: ev.eventId,
-          departmentId: ev.departmentId || undefined,
-        };
       }
     }
   } catch {

@@ -9,8 +9,18 @@ mutation RegisterUser($input: RegisterUserInput!) {
       fullName
       phone
       congregation
+      congregationId
       appointmentStatus
       isOverseer
+      congregationRef {
+        id
+        name
+        state
+        circuit {
+          id
+          code
+        }
+      }
     }
     accessToken
     refreshToken

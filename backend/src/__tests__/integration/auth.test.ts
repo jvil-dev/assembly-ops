@@ -20,8 +20,6 @@ describe('Auth GraphQL', () => {
   let userToken: string;
   let userEmail: string;
   let testEventId: string;
-  let testVolunteerId: string;
-  let testVolunteerToken: string;
 
   beforeAll(async () => {
     app = await createTestApp();
@@ -164,95 +162,6 @@ describe('Auth GraphQL', () => {
           input: {
             email: 'wrong@test.com',
             password: 'wrongpassword',
-          },
-        }
-      );
-
-      expect(res.body.errors).toBeDefined();
-    });
-  });
-
-  describe('Volunteer Auth', () => {
-    beforeAll(async () => {
-      if (!testEventId || !userToken) {
-        console.log('Skipping volunteer tests - no event or user token');
-        return;
-      }
-
-      // Create a volunteer
-      const volunteerRes = await authGraphqlRequest(
-        `
-          mutation CreateVolunteer($eventId: ID!, $input: CreateVolunteerInput!) {
-            createVolunteer(eventId: $eventId, input: $input) {
-              id
-              volunteerId
-              token
-            }
-          }
-        `,
-        {
-          eventId: testEventId,
-          input: {
-            firstName: 'Test',
-            lastName: 'Volunteer',
-            congregation: `Auth Cong ${Date.now()}`,
-          },
-        },
-        userToken
-      );
-
-      if (volunteerRes.body.errors) {
-        console.log('Create volunteer errors:', JSON.stringify(volunteerRes.body.errors, null, 2));
-      }
-
-      testVolunteerId = volunteerRes.body.data?.createVolunteer?.volunteerId;
-      testVolunteerToken = volunteerRes.body.data?.createVolunteer?.token;
-    });
-
-    it('should login volunteer with valid credentials', async () => {
-      if (!testVolunteerId || !testVolunteerToken) {
-        console.log('Skipping - no volunteer created');
-        return;
-      }
-
-      const res = await graphqlRequest(
-        `
-          mutation LoginEventVolunteer($input: LoginEventVolunteerInput!) {
-            loginEventVolunteer(input: $input) {
-              accessToken
-              refreshToken
-              expiresIn
-              eventVolunteer {
-                id
-              }
-            }
-          }
-        `,
-        {
-          input: {
-            volunteerId: testVolunteerId,
-            token: testVolunteerToken,
-          },
-        }
-      );
-
-      expect(res.body.errors).toBeUndefined();
-      expect(res.body.data.loginEventVolunteer.accessToken).toBeDefined();
-    });
-
-    it('should reject invalid volunteer credentials', async () => {
-      const res = await graphqlRequest(
-        `
-          mutation LoginEventVolunteer($input: LoginEventVolunteerInput!) {
-            loginEventVolunteer(input: $input) {
-              accessToken
-            }
-          }
-        `,
-        {
-          input: {
-            volunteerId: 'INVALID-123',
-            token: 'WRONGTOKEN',
           },
         }
       );

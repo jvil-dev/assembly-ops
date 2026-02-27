@@ -28,7 +28,7 @@ struct EventMembershipItem: Identifiable, Hashable {
     let id: String          // eventId
     let eventId: String
     let eventName: String
-    let eventType: String   // raw enum value e.g. "CIRCUIT_ASSEMBLY"
+    let eventType: String   // raw enum value e.g. "CIRCUIT_ASSEMBLY_CO"
     let venue: String
     let address: String
     let startDate: Date
@@ -86,7 +86,7 @@ struct EventMembershipItem: Identifiable, Hashable {
 
     var displayEventType: String {
         switch eventType {
-        case "CIRCUIT_ASSEMBLY": return "Circuit Assembly"
+        case "CIRCUIT_ASSEMBLY_CO", "CIRCUIT_ASSEMBLY_BR": return "Circuit Assembly"
         case "REGIONAL_CONVENTION": return "Regional Convention"
         case "SPECIAL_CONVENTION": return "Special Convention"
         default: return eventType

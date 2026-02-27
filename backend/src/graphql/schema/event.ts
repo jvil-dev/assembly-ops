@@ -70,7 +70,6 @@ const eventTypeDefs = `#graphql
     departmentAccessCode: String
     # Volunteer-specific
     eventVolunteerId: ID
-    volunteerId: String
   }
 
   # ============================================
@@ -78,20 +77,19 @@ const eventTypeDefs = `#graphql
   # ============================================
 
   extend type Query {
-    eventTemplates(serviceYear: Int): [EventTemplate!]!
     myEvents: [EventAdmin!]!
     myAllEvents: [UserEventMembership!]!
     event(id: ID!): Event
     eventDepartments(eventId: ID!): [Department!]!
     availableDepartments(eventId: ID!): [DepartmentType!]!
     eventAdmins(eventId: ID!): [EventAdmin!]!
-    discoverEvents(eventType: EventType): [Event!]!
+    discoverEvents(eventType: EventType, state: String, language: String, circuitCode: String): [Event!]!
     departmentInfo(departmentId: ID!): Department
   }
 
   extend type Mutation {
     purchaseDepartment(input: PurchaseDepartmentInput!): Department!
-    joinDepartmentByAccessCode(input: JoinDepartmentByCodeInput!): EventVolunteerCredentials!
+    joinDepartmentByAccessCode(input: JoinDepartmentByCodeInput!): EventVolunteer!
     setDepartmentPrivacy(departmentId: ID!, isPublic: Boolean!): Department!
     assignHierarchyRole(input: AssignHierarchyRoleInput!): DepartmentHierarchy!
     removeHierarchyRole(departmentId: ID!, eventVolunteerId: ID!): Boolean!

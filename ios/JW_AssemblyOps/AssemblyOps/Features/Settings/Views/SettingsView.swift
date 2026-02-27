@@ -19,7 +19,7 @@
 // Navigation:
 //   - Presented as .sheet from EventsHomeView
 //   - "Done" button dismisses
-//   - Edit Profile opens EditOverseerProfileSheet as nested sheet
+//   - Edit Profile opens EditProfileSheet as nested sheet
 //
 
 import SwiftUI
@@ -80,7 +80,7 @@ struct SettingsView: View {
                 }
             }
             .sheet(isPresented: $showEditProfile) {
-                EditOverseerProfileSheet()
+                EditProfileSheet()
                     .environmentObject(appState)
             }
             .onAppear {

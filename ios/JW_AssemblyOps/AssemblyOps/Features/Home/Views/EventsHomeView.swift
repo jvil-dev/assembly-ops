@@ -9,18 +9,31 @@
 //
 // Main hub for all logged-in users. Shows event cards grouped by
 // Active / Upcoming / Past. Tapping a card pushes into the
-// role-appropriate tab view via EventEntryView.
+// unified tab view via EventTabView.
 //
 // Navigation:
 //   - Top-left: Profile avatar → SettingsView (sheet)
 //   - Top-right: "+" → BrowseEventsView (push)
-//   - Card tap → EventEntryView (push)
+//   - Card tap → EventTabView (push)
 //
 // Dependencies:
 //   - EventsHomeViewModel: Loads myAllEvents query
 //   - AppState: Current user info for avatar
 
 import SwiftUI
+
+// MARK: - Pop-to-Root Environment Key
+
+private struct PopToRootKey: EnvironmentKey {
+    static let defaultValue: () -> Void = {}
+}
+
+extension EnvironmentValues {
+    var popToRoot: () -> Void {
+        get { self[PopToRootKey.self] }
+        set { self[PopToRootKey.self] = newValue }
+    }
+}
 
 struct EventsHomeView: View {
     @EnvironmentObject private var appState: AppState
@@ -29,6 +42,7 @@ struct EventsHomeView: View {
     @State private var hasAppeared = false
     @State private var showSettings = false
     @State private var showError = false
+    @State private var navigationStackId = UUID()
 
     var body: some View {
         NavigationStack {
@@ -52,16 +66,12 @@ struct EventsHomeView: View {
                     plusButton
                 }
             }
-            .navigationDestination(for: EventMembershipItem.self) { item in
-                EventEntryView(membership: item)
-                    .environmentObject(appState)
-            }
             .refreshable {
                 viewModel.refresh()
             }
             .onAppear {
                 withAnimation(AppTheme.entranceAnimation) { hasAppeared = true }
-                if viewModel.sections.isEmpty { viewModel.load() }
+                viewModel.load()
             }
             .onChange(of: viewModel.errorMessage) { _, error in
                 showError = error != nil
@@ -76,6 +86,7 @@ struct EventsHomeView: View {
                     .environmentObject(appState)
             }
         }
+        .id(navigationStackId)
     }
 
     // MARK: - Events List
@@ -104,7 +115,10 @@ struct EventsHomeView: View {
                 .padding(.leading, 4)
 
             ForEach(Array(section.items.enumerated()), id: \.element.id) { index, item in
-                NavigationLink(value: item) {
+                NavigationLink {
+                    EventTabView(membership: item)
+                        .environmentObject(appState)
+                } label: {
                     EventMembershipCard(item: item, colorScheme: colorScheme)
                 }
                 .buttonStyle(.plain)
@@ -181,6 +195,7 @@ struct EventsHomeView: View {
             NavigationLink {
                 BrowseEventsView()
                     .environmentObject(appState)
+                    .environment(\.popToRoot, popToRootAndRefresh)
             } label: {
                 HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: "magnifyingglass")
@@ -226,11 +241,19 @@ struct EventsHomeView: View {
         NavigationLink {
             BrowseEventsView()
                 .environmentObject(appState)
+                .environment(\.popToRoot, popToRootAndRefresh)
         } label: {
             Image(systemName: "plus")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(AppTheme.themeColor)
         }
+    }
+
+    // MARK: - Pop to Root
+
+    private func popToRootAndRefresh() {
+        navigationStackId = UUID()
+        viewModel.refresh()
     }
 }
 

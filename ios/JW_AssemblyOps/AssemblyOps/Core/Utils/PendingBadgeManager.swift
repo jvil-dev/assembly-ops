@@ -22,7 +22,7 @@
 // Dependencies:
 //   - AssignmentsService: API calls
 //
-// Used by: VolunteerTabView
+// Used by: EventTabView (Assignments tab badge)
 
 import Foundation
 import Combine

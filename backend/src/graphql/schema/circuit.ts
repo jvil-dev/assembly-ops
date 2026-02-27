@@ -5,7 +5,7 @@ export const circuitTypeDefs = `#graphql
         region: String!
         language: String!
         congregations: [Congregation]!
-        eventTemplates: [EventTemplate]!
+        events: [Event]!
         createdAt: DateTime!
         updatedAt: DateTime!    
     }

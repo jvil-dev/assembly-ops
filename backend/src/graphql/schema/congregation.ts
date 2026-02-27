@@ -2,11 +2,10 @@ export const congregationTypeDefs = `#graphql
     type Congregation {
         id: ID!
         name: String!
-        city: String!
         state: String!
         language: String!
         circuit: Circuit!
-        volunteerProfiles: [VolunteerProfile!]!
+        users: [User!]!
         createdAt: DateTime!
         updatedAt: DateTime!
     }

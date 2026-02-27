@@ -38,6 +38,8 @@ struct OAuthRegistrationView: View {
     @State private var firstNameField: String
     @State private var lastNameField: String
     @State private var isOverseer: Bool = false
+    @State private var congregationName: String = ""
+    @State private var congregationId: String?
     @State private var isSubmitting = false
     @State private var errorMessage: String?
     @State private var showError = false
@@ -189,12 +191,24 @@ struct OAuthRegistrationView: View {
                 text: $lastNameField,
                 isSecure: false,
                 isFocused: focusedField == .lastName,
-                onSubmit: { register() },
+                onSubmit: { focusedField = nil },
                 autocapitalization: .words,
                 keyboardType: .default,
                 isMonospaced: false
             )
             .focused($focusedField, equals: .lastName)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("CONGREGATION")
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(0.6)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+                CongregationSearchField(
+                    selectedName: $congregationName,
+                    selectedId: $congregationId
+                )
+            }
         }
     }
 
@@ -273,7 +287,9 @@ struct OAuthRegistrationView: View {
             pendingOAuthToken: pendingOAuthToken,
             firstName: firstNameField.trimmingCharacters(in: .whitespaces),
             lastName: lastNameField.trimmingCharacters(in: .whitespaces),
-            isOverseer: isOverseer ? .some(true) : .none
+            isOverseer: isOverseer ? .some(true) : .none,
+            congregation: congregationName.isEmpty ? .none : .some(congregationName),
+            congregationId: congregationId.map { .some($0) } ?? .none
         )
 
         NetworkClient.shared.apollo.perform(
@@ -291,8 +307,10 @@ struct OAuthRegistrationView: View {
                             lastName: data.user.lastName,
                             fullName: data.user.fullName,
                             phone: nil,
-                            congregation: nil,
-                            congregationId: nil,
+                            congregation: data.user.congregation,
+                            congregationId: data.user.congregationId,
+                            circuitCode: data.user.congregationRef?.circuit.code,
+                            circuitId: data.user.congregationRef?.circuit.id,
                             appointmentStatus: nil,
                             isOverseer: data.user.isOverseer
                         )

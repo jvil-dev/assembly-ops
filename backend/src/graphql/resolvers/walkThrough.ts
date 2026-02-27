@@ -12,23 +12,20 @@
  */
 import { Context } from '../context.js';
 import { WalkThroughService } from '../../services/walkThroughService.js';
-import { requireAdmin, requireVolunteer, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireEventAccess, resolveUserEventVolunteer } from '../guards/auth.js';
 import { SubmitWalkThroughCompletionInput } from '../validators/walkThrough.js';
 import { AuthorizationError } from '../../utils/errors.js';
 
 /**
- * Resolve EventVolunteer for authenticated volunteer (dual-auth bridge).
- * Same pattern as attendant.ts resolveAttendantVolunteer but without department check.
+ * Resolve EventVolunteer for authenticated user.
+ * Requires eventId to look up the user's EventVolunteer record.
  */
 async function resolveEventVolunteer(
-  context: Context
+  context: Context,
+  eventId: string
 ): Promise<string> {
-  const ev = await context.prisma.eventVolunteer.findUnique({
-    where: { id: context.volunteer!.id },
-  });
-  if (!ev) {
-    throw new AuthorizationError('Volunteer not found');
-  }
+  if (!context.user) throw new AuthorizationError('You must be logged in');
+  const ev = await resolveUserEventVolunteer(context.user.id, eventId, context.prisma);
   return ev.id;
 }
 
@@ -51,8 +48,13 @@ const walkThroughResolvers = {
       _args: unknown,
       context: Context
     ) => {
-      requireVolunteer(context);
-      const eventVolunteerId = await resolveEventVolunteer(context);
+      requireAuth(context);
+      const eventVolunteer = await context.prisma.eventVolunteer.findFirst({
+        where: { userId: context.user!.id },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (!eventVolunteer) throw new AuthorizationError('Volunteer not found');
+      const eventVolunteerId = eventVolunteer.id;
 
       const service = new WalkThroughService(context.prisma);
       return service.getMyCompletions(eventVolunteerId);
@@ -65,8 +67,13 @@ const walkThroughResolvers = {
       { input }: { input: SubmitWalkThroughCompletionInput },
       context: Context
     ) => {
-      requireVolunteer(context);
-      const eventVolunteerId = await resolveEventVolunteer(context);
+      requireAuth(context);
+      const eventVolunteer = await context.prisma.eventVolunteer.findFirst({
+        where: { userId: context.user!.id },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (!eventVolunteer) throw new AuthorizationError('Volunteer not found');
+      const eventVolunteerId = eventVolunteer.id;
 
       const service = new WalkThroughService(context.prisma);
       return service.submitCompletion(eventVolunteerId, input);

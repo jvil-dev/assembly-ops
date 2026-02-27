@@ -9,7 +9,6 @@ query VolunteerProfiles($congregationId: ID) {
     congregation {
       id
       name
-      city
     }
   }
 }
@@ -25,7 +24,6 @@ query VolunteerProfilesByCircuit($circuitId: ID!) {
     congregation {
       id
       name
-      city
     }
   }
 }
@@ -41,7 +39,6 @@ query SearchVolunteerProfiles($query: String!, $circuitId: ID) {
     congregation {
       id
       name
-      city
     }
   }
 }

@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "CircuitByCode"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query CircuitByCode($code: String!) { circuitByCode(code: $code) { __typename id code region language congregations { __typename id name city } } }"#
+        #"query CircuitByCode($code: String!) { circuitByCode(code: $code) { __typename id code region language congregations { __typename id name } } }"#
       ))
 
     public var code: String
@@ -71,7 +71,6 @@ extension AssemblyOpsAPI {
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
             .field("name", String.self),
-            .field("city", String.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             CircuitByCodeQuery.Data.CircuitByCode.Congregation.self
@@ -79,7 +78,6 @@ extension AssemblyOpsAPI {
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var name: String { __data["name"] }
-          var city: String { __data["city"] }
         }
       }
     }
