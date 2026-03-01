@@ -42,9 +42,7 @@ struct VolunteerDetailView: View {
     @StateObject private var viewModel: VolunteerDetailViewModel
     @State private var showRemoveConfirmation = false
     @State private var showDeleteConfirmation = false
-    @State private var showRegenerateConfirmation = false
     @State private var showEditSheet = false
-    @State private var showToken = false
     @State private var hasAppeared = false
     @State private var showCopiedToast = false
 
@@ -83,23 +81,10 @@ struct VolunteerDetailView: View {
         .onChange(of: viewModel.didDelete) { _, didDelete in
             if didDelete { dismiss() }
         }
-        .confirmationDialog(
-            "Regenerate Credentials",
-            isPresented: $showRegenerateConfirmation,
-            titleVisibility: .visible
-        ) { regenerateDialogButtons } message: { regenerateDialogMessage }
-        .sheet(item: $viewModel.regeneratedCredentials) { creds in
-            VolunteerCredentialsView(
-                volunteerName: volunteer.fullName,
-                volunteerId: creds.volunteerId,
-                token: creds.token,
-                inviteMessage: "Your new login credentials:\nVolunteer ID: \(creds.volunteerId)\nToken: \(creds.token)"
-            )
-        }
-        .alert("Error", isPresented: .init(
+        .alert("common.error".localized, isPresented: .init(
             get: { viewModel.errorMessage != nil },
             set: { if !$0 { viewModel.errorMessage = nil } }
-        )) { Button("OK", role: .cancel) {} } message: { errorAlertMessage }
+        )) { Button("common.ok".localized, role: .cancel) {} } message: { errorAlertMessage }
         .overlay(alignment: .bottom) { copiedToastOverlay }
     }
 
@@ -133,7 +118,7 @@ struct VolunteerDetailView: View {
                     dismiss()
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button("common.cancel".localized, role: .cancel) {}
         }
     }
 
@@ -146,7 +131,7 @@ struct VolunteerDetailView: View {
             Button("Delete Permanently", role: .destructive) {
                 Task { await viewModel.deleteVolunteer() }
             }
-            Button("Cancel", role: .cancel) {}
+            Button("common.cancel".localized, role: .cancel) {}
         }
     }
 
@@ -154,18 +139,6 @@ struct VolunteerDetailView: View {
         Text("Are you sure you want to permanently delete \(volunteer.fullName)? This will remove all their assignments and check-in records. This action cannot be undone.")
     }
 
-    private var regenerateDialogButtons: some View {
-        Group {
-            Button("Regenerate", role: .destructive) {
-                Task { await viewModel.regenerateCredentials() }
-            }
-            Button("Cancel", role: .cancel) {}
-        }
-    }
-
-    private var regenerateDialogMessage: some View {
-        Text("This will invalidate \(volunteer.fullName)'s current login credentials. They will need new credentials to log in.")
-    }
 
     private var errorAlertMessage: some View {
         Group {
@@ -257,7 +230,7 @@ struct VolunteerDetailView: View {
                             .frame(width: 24, height: 24)
                             .overlay(
                                 Image(systemName: "pencil")
-                                    .font(.system(size: 11, weight: .semibold))
+                                    .font(AppTheme.Typography.captionSmall).fontWeight(.semibold)
                                     .foregroundStyle(.white)
                             )
                             .offset(x: 2, y: 2)
@@ -357,30 +330,43 @@ struct VolunteerDetailView: View {
                 ForEach(Array(viewModel.assignments.enumerated()), id: \.element.id) { index, assignment in
                     if index > 0 { Divider() }
 
-                    Toggle(isOn: Binding(
-                        get: { assignment.isCaptain },
-                        set: { newValue in
-                            Task { await viewModel.setCaptain(assignmentId: assignment.id, isCaptain: newValue) }
-                        }
-                    )) {
+                    if isAVDepartment {
+                        // AV departments: read-only row (no captain toggle)
                         VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                            HStack(spacing: AppTheme.Spacing.xs) {
-                                Text(assignment.sessionName)
-                                    .font(AppTheme.Typography.bodyMedium)
-                                    .foregroundStyle(.primary)
-                                if assignment.isCaptain {
-                                    Image(systemName: "star.fill")
-                                        .font(.system(size: 11))
-                                        .foregroundStyle(AppTheme.themeColor)
-                                }
-                            }
+                            Text(assignment.sessionName)
+                                .font(AppTheme.Typography.bodyMedium)
+                                .foregroundStyle(.primary)
                             Text(assignment.postName)
                                 .font(AppTheme.Typography.caption)
                                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                         }
+                    } else {
+                        // Non-AV departments: captain toggle
+                        Toggle(isOn: Binding(
+                            get: { assignment.isCaptain },
+                            set: { newValue in
+                                Task { await viewModel.setCaptain(assignmentId: assignment.id, isCaptain: newValue) }
+                            }
+                        )) {
+                            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                                HStack(spacing: AppTheme.Spacing.xs) {
+                                    Text(assignment.sessionName)
+                                        .font(AppTheme.Typography.bodyMedium)
+                                        .foregroundStyle(.primary)
+                                    if assignment.isCaptain {
+                                        Image(systemName: "star.fill")
+                                            .font(AppTheme.Typography.captionSmall)
+                                            .foregroundStyle(AppTheme.themeColor)
+                                    }
+                                }
+                                Text(assignment.postName)
+                                    .font(AppTheme.Typography.caption)
+                                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                            }
+                        }
+                        .tint(AppTheme.themeColor)
+                        .disabled(assignment.status == "DECLINED" || assignment.status == "AUTO_DECLINED")
                     }
-                    .tint(AppTheme.themeColor)
-                    .disabled(assignment.status == "DECLINED" || assignment.status == "AUTO_DECLINED")
                 }
             }
         }
@@ -417,102 +403,26 @@ struct VolunteerDetailView: View {
         .themedCard(scheme: colorScheme)
     }
 
-    // MARK: - Credentials Card
+    // MARK: - Identifier Card
 
     private var credentialsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            // Header
             HStack(spacing: AppTheme.Spacing.s) {
-                Image(systemName: "key")
+                Image(systemName: "person.text.rectangle")
                     .foregroundStyle(AppTheme.themeColor)
-                Text("Login Credentials")
+                Text("User ID")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
 
-            // Volunteer ID row
             HStack {
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                    Text("Volunteer ID")
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                    Text(volunteer.volunteerId)
-                        .font(.system(size: 17, design: .monospaced))
-                        .foregroundStyle(.primary)
-                }
-
+                Text(volunteer.userId ?? "—")
+                    .font(.system(size: 17, design: .monospaced))
+                    .foregroundStyle(.primary)
                 Spacer()
-
-                copyButton(text: volunteer.volunteerId)
-            }
-
-            Divider()
-
-            // Token row
-            HStack {
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                    Text("Token")
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-
-                    if viewModel.isLoadingToken {
-                        ProgressView()
-                            .frame(height: 20)
-                    } else if let token = viewModel.token {
-                        Text(showToken ? token : String(repeating: "\u{2022}", count: 8))
-                            .font(.system(size: 17, design: .monospaced))
-                            .foregroundStyle(.primary)
-                    } else {
-                        Button("Tap to view") {
-                            Task { await viewModel.fetchToken() }
-                        }
-                        .font(AppTheme.Typography.subheadline)
-                        .foregroundStyle(AppTheme.themeColor)
-                    }
+                if let uid = volunteer.userId {
+                    copyButton(text: uid)
                 }
-
-                Spacer()
-
-                if viewModel.token != nil {
-                    // Show/Hide toggle
-                    Button {
-                        showToken.toggle()
-                        HapticManager.shared.lightTap()
-                    } label: {
-                        Image(systemName: showToken ? "eye.slash" : "eye")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(AppTheme.themeColor)
-                    }
-                    .padding(.trailing, 8)
-
-                    // Copy token
-                    if let token = viewModel.token {
-                        copyButton(text: token)
-                    }
-                }
-            }
-
-            // Regenerate button (editable only)
-            if isEditable {
-                Divider()
-
-                Button {
-                    showRegenerateConfirmation = true
-                } label: {
-                    HStack(spacing: AppTheme.Spacing.s) {
-                        if viewModel.isRegenerating {
-                            ProgressView()
-                                .tint(AppTheme.StatusColors.warning)
-                        } else {
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                            Text("Regenerate Credentials")
-                        }
-                    }
-                    .font(AppTheme.Typography.subheadline)
-                    .foregroundStyle(AppTheme.StatusColors.warning)
-                }
-                .buttonStyle(.plain)
-                .disabled(viewModel.isRegenerating)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -634,7 +544,7 @@ struct VolunteerDetailView: View {
     private func infoRow(icon: String, text: String) -> some View {
         HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: icon)
-                .font(.system(size: 12))
+                .font(AppTheme.Typography.caption)
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 .frame(width: 16)
             Text(text)
@@ -644,6 +554,10 @@ struct VolunteerDetailView: View {
     }
 
     // MARK: - Helpers
+
+    private var isAVDepartment: Bool {
+        ["AUDIO", "VIDEO", "STAGE"].contains(volunteer.departmentType?.uppercased() ?? "")
+    }
 
     private var departmentColor: Color {
         if let type = volunteer.departmentType {
@@ -658,7 +572,9 @@ struct VolunteerDetailView: View {
         switch type.uppercased() {
         case "PARKING": return "car"
         case "ATTENDANT": return "person.badge.shield.checkmark"
-        case "AUDIO_VIDEO", "AV": return "video"
+        case "AUDIO": return "speaker.wave.3"
+        case "VIDEO": return "video"
+        case "STAGE": return "light.overhead.left"
         case "CLEANING": return "sparkles"
         case "COMMITTEE": return "person.3"
         case "FIRST_AID", "FIRSTAID": return "cross"
@@ -692,7 +608,7 @@ struct VolunteerDetailView: View {
         VolunteerDetailView(
             volunteer: VolunteerListItem(
                 id: "1",
-                volunteerId: "VOL-12345",
+                userId: "A7X9K2",
                 fullName: "John Smith",
                 firstName: "John",
                 lastName: "Smith",
@@ -716,7 +632,7 @@ struct VolunteerDetailView: View {
         VolunteerDetailView(
             volunteer: VolunteerListItem(
                 id: "1",
-                volunteerId: "VOL-12345",
+                userId: "A7X9K2",
                 fullName: "John Smith",
                 firstName: "John",
                 lastName: "Smith",

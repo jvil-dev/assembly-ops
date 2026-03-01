@@ -42,7 +42,7 @@ final class VolunteersViewModel: ObservableObject {
     @Published var roles: [RoleItem] = []
     @Published var isLoading = false
     @Published var isAddingVolunteer = false
-    @Published var addedVolunteerCredentials: AddedVolunteerResult?
+    @Published var addedVolunteerName: String?
     @Published var error: String?
 
     var departmentId: String?
@@ -191,19 +191,12 @@ final class VolunteersViewModel: ObservableObject {
                 switch result {
                 case .success(let graphQLResult):
                     if let data = graphQLResult.data?.addVolunteerByUserId {
-                        let ev = data.eventVolunteer
-                        let user = ev.user
+                        let user = data.user
                         let fullName = "\(user.firstName) \(user.lastName)"
-                        self?.addedVolunteerCredentials = AddedVolunteerResult(
-                            name: fullName,
-                            volunteerId: data.volunteerId,
-                            token: data.token,
-                            inviteMessage: data.inviteMessage
-                        )
                         // Append to department roster immediately
                         let newItem = VolunteerListItem(
-                            id: ev.id,
-                            volunteerId: data.volunteerId,
+                            id: data.id,
+                            userId: nil,
                             fullName: fullName,
                             firstName: user.firstName,
                             lastName: user.lastName,
@@ -211,13 +204,14 @@ final class VolunteersViewModel: ObservableObject {
                             phone: nil,
                             email: nil,
                             appointmentStatus: nil,
-                            departmentId: self?.departmentId,
-                            departmentName: nil,
-                            departmentType: nil,
+                            departmentId: data.department?.id,
+                            departmentName: data.department?.name,
+                            departmentType: data.department?.departmentType.rawValue,
                             roleId: nil,
                             roleName: nil
                         )
                         self?.departmentVolunteers.append(newItem)
+                        self?.addedVolunteerName = fullName
                         HapticManager.shared.success()
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
                         self?.error = errors.first?.message ?? "Failed to add volunteer"
@@ -259,7 +253,7 @@ final class VolunteersViewModel: ObservableObject {
     private func mapToVolunteerListItem(_ volunteer: AssemblyOpsAPI.VolunteersQuery.Data.Volunteer) -> VolunteerListItem {
         VolunteerListItem(
             id: volunteer.id,
-            volunteerId: volunteer.volunteerId,
+            userId: volunteer.userId,
             fullName: volunteer.fullName,
             firstName: volunteer.firstName,
             lastName: volunteer.lastName,
@@ -276,10 +270,4 @@ final class VolunteersViewModel: ObservableObject {
     }
 }
 
-struct AddedVolunteerResult: Identifiable {
-    let id = UUID()
-    let name: String
-    let volunteerId: String
-    let token: String
-    let inviteMessage: String?
-}
+

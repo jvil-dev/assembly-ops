@@ -1,10 +1,15 @@
 mutation JoinDepartmentByCode($input: JoinDepartmentByCodeInput!) {
   joinDepartmentByAccessCode(input: $input) {
-    eventVolunteer {
+    id
+    user {
       id
+      firstName
+      lastName
     }
-    volunteerId
-    token
-    inviteMessage
+    department {
+      id
+      name
+      departmentType
+    }
   }
 }

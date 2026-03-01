@@ -39,7 +39,9 @@ struct JoinRequestItem: Identifiable {
         switch dt {
         case "ACCOUNTS": return "Accounts"
         case "ATTENDANT": return "Attendant"
-        case "AUDIO_VIDEO": return "Audio/Video"
+        case "AUDIO": return "Audio"
+        case "VIDEO": return "Video"
+        case "STAGE": return "Stage"
         case "BAPTISM": return "Baptism"
         case "CLEANING": return "Cleaning"
         case "FIRST_AID": return "First Aid"
@@ -64,9 +66,7 @@ struct JoinRequestItem: Identifiable {
     }
 }
 
-struct ApprovedCredentials: Equatable {
-    let volunteerId: String
-    let token: String
+struct ApprovedResult: Equatable {
     let requestId: String
     let userFullName: String
 }
@@ -76,7 +76,7 @@ final class JoinRequestsViewModel: ObservableObject {
     @Published var requests: [JoinRequestItem] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var approvedCredentials: ApprovedCredentials?
+    @Published var approvedResult: ApprovedResult?
     @Published var processingIds: Set<String> = []
 
     func loadRequests(eventId: String) {
@@ -130,11 +130,9 @@ final class JoinRequestsViewModel: ObservableObject {
                 self?.processingIds.remove(requestId)
                 switch result {
                 case .success(let graphQLResult):
-                    if let creds = graphQLResult.data?.approveJoinRequest {
+                    if graphQLResult.data?.approveJoinRequest != nil {
                         let requestItem = self?.requests.first(where: { $0.id == requestId })
-                        self?.approvedCredentials = ApprovedCredentials(
-                            volunteerId: creds.volunteerId,
-                            token: creds.token,
+                        self?.approvedResult = ApprovedResult(
                             requestId: requestId,
                             userFullName: requestItem?.userFullName ?? "Volunteer"
                         )

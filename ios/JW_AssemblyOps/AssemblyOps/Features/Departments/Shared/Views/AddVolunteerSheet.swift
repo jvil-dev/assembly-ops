@@ -7,15 +7,13 @@
 
 // MARK: - Add Volunteer Sheet
 //
-// Replaces CreateVolunteerSheet. Two paths to invite volunteers:
+// Two paths to invite volunteers:
 //
 //   1. Share Access Code (primary) — show department code with copy + share.
 //      Volunteers enter it in the app to join instantly.
 //
 //   2. Add by User ID (manual) — overseer types a volunteer's 6-char User ID
-//      and adds them directly. Returns credentials sheet on success.
-//
-// On success, shows CredentialsSheet with volunteerId + token + inviteMessage.
+//      and adds them directly. Shows success alert on completion.
 //
 
 import SwiftUI
@@ -77,22 +75,25 @@ struct AddVolunteerSheet: View {
             .onChange(of: viewModel.error) { _, err in
                 showError = err != nil
             }
-            .alert("Error", isPresented: $showError) {
-                Button("OK") { viewModel.error = nil }
+            .alert("common.error".localized, isPresented: $showError) {
+                Button("common.ok".localized) { viewModel.error = nil }
             } message: {
                 Text(viewModel.error ?? "")
             }
-            .sheet(item: $viewModel.addedVolunteerCredentials) { result in
-                CredentialsSheet(
-                    volunteerName: result.name,
-                    volunteerId: result.volunteerId,
-                    token: result.token,
-                    inviteMessage: result.inviteMessage
-                ) {
-                    viewModel.addedVolunteerCredentials = nil
+            .alert(
+                viewModel.addedVolunteerName.map { "\($0) Added!" } ?? "Volunteer Added!",
+                isPresented: Binding(
+                    get: { viewModel.addedVolunteerName != nil },
+                    set: { if !$0 { viewModel.addedVolunteerName = nil } }
+                )
+            ) {
+                Button("common.ok".localized) {
+                    viewModel.addedVolunteerName = nil
                     userIdInput = ""
                     dismiss()
                 }
+            } message: {
+                Text("The volunteer has been added to the department.")
             }
         }
     }
@@ -254,154 +255,6 @@ struct AddVolunteerSheet: View {
     }
 }
 
-// MARK: - Credentials Sheet
-
-struct CredentialsSheet: View {
-    @Environment(\.colorScheme) var colorScheme
-
-    let volunteerName: String?
-    let volunteerId: String
-    let token: String
-    let inviteMessage: String?
-    let onDismiss: () -> Void
-
-    @State private var showCopiedToast = false
-    @State private var hasAppeared = false
-
-    init(volunteerName: String? = nil, volunteerId: String, token: String, inviteMessage: String? = nil, onDismiss: @escaping () -> Void) {
-        self.volunteerName = volunteerName
-        self.volunteerId = volunteerId
-        self.token = token
-        self.inviteMessage = inviteMessage
-        self.onDismiss = onDismiss
-    }
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: AppTheme.Spacing.xl) {
-                    // Success icon
-                    ZStack {
-                        Circle()
-                            .fill(AppTheme.StatusColors.acceptedBackground)
-                            .frame(width: 100, height: 100)
-
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 60))
-                            .foregroundStyle(AppTheme.StatusColors.accepted)
-                    }
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
-
-                    // Success message
-                    VStack(spacing: AppTheme.Spacing.s) {
-                        Text(volunteerName.map { "\($0) Added!" } ?? "Volunteer Added!")
-                            .font(AppTheme.Typography.title)
-                            .foregroundStyle(.primary)
-
-                        Text("addVolunteer.credentials.subtitle".localized)
-                            .font(AppTheme.Typography.subheadline)
-                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                            .multilineTextAlignment(.center)
-                    }
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
-
-                    // Credentials card
-                    VStack(spacing: AppTheme.Spacing.l) {
-                        CredentialRow(label: "addVolunteer.credentials.volunteerId".localized, value: volunteerId, colorScheme: colorScheme)
-                        CredentialRow(label: "addVolunteer.credentials.token".localized, value: token, colorScheme: colorScheme)
-                    }
-                    .cardPadding()
-                    .themedCard(scheme: colorScheme)
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
-
-                    // Copy button
-                    Button {
-                        let copyText: String
-                        if let msg = inviteMessage {
-                            copyText = msg
-                        } else {
-                            copyText = "Volunteer ID: \(volunteerId)\nToken: \(token)"
-                        }
-                        UIPasteboard.general.string = copyText
-                        HapticManager.shared.lightTap()
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            showCopiedToast = true
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            withAnimation(.easeOut) { showCopiedToast = false }
-                        }
-                    } label: {
-                        HStack(spacing: AppTheme.Spacing.s) {
-                            Image(systemName: "doc.on.doc")
-                            Text("addVolunteer.credentials.copy".localized)
-                        }
-                        .font(AppTheme.Typography.headline)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: AppTheme.ButtonHeight.medium)
-                        .foregroundStyle(.white)
-                        .background(AppTheme.themeColor)
-                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
-                    }
-                    .buttonStyle(.plain)
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
-                }
-                .screenPadding()
-                .padding(.top, AppTheme.Spacing.xl)
-                .padding(.bottom, AppTheme.Spacing.xxl)
-            }
-            .themedBackground(scheme: colorScheme)
-            .navigationTitle("addVolunteer.credentials.title".localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("common.done".localized) { onDismiss() }
-                        .fontWeight(.semibold)
-                }
-            }
-            .onAppear {
-                withAnimation(AppTheme.entranceAnimation) { hasAppeared = true }
-            }
-            .overlay(alignment: .bottom) {
-                if showCopiedToast {
-                    HStack(spacing: AppTheme.Spacing.s) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(AppTheme.StatusColors.accepted)
-                        Text("addVolunteer.credentials.copied".localized)
-                            .font(AppTheme.Typography.subheadline)
-                            .foregroundStyle(.primary)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
-                            .fill(AppTheme.cardBackground(for: colorScheme))
-                            .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 4)
-                    )
-                    .padding(.bottom, AppTheme.Spacing.xl)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Credential Row
-
-struct CredentialRow: View {
-    let label: String
-    let value: String
-    let colorScheme: ColorScheme
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-            Text(label)
-                .font(AppTheme.Typography.caption)
-                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-            Text(value)
-                .font(.system(.body, design: .monospaced))
-                .fontWeight(.medium)
-                .foregroundStyle(.primary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
+#Preview {
+    AddVolunteerSheet(viewModel: VolunteersViewModel())
 }

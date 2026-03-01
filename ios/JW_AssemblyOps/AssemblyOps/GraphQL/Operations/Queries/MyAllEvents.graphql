@@ -7,12 +7,12 @@ query MyAllEvents {
     departmentName
     departmentType
     eventVolunteerId
-    volunteerId
     departmentAccessCode
     event {
       id
       name
       eventType
+      theme
       venue
       address
       startDate

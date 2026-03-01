@@ -40,19 +40,19 @@ struct JoinRequestsView: View {
         .onChange(of: viewModel.errorMessage) { _, error in
             showError = error != nil
         }
-        .onChange(of: viewModel.approvedCredentials) { _, creds in
-            showCredentials = creds != nil
+        .onChange(of: viewModel.approvedResult) { _, result in
+            showCredentials = result != nil
         }
-        .alert("Error", isPresented: $showError) {
-            Button("OK") { viewModel.errorMessage = nil }
+        .alert("common.error".localized, isPresented: $showError) {
+            Button("common.ok".localized) { viewModel.errorMessage = nil }
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
         .sheet(isPresented: $showCredentials, onDismiss: {
-            viewModel.approvedCredentials = nil
+            viewModel.approvedResult = nil
         }) {
-            if let creds = viewModel.approvedCredentials {
-                CredentialsOverlayView(credentials: creds)
+            if let result = viewModel.approvedResult {
+                ApprovedOverlayView(result: result)
             }
         }
     }
@@ -191,7 +191,7 @@ struct JoinRequestsView: View {
                         .foregroundStyle(colorScheme == .dark ? .white : Color(red: 0.1, green: 0.1, blue: 0.1))
 
                     Text(request.userId)
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 }
 
@@ -200,7 +200,7 @@ struct JoinRequestsView: View {
                 // Time ago badge
                 if let timeAgo = request.timeAgoString {
                     Text(timeAgo)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(AppTheme.Typography.captionSmall).fontWeight(.medium)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                         .padding(.horizontal, AppTheme.Spacing.s)
                         .padding(.vertical, 3)
@@ -306,7 +306,7 @@ struct JoinRequestsView: View {
     private func detailRow(icon: String, text: String, tinted: Bool = false, isNote: Bool = false) -> some View {
         HStack(alignment: isNote ? .top : .center, spacing: AppTheme.Spacing.s) {
             Image(systemName: icon)
-                .font(.system(size: 12))
+                .font(AppTheme.Typography.caption)
                 .foregroundStyle(tinted ? AppTheme.themeColor : AppTheme.themeColor.opacity(0.6))
                 .frame(width: 18)
             Text(text)
@@ -335,14 +335,12 @@ extension JoinRequestItem {
     }
 }
 
-// MARK: - Credentials Overlay
+// MARK: - Approved Overlay
 
-struct CredentialsOverlayView: View {
-    let credentials: ApprovedCredentials
+struct ApprovedOverlayView: View {
+    let result: ApprovedResult
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
-    @State private var copiedId = false
-    @State private var copiedToken = false
     @State private var hasAppeared = false
 
     var body: some View {
@@ -350,26 +348,36 @@ struct CredentialsOverlayView: View {
             ScrollView {
                 VStack(spacing: AppTheme.Spacing.xxl) {
                     // Success header
-                    successHeader
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+                    VStack(spacing: AppTheme.Spacing.l) {
+                        ZStack {
+                            Circle()
+                                .fill(AppTheme.StatusColors.acceptedBackground)
+                                .frame(width: 80, height: 80)
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 40))
+                                .foregroundStyle(AppTheme.StatusColors.accepted)
+                        }
 
-                    // Credentials card
-                    credentialsCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.07)
+                        VStack(spacing: AppTheme.Spacing.s) {
+                            Text("\(result.userFullName) approved!")
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundStyle(colorScheme == .dark ? .white : Color(red: 0.1, green: 0.1, blue: 0.1))
+                                .multilineTextAlignment(.center)
 
-                    // Footer note
-                    Text("Store these credentials securely. The volunteer will use them to sign in at the event.")
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                        .multilineTextAlignment(.center)
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.14)
+                            Text("The volunteer has been added to the event and can now view their assignments.")
+                                .font(AppTheme.Typography.subheadline)
+                                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
                 }
                 .screenPadding()
                 .padding(.top, AppTheme.Spacing.xl)
                 .padding(.bottom, AppTheme.Spacing.xxl)
             }
             .themedBackground(scheme: colorScheme)
-            .navigationTitle("Credentials")
+            .navigationTitle("Approved")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -381,121 +389,6 @@ struct CredentialsOverlayView: View {
                 withAnimation(AppTheme.entranceAnimation) { hasAppeared = true }
             }
         }
-    }
-
-    // MARK: - Success Header
-
-    private var successHeader: some View {
-        VStack(spacing: AppTheme.Spacing.l) {
-            ZStack {
-                Circle()
-                    .fill(AppTheme.StatusColors.acceptedBackground)
-                    .frame(width: 80, height: 80)
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(AppTheme.StatusColors.accepted)
-            }
-
-            VStack(spacing: AppTheme.Spacing.s) {
-                Text("\(credentials.userFullName) approved!")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(colorScheme == .dark ? .white : Color(red: 0.1, green: 0.1, blue: 0.1))
-                    .multilineTextAlignment(.center)
-
-                Text("Share these credentials so they can sign in with their printed card.")
-                    .font(AppTheme.Typography.subheadline)
-                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                    .multilineTextAlignment(.center)
-            }
-        }
-    }
-
-    // MARK: - Credentials Card
-
-    private var credentialsCard: some View {
-        VStack(spacing: 0) {
-            credentialRow(
-                label: "VOLUNTEER ID",
-                value: credentials.volunteerId,
-                icon: "person.text.rectangle",
-                copied: copiedId
-            ) {
-                UIPasteboard.general.string = credentials.volunteerId
-                copiedId = true
-                HapticManager.shared.lightTap()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) { copiedId = false }
-            }
-
-            Rectangle()
-                .fill(AppTheme.dividerColor(for: colorScheme))
-                .frame(height: 1)
-                .padding(.horizontal, AppTheme.Spacing.cardPadding)
-
-            credentialRow(
-                label: "TOKEN",
-                value: credentials.token,
-                icon: "key.fill",
-                copied: copiedToken
-            ) {
-                UIPasteboard.general.string = credentials.token
-                copiedToken = true
-                HapticManager.shared.lightTap()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) { copiedToken = false }
-            }
-        }
-        .themedCard(scheme: colorScheme)
-    }
-
-    private func credentialRow(
-        label: String,
-        value: String,
-        icon: String,
-        copied: Bool,
-        onCopy: @escaping () -> Void
-    ) -> some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-            HStack(spacing: AppTheme.Spacing.s) {
-                Image(systemName: icon)
-                    .font(.system(size: 12))
-                    .foregroundStyle(AppTheme.themeColor.opacity(0.7))
-                Text(label)
-                    .font(.system(size: 11, weight: .semibold))
-                    .tracking(0.5)
-                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-            }
-
-            HStack(alignment: .center) {
-                Text(value)
-                    .font(.system(.body, design: .monospaced))
-                    .foregroundStyle(colorScheme == .dark ? .white : Color(red: 0.1, green: 0.1, blue: 0.1))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-
-                Spacer()
-
-                Button {
-                    onCopy()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                            .font(.system(size: 12, weight: .medium))
-                        Text(copied ? "Copied" : "Copy")
-                            .font(.system(size: 13, weight: .medium))
-                    }
-                    .padding(.horizontal, AppTheme.Spacing.m)
-                    .padding(.vertical, AppTheme.Spacing.xs)
-                    .background(
-                        Capsule()
-                            .fill(copied
-                                  ? AppTheme.StatusColors.acceptedBackground
-                                  : AppTheme.themeColor.opacity(0.1))
-                    )
-                    .foregroundStyle(copied ? AppTheme.StatusColors.accepted : AppTheme.themeColor)
-                    .animation(AppTheme.quickAnimation, value: copied)
-                }
-            }
-        }
-        .padding(AppTheme.Spacing.cardPadding)
     }
 }
 
