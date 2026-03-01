@@ -25,6 +25,7 @@ export const walkThroughTypeDefs = `#graphql
     completedAt: String!
     itemCount: Int!
     notes: String
+    checklistType: String
   }
 
   input SubmitWalkThroughCompletionInput {
@@ -32,6 +33,7 @@ export const walkThroughTypeDefs = `#graphql
     sessionId: ID!
     itemCount: Int!
     notes: String
+    checklistType: String
   }
 
   extend type Query {

@@ -663,9 +663,15 @@ export class AssignmentService {
     // Verify post exists
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
+      include: { department: { select: { departmentType: true } } },
     });
     if (!post) {
       throw new NotFoundError('Post');
+    }
+
+    // Captain designation is only supported for the Attendant department
+    if (isCaptain && post.department.departmentType !== 'ATTENDANT') {
+      throw new ValidationError('Captain designation is only available for the Attendant department');
     }
 
     // Verify session exists
@@ -731,10 +737,16 @@ export class AssignmentService {
 
     const assignment = await this.prisma.scheduleAssignment.findUnique({
       where: { id: result.data.assignmentId },
+      include: { post: { include: { department: { select: { departmentType: true } } } } },
     });
 
     if (!assignment) {
       throw new NotFoundError('Assignment');
+    }
+
+    // Captain designation is only supported for the Attendant department
+    if (result.data.isCaptain && assignment.post.department.departmentType !== 'ATTENDANT') {
+      throw new ValidationError('Captain designation is only available for the Attendant department');
     }
 
     return this.prisma.scheduleAssignment.update({

@@ -15,6 +15,7 @@ export const submitWalkThroughCompletionSchema = z.object({
   sessionId: z.string().min(1),
   itemCount: z.number().int().positive(),
   notes: z.string().max(2000).optional(),
+  checklistType: z.string().max(50).optional(),
 });
 
 export type SubmitWalkThroughCompletionInput = z.infer<typeof submitWalkThroughCompletionSchema>;

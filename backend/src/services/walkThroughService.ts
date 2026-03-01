@@ -37,6 +37,7 @@ export class WalkThroughService {
         eventVolunteerId,
         itemCount: result.data.itemCount,
         notes: result.data.notes,
+        checklistType: result.data.checklistType,
       },
       include: { session: true, eventVolunteer: true },
     });

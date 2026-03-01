@@ -41,11 +41,11 @@ import { requireAdmin, requireAuth, requireUser, requireEventAccess } from '../g
 import { Event, EventAdmin, Department, DepartmentType } from '@prisma/client';
 import type { AssignHierarchyRoleInput } from '../validators/event.js';
 
-// All 12 department types
+// All 14 department types
 const ALL_DEPARTMENT_TYPES: DepartmentType[] = [
   'ACCOUNTS',
   'ATTENDANT',
-  'AUDIO_VIDEO',
+  'AUDIO',
   'BAPTISM',
   'CLEANING',
   'FIRST_AID',
@@ -54,7 +54,9 @@ const ALL_DEPARTMENT_TYPES: DepartmentType[] = [
   'LOST_FOUND_CHECKROOM',
   'PARKING',
   'ROOMING',
+  'STAGE',
   'TRUCKING_EQUIPMENT',
+  'VIDEO',
 ];
 
 const eventResolvers = {
