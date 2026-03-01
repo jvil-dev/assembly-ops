@@ -1,0 +1,10 @@
+mutation OverseerPickUpLanyard($eventVolunteerId: ID!) {
+  overseerPickUpLanyard(eventVolunteerId: $eventVolunteerId) {
+    id
+    eventVolunteerId
+    date
+    pickedUpAt
+    returnedAt
+    volunteerName
+  }
+}

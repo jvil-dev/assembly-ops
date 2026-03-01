@@ -1,0 +1,16 @@
+mutation DeclineAreaCaptain($input: DeclineAreaCaptainInput!) {
+  declineAreaCaptain(input: $input) {
+    id
+    status
+    respondedAt
+    declineReason
+    area {
+      id
+      name
+    }
+    session {
+      id
+      name
+    }
+  }
+}
