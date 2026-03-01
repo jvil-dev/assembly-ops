@@ -1,0 +1,14 @@
+mutation BulkCreateAVEquipment($input: BulkCreateAVEquipmentInput!) {
+  bulkCreateAVEquipment(input: $input) {
+    id
+    name
+    category
+    condition
+    location
+    area {
+      id
+      name
+    }
+    createdAt
+  }
+}

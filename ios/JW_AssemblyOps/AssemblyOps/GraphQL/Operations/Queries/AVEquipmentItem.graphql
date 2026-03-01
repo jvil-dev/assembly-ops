@@ -1,0 +1,71 @@
+query AVEquipmentItem($id: ID!) {
+  avEquipmentItem(id: $id) {
+    id
+    name
+    model
+    serialNumber
+    category
+    condition
+    location
+    notes
+    area {
+      id
+      name
+    }
+    currentCheckout {
+      id
+      checkedOutBy {
+        id
+        user {
+          firstName
+          lastName
+        }
+      }
+      checkedOutAt
+      session {
+        id
+        name
+      }
+      notes
+    }
+    checkoutHistory {
+      id
+      checkedOutBy {
+        id
+        user {
+          firstName
+          lastName
+        }
+      }
+      checkedOutAt
+      checkedInAt
+      session {
+        id
+        name
+      }
+      notes
+    }
+    damageReports {
+      id
+      description
+      severity
+      resolved
+      resolvedAt
+      resolutionNotes
+      reportedBy {
+        id
+        user {
+          firstName
+          lastName
+        }
+      }
+      session {
+        id
+        name
+      }
+      createdAt
+    }
+    createdAt
+    updatedAt
+  }
+}

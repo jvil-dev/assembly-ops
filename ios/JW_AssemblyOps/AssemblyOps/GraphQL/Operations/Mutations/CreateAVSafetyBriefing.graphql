@@ -1,0 +1,24 @@
+mutation CreateAVSafetyBriefing($input: CreateAVSafetyBriefingInput!) {
+  createAVSafetyBriefing(input: $input) {
+    id
+    topic
+    notes
+    conductedBy {
+      id
+      firstName
+      lastName
+    }
+    conductedAt
+    attendees {
+      id
+      eventVolunteer {
+        id
+        user {
+          firstName
+          lastName
+        }
+      }
+    }
+    attendeeCount
+  }
+}
