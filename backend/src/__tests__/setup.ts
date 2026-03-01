@@ -30,7 +30,7 @@ export async function createTestApp() {
         timestamp: new Date().toISOString(),
         services: { database: 'connected' },
       });
-    } catch (error) {
+    } catch {
       res.status(503).json({
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
