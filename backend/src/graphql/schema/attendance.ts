@@ -51,6 +51,31 @@ const attendanceTypeDefs = `#graphql
   }
 
   # ============================================
+  # CAPTAIN ATTENDANCE VIEW
+  # ============================================
+
+  type CaptainAreaAttendanceCount {
+    post: Post!
+    session: Session!
+    count: Int!
+    section: String
+    notes: String
+    submittedBy: User!
+    submittedAt: DateTime!
+  }
+
+  # ============================================
+  # VOLUNTEER ATTENDANCE STATUS
+  # ============================================
+
+  type MyAttendanceStatus {
+    session: Session!
+    hasSubmitted: Boolean!
+    postId: ID
+    postName: String
+  }
+
+  # ============================================
   # QUERIES & MUTATIONS
   # ============================================
 
@@ -62,6 +87,8 @@ const attendanceTypeDefs = `#graphql
     eventAttendanceSummary(eventId: ID!): [SessionAttendanceSummary!]!
     volunteerSessionsForEvent(eventId: ID!): [Session!]!
     postAttendanceCounts(postId: ID!): [AttendanceCount!]!
+    captainAreaAttendanceCounts(eventId: ID!): [CaptainAreaAttendanceCount!]!
+    myAttendanceStatus(eventId: ID!): [MyAttendanceStatus!]!
   }
 
   extend type Mutation {
