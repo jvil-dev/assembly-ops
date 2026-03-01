@@ -78,7 +78,7 @@ describe('Assignment Acceptance Operations', () => {
           query: `mutation($departmentId: ID!, $input: CreatePostInput!) { createPost(departmentId: $departmentId, input: $input) { id } }`,
           variables: {
             departmentId,
-            input: { name: 'Test Post', capacity: 5 },
+            input: { name: 'Test Post' },
           },
         });
       postId = postRes.body.data.createPost.id;
@@ -428,7 +428,6 @@ describe('Assignment Acceptance Operations', () => {
               post { id name }
               session { id name }
               filled
-              capacity
               assignments { id status }
             }
           }`,

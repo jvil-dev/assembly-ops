@@ -87,7 +87,7 @@ describe('Check-In Operations', () => {
       `mutation($departmentId: ID!, $input: CreatePostInput!) {
         createPost(departmentId: $departmentId, input: $input) { id }
       }`,
-      { departmentId, input: { name: 'East Lobby', capacity: 2 } },
+      { departmentId, input: { name: 'East Lobby' } },
       adminToken
     );
     if (postRes.body.errors) {

@@ -5,15 +5,14 @@
  * Posts are physical locations/positions within a department (e.g., "Gate A", "Main Entrance").
  *
  * Schemas:
- *   - createPostSchema: Single post creation (name, description, location, capacity)
+ *   - createPostSchema: Single post creation (name, description, location)
  *   - createPostsSchema: Bulk post creation (departmentId + array of posts)
- *   - updatePostSchema: Partial update (name, description, location, capacity - all optional)
+ *   - updatePostSchema: Partial update (name, description, location - all optional)
  *
  * Fields:
  *   - name: Required on create, max 100 chars
  *   - description: Optional, describes the post's purpose
  *   - location: Optional, physical location details
- *   - capacity: How many volunteers needed (default 1 on create)
  *
  * Exports:
  *   - CreatePostInput, CreatePostsInput, UpdatePostInput (TypeScript types)
@@ -36,7 +35,6 @@ export const createPostSchema = z.object({
     .string()
     .nullish()
     .transform((v: string | null | undefined) => v?.trim() || null),
-  capacity: z.number().int().min(1, 'Capacity must be at least 1').default(1),
   category: z
     .string()
     .max(50, 'Category name too long')
@@ -66,7 +64,6 @@ export const updatePostSchema = z.object({
     .string()
     .nullish()
     .transform((v: string | null | undefined) => v?.trim() || null),
-  capacity: z.number().int().min(1, 'Capacity must be at least 1').optional(),
   category: z
     .string()
     .max(50, 'Category name too long')

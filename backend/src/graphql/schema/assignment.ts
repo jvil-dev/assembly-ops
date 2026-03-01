@@ -41,19 +41,24 @@ const assignmentTypeDefs = `#graphql
   # TYPES
   # ============================================
 
+  type CoverageShift {
+    id: ID!
+    name: String!
+    startTime: DateTime!
+    endTime: DateTime!
+  }
+
   type CoverageSlot {
     post: CoveragePost!
     session: CoverageSession!
+    shifts: [CoverageShift!]!
     assignments: [CoverageAssignment!]!
     filled: Int!
-    capacity: Int!
-    isFilled: Boolean!
   }
 
   type CoveragePost {
     id: ID!
     name: String!
-    capacity: Int!
     category: String
     location: String
     sortOrder: Int!
@@ -75,6 +80,8 @@ const assignmentTypeDefs = `#graphql
     checkIn: CoverageCheckIn
     status: AssignmentStatus!
     forceAssigned: Boolean!
+    shiftId: ID
+    shiftName: String
   }
 
   type CoverageVolunteer {
@@ -101,6 +108,7 @@ const assignmentTypeDefs = `#graphql
     volunteerId: ID!
     postId: ID!
     sessionId: ID!
+    shiftId: ID
     isCaptain: Boolean
   }
 
@@ -122,6 +130,7 @@ const assignmentTypeDefs = `#graphql
     volunteerId: ID!
     postId: ID!
     sessionId: ID!
+    shiftId: ID
     isCaptain: Boolean
   }
 
@@ -151,7 +160,7 @@ const assignmentTypeDefs = `#graphql
     volunteerAssignments(volunteerId: ID!): [ScheduleAssignment!]!
     sessionAssignments(sessionId: ID!): [ScheduleAssignment!]!
     postAssignments(postId: ID!): [ScheduleAssignment!]!
-    myAssignments(status: AssignmentStatus): [ScheduleAssignment!]!
+    myAssignments(eventId: ID!, status: AssignmentStatus): [ScheduleAssignment!]!
     pendingAssignments(filter: PendingAssignmentsFilter): [ScheduleAssignment!]!
     declinedAssignments(eventId: ID, departmentId: ID): [ScheduleAssignment!]!
     captainGroup(postId: ID!, sessionId: ID!): CaptainGroup

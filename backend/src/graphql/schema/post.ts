@@ -6,7 +6,7 @@
  * (e.g., "Gate A", "Main Entrance", "Information Booth").
  *
  * Inputs:
- *   - CreatePostInput: name (required), description, location, capacity
+ *   - CreatePostInput: name (required), description, location
  *   - CreatePostsInput: departmentId + array of posts (bulk creation)
  *   - UpdatePostInput: All fields optional (patch-style update)
  *
@@ -26,7 +26,6 @@ const postTypeDefs = `#graphql
     name: String!
     description: String
     location: String
-    capacity: Int
     category: String
     sortOrder: Int
     areaId: ID
@@ -41,7 +40,6 @@ const postTypeDefs = `#graphql
     name: String
     description: String
     location: String
-    capacity: Int
     category: String
     sortOrder: Int
   }

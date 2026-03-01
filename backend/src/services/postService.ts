@@ -8,7 +8,7 @@
  * Operations:
  *   - createPost: Create single post in a department
  *   - createPosts: Bulk create multiple posts in a department
- *   - updatePost: Update post details (name, description, location, capacity)
+ *   - updatePost: Update post details (name, description, location)
  *   - deletePost: Remove a post
  *   - getPost: Fetch single post with department/event info and assignment count
  *   - getDepartmentPosts: List all posts in a department
@@ -77,7 +77,6 @@ export class PostService {
         name: validated.name,
         description: validated.description,
         location: validated.location,
-        capacity: validated.capacity,
         category,
         sortOrder: validated.sortOrder,
         departmentId,
@@ -129,7 +128,6 @@ export class PostService {
           name: postInput.name,
           description: postInput.description,
           location: postInput.location,
-          capacity: postInput.capacity,
           category,
           sortOrder: postInput.sortOrder,
           departmentId,
@@ -164,7 +162,6 @@ export class PostService {
         name: validated.name,
         description: validated.description,
         location: validated.location,
-        capacity: validated.capacity,
         category: validated.category,
         sortOrder: validated.sortOrder,
       },
