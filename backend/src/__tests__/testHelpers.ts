@@ -58,6 +58,26 @@ export async function setAppAdmin(email: string): Promise<void> {
  * Clean up test data created during integration tests.
  */
 export async function cleanupTestData() {
+  // Delete AV records that reference EventVolunteer with RESTRICT delete
+  // (must be deleted before events cascade to EventVolunteers)
+  const testEvents = await prisma.event.findMany({
+    where: { name: { startsWith: 'Test Event' } },
+    select: { id: true },
+  });
+  const testEventIds = testEvents.map((e) => e.id);
+
+  if (testEventIds.length > 0) {
+    await prisma.aVSafetyBriefingAttendee.deleteMany({
+      where: { briefing: { eventId: { in: testEventIds } } },
+    });
+    await prisma.aVDamageReport.deleteMany({
+      where: { equipment: { eventId: { in: testEventIds } } },
+    });
+    await prisma.aVEquipmentCheckout.deleteMany({
+      where: { equipment: { eventId: { in: testEventIds } } },
+    });
+  }
+
   // Delete test events (cascades to departments, sessions, etc.)
   await prisma.event.deleteMany({
     where: { name: { startsWith: 'Test Event' } },
