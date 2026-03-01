@@ -45,6 +45,7 @@ import walkThroughResolvers from './walkThrough.js';
 import postSessionStatusResolvers from './postSessionStatus.js';
 import facilityLocationResolvers from './facilityLocation.js';
 import adminResolvers from './admin.js';
+import audioVideoResolvers from './audioVideo.js';
 
 const baseResolvers = {
   DateTime: DateTimeResolver,
@@ -97,6 +98,7 @@ const resolvers = {
     ...postSessionStatusResolvers.Query,
     ...facilityLocationResolvers.Query,
     ...adminResolvers.Query,
+    ...audioVideoResolvers.Query,
   },
 
   Mutation: {
@@ -119,6 +121,7 @@ const resolvers = {
     ...postSessionStatusResolvers.Mutation,
     ...facilityLocationResolvers.Mutation,
     ...adminResolvers.Mutation,
+    ...audioVideoResolvers.Mutation,
   },
 
   User: authResolvers.User,
@@ -137,6 +140,11 @@ const resolvers = {
   Message: messageResolvers.Message,
   Conversation: messageResolvers.Conversation,
   ConversationParticipant: messageResolvers.ConversationParticipant,
+  AVEquipmentItem: audioVideoResolvers.AVEquipmentItem,
+  AVEquipmentCheckout: audioVideoResolvers.AVEquipmentCheckout,
+  AVDamageReport: audioVideoResolvers.AVDamageReport,
+  AVHazardAssessment: audioVideoResolvers.AVHazardAssessment,
+  AVSafetyBriefing: audioVideoResolvers.AVSafetyBriefing,
 };
 
 export default resolvers;

@@ -9,8 +9,10 @@
  *   requireAppAdmin()    — User with isAppAdmin === true
  *   requireAuth()        — alias for requireUser()
  *   requireEventAccess() — overseer must belong to the event (with optional role check)
+ *   requireAreaOverseer() — volunteer must have AREA_OVERSEER role for the post's area
  *
  * Helpers:
+ *   tryRequireAdmin()           — non-throwing admin check (returns boolean)
  *   resolveUserEventVolunteer() — look up the current user's EventVolunteer for an event
  */
 import { Context } from '../context.js';
@@ -102,4 +104,52 @@ export async function resolveUserEventVolunteer(
   }
 
   return ev;
+}
+
+/**
+ * Non-throwing admin check — returns true if the user is an overseer, false otherwise.
+ * Used for dual-auth patterns where either admin OR area overseer can proceed.
+ */
+export function tryRequireAdmin(context: Context): boolean {
+  return !!(context.user && context.user.isOverseer);
+}
+
+/**
+ * Require that the current user is an AREA_OVERSEER for the area containing the given post.
+ * Used for delegated scheduling — crew/zone overseers schedule within their area only.
+ */
+export async function requireAreaOverseer(
+  context: Context,
+  postId: string
+): Promise<{ eventVolunteerId: string; areaId: string }> {
+  requireAuth(context);
+
+  const post = await context.prisma.post.findUnique({
+    where: { id: postId },
+    select: { areaId: true },
+  });
+  if (!post?.areaId) {
+    throw new AuthorizationError('Post is not assigned to an area');
+  }
+
+  const ev = await context.prisma.eventVolunteer.findFirst({
+    where: { userId: context.user!.id },
+    select: { id: true },
+  });
+  if (!ev) {
+    throw new AuthorizationError('Not a volunteer');
+  }
+
+  const hierarchy = await context.prisma.departmentHierarchy.findFirst({
+    where: {
+      eventVolunteerId: ev.id,
+      hierarchyRole: 'AREA_OVERSEER',
+      areaId: post.areaId,
+    },
+  });
+  if (!hierarchy) {
+    throw new AuthorizationError('Not an area overseer for this crew');
+  }
+
+  return { eventVolunteerId: ev.id, areaId: post.areaId };
 }
