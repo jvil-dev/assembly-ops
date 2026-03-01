@@ -51,8 +51,8 @@ export interface UserAuthResult {
     isOverseer: boolean;
     createdAt: Date;
     updatedAt: Date;
-  };
-  tokens: TokenPair;
+  } | null;
+  tokens: TokenPair | null;
   isNewUser?: boolean;
   pendingOAuthToken?: string;
   email?: string;
@@ -209,8 +209,8 @@ export class AuthService {
 
     // Return a partial result — user is null until completeOAuthRegistration
     return {
-      user: null as any, // resolver checks isNewUser and won't access user
-      tokens: null as any,
+      user: null,
+      tokens: null,
       isNewUser: true,
       pendingOAuthToken,
       email: userInfo.email,

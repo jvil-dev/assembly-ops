@@ -66,6 +66,11 @@ const authResolvers = {
       const authService = new AuthService(context.prisma);
       const result = await authService.registerUser(input);
 
+      // Registration always returns tokens (never a pending OAuth flow)
+      if (!result.tokens || !result.user) {
+        throw new Error('Registration failed to generate tokens');
+      }
+
       return {
         user: result.user,
         accessToken: result.tokens.accessToken,
@@ -81,6 +86,11 @@ const authResolvers = {
     ) => {
       const authService = new AuthService(context.prisma);
       const result = await authService.loginUser(input);
+
+      // Login always returns tokens (never a pending OAuth flow)
+      if (!result.tokens || !result.user) {
+        throw new Error('Login failed to generate tokens');
+      }
 
       return {
         user: result.user,

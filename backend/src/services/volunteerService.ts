@@ -15,7 +15,7 @@
  *
  * Called by: ../graphql/resolvers/volunteer.ts
  */
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, DepartmentType, JoinRequestStatus } from '@prisma/client';
 import { NotFoundError, ValidationError } from '../utils/errors.js';
 import { generateUserId } from '../utils/credentials.js';
 import {
@@ -324,8 +324,8 @@ export class VolunteerService {
       return this.prisma.eventJoinRequest.update({
         where: { id: existingRequest.id },
         data: {
-          status: 'PENDING',
-          departmentType: departmentType as any,
+          status: 'PENDING' as JoinRequestStatus,
+          departmentType: (departmentType as DepartmentType) || null,
           note,
           resolvedAt: null,
           resolvedById: null,
@@ -338,7 +338,7 @@ export class VolunteerService {
       data: {
         eventId,
         userId,
-        departmentType: departmentType as any,
+        departmentType: (departmentType as DepartmentType) || null,
         note,
       },
       include: { user: true, event: true },
@@ -486,7 +486,7 @@ export class VolunteerService {
     return this.prisma.eventJoinRequest.findMany({
       where: {
         eventId,
-        ...(status && { status: status as any }),
+        ...(status && { status: status as JoinRequestStatus }),
       },
       include: { user: true },
       orderBy: { createdAt: 'desc' },

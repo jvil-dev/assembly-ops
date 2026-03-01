@@ -1,6 +1,13 @@
 import request from 'supertest';
-import app from '../../app.js';
+import { createTestApp } from '../setup.js';
 import prisma from '../../config/database.js';
+import type { Application } from 'express';
+
+let app: Application;
+
+beforeAll(async () => {
+  app = await createTestApp();
+});
 
 afterAll(async () => {
   await prisma.$disconnect();
