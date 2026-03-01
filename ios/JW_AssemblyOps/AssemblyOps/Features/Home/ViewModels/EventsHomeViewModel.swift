@@ -29,6 +29,7 @@ struct EventMembershipItem: Identifiable, Hashable {
     let eventId: String
     let eventName: String
     let eventType: String   // raw enum value e.g. "CIRCUIT_ASSEMBLY_CO"
+    let theme: String?      // convention theme e.g. "Declare the Good News!"
     let venue: String
     let address: String
     let startDate: Date
@@ -86,11 +87,20 @@ struct EventMembershipItem: Identifiable, Hashable {
 
     var displayEventType: String {
         switch eventType {
-        case "CIRCUIT_ASSEMBLY_CO", "CIRCUIT_ASSEMBLY_BR": return "Circuit Assembly"
+        case "CIRCUIT_ASSEMBLY_CO": return "Circuit Assembly with Circuit Overseer"
+        case "CIRCUIT_ASSEMBLY_BR": return "Circuit Assembly with Branch Representative"
         case "REGIONAL_CONVENTION": return "Regional Convention"
         case "SPECIAL_CONVENTION": return "Special Convention"
         default: return eventType
         }
+    }
+
+    /// Theme + event type badge text (e.g. "Declare the Good News! — Circuit Assembly with Circuit Overseer")
+    var themeBadgeText: String {
+        if let theme, !theme.isEmpty {
+            return "\(theme) — \(displayEventType)"
+        }
+        return displayEventType
     }
 
     var dateRangeString: String {
@@ -170,6 +180,7 @@ final class EventsHomeViewModel: ObservableObject {
                 eventId: e.eventId,
                 eventName: e.event.name,
                 eventType: e.event.eventType.rawValue,
+                theme: e.event.theme,
                 venue: e.event.venue,
                 address: e.event.address,
                 startDate: start,
@@ -182,7 +193,7 @@ final class EventsHomeViewModel: ObservableObject {
                 departmentType: e.departmentType?.rawValue,
                 departmentAccessCode: e.departmentAccessCode,
                 eventVolunteerId: e.eventVolunteerId,
-                volunteerId: e.volunteerId
+                volunteerId: nil
             )
         }
 

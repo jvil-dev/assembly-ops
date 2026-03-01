@@ -24,11 +24,13 @@ struct DepartmentSelectionView: View {
     @State private var showConfirm = false
     @State private var showError = false
 
-    // All 12 department types
+    // All 14 department types
     private let departmentTypes: [DepartmentTypeInfo] = [
         .init(type: "ACCOUNTS", name: "Accounts", icon: "dollarsign.circle"),
         .init(type: "ATTENDANT", name: "Attendant", icon: "person.badge.shield.checkmark"),
-        .init(type: "AUDIO_VIDEO", name: "Audio/Video", icon: "speaker.wave.3"),
+        .init(type: "AUDIO", name: "Audio", icon: "speaker.wave.3"),
+        .init(type: "VIDEO", name: "Video", icon: "video"),
+        .init(type: "STAGE", name: "Stage", icon: "light.overhead.left"),
         .init(type: "BAPTISM", name: "Baptism", icon: "drop.circle"),
         .init(type: "CLEANING", name: "Cleaning", icon: "sparkles"),
         .init(type: "FIRST_AID", name: "First Aid", icon: "cross.case"),
@@ -185,4 +187,20 @@ struct DepartmentTypeInfo: Hashable {
     let type: String
     let name: String
     let icon: String
+}
+
+#Preview {
+    NavigationStack {
+        DepartmentSelectionView(
+            event: DiscoverableEvent(
+                id: "e1", name: "2026 Circuit Assembly",
+                eventType: "CIRCUIT_ASSEMBLY",
+                circuit: "CA-5", state: "CA",
+                venue: "Assembly Hall", address: "123 Main St",
+                startDate: "2026-03-15", endDate: "2026-03-16",
+                theme: nil, isPublic: true, volunteerCount: 30
+            )
+        )
+    }
+    .environmentObject(AppState.shared)
 }

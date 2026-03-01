@@ -384,6 +384,24 @@ struct AreaDetailSheet: View {
     }
 }
 
+#Preview {
+    AreaDetailSheet(
+        area: AreaItem(
+            id: "area-1", name: "Main Entrance",
+            description: "Front doors and lobby area",
+            category: "EXTERIOR", sortOrder: 1, postCount: 3,
+            posts: [], captains: []
+        ),
+        session: EventSessionItem(
+            id: "s1", name: "Morning Session",
+            date: Date(), startTime: Date(), assignmentCount: 5
+        ),
+        departmentId: "dept-1",
+        areaViewModel: AreaManagementViewModel(),
+        coverageViewModel: CoverageMatrixViewModel()
+    )
+}
+
 // MARK: - Volunteer Picker for Captain
 
 struct VolunteerPickerForCaptain: View {

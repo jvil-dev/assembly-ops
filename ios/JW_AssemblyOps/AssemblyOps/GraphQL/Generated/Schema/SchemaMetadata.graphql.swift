@@ -29,6 +29,14 @@ extension AssemblyOpsAPI {
 
     static func objectType(forTypename typename: String) -> ApolloAPI.Object? {
       switch typename {
+      case "AVCategorySummary": return AssemblyOpsAPI.Objects.AVCategorySummary
+      case "AVDamageReport": return AssemblyOpsAPI.Objects.AVDamageReport
+      case "AVEquipmentCheckout": return AssemblyOpsAPI.Objects.AVEquipmentCheckout
+      case "AVEquipmentItem": return AssemblyOpsAPI.Objects.AVEquipmentItem
+      case "AVEquipmentSummary": return AssemblyOpsAPI.Objects.AVEquipmentSummary
+      case "AVHazardAssessment": return AssemblyOpsAPI.Objects.AVHazardAssessment
+      case "AVSafetyBriefing": return AssemblyOpsAPI.Objects.AVSafetyBriefing
+      case "AVSafetyBriefingAttendee": return AssemblyOpsAPI.Objects.AVSafetyBriefingAttendee
       case "Area": return AssemblyOpsAPI.Objects.Area
       case "AreaCaptainAssignment": return AssemblyOpsAPI.Objects.AreaCaptainAssignment
       case "AreaGroup": return AssemblyOpsAPI.Objects.AreaGroup
@@ -55,8 +63,6 @@ extension AssemblyOpsAPI {
       case "EventJoinRequest": return AssemblyOpsAPI.Objects.EventJoinRequest
       case "EventParticipant": return AssemblyOpsAPI.Objects.EventParticipant
       case "EventVolunteer": return AssemblyOpsAPI.Objects.EventVolunteer
-      case "EventVolunteerAuthPayload": return AssemblyOpsAPI.Objects.EventVolunteerAuthPayload
-      case "EventVolunteerCredentials": return AssemblyOpsAPI.Objects.EventVolunteerCredentials
       case "FacilityLocation": return AssemblyOpsAPI.Objects.FacilityLocation
       case "LostPersonAlert": return AssemblyOpsAPI.Objects.LostPersonAlert
       case "MarkAllReadResult": return AssemblyOpsAPI.Objects.MarkAllReadResult
@@ -77,7 +83,6 @@ extension AssemblyOpsAPI {
       case "UserAuthPayload": return AssemblyOpsAPI.Objects.UserAuthPayload
       case "UserEventMembership": return AssemblyOpsAPI.Objects.UserEventMembership
       case "Volunteer": return AssemblyOpsAPI.Objects.Volunteer
-      case "VolunteerCredentials": return AssemblyOpsAPI.Objects.VolunteerCredentials
       case "VolunteerProfile": return AssemblyOpsAPI.Objects.VolunteerProfile
       case "WalkThroughCompletion": return AssemblyOpsAPI.Objects.WalkThroughCompletion
       default: return nil

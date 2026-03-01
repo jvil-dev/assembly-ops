@@ -236,3 +236,15 @@ struct RecipientOption: Identifiable, Hashable {
     let displayName: String
     let isAdmin: Bool
 }
+
+#Preview {
+    ComposeMessageView(
+        eventId: "event-1",
+        currentUserId: "user-1",
+        onSent: nil,
+        recipients: [
+            RecipientOption(id: "r1", displayName: "John Smith", isAdmin: true),
+            RecipientOption(id: "r2", displayName: "Jane Doe", isAdmin: false)
+        ]
+    )
+}

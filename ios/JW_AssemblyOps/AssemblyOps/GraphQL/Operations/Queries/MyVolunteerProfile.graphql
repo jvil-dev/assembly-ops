@@ -1,7 +1,6 @@
 query MyVolunteerProfile {
   myVolunteerProfile {
     id
-    volunteerId
     firstName
     lastName
     fullName

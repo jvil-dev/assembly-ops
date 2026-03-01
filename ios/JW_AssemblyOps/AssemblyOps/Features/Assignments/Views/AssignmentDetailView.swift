@@ -96,8 +96,8 @@ struct AssignmentDetailView: View {
                     }
                 }
 
-                // Captain group (if captain)
-                if assignment.isCaptain && assignment.isAccepted {
+                // Captain group (if captain — not applicable to AV departments)
+                if assignment.isCaptain && assignment.isAccepted && !assignment.isAVDepartment {
                     captainGroupCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
                 }
@@ -175,7 +175,8 @@ struct AssignmentDetailView: View {
 
                 AssignmentStatusBadge(
                     status: assignment.status,
-                    isCaptain: assignment.isCaptain
+                    isCaptain: assignment.isCaptain,
+                    departmentType: assignment.departmentType
                 )
             }
         }

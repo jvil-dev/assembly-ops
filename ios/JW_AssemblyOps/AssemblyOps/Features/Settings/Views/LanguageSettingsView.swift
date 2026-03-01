@@ -89,3 +89,9 @@ struct LanguageSettingsView: View {
         .buttonStyle(.plain)
     }
 }
+
+#Preview {
+    NavigationStack {
+        LanguageSettingsView()
+    }
+}

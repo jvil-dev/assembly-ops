@@ -99,7 +99,8 @@ struct AssignmentCardView: View {
 
             AssignmentStatusBadge(
                 status: assignment.status,
-                isCaptain: assignment.isCaptain
+                isCaptain: assignment.isCaptain,
+                departmentType: assignment.departmentType
             )
         }
     }

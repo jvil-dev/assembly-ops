@@ -145,3 +145,13 @@ struct CategoryGroupedLocationPicker: View {
             .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
     }
 }
+
+#Preview {
+    CategoryGroupedLocationPicker(
+        posts: [],
+        selectedPostId: .constant(nil),
+        useCustomLocation: .constant(false),
+        customLocation: .constant("")
+    )
+    .padding()
+}

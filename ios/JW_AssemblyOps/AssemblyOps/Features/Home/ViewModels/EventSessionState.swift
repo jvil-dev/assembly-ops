@@ -144,7 +144,7 @@ final class EventSessionState: ObservableObject {
             id: membership.eventId,
             name: membership.eventName,
             eventType: membership.eventType,
-            theme: nil,
+            theme: membership.theme,
             venue: membership.venue,
             startDate: membership.startDate,
             endDate: membership.endDate,

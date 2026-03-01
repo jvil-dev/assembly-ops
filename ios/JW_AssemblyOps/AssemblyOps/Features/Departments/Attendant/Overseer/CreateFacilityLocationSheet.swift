@@ -119,3 +119,8 @@ struct CreateFacilityLocationSheet: View {
         }
     }
 }
+
+#Preview {
+    CreateFacilityLocationSheet { _ in }
+        .environmentObject(AppState.shared)
+}

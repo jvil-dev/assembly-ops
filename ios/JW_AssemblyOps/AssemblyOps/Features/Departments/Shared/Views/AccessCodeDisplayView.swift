@@ -180,7 +180,7 @@ struct AccessCodeDisplayView: View {
                     .fill(AppTheme.themeColor.opacity(0.12))
                     .frame(width: 24, height: 24)
                 Text(number)
-                    .font(.system(size: 12, weight: .bold))
+                    .font(AppTheme.Typography.caption).fontWeight(.bold)
                     .foregroundStyle(AppTheme.themeColor)
             }
 
@@ -189,4 +189,12 @@ struct AccessCodeDisplayView: View {
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
         }
     }
+}
+
+#Preview {
+    AccessCodeDisplayView(
+        departmentName: "Attendant",
+        accessCode: "ABC123",
+        eventName: "2026 Circuit Assembly"
+    )
 }

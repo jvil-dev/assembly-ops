@@ -86,7 +86,7 @@ struct EditVolunteerSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("common.cancel".localized) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isSubmitting {
@@ -106,11 +106,11 @@ struct EditVolunteerSheet: View {
                     await viewModel.loadRoles(eventId: eventId)
                 }
             }
-            .alert("Error", isPresented: Binding(
+            .alert("common.error".localized, isPresented: Binding(
                 get: { errorMessage != nil },
                 set: { if !$0 { errorMessage = nil } }
             )) {
-                Button("OK") { errorMessage = nil }
+                Button("common.ok".localized) { errorMessage = nil }
             } message: {
                 if let msg = errorMessage {
                     Text(msg)
@@ -365,7 +365,7 @@ struct EditVolunteerSheet: View {
     EditVolunteerSheet(
         volunteer: VolunteerListItem(
             id: "1",
-            volunteerId: "VOL-12345",
+            userId: "A7X9K2",
             fullName: "John Smith",
             firstName: "John",
             lastName: "Smith",

@@ -54,6 +54,26 @@ struct SlotDetailSheet: View {
         sessionState.selectedDepartment?.departmentType == "ATTENDANT"
     }
 
+    private var isAVDept: Bool {
+        ["AUDIO", "VIDEO", "STAGE"].contains(sessionState.selectedDepartment?.departmentType.uppercased() ?? "")
+    }
+
+    private var isAudioDept: Bool {
+        sessionState.selectedDepartment?.departmentType.uppercased() == "AUDIO"
+    }
+
+    private var isVideoDept: Bool {
+        sessionState.selectedDepartment?.departmentType.uppercased() == "VIDEO"
+    }
+
+    private var isStageDept: Bool {
+        sessionState.selectedDepartment?.departmentType.uppercased() == "STAGE"
+    }
+
+    private var isMakeupPost: Bool {
+        editName.localizedCaseInsensitiveContains("Makeup")
+    }
+
     /// Live slot from viewModel, falls back to initial snapshot
     private var slot: CoverageSlot {
         viewModel.slot(for: initialSlot.postId, session: initialSlot.sessionId) ?? initialSlot
@@ -186,15 +206,45 @@ struct SlotDetailSheet: View {
             }
 
             VStack(spacing: AppTheme.Spacing.m) {
-                editableField(label: "Name", text: $editName)
-                editableField(label: "Location", text: $editLocation, placeholder: "Optional")
+                // Name: read-only for AV departments, editable for others
+                if isAVDept {
+                    infoRow(label: "Name", value: editName)
+                } else {
+                    editableField(label: "Name", text: $editName)
+                }
+
+                // Location: hidden for Audio/Video, picker for Stage, editable for others
+                if isStageDept {
+                    stageLocationPicker
+                } else if !isAudioDept && !isVideoDept {
+                    editableField(label: "Location", text: $editLocation, placeholder: "Optional")
+                }
+
+                // Category: Attendant has its own picker, AV is read-only, others editable
                 if isAttendantDept {
                     attendantCategoryPicker
+                } else if isAVDept {
+                    infoRow(label: "Category", value: editCategory.isEmpty ? "—" : editCategory)
                 } else {
                     editableField(label: "Category", text: $editCategory, placeholder: "Optional")
                 }
 
-                if !isAttendantDept {
+                // Capacity: hidden for Audio/Video, Stage shows only for Makeup (max 4), others get full picker
+                if isStageDept && isMakeupPost {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                        Text("Capacity")
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        Picker("Capacity", selection: $editCapacity) {
+                            ForEach(1...4, id: \.self) { value in
+                                Text("\(value)").tag(value)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(height: 100)
+                        .onChange(of: editCapacity) { checkForEdits() }
+                    }
+                } else if !isAttendantDept && !isAVDept {
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                         Text("Capacity")
                             .font(AppTheme.Typography.caption)
@@ -456,6 +506,38 @@ struct SlotDetailSheet: View {
         }
     }
 
+    // MARK: - Stage Location Picker
+
+    private var stageLocationPicker: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+            Text("Location")
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+            HStack(spacing: AppTheme.Spacing.s) {
+                ForEach(["Stage Right", "Stage Left", "Backstage"], id: \.self) { option in
+                    Button {
+                        editLocation = editLocation == option ? "" : option
+                        checkForEdits()
+                    } label: {
+                        Text(option)
+                            .font(AppTheme.Typography.caption)
+                            .padding(.horizontal, AppTheme.Spacing.m)
+                            .padding(.vertical, AppTheme.Spacing.s)
+                            .background(editLocation == option
+                                ? DepartmentColor.color(for: "STAGE")
+                                : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                            .foregroundStyle(editLocation == option
+                                ? .white
+                                : AppTheme.textSecondary(for: colorScheme))
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
     private func syncCategory() {
         guard let main = selectedMain else {
             editCategory = ""
@@ -550,6 +632,17 @@ struct SlotDetailSheet: View {
             HapticManager.shared.error()
         }
     }
+}
+
+#Preview {
+    SlotDetailSheet(
+        initialSlot: CoverageSlot(
+            postId: "p1", sessionId: "s1",
+            postName: "Main Entrance", sessionName: "Morning Session",
+            assignments: [], filled: 2, capacity: 4, isFilled: false
+        ),
+        viewModel: CoverageMatrixViewModel()
+    )
 }
 
 // MARK: - Assignment Row

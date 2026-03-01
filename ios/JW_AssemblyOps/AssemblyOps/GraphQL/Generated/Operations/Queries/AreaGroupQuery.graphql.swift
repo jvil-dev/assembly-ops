@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "AreaGroup"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query AreaGroup($areaId: ID!, $sessionId: ID!) { areaGroup(areaId: $areaId, sessionId: $sessionId) { __typename area { __typename id name description category } captain { __typename id session { __typename id name } eventVolunteer { __typename id volunteerId user { __typename firstName lastName } } } members { __typename postName postId assignment { __typename id status isCaptain volunteer { __typename id firstName lastName congregation phone } checkIn { __typename id status checkInTime } } } } }"#
+        #"query AreaGroup($areaId: ID!, $sessionId: ID!) { areaGroup(areaId: $areaId, sessionId: $sessionId) { __typename area { __typename id name description category } captain { __typename id session { __typename id name } eventVolunteer { __typename id user { __typename firstName lastName } } } members { __typename postName postId assignment { __typename id status isCaptain volunteer { __typename id firstName lastName congregation phone } checkIn { __typename id status checkInTime } } } } }"#
       ))
 
     public var areaId: ID
@@ -145,7 +145,6 @@ extension AssemblyOpsAPI {
             static var __selections: [ApolloAPI.Selection] { [
               .field("__typename", String.self),
               .field("id", AssemblyOpsAPI.ID.self),
-              .field("volunteerId", String.self),
               .field("user", User.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -153,7 +152,6 @@ extension AssemblyOpsAPI {
             ] }
 
             var id: AssemblyOpsAPI.ID { __data["id"] }
-            var volunteerId: String { __data["volunteerId"] }
             var user: User { __data["user"] }
 
             /// AreaGroup.Captain.EventVolunteer.User

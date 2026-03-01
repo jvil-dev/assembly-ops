@@ -112,7 +112,7 @@ extension AreaCaptainItem {
         self.sessionName = data.session.name
         self.sessionDate = DateUtils.parseISO8601(data.session.date)
         self.eventVolunteerId = data.eventVolunteer.id
-        self.volunteerId = data.eventVolunteer.volunteerId
+        self.volunteerId = data.eventVolunteer.id
         let user = data.eventVolunteer.user
         self.volunteerName = "\(user.firstName) \(user.lastName)"
     }
@@ -123,7 +123,7 @@ extension AreaCaptainItem {
         self.sessionName = data.session.name
         self.sessionDate = nil
         self.eventVolunteerId = data.eventVolunteer.id
-        self.volunteerId = data.eventVolunteer.volunteerId
+        self.volunteerId = data.eventVolunteer.id
         let user = data.eventVolunteer.user
         self.volunteerName = "\(user.firstName) \(user.lastName)"
     }

@@ -7,6 +7,7 @@ extension AssemblyOpsAPI {
   enum DepartmentType: String, EnumType {
     case accounts = "ACCOUNTS"
     case attendant = "ATTENDANT"
+    case audio = "AUDIO"
     case audioVideo = "AUDIO_VIDEO"
     case baptism = "BAPTISM"
     case cleaning = "CLEANING"
@@ -16,7 +17,9 @@ extension AssemblyOpsAPI {
     case lostFoundCheckroom = "LOST_FOUND_CHECKROOM"
     case parking = "PARKING"
     case rooming = "ROOMING"
+    case stage = "STAGE"
     case truckingEquipment = "TRUCKING_EQUIPMENT"
+    case video = "VIDEO"
   }
 
 }

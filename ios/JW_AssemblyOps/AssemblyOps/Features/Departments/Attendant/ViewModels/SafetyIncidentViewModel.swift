@@ -33,23 +33,22 @@ final class SafetyIncidentViewModel: ObservableObject {
 
     var unresolvedCount: Int { incidents.filter { !$0.resolved }.count }
 
-    func loadIncidents(eventId: String) async {
+    func loadIncidents(eventId: String, resolved: Bool? = nil) async {
         isLoading = true
         error = nil
         defer { isLoading = false }
         do {
-            let resolved: Bool? = showResolved ? nil : false
-            incidents = try await AttendantService.shared.fetchSafetyIncidents(eventId: eventId, resolved: resolved)
+            let filter: Bool? = resolved ?? (showResolved ? nil : false)
+            incidents = try await AttendantService.shared.fetchSafetyIncidents(eventId: eventId, resolved: filter)
         } catch {
             self.error = error.localizedDescription
         }
     }
 
-    func resolveIncident(id: String, notes: String?, eventId: String) async {
+    func resolveIncident(id: String, resolutionNotes: String?) async {
         do {
-            try await AttendantService.shared.resolveSafetyIncident(id: id, resolutionNotes: notes)
+            try await AttendantService.shared.resolveSafetyIncident(id: id, resolutionNotes: resolutionNotes)
             HapticManager.shared.success()
-            await loadIncidents(eventId: eventId)
         } catch {
             self.error = error.localizedDescription
             HapticManager.shared.error()

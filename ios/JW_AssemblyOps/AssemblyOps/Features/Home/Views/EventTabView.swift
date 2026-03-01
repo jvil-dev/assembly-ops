@@ -42,6 +42,7 @@ struct EventTabView: View {
     @ObservedObject private var pendingBadgeManager = PendingBadgeManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedTab: EventTab = .home
     @State private var isReady = false
 
@@ -58,7 +59,9 @@ struct EventTabView: View {
         switch type.uppercased() {
         case "PARKING": return "car"
         case "ATTENDANT": return "person.badge.shield.checkmark"
-        case "AUDIO_VIDEO", "AV": return "video"
+        case "AUDIO": return "speaker.wave.3"
+        case "VIDEO": return "video"
+        case "STAGE": return "light.overhead.left"
         case "CLEANING": return "sparkles"
         case "COMMITTEE": return "person.3"
         case "FIRST_AID", "FIRSTAID": return "cross"
@@ -81,72 +84,77 @@ struct EventTabView: View {
     }
 
     var body: some View {
-        Group {
-            if isReady {
-                VStack(spacing: 0) {
-                    OfflineBanner()
-                        .animation(.easeInOut, value: NetworkMonitor.shared.isConnected)
+        VStack(spacing: 0) {
+            eventHeaderBar
 
-                    TabView(selection: $selectedTab) {
-                        // Tab 1: Home
-                        Group {
-                            if isOverseer {
-                                EventHomeView(membership: membership)
-                            } else {
-                                HomeView(switchToTab: { selectedTab = $0 })
+            Group {
+                if isReady {
+                    VStack(spacing: 0) {
+                        OfflineBanner()
+                            .animation(.easeInOut, value: NetworkMonitor.shared.isConnected)
+
+                        TabView(selection: $selectedTab) {
+                            // Tab 1: Home
+                            Group {
+                                if isOverseer {
+                                    EventHomeView(membership: membership)
+                                } else {
+                                    HomeView(switchToTab: { selectedTab = $0 })
+                                }
                             }
-                        }
-                        .environmentObject(appState)
-                        .tabItem {
-                            Label("tab.home".localized, systemImage: "house")
-                        }
-                        .tag(EventTab.home)
-
-                        // Tab 2: Department (dynamic label)
-                        DepartmentTabRouter(membership: membership)
                             .environmentObject(appState)
                             .tabItem {
-                                Label(departmentTabLabel, systemImage: departmentTabIcon)
+                                Label("tab.home".localized, systemImage: "house")
                             }
-                            .tag(EventTab.department)
+                            .tag(EventTab.home)
 
-                        // Tab 3: Assignments
-                        Group {
-                            if isOverseer {
-                                AssignmentsView()
-                            } else {
-                                AssignmentsListView()
-                            }
-                        }
-                        .environmentObject(appState)
-                        .tabItem {
-                            Label("tab.schedule".localized, systemImage: isOverseer ? "tablecells" : "calendar")
-                        }
-                        .badge(isOverseer ? 0 : pendingBadgeManager.pendingCount)
-                        .tag(EventTab.assignments)
+                            // Tab 2: Department (dynamic label)
+                            DepartmentTabRouter(membership: membership)
+                                .environmentObject(appState)
+                                .tabItem {
+                                    Label(departmentTabLabel, systemImage: departmentTabIcon)
+                                }
+                                .tag(EventTab.department)
 
-                        // Tab 4: Messages
-                        Group {
-                            if isOverseer {
-                                OverseerMessagesView()
-                            } else {
-                                MessagesView()
+                            // Tab 3: Assignments
+                            Group {
+                                if isOverseer {
+                                    AssignmentsView()
+                                } else {
+                                    AssignmentsListView()
+                                }
                             }
+                            .environmentObject(appState)
+                            .tabItem {
+                                Label("tab.schedule".localized, systemImage: isOverseer ? "tablecells" : "calendar")
+                            }
+                            .badge(isOverseer ? 0 : pendingBadgeManager.pendingCount)
+                            .tag(EventTab.assignments)
+
+                            // Tab 4: Messages
+                            Group {
+                                if isOverseer {
+                                    OverseerMessagesView()
+                                } else {
+                                    MessagesView()
+                                }
+                            }
+                            .environmentObject(appState)
+                            .tabItem {
+                                Label("tab.messages".localized, systemImage: "envelope")
+                            }
+                            .badge(messageBadgeManager.unreadCount)
+                            .tag(EventTab.messages)
                         }
-                        .environmentObject(appState)
-                        .tabItem {
-                            Label("tab.messages".localized, systemImage: "envelope")
-                        }
-                        .badge(messageBadgeManager.unreadCount)
-                        .tag(EventTab.messages)
+                        .tint(tabTintColor)
                     }
-                    .tint(tabTintColor)
+                } else {
+                    loadingView
                 }
-                .toolbar(.hidden, for: .navigationBar)
-            } else {
-                loadingView
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             await setupContext()
             isReady = true
@@ -168,6 +176,49 @@ struct EventTabView: View {
                 messageBadgeManager.startRefreshing()
                 pendingBadgeManager.startRefreshing()
             }
+        }
+    }
+
+    // MARK: - Event Header Bar
+
+    private var eventHeaderBar: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: AppTheme.Spacing.m) {
+                Button {
+                    HapticManager.shared.lightTap()
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(AppTheme.themeColor)
+                        .frame(width: 32, height: 32)
+                        .background(
+                            Circle()
+                                .fill(AppTheme.themeColor.opacity(colorScheme == .dark ? 0.2 : 0.1))
+                        )
+                }
+                .accessibilityLabel("eventTab.back".localized)
+
+                Text(membership.eventName)
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.textPrimary(for: colorScheme))
+                    .lineLimit(1)
+
+                Spacer()
+
+                if let deptType = membership.departmentType {
+                    Circle()
+                        .fill(DepartmentColor.color(for: deptType))
+                        .frame(width: 8, height: 8)
+                }
+            }
+            .padding(.horizontal, AppTheme.Spacing.l)
+            .frame(height: 44)
+            .background(AppTheme.cardBackground(for: colorScheme))
+
+            Rectangle()
+                .fill(AppTheme.dividerColor(for: colorScheme))
+                .frame(height: 1)
         }
     }
 
@@ -203,7 +254,8 @@ struct EventTabView: View {
             id: "1",
             eventId: "1",
             eventName: "2026 Circuit Assembly",
-            eventType: "CIRCUIT_ASSEMBLY",
+            eventType: "CIRCUIT_ASSEMBLY_CO",
+            theme: nil,
             venue: "Assembly Hall",
             address: "123 Main St",
             startDate: Date(),

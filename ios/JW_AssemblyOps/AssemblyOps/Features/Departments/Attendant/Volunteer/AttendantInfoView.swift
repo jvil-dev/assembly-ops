@@ -103,7 +103,7 @@ struct AttendantInfoView: View {
                     }
                     Spacer()
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTheme.Typography.caption).fontWeight(.semibold)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }

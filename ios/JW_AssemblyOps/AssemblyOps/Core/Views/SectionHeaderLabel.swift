@@ -33,3 +33,8 @@ struct SectionHeaderLabel: View {
         }
     }
 }
+
+#Preview {
+    SectionHeaderLabel(icon: "person.3", title: "Volunteers")
+        .padding()
+}

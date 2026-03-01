@@ -66,47 +66,45 @@ struct VolunteerListView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // Tab picker card
-                tabPickerCard
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+        VStack(spacing: 0) {
+            // Tab picker card
+            tabPickerCard
+                .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                // Content
-                Group {
-                    if viewModel.isLoading {
-                        LoadingView(message: "Loading volunteers...")
-                    } else if displayedVolunteers.isEmpty {
-                        emptyState
-                    } else {
-                        volunteerList
+            // Content
+            Group {
+                if viewModel.isLoading {
+                    LoadingView(message: "Loading volunteers...")
+                } else if displayedVolunteers.isEmpty {
+                    emptyState
+                } else {
+                    volunteerList
+                }
+            }
+        }
+        .themedBackground(scheme: colorScheme)
+        .navigationTitle("Volunteers")
+        .searchable(text: $searchText, prompt: "Search by name or congregation")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                if isEditable {
+                    Button {
+                        showAddVolunteer = true
+                    } label: {
+                        Image(systemName: "plus")
                     }
                 }
             }
-            .themedBackground(scheme: colorScheme)
-            .navigationTitle("Volunteers")
-            .searchable(text: $searchText, prompt: "Search by name or congregation")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    if isEditable {
-                        Button {
-                            showAddVolunteer = true
-                        } label: {
-                            Image(systemName: "plus")
-                        }
-                    }
-                }
-            }
-            .sheet(isPresented: $showAddVolunteer) {
-                AddVolunteerSheet(viewModel: viewModel)
-            }
-            .refreshable {
-                await loadVolunteers()
-            }
-            .onAppear {
-                withAnimation(AppTheme.entranceAnimation) {
-                    hasAppeared = true
-                }
+        }
+        .sheet(isPresented: $showAddVolunteer) {
+            AddVolunteerSheet(viewModel: viewModel)
+        }
+        .refreshable {
+            await loadVolunteers()
+        }
+        .onAppear {
+            withAnimation(AppTheme.entranceAnimation) {
+                hasAppeared = true
             }
         }
         .task {
@@ -203,7 +201,7 @@ struct VolunteerListView: View {
                     }
                 }
             }
-            Button("Cancel", role: .cancel) {
+            Button("common.cancel".localized, role: .cancel) {
                 volunteerToDelete = nil
             }
         } message: {
@@ -294,7 +292,7 @@ struct VolunteerRowView: View {
             // Chevron (hidden when inside List+NavigationLink which provides its own)
             if showChevron {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.Typography.caption).fontWeight(.semibold)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
         }

@@ -144,3 +144,9 @@ struct ArchivedEventsView: View {
         .frame(maxWidth: .infinity)
     }
 }
+
+#Preview {
+    NavigationStack {
+        ArchivedEventsView()
+    }
+}

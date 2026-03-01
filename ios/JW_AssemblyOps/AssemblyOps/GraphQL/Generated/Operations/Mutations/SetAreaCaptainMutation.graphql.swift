@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "SetAreaCaptain"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation SetAreaCaptain($input: SetAreaCaptainInput!) { setAreaCaptain(input: $input) { __typename id area { __typename id name } session { __typename id name } eventVolunteer { __typename id volunteerId user { __typename firstName lastName } } } }"#
+        #"mutation SetAreaCaptain($input: SetAreaCaptainInput!) { setAreaCaptain(input: $input) { __typename id area { __typename id name } session { __typename id name } eventVolunteer { __typename id user { __typename firstName lastName } } } }"#
       ))
 
     public var input: SetAreaCaptainInput
@@ -110,7 +110,6 @@ extension AssemblyOpsAPI {
           static var __selections: [ApolloAPI.Selection] { [
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
-            .field("volunteerId", String.self),
             .field("user", User.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -118,7 +117,6 @@ extension AssemblyOpsAPI {
           ] }
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
-          var volunteerId: String { __data["volunteerId"] }
           var user: User { __data["user"] }
 
           /// SetAreaCaptain.EventVolunteer.User

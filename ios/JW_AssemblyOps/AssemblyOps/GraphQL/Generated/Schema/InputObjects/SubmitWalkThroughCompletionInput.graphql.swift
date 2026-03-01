@@ -15,13 +15,15 @@ extension AssemblyOpsAPI {
       eventId: ID,
       sessionId: ID,
       itemCount: Int,
-      notes: GraphQLNullable<String> = nil
+      notes: GraphQLNullable<String> = nil,
+      checklistType: GraphQLNullable<String> = nil
     ) {
       __data = InputDict([
         "eventId": eventId,
         "sessionId": sessionId,
         "itemCount": itemCount,
-        "notes": notes
+        "notes": notes,
+        "checklistType": checklistType
       ])
     }
 
@@ -43,6 +45,11 @@ extension AssemblyOpsAPI {
     var notes: GraphQLNullable<String> {
       get { __data["notes"] }
       set { __data["notes"] = newValue }
+    }
+
+    var checklistType: GraphQLNullable<String> {
+      get { __data["checklistType"] }
+      set { __data["checklistType"] = newValue }
     }
   }
 

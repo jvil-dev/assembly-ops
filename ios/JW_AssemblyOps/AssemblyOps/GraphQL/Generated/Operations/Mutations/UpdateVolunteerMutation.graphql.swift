@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "UpdateVolunteer"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation UpdateVolunteer($id: ID!, $input: UpdateVolunteerInput!) { updateVolunteer(id: $id, input: $input) { __typename id volunteerId firstName lastName fullName congregation phone email appointmentStatus notes department { __typename id name departmentType } role { __typename id name } } }"#
+        #"mutation UpdateVolunteer($id: ID!, $input: UpdateVolunteerInput!) { updateVolunteer(id: $id, input: $input) { __typename id firstName lastName fullName congregation phone email appointmentStatus notes department { __typename id name departmentType } role { __typename id name } } }"#
       ))
 
     public var id: ID
@@ -55,7 +55,6 @@ extension AssemblyOpsAPI {
         static var __selections: [ApolloAPI.Selection] { [
           .field("__typename", String.self),
           .field("id", AssemblyOpsAPI.ID.self),
-          .field("volunteerId", String.self),
           .field("firstName", String.self),
           .field("lastName", String.self),
           .field("fullName", String.self),
@@ -72,7 +71,6 @@ extension AssemblyOpsAPI {
         ] }
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
-        var volunteerId: String { __data["volunteerId"] }
         var firstName: String { __data["firstName"] }
         var lastName: String { __data["lastName"] }
         var fullName: String { __data["fullName"] }

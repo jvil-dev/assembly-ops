@@ -17,7 +17,6 @@ query MyAreaGroups {
             }
             eventVolunteer {
                 id
-                volunteerId
                 user {
                     firstName
                     lastName

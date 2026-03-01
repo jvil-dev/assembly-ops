@@ -38,7 +38,6 @@
 // MARK: - Departments
 "department.accounts" = "Accounts";
 "department.attendant" = "Attendant";
-"department.audioVideo" = "Audio/Video";
 "department.baptism" = "Baptism";
 "department.cleaning" = "Cleaning";
 "department.firstAid" = "First Aid";
@@ -869,3 +868,473 @@
 // MARK: - Congregation Search
 "registration.congregation.searchHint" = "Enter search text to find results.";
 "registration.congregation.noResults" = "No congregations found.";
+
+// MARK: - Sprint 6.14 — Audio/Video Departments
+
+// Dashboard
+"av.dashboard.title" = "AV Dashboard";
+"av.dashboard.equipment" = "Equipment";
+"av.dashboard.total" = "Total";
+"av.dashboard.checkedOut" = "Checked Out";
+"av.dashboard.needsRepair" = "Needs Repair";
+"av.dashboard.noEquipment" = "No equipment added yet";
+"av.dashboard.damageReports" = "Damage Reports";
+"av.dashboard.unresolvedCount" = "%d unresolved";
+"av.dashboard.noDamage" = "No damage reports";
+"av.dashboard.safety" = "Safety";
+"av.dashboard.hazardCount" = "%d hazard assessments";
+"av.dashboard.briefingCount" = "%d safety briefings";
+"av.dashboard.hazards" = "Hazards";
+"av.dashboard.briefings" = "Briefings";
+"av.dashboard.walkThroughs" = "Walk-Throughs";
+"av.dashboard.walkThroughsDesc" = "CO-160 checklists";
+"av.dashboard.volunteers" = "Volunteers";
+"av.dashboard.volunteersDesc" = "Manage department volunteers";
+"av.dashboard.settings" = "Settings";
+"av.dashboard.settingsDesc" = "Department settings & access code";
+
+// Equipment
+"av.equipment.title" = "Equipment";
+"av.equipment.search" = "Search equipment...";
+"av.equipment.addOne" = "Add Equipment";
+"av.equipment.addBulk" = "Bulk Add";
+"av.equipment.filter.all" = "All";
+"av.equipment.empty" = "No equipment yet";
+"av.equipment.emptyHint" = "Tap + to add equipment items to your inventory";
+"av.equipment.checkedOut" = "Checked Out";
+"av.equipment.detail" = "Equipment Detail";
+"av.equipment.notFound" = "Equipment not found";
+"av.equipment.info" = "Info";
+"av.equipment.category" = "Category";
+"av.equipment.condition" = "Condition";
+"av.equipment.model" = "Model";
+"av.equipment.serial" = "Serial Number";
+"av.equipment.location" = "Location";
+"av.equipment.area" = "Area";
+"av.equipment.notes" = "Notes";
+"av.equipment.name" = "Name";
+"av.equipment.actions" = "Actions";
+"av.equipment.return" = "Return Equipment";
+"av.equipment.checkout" = "Check Out Equipment";
+"av.equipment.reportDamage" = "Report Damage";
+"av.equipment.checkoutHistory" = "Checkout History";
+"av.equipment.active" = "Active";
+"av.equipment.damageHistory" = "Damage History";
+"av.equipment.create" = "Add Equipment";
+"av.equipment.save" = "Save";
+
+// Equipment Categories
+"av.equipment.category.cameraPtz" = "PTZ Camera";
+"av.equipment.category.cameraManned" = "Manned Camera";
+"av.equipment.category.tripod" = "Tripod";
+"av.equipment.category.audioMixer" = "Audio Mixer";
+"av.equipment.category.videoSwitcher" = "Video Switcher";
+"av.equipment.category.mediaPlayer" = "Media Player";
+"av.equipment.category.ledPanel" = "LED Panel";
+"av.equipment.category.loudspeaker" = "Loudspeaker";
+"av.equipment.category.microphone" = "Microphone";
+"av.equipment.category.stageMonitor" = "Stage Monitor";
+"av.equipment.category.intercom" = "Intercom";
+"av.equipment.category.cable" = "Cable";
+"av.equipment.category.stageLighting" = "Stage Lighting";
+"av.equipment.category.recordingDevice" = "Recording Device";
+"av.equipment.category.assistiveListening" = "Assistive Listening";
+"av.equipment.category.accessory" = "Accessory";
+
+// Equipment Conditions
+"av.equipment.condition.good" = "Good";
+"av.equipment.condition.needsRepair" = "Needs Repair";
+"av.equipment.condition.outOfService" = "Out of Service";
+
+// Bulk Create
+"av.equipment.bulk.title" = "Bulk Add Equipment";
+"av.equipment.bulk.count" = "Count";
+"av.equipment.bulk.prefix" = "Name Prefix";
+"av.equipment.bulk.prefixPlaceholder" = "e.g. Loudspeaker";
+"av.equipment.bulk.prefixHint" = "Items will be named \"Prefix 1\", \"Prefix 2\", etc.";
+"av.equipment.bulk.preview" = "Preview";
+"av.equipment.bulk.create" = "Create All";
+"av.equipment.bulk.creating" = "Creating...";
+
+// Checkout
+"av.checkout.title" = "Check Out Equipment";
+"av.checkout.equipment" = "Equipment";
+"av.checkout.volunteer" = "Volunteer";
+"av.checkout.volunteerId" = "Volunteer ID";
+"av.checkout.session" = "Session";
+"av.checkout.sessionOptional" = "Session (optional)";
+"av.checkout.notes" = "Notes";
+"av.checkout.confirm" = "Check Out";
+
+// Damage Reports
+"av.damage.title" = "Damage Reports";
+"av.damage.showResolved" = "Show Resolved";
+"av.damage.empty" = "No damage reports";
+"av.damage.resolved" = "Resolved";
+"av.damage.tapToResolve" = "Tap to resolve";
+"av.damage.resolve" = "Resolve Damage";
+"av.damage.reportInfo" = "Report Info";
+"av.damage.resolutionNotes" = "Resolution Notes";
+"av.damage.markResolved" = "Mark Resolved";
+"av.damage.equipment" = "Equipment";
+"av.damage.selectEquipment" = "Select Equipment";
+"av.damage.selectPlaceholder" = "Choose equipment...";
+"av.damage.description" = "Description";
+"av.damage.severity" = "Severity";
+"av.damage.report" = "Report Damage";
+"av.damage.submit" = "Submit Report";
+
+// Damage Severity
+"av.damage.severity.minor" = "Minor";
+"av.damage.severity.moderate" = "Moderate";
+"av.damage.severity.severe" = "Severe";
+
+// Safety & Hazards
+"av.safety.title" = "Safety & Hazards";
+"av.safety.briefings" = "Safety Briefings";
+"av.safety.briefingsCount" = "%d briefings conducted";
+"av.hazard.title" = "Hazard Assessments";
+"av.hazard.empty" = "No hazard assessments yet";
+"av.hazard.create" = "New Hazard Assessment";
+"av.hazard.create.title" = "Title";
+"av.hazard.type" = "Hazard Type";
+"av.hazard.description" = "Description";
+"av.hazard.controls" = "Control Measures";
+"av.hazard.ppeRequired" = "PPE Required";
+"av.hazard.save" = "Save";
+
+// Hazard Types
+"av.hazard.type.workingAtHeight" = "Working at Height";
+"av.hazard.type.electricalExposure" = "Electrical Exposure";
+"av.hazard.type.elevatedPlatform" = "Elevated Platform";
+"av.hazard.type.powerTools" = "Power Tools";
+"av.hazard.type.movingEquipment" = "Moving Equipment";
+"av.hazard.type.nearStairs" = "Near Stairs";
+"av.hazard.type.unevenSurface" = "Uneven Surface";
+"av.hazard.type.heavyLifting" = "Heavy Lifting";
+"av.hazard.type.pinchCrushCut" = "Pinch/Crush/Cut";
+"av.hazard.type.extremeConditions" = "Extreme Conditions";
+
+// PPE Types
+"av.ppe.hardHat" = "Hard Hat";
+"av.ppe.safetyGlasses" = "Safety Glasses";
+"av.ppe.highVisVest" = "High-Vis Vest";
+"av.ppe.gloves" = "Gloves";
+"av.ppe.workShoes" = "Work Shoes";
+"av.ppe.fallProtection" = "Fall Protection";
+"av.ppe.hearingProtection" = "Hearing Protection";
+
+// Safety Briefings
+"av.briefing.title" = "Safety Briefings";
+"av.briefing.empty" = "No safety briefings yet";
+"av.briefing.create" = "New Safety Briefing";
+"av.briefing.topic" = "Topic";
+"av.briefing.topicPlaceholder" = "e.g. Pre-Installation Safety Talk";
+"av.briefing.notes" = "Notes";
+"av.briefing.attendees" = "Attendees";
+"av.briefing.attendeesHint" = "Enter one volunteer ID per line";
+"av.briefing.save" = "Save";
+
+// Walk-Throughs
+"av.walkthrough.title" = "Walk-Through Checklists";
+"av.walkthrough.done" = "Done";
+"av.walkthrough.appendixE.title" = "Appendix E";
+"av.walkthrough.appendixE.subtitle" = "Reminders During Walk-Throughs";
+"av.walkthrough.appendixF.title" = "Appendix F";
+"av.walkthrough.appendixF.subtitle" = "Reminders Before Going on Stage";
+"av.walkthrough.appendixG.title" = "Appendix G";
+"av.walkthrough.appendixG.subtitle" = "AV Overseer Checklist";
+
+// Appendix E Items
+"av.walkthrough.e.cellPhonesAirplaneMode" = "Cell phones in airplane mode or off";
+"av.walkthrough.e.dontPullLectern" = "Don't pull or lean on the lectern";
+"av.walkthrough.e.micDistance" = "Maintain proper microphone distance (4-6 inches)";
+"av.walkthrough.e.projectVoice" = "Project voice — speak with confidence";
+"av.walkthrough.e.speakingSoftly" = "If speaking softly, move closer to the mic";
+"av.walkthrough.e.speakingLoudly" = "If speaking loudly, move back from the mic";
+"av.walkthrough.e.popping" = "Avoid popping sounds (P/B) — angle mic slightly";
+"av.walkthrough.e.feedback" = "If feedback occurs, move away from speakers";
+"av.walkthrough.e.coughSneeze" = "Turn away from mic when coughing or sneezing";
+"av.walkthrough.e.interviews" = "During interviews, share the microphone properly";
+"av.walkthrough.e.stageEntryExit" = "Enter and exit the stage quietly";
+
+// Appendix F Items
+"av.walkthrough.f.cellPhonesAirplaneMode" = "Cell phones in airplane mode or off";
+"av.walkthrough.f.dontPullLectern" = "Don't pull or lean on the lectern";
+"av.walkthrough.f.projectVoice" = "Project voice — speak with confidence";
+"av.walkthrough.f.stageExitSide" = "Exit stage on the designated side";
+
+// Appendix G Phases
+"av.walkthrough.g.phase1.title" = "Phase 1: Pre-Planning";
+"av.walkthrough.g.phase1.jwHubLogin" = "Log in to JW Hub and review AV resources";
+"av.walkthrough.g.phase1.reviewCO160" = "Review CO-160 guidelines thoroughly";
+"av.walkthrough.g.phase1.checkWithOverseer" = "Check with Convention Overseer for requirements";
+"av.walkthrough.g.phase1.reviewPreviousNotes" = "Review notes from previous events";
+"av.walkthrough.g.phase2.title" = "Phase 2: Preparation";
+"av.walkthrough.g.phase2.downloadMedia" = "Download required media files";
+"av.walkthrough.g.phase2.reviewOutlines" = "Review program outlines for AV needs";
+"av.walkthrough.g.phase2.recruitVolunteers" = "Recruit and assign crew members";
+"av.walkthrough.g.phase2.planInstallation" = "Plan installation schedule";
+"av.walkthrough.g.phase2.verifyEquipment" = "Verify all equipment is available and working";
+"av.walkthrough.g.phase3.title" = "Phase 3: Pre-Installation";
+"av.walkthrough.g.phase3.reviewPlan" = "Review installation plan with crew";
+"av.walkthrough.g.phase3.remindPPE" = "Remind crew about required PPE";
+"av.walkthrough.g.phase3.verifyItems" = "Verify all items match inventory list";
+"av.walkthrough.g.phase3.confirmCrewAssignments" = "Confirm crew assignments and responsibilities";
+"av.walkthrough.g.phase4.title" = "Phase 4: Installation & Testing";
+"av.walkthrough.g.phase4.safetyTalk" = "Conduct safety talk before installation";
+"av.walkthrough.g.phase4.equipmentTest" = "Test all equipment after installation";
+"av.walkthrough.g.phase4.cameraPositions" = "Verify camera positions and angles";
+"av.walkthrough.g.phase4.audioLevels" = "Set and verify audio levels";
+"av.walkthrough.g.phase4.videoSwitching" = "Test video switching and transitions";
+"av.walkthrough.g.phase5.title" = "Phase 5: During the Event";
+"av.walkthrough.g.phase5.walkThroughs" = "Conduct walk-throughs with speakers";
+"av.walkthrough.g.phase5.monitorQuality" = "Monitor audio/video quality continuously";
+"av.walkthrough.g.phase5.addressIssues" = "Address any issues immediately";
+"av.walkthrough.g.phase5.coordinateStage" = "Coordinate with stage management";
+"av.walkthrough.g.phase6.title" = "Phase 6: Disassembly";
+"av.walkthrough.g.phase6.disassemblyBriefing" = "Conduct disassembly safety briefing";
+"av.walkthrough.g.phase6.inventoryCheck" = "Complete equipment inventory check";
+"av.walkthrough.g.phase6.damageReport" = "Submit any damage reports";
+"av.walkthrough.g.phase6.handoffNotes" = "Prepare handoff notes for next event";
+
+// Appendix A — Configuring JW Library & Media Playlists
+"av.walkthrough.appendixA.title" = "Appendix A";
+"av.walkthrough.appendixA.subtitle" = "Configuring JW Library & Media Playlists";
+"av.walkthrough.a.jwLibrary.title" = "JW Library Settings";
+"av.walkthrough.a.jwLibrary.openApp" = "Open JW Library";
+"av.walkthrough.a.jwLibrary.settings" = "Navigate to Settings page";
+"av.walkthrough.a.jwLibrary.secondDisplay" = "Verify 'Play video on second display' is On";
+"av.walkthrough.a.jwLibrary.yeartextOff" = "Set 'Yeartext language' to Off";
+"av.walkthrough.a.mediaPlaylist.title" = "Media Playlist Setup";
+"av.walkthrough.a.mediaPlaylist.downloadJWPUB" = "Download media playlist JWPUB from JW Hub 'Event Media'";
+"av.walkthrough.a.mediaPlaylist.importJWPUB" = "Double-click JWPUB file to import into JW Library";
+"av.walkthrough.a.mediaPlaylist.downloadWatchtower" = "Download and import The Watchtower for the event week";
+"av.walkthrough.a.importVideos.title" = "Importing Videos";
+"av.walkthrough.a.importVideos.selectFiles" = "Select media files to import (extract ZIP files first)";
+"av.walkthrough.a.importVideos.dragDrop" = "Drag and drop files onto the JW Library window";
+"av.walkthrough.a.importVideos.verifyImport" = "Verify correct files were imported via dialog box";
+"av.walkthrough.a.importVideos.testPlayback" = "Test each video — play until audio and moving footage confirm";
+"av.walkthrough.a.importVideos.verifyLanguage" = "Verify each video is in the correct language";
+"av.walkthrough.a.playlists.title" = "Custom Playlists";
+"av.walkthrough.a.playlists.createPlaylist" = "Create playlist for prerecorded talks or custom media";
+"av.walkthrough.a.playlists.addMedia" = "Drag media files from File Explorer into the playlist";
+"av.walkthrough.a.playlists.setEndActions" = "Set end action for each item (Continue, Stop, Freeze, or Repeat)";
+"av.walkthrough.a.playlists.verifyItems" = "Verify each playlist item works before the event";
+
+// Appendix B — Configuring Audio & Video Systems
+"av.walkthrough.appendixB.title" = "Appendix B";
+"av.walkthrough.appendixB.subtitle" = "Configuring Audio & Video Systems";
+"av.walkthrough.b.clickTrack" = "Use click track to set and confirm audio delays";
+"av.walkthrough.b.pinkNoise" = "Use pink noise to balance audio and check loudspeaker zones";
+"av.walkthrough.b.sineWave" = "Use 1 kHz sine wave to equalize the audio system";
+"av.walkthrough.b.calibrationImage" = "Display calibration image on LED video walls";
+"av.walkthrough.b.whiteLevel" = "White Level: Verify 10 gray squares visible on white background";
+"av.walkthrough.b.blackLevel" = "Black Level: Verify 10 gray squares visible on black background";
+"av.walkthrough.b.grayScale" = "Gray Scale: Verify each bar from 0-100 is distinctly visible";
+
+// Appendix D — Using JW Stream
+"av.walkthrough.appendixD.title" = "Appendix D";
+"av.walkthrough.appendixD.subtitle" = "Using JW Stream to View & Download Talks";
+"av.walkthrough.d.login.title" = "Login";
+"av.walkthrough.d.login.accessLink" = "Use link provided by Local Broadcasting Department";
+"av.walkthrough.d.login.credentials" = "Log in with jwpub.org credentials";
+"av.walkthrough.d.livestream.title" = "Livestreamed Talks";
+"av.walkthrough.d.livestream.accessStream" = "Access livestream via Local Broadcasting link";
+"av.walkthrough.d.livestream.fullscreen" = "Make video player full-screen on switcher input; monitor via multiview";
+"av.walkthrough.d.livestream.wideShot" = "After chairman announces tie-in, show wide shot of local stage";
+"av.walkthrough.d.livestream.informCoordinator" = "Inform stream coordinator that receiving site is ready";
+"av.walkthrough.d.livestream.dissolveToStream" = "When prompted, dissolve to stream; raise stream gain, lower local mics";
+"av.walkthrough.d.livestream.dissolveBack" = "After talk, dissolve to black, then to local chairman; restore gain levels";
+"av.walkthrough.d.delayStream.title" = "Delay-Streamed Talks";
+"av.walkthrough.d.delayStream.accessStream" = "Access delayed stream via Local Broadcasting link";
+"av.walkthrough.d.delayStream.pauseAndScrub" = "Pause stream; scrub to ten-second black screen cue point";
+"av.walkthrough.d.delayStream.fullscreen" = "Make video player full-screen on switcher input";
+"av.walkthrough.d.delayStream.adjustGain" = "Raise stream gain; lower all local microphones";
+"av.walkthrough.d.delayStream.playAndDissolve" = "Press Play; when transport bar disappears, dissolve to stream";
+"av.walkthrough.d.delayStream.dissolveBack" = "After talk, dissolve to black, then to local chairman; restore gain levels";
+"av.walkthrough.d.downloaded.title" = "Downloaded Recordings";
+"av.walkthrough.d.downloaded.downloadFile" = "Download prerecorded talk file from JW Stream";
+"av.walkthrough.d.downloaded.addToPlaylist" = "Add media file to a playlist in JW Library";
+"av.walkthrough.d.downloaded.followShotGuidelines" = "Follow shot and transition guidelines before and after playback";
+
+// Volunteer Views
+"av.volunteer.quickActions" = "Quick Actions";
+"av.volunteer.reportDamage" = "Report Equipment Damage";
+"av.volunteer.walkThrough" = "Walk-Through Checklist";
+"av.volunteer.myEquipment" = "My Equipment";
+"av.volunteer.noCheckouts" = "No equipment currently checked out";
+"av.volunteer.myBriefings" = "My Briefings";
+"av.volunteer.noBriefings" = "No briefings attended yet";
+"av.volunteer.resources" = "Resources";
+"av.volunteer.crewInfo" = "AV Crew Guidelines";
+
+// Crew Info
+"av.crew.title" = "AV Crew Guidelines";
+"av.crew.done" = "Done";
+"av.crew.responsibilities.title" = "General Responsibilities";
+"av.crew.responsibilities.punctual" = "Be punctual for all assignments and briefings";
+"av.crew.responsibilities.dignified" = "Maintain a dignified appearance at all times";
+"av.crew.responsibilities.follow" = "Follow the direction of your crew overseer";
+"av.crew.responsibilities.report" = "Report any issues to your overseer immediately";
+"av.crew.responsibilities.equipment" = "Handle all equipment with care";
+"av.crew.safety.title" = "Safety Guidelines";
+"av.crew.safety.ppe" = "Wear required PPE during installation and disassembly";
+"av.crew.safety.lifting" = "Use proper lifting techniques for heavy equipment";
+"av.crew.safety.electrical" = "Never work on electrical connections when powered on";
+"av.crew.safety.ladders" = "Follow ladder safety — maintain 3 points of contact";
+"av.crew.safety.report" = "Report all safety hazards and injuries immediately";
+"av.crew.equipment.title" = "Equipment Handling";
+"av.crew.equipment.careful" = "Handle all equipment carefully — avoid drops and impacts";
+"av.crew.equipment.checkout" = "Always check out equipment before using it";
+"av.crew.equipment.damage" = "Report any damage immediately — no matter how minor";
+"av.crew.equipment.storage" = "Return equipment to proper storage after use";
+
+// Department Names
+"department.audio" = "Audio";
+"department.video" = "Video";
+"department.stage" = "Stage";
+
+// MARK: - Sprint 6.15 — Audio / Video / Stage Department Split
+
+// Audio Crew
+"audio.dashboard.title" = "Audio";
+"audio.crew.title" = "Audio Crew Guidelines";
+"audio.volunteer.crewInfo" = "Audio Crew Guidelines";
+"audio.crew.roles.mixerOp.title" = "Mixer Operator";
+"audio.crew.roles.mixerOp.item1" = "Operates the main mixing console during the entire program";
+"audio.crew.roles.mixerOp.item2" = "Sets and adjusts audio levels for microphones and playback";
+"audio.crew.roles.mixerOp.item3" = "Coordinates with stage crew to ensure proper mic placement";
+"audio.crew.roles.mixerOp.item4" = "Monitors audio quality and responds to feedback or distortion immediately";
+"audio.crew.roles.mixerOpAsst.title" = "Mixer Operator Assistant";
+"audio.crew.roles.mixerOpAsst.item1" = "Assists the Mixer Operator with setup, testing, and adjustments";
+"audio.crew.roles.mixerOpAsst.item2" = "Manages microphone distribution and collection between program parts";
+"audio.crew.roles.mixerOpAsst.item3" = "Supports troubleshooting of audio issues during the program";
+"audio.crew.roles.assistiveListening.title" = "Assistive Listening Device Operator";
+"audio.crew.roles.assistiveListening.item1" = "Distributes and collects assistive listening devices for attendees";
+"audio.crew.roles.assistiveListening.item2" = "Monitors device battery levels and replaces as needed during the program";
+"audio.crew.roles.assistiveListening.item3" = "Assists attendees with proper use and troubleshooting of devices";
+"audio.crew.roles.loudspeaker.title" = "Loudspeaker Operator";
+"audio.crew.roles.loudspeaker.item1" = "Positions and aims loudspeakers for optimal audience coverage";
+"audio.crew.roles.loudspeaker.item2" = "Monitors speaker levels and adjusts for outdoor or overflow areas";
+"audio.crew.roles.loudspeaker.item3" = "Reports any speaker malfunctions or sound quality issues immediately";
+
+// Video Dashboard
+"video.dashboard.title" = "Video";
+"video.crew.title" = "Video Crew Guidelines";
+"video.volunteer.crewInfo" = "Video Crew Guidelines";
+"video.volunteer.shotGuidelines" = "Shot Guidelines";
+
+// Video Crew Roles (CO-160 Ch. 4)
+"video.crew.roles.technicalDirector.title" = "Technical Director";
+"video.crew.roles.technicalDirector.item1" = "Directs all camera operators and calls shots during the program";
+"video.crew.roles.technicalDirector.item2" = "Coordinates with the switcher operator to ensure smooth transitions";
+"video.crew.roles.technicalDirector.item3" = "Monitors program flow and communicates with the stage crew";
+"video.crew.roles.switcherOp.title" = "Switcher Operator";
+"video.crew.roles.switcherOp.item1" = "Operates the video switcher to select camera sources on cue";
+"video.crew.roles.switcherOp.item2" = "Queues media playback for video and song segments";
+"video.crew.roles.switcherOp.item3" = "Maintains smooth, distraction-free transitions between sources";
+"video.crew.roles.mediaOp.title" = "Media Operator";
+"video.crew.roles.mediaOp.item1" = "Manages media playback for songs, videos, and program segments";
+"video.crew.roles.mediaOp.item2" = "Ensures all media files are pre-loaded and verified before the program";
+"video.crew.roles.mediaOp.item3" = "Coordinates timing of media with the Technical Director";
+"video.crew.roles.cameraOp.title" = "Camera Operator";
+"video.crew.roles.cameraOp.item1" = "Operates PTZ or manned camera as assigned";
+"video.crew.roles.cameraOp.item2" = "Follows shot guidelines and framing standards from CO-160 Ch. 4";
+"video.crew.roles.cameraOp.item3" = "Responds to director cues promptly and professionally";
+"video.crew.roles.cameraOp.item4" = "Maintains steady movement — avoids unnecessary zooms and panning";
+"video.crew.roles.recordingMonitor.title" = "Recording Monitor";
+"video.crew.roles.recordingMonitor.item1" = "Monitors recording quality and storage during the program";
+"video.crew.roles.recordingMonitor.item2" = "Alerts the Technical Director to any recording issues immediately";
+"video.crew.roles.commProtocol.title" = "Communication Protocol";
+"video.crew.roles.commProtocol.item1" = "Use headsets for all crew communication — keep chatter brief and professional";
+"video.crew.roles.commProtocol.item2" = "Follow the Technical Director's commands without delay or question during live program";
+"video.crew.roles.commProtocol.item3" = "Announce camera readiness before each shot transition";
+"video.crew.roles.commProtocol.item4" = "Be aware of tally lights — a lit tally means your camera is live";
+
+// Video Shot Guidelines
+"video.shot.mediumCloseUp" = "Medium Close-Up";
+"video.shot.stageWide" = "Stage Wide";
+"video.shot.transitionShot" = "Transition Shot";
+"video.shot.interviewMidShot" = "Interview Mid-Shot";
+"video.shot.generalGuidelines" = "General Guidelines";
+"video.shot.guideline.followDirector" = "Always follow the Technical Director's cues — do not switch shots independently";
+"video.shot.guideline.avoidZoom" = "Avoid unnecessary zooms; use deliberate, smooth movements only";
+"video.shot.guideline.steadyMovement" = "Keep the camera steady — use tripod locks when stationary";
+"video.shot.guideline.checkMonitor" = "Check the monitor frequently to ensure proper framing and exposure";
+
+// Stage Dashboard
+"stage.dashboard.title" = "Stage";
+"stage.dashboard.walkThroughs" = "Walk-Throughs";
+"stage.dashboard.walkThroughsCount" = "%d completed";
+"stage.dashboard.stageConfig" = "Stage Configuration";
+"stage.dashboard.stageConfigSub" = "Entry/exit sides, furniture, floor marks";
+"stage.dashboard.makeup" = "Makeup Coordination";
+"stage.dashboard.makeupSub" = "Supplies and sister assignments";
+
+// Stage Volunteer
+"stage.volunteer.quickActions" = "Quick Actions";
+"stage.volunteer.participantChecklist" = "Participant Reminder Checklist";
+"stage.volunteer.crewInfo" = "Stage Crew Guidelines";
+"stage.volunteer.yourRole" = "Your Role";
+"stage.volunteer.roleTitle" = "Stage Crew Volunteer";
+"stage.volunteer.roleDesc" = "Support the program by preparing the stage, coordinating with participants, and ensuring smooth transitions between parts.";
+"stage.volunteer.keyReminders" = "Key Reminders";
+"stage.volunteer.reminder1" = "Arrive at least 30 minutes before the session starts";
+"stage.volunteer.reminder2" = "Guide participants to the correct entry/exit sides";
+"stage.volunteer.reminder3" = "Remind participants to remove badges and large pins";
+"stage.volunteer.reminder4" = "Watch for cues from the chairman for stage changes";
+
+// Stage Crew Info
+"stage.crew.title" = "Stage Crew Guidelines";
+"stage.crew.roles.micAdjuster.item1" = "Adjusts microphone height and angle for each participant before they speak";
+"stage.crew.roles.micAdjuster.item2" = "Coordinates with the audio crew on microphone type and placement";
+"stage.crew.roles.micAdjuster.item3" = "Tests mic levels with participants during walk-throughs";
+"stage.crew.roles.participantReminder.item1" = "Reviews Appendix F reminders with each participant immediately before stage";
+"stage.crew.roles.participantReminder.item2" = "Confirms participant knows the entry/exit sides and floor markings";
+"stage.crew.roles.participantReminder.item3" = "Ensures badges, lanyards, and large pins are removed";
+"stage.crew.roles.stageConfig.item1" = "Sets up and repositions stage furniture per the program schedule";
+"stage.crew.roles.stageConfig.item2" = "Places floor markings for entry/exit and mic positions";
+"stage.crew.roles.stageConfig.item3" = "Coordinates furniture changes with the Installation department";
+"stage.crew.roles.makeupAssistant.item1" = "Applies makeup to participants only when video is in use — sisters only";
+"stage.crew.roles.makeupAssistant.item2" = "Uses clean, disposable applicators for each participant";
+"stage.crew.roles.makeupAssistant.item3" = "Applies conservatively for a natural on-camera appearance";
+"stage.crew.roles.appearanceCheck.item1" = "Conducts a final appearance check near the stage entrance";
+"stage.crew.roles.appearanceCheck.item2" = "Verifies clothing, grooming, and accessories are appropriate";
+
+// Stage Pre-Show (Appendix F)
+"stage.preShow.participantName" = "Participant Name (Optional)";
+"stage.preShow.participantNamePlaceholder" = "e.g. John Smith";
+"stage.preShow.done" = "Done — Participant Ready";
+
+// Stage Configuration
+"stage.config.title" = "Stage Configuration";
+"stage.config.sides" = "Entry & Exit Sides";
+"stage.config.bothSidesEntry" = "Participants use both sides";
+"stage.config.entryLabel" = "Entry Side";
+"stage.config.exitLabel" = "Exit Side";
+"stage.config.leftSide" = "Left";
+"stage.config.rightSide" = "Right";
+"stage.config.confirmations" = "Confirmations";
+"stage.config.floorMarks" = "Floor marks placed and confirmed";
+"stage.config.confidenceMonitor" = "Confidence monitor visible from stage";
+"stage.config.furnitureNotes" = "Furniture & Layout Notes";
+"stage.config.furnitureHint" = "Record furniture positions per CO-13/S-343 for each program part";
+"stage.config.additionalNotes" = "Additional Notes";
+
+// Makeup Coordination
+"stage.makeup.title" = "Makeup Coordination";
+"stage.makeup.videoToggle" = "Video Usage";
+"stage.makeup.videoInUse" = "Video is in use at this event";
+"stage.makeup.videoOffHint" = "Makeup coordination is only needed when video is in use.";
+"stage.makeup.supplies" = "Supplies";
+"stage.makeup.disposableAvailable" = "Disposable supplies available";
+"stage.makeup.suppliesHint" = "Per CO-160 Ch. 3:7 — use disposable applicators and hygiene supplies only";
+"stage.makeup.guidelines" = "Guidelines (CO-160 Ch. 3:6-8)";
+"stage.makeup.guideline1" = "Makeup is applied by sisters only, with the subject's consent";
+"stage.makeup.guideline2" = "Use only clean, disposable applicators — never share between participants";
+"stage.makeup.guideline3" = "Apply conservatively — natural appearance only";
+"stage.makeup.notes" = "Notes";
+
+// MARK: - Event Tab
+"eventTab.back" = "Back";

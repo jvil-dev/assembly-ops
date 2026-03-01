@@ -38,7 +38,6 @@
 // MARK: - Departments
 "department.accounts" = "Cuentas";
 "department.attendant" = "Acomodadores";
-"department.audioVideo" = "Audio/Video";
 "department.baptism" = "Bautismo";
 "department.cleaning" = "Limpieza";
 "department.firstAid" = "Primeros Auxilios";
@@ -870,3 +869,473 @@
 // MARK: - Búsqueda de Congregación
 "registration.congregation.searchHint" = "Ingresa texto para buscar resultados.";
 "registration.congregation.noResults" = "No se encontraron congregaciones.";
+
+// MARK: - Sprint 6.14 — Departamentos de Audio/Video
+
+// Dashboard
+"av.dashboard.title" = "Panel de AV";
+"av.dashboard.equipment" = "Equipo";
+"av.dashboard.total" = "Total";
+"av.dashboard.checkedOut" = "Prestado";
+"av.dashboard.needsRepair" = "Necesita Reparación";
+"av.dashboard.noEquipment" = "No se ha agregado equipo aún";
+"av.dashboard.damageReports" = "Reportes de Daño";
+"av.dashboard.unresolvedCount" = "%d sin resolver";
+"av.dashboard.noDamage" = "Sin reportes de daño";
+"av.dashboard.safety" = "Seguridad";
+"av.dashboard.hazardCount" = "%d evaluaciones de riesgo";
+"av.dashboard.briefingCount" = "%d charlas de seguridad";
+"av.dashboard.hazards" = "Riesgos";
+"av.dashboard.briefings" = "Charlas";
+"av.dashboard.walkThroughs" = "Recorridos";
+"av.dashboard.walkThroughsDesc" = "Listas de verificación CO-160";
+"av.dashboard.volunteers" = "Voluntarios";
+"av.dashboard.volunteersDesc" = "Administrar voluntarios del departamento";
+"av.dashboard.settings" = "Configuración";
+"av.dashboard.settingsDesc" = "Configuración y código de acceso";
+
+// Equipment
+"av.equipment.title" = "Equipo";
+"av.equipment.search" = "Buscar equipo...";
+"av.equipment.addOne" = "Agregar Equipo";
+"av.equipment.addBulk" = "Agregar en Lote";
+"av.equipment.filter.all" = "Todos";
+"av.equipment.empty" = "Sin equipo aún";
+"av.equipment.emptyHint" = "Toca + para agregar elementos al inventario";
+"av.equipment.checkedOut" = "Prestado";
+"av.equipment.detail" = "Detalle del Equipo";
+"av.equipment.notFound" = "Equipo no encontrado";
+"av.equipment.info" = "Información";
+"av.equipment.category" = "Categoría";
+"av.equipment.condition" = "Condición";
+"av.equipment.model" = "Modelo";
+"av.equipment.serial" = "Número de Serie";
+"av.equipment.location" = "Ubicación";
+"av.equipment.area" = "Área";
+"av.equipment.notes" = "Notas";
+"av.equipment.name" = "Nombre";
+"av.equipment.actions" = "Acciones";
+"av.equipment.return" = "Devolver Equipo";
+"av.equipment.checkout" = "Prestar Equipo";
+"av.equipment.reportDamage" = "Reportar Daño";
+"av.equipment.checkoutHistory" = "Historial de Préstamos";
+"av.equipment.active" = "Activo";
+"av.equipment.damageHistory" = "Historial de Daños";
+"av.equipment.create" = "Agregar Equipo";
+"av.equipment.save" = "Guardar";
+
+// Equipment Categories
+"av.equipment.category.cameraPtz" = "Cámara PTZ";
+"av.equipment.category.cameraManned" = "Cámara Tripulada";
+"av.equipment.category.tripod" = "Trípode";
+"av.equipment.category.audioMixer" = "Mezcladora de Audio";
+"av.equipment.category.videoSwitcher" = "Conmutador de Video";
+"av.equipment.category.mediaPlayer" = "Reproductor Multimedia";
+"av.equipment.category.ledPanel" = "Panel LED";
+"av.equipment.category.loudspeaker" = "Altavoz";
+"av.equipment.category.microphone" = "Micrófono";
+"av.equipment.category.stageMonitor" = "Monitor de Escenario";
+"av.equipment.category.intercom" = "Intercomunicador";
+"av.equipment.category.cable" = "Cable";
+"av.equipment.category.stageLighting" = "Iluminación de Escenario";
+"av.equipment.category.recordingDevice" = "Dispositivo de Grabación";
+"av.equipment.category.assistiveListening" = "Asistencia Auditiva";
+"av.equipment.category.accessory" = "Accesorio";
+
+// Equipment Conditions
+"av.equipment.condition.good" = "Bueno";
+"av.equipment.condition.needsRepair" = "Necesita Reparación";
+"av.equipment.condition.outOfService" = "Fuera de Servicio";
+
+// Bulk Create
+"av.equipment.bulk.title" = "Agregar Equipo en Lote";
+"av.equipment.bulk.count" = "Cantidad";
+"av.equipment.bulk.prefix" = "Prefijo del Nombre";
+"av.equipment.bulk.prefixPlaceholder" = "ej. Altavoz";
+"av.equipment.bulk.prefixHint" = "Los elementos se nombrarán \"Prefijo 1\", \"Prefijo 2\", etc.";
+"av.equipment.bulk.preview" = "Vista Previa";
+"av.equipment.bulk.create" = "Crear Todos";
+"av.equipment.bulk.creating" = "Creando...";
+
+// Checkout
+"av.checkout.title" = "Prestar Equipo";
+"av.checkout.equipment" = "Equipo";
+"av.checkout.volunteer" = "Voluntario";
+"av.checkout.volunteerId" = "ID del Voluntario";
+"av.checkout.session" = "Sesión";
+"av.checkout.sessionOptional" = "Sesión (opcional)";
+"av.checkout.notes" = "Notas";
+"av.checkout.confirm" = "Prestar";
+
+// Damage Reports
+"av.damage.title" = "Reportes de Daño";
+"av.damage.showResolved" = "Mostrar Resueltos";
+"av.damage.empty" = "Sin reportes de daño";
+"av.damage.resolved" = "Resuelto";
+"av.damage.tapToResolve" = "Toca para resolver";
+"av.damage.resolve" = "Resolver Daño";
+"av.damage.reportInfo" = "Info del Reporte";
+"av.damage.resolutionNotes" = "Notas de Resolución";
+"av.damage.markResolved" = "Marcar como Resuelto";
+"av.damage.equipment" = "Equipo";
+"av.damage.selectEquipment" = "Seleccionar Equipo";
+"av.damage.selectPlaceholder" = "Elegir equipo...";
+"av.damage.description" = "Descripción";
+"av.damage.severity" = "Severidad";
+"av.damage.report" = "Reportar Daño";
+"av.damage.submit" = "Enviar Reporte";
+
+// Damage Severity
+"av.damage.severity.minor" = "Menor";
+"av.damage.severity.moderate" = "Moderado";
+"av.damage.severity.severe" = "Severo";
+
+// Safety & Hazards
+"av.safety.title" = "Seguridad y Riesgos";
+"av.safety.briefings" = "Charlas de Seguridad";
+"av.safety.briefingsCount" = "%d charlas realizadas";
+"av.hazard.title" = "Evaluaciones de Riesgo";
+"av.hazard.empty" = "Sin evaluaciones de riesgo aún";
+"av.hazard.create" = "Nueva Evaluación de Riesgo";
+"av.hazard.create.title" = "Título";
+"av.hazard.type" = "Tipo de Riesgo";
+"av.hazard.description" = "Descripción";
+"av.hazard.controls" = "Medidas de Control";
+"av.hazard.ppeRequired" = "EPP Requerido";
+"av.hazard.save" = "Guardar";
+
+// Hazard Types
+"av.hazard.type.workingAtHeight" = "Trabajo en Altura";
+"av.hazard.type.electricalExposure" = "Exposición Eléctrica";
+"av.hazard.type.elevatedPlatform" = "Plataforma Elevada";
+"av.hazard.type.powerTools" = "Herramientas Eléctricas";
+"av.hazard.type.movingEquipment" = "Equipo en Movimiento";
+"av.hazard.type.nearStairs" = "Cerca de Escaleras";
+"av.hazard.type.unevenSurface" = "Superficie Irregular";
+"av.hazard.type.heavyLifting" = "Carga Pesada";
+"av.hazard.type.pinchCrushCut" = "Pellizco/Aplastamiento/Corte";
+"av.hazard.type.extremeConditions" = "Condiciones Extremas";
+
+// PPE Types
+"av.ppe.hardHat" = "Casco";
+"av.ppe.safetyGlasses" = "Gafas de Seguridad";
+"av.ppe.highVisVest" = "Chaleco Reflectante";
+"av.ppe.gloves" = "Guantes";
+"av.ppe.workShoes" = "Zapatos de Trabajo";
+"av.ppe.fallProtection" = "Protección contra Caídas";
+"av.ppe.hearingProtection" = "Protección Auditiva";
+
+// Safety Briefings
+"av.briefing.title" = "Charlas de Seguridad";
+"av.briefing.empty" = "Sin charlas de seguridad aún";
+"av.briefing.create" = "Nueva Charla de Seguridad";
+"av.briefing.topic" = "Tema";
+"av.briefing.topicPlaceholder" = "ej. Charla de Seguridad Pre-Instalación";
+"av.briefing.notes" = "Notas";
+"av.briefing.attendees" = "Asistentes";
+"av.briefing.attendeesHint" = "Ingresa un ID de voluntario por línea";
+"av.briefing.save" = "Guardar";
+
+// Walk-Throughs
+"av.walkthrough.title" = "Listas de Verificación";
+"av.walkthrough.done" = "Listo";
+"av.walkthrough.appendixE.title" = "Apéndice E";
+"av.walkthrough.appendixE.subtitle" = "Recordatorios Durante los Recorridos";
+"av.walkthrough.appendixF.title" = "Apéndice F";
+"av.walkthrough.appendixF.subtitle" = "Recordatorios Antes de Subir al Escenario";
+"av.walkthrough.appendixG.title" = "Apéndice G";
+"av.walkthrough.appendixG.subtitle" = "Lista de Verificación del Superintendente de AV";
+
+// Appendix E Items
+"av.walkthrough.e.cellPhonesAirplaneMode" = "Teléfonos en modo avión o apagados";
+"av.walkthrough.e.dontPullLectern" = "No jalar ni apoyarse en el atril";
+"av.walkthrough.e.micDistance" = "Mantener distancia apropiada del micrófono (10-15 cm)";
+"av.walkthrough.e.projectVoice" = "Proyectar la voz — hablar con confianza";
+"av.walkthrough.e.speakingSoftly" = "Si habla suave, acercarse más al micrófono";
+"av.walkthrough.e.speakingLoudly" = "Si habla fuerte, alejarse del micrófono";
+"av.walkthrough.e.popping" = "Evitar sonidos explosivos (P/B) — inclinar el micrófono";
+"av.walkthrough.e.feedback" = "Si hay retroalimentación, alejarse de las bocinas";
+"av.walkthrough.e.coughSneeze" = "Voltear del micrófono al toser o estornudar";
+"av.walkthrough.e.interviews" = "En entrevistas, compartir el micrófono adecuadamente";
+"av.walkthrough.e.stageEntryExit" = "Entrar y salir del escenario en silencio";
+
+// Appendix F Items
+"av.walkthrough.f.cellPhonesAirplaneMode" = "Teléfonos en modo avión o apagados";
+"av.walkthrough.f.dontPullLectern" = "No jalar ni apoyarse en el atril";
+"av.walkthrough.f.projectVoice" = "Proyectar la voz — hablar con confianza";
+"av.walkthrough.f.stageExitSide" = "Salir del escenario por el lado designado";
+
+// Appendix G Phases
+"av.walkthrough.g.phase1.title" = "Fase 1: Pre-Planificación";
+"av.walkthrough.g.phase1.jwHubLogin" = "Iniciar sesión en JW Hub y revisar recursos de AV";
+"av.walkthrough.g.phase1.reviewCO160" = "Revisar las directrices del CO-160 a fondo";
+"av.walkthrough.g.phase1.checkWithOverseer" = "Consultar con el superintendente de la asamblea";
+"av.walkthrough.g.phase1.reviewPreviousNotes" = "Revisar notas de eventos anteriores";
+"av.walkthrough.g.phase2.title" = "Fase 2: Preparación";
+"av.walkthrough.g.phase2.downloadMedia" = "Descargar archivos multimedia requeridos";
+"av.walkthrough.g.phase2.reviewOutlines" = "Revisar bosquejos del programa para necesidades de AV";
+"av.walkthrough.g.phase2.recruitVolunteers" = "Reclutar y asignar miembros del equipo";
+"av.walkthrough.g.phase2.planInstallation" = "Planificar el calendario de instalación";
+"av.walkthrough.g.phase2.verifyEquipment" = "Verificar que todo el equipo está disponible y funcional";
+"av.walkthrough.g.phase3.title" = "Fase 3: Pre-Instalación";
+"av.walkthrough.g.phase3.reviewPlan" = "Revisar el plan de instalación con el equipo";
+"av.walkthrough.g.phase3.remindPPE" = "Recordar al equipo sobre el EPP requerido";
+"av.walkthrough.g.phase3.verifyItems" = "Verificar que los artículos coincidan con la lista de inventario";
+"av.walkthrough.g.phase3.confirmCrewAssignments" = "Confirmar asignaciones y responsabilidades del equipo";
+"av.walkthrough.g.phase4.title" = "Fase 4: Instalación y Pruebas";
+"av.walkthrough.g.phase4.safetyTalk" = "Dar charla de seguridad antes de la instalación";
+"av.walkthrough.g.phase4.equipmentTest" = "Probar todo el equipo después de la instalación";
+"av.walkthrough.g.phase4.cameraPositions" = "Verificar posiciones y ángulos de las cámaras";
+"av.walkthrough.g.phase4.audioLevels" = "Ajustar y verificar niveles de audio";
+"av.walkthrough.g.phase4.videoSwitching" = "Probar la conmutación y transiciones de video";
+"av.walkthrough.g.phase5.title" = "Fase 5: Durante el Evento";
+"av.walkthrough.g.phase5.walkThroughs" = "Realizar recorridos con los oradores";
+"av.walkthrough.g.phase5.monitorQuality" = "Monitorear calidad de audio/video continuamente";
+"av.walkthrough.g.phase5.addressIssues" = "Atender cualquier problema de inmediato";
+"av.walkthrough.g.phase5.coordinateStage" = "Coordinar con la administración del escenario";
+"av.walkthrough.g.phase6.title" = "Fase 6: Desinstalación";
+"av.walkthrough.g.phase6.disassemblyBriefing" = "Dar charla de seguridad de desinstalación";
+"av.walkthrough.g.phase6.inventoryCheck" = "Completar verificación de inventario del equipo";
+"av.walkthrough.g.phase6.damageReport" = "Enviar reportes de daño pendientes";
+"av.walkthrough.g.phase6.handoffNotes" = "Preparar notas de traspaso para el siguiente evento";
+
+// Apéndice A — Configuración de JW Library y Listas de Multimedia
+"av.walkthrough.appendixA.title" = "Apéndice A";
+"av.walkthrough.appendixA.subtitle" = "Configuración de JW Library y Listas de Multimedia";
+"av.walkthrough.a.jwLibrary.title" = "Configuración de JW Library";
+"av.walkthrough.a.jwLibrary.openApp" = "Abrir JW Library";
+"av.walkthrough.a.jwLibrary.settings" = "Ir a la página de Configuración";
+"av.walkthrough.a.jwLibrary.secondDisplay" = "Verificar que 'Reproducir video en segunda pantalla' esté activado";
+"av.walkthrough.a.jwLibrary.yeartextOff" = "Configurar 'Idioma del texto del año' en Desactivado";
+"av.walkthrough.a.mediaPlaylist.title" = "Configuración de Lista de Multimedia";
+"av.walkthrough.a.mediaPlaylist.downloadJWPUB" = "Descargar JWPUB de lista de multimedia de 'Multimedia del evento' en JW Hub";
+"av.walkthrough.a.mediaPlaylist.importJWPUB" = "Hacer doble clic en el archivo JWPUB para importar a JW Library";
+"av.walkthrough.a.mediaPlaylist.downloadWatchtower" = "Descargar e importar La Atalaya de la semana del evento";
+"av.walkthrough.a.importVideos.title" = "Importar Videos";
+"av.walkthrough.a.importVideos.selectFiles" = "Seleccionar archivos multimedia (extraer ZIP primero)";
+"av.walkthrough.a.importVideos.dragDrop" = "Arrastrar y soltar archivos en la ventana de JW Library";
+"av.walkthrough.a.importVideos.verifyImport" = "Verificar que los archivos correctos se importaron";
+"av.walkthrough.a.importVideos.testPlayback" = "Probar cada video — reproducir hasta confirmar audio e imagen";
+"av.walkthrough.a.importVideos.verifyLanguage" = "Verificar que cada video esté en el idioma correcto";
+"av.walkthrough.a.playlists.title" = "Listas Personalizadas";
+"av.walkthrough.a.playlists.createPlaylist" = "Crear lista para discursos pregrabados o multimedia personalizada";
+"av.walkthrough.a.playlists.addMedia" = "Arrastrar archivos multimedia del Explorador a la lista";
+"av.walkthrough.a.playlists.setEndActions" = "Configurar acción final de cada elemento (Continuar, Detener, Congelar o Repetir)";
+"av.walkthrough.a.playlists.verifyItems" = "Verificar que cada elemento de la lista funcione antes del evento";
+
+// Apéndice B — Configuración de Sistemas de Audio y Video
+"av.walkthrough.appendixB.title" = "Apéndice B";
+"av.walkthrough.appendixB.subtitle" = "Configuración de Sistemas de Audio y Video";
+"av.walkthrough.b.clickTrack" = "Usar pista de clic para configurar y confirmar retardos de audio";
+"av.walkthrough.b.pinkNoise" = "Usar ruido rosa para balancear audio y verificar zonas de altavoces";
+"av.walkthrough.b.sineWave" = "Usar onda sinusoidal de 1 kHz para ecualizar el sistema de audio";
+"av.walkthrough.b.calibrationImage" = "Mostrar imagen de calibración en pantallas LED de video";
+"av.walkthrough.b.whiteLevel" = "Nivel de blanco: Verificar 10 cuadros grises visibles sobre fondo blanco";
+"av.walkthrough.b.blackLevel" = "Nivel de negro: Verificar 10 cuadros grises visibles sobre fondo negro";
+"av.walkthrough.b.grayScale" = "Escala de grises: Verificar que cada barra de 0-100 sea claramente visible";
+
+// Apéndice D — Uso de JW Stream
+"av.walkthrough.appendixD.title" = "Apéndice D";
+"av.walkthrough.appendixD.subtitle" = "Uso de JW Stream para Ver y Descargar Discursos";
+"av.walkthrough.d.login.title" = "Inicio de Sesión";
+"av.walkthrough.d.login.accessLink" = "Usar el enlace proporcionado por el Departamento de Transmisión Local";
+"av.walkthrough.d.login.credentials" = "Iniciar sesión con credenciales de jwpub.org";
+"av.walkthrough.d.livestream.title" = "Discursos en Vivo";
+"av.walkthrough.d.livestream.accessStream" = "Acceder a la transmisión en vivo por enlace de Transmisión Local";
+"av.walkthrough.d.livestream.fullscreen" = "Poner reproductor en pantalla completa en entrada del conmutador; monitorear en multivista";
+"av.walkthrough.d.livestream.wideShot" = "Cuando el presidente anuncie la conexión, mostrar toma amplia del escenario local";
+"av.walkthrough.d.livestream.informCoordinator" = "Informar al coordinador de transmisión que el sitio receptor está listo";
+"av.walkthrough.d.livestream.dissolveToStream" = "Al recibir señal, disolver a transmisión; subir ganancia de transmisión, bajar micrófonos locales";
+"av.walkthrough.d.livestream.dissolveBack" = "Al concluir, disolver a negro, luego al presidente local; restaurar niveles de ganancia";
+"av.walkthrough.d.delayStream.title" = "Discursos con Retardo";
+"av.walkthrough.d.delayStream.accessStream" = "Acceder a la transmisión retrasada por enlace de Transmisión Local";
+"av.walkthrough.d.delayStream.pauseAndScrub" = "Pausar la transmisión; avanzar hasta la pantalla negra de diez segundos";
+"av.walkthrough.d.delayStream.fullscreen" = "Poner reproductor en pantalla completa en entrada del conmutador";
+"av.walkthrough.d.delayStream.adjustGain" = "Subir ganancia de transmisión; bajar todos los micrófonos locales";
+"av.walkthrough.d.delayStream.playAndDissolve" = "Presionar Reproducir; cuando desaparezca la barra, disolver a transmisión";
+"av.walkthrough.d.delayStream.dissolveBack" = "Al concluir, disolver a negro, luego al presidente local; restaurar niveles de ganancia";
+"av.walkthrough.d.downloaded.title" = "Grabaciones Descargadas";
+"av.walkthrough.d.downloaded.downloadFile" = "Descargar archivo de discurso pregrabado de JW Stream";
+"av.walkthrough.d.downloaded.addToPlaylist" = "Agregar archivo multimedia a una lista en JW Library";
+"av.walkthrough.d.downloaded.followShotGuidelines" = "Seguir directrices de tomas y transiciones antes y después de la reproducción";
+
+// Volunteer Views
+"av.volunteer.quickActions" = "Acciones Rápidas";
+"av.volunteer.reportDamage" = "Reportar Daño de Equipo";
+"av.volunteer.walkThrough" = "Lista de Verificación";
+"av.volunteer.myEquipment" = "Mi Equipo";
+"av.volunteer.noCheckouts" = "Sin equipo prestado actualmente";
+"av.volunteer.myBriefings" = "Mis Charlas";
+"av.volunteer.noBriefings" = "Sin charlas atendidas aún";
+"av.volunteer.resources" = "Recursos";
+"av.volunteer.crewInfo" = "Directrices del Equipo AV";
+
+// Crew Info
+"av.crew.title" = "Directrices del Equipo AV";
+"av.crew.done" = "Listo";
+"av.crew.responsibilities.title" = "Responsabilidades Generales";
+"av.crew.responsibilities.punctual" = "Ser puntual en todas las asignaciones y reuniones";
+"av.crew.responsibilities.dignified" = "Mantener una apariencia digna en todo momento";
+"av.crew.responsibilities.follow" = "Seguir las instrucciones del superintendente del equipo";
+"av.crew.responsibilities.report" = "Reportar cualquier problema al superintendente de inmediato";
+"av.crew.responsibilities.equipment" = "Manejar todo el equipo con cuidado";
+"av.crew.safety.title" = "Directrices de Seguridad";
+"av.crew.safety.ppe" = "Usar EPP requerido durante instalación y desinstalación";
+"av.crew.safety.lifting" = "Usar técnicas apropiadas de levantamiento para equipo pesado";
+"av.crew.safety.electrical" = "Nunca trabajar en conexiones eléctricas cuando estén energizadas";
+"av.crew.safety.ladders" = "Seguir seguridad en escaleras — mantener 3 puntos de contacto";
+"av.crew.safety.report" = "Reportar todos los riesgos de seguridad y lesiones de inmediato";
+"av.crew.equipment.title" = "Manejo de Equipo";
+"av.crew.equipment.careful" = "Manejar todo el equipo con cuidado — evitar golpes e impactos";
+"av.crew.equipment.checkout" = "Siempre registrar el préstamo del equipo antes de usarlo";
+"av.crew.equipment.damage" = "Reportar cualquier daño de inmediato — sin importar cuán menor sea";
+"av.crew.equipment.storage" = "Devolver el equipo al almacenamiento apropiado después de usar";
+
+// Department Names
+"department.audio" = "Audio";
+"department.video" = "Video";
+"department.stage" = "Plataforma";
+
+// MARK: - Sprint 6.15 — Audio / Video / Stage Department Split
+
+// Audio Crew
+"audio.dashboard.title" = "Audio";
+"audio.crew.title" = "Directrices del Equipo de Audio";
+"audio.volunteer.crewInfo" = "Directrices del Equipo de Audio";
+"audio.crew.roles.mixerOp.title" = "Operador de Consola";
+"audio.crew.roles.mixerOp.item1" = "Opera la consola de mezcla durante todo el programa";
+"audio.crew.roles.mixerOp.item2" = "Ajusta los niveles de audio para micrófonos y reproducción";
+"audio.crew.roles.mixerOp.item3" = "Coordina con el equipo de plataforma para la colocación correcta del micrófono";
+"audio.crew.roles.mixerOp.item4" = "Monitorea la calidad del audio y responde a retroalimentación o distorsión de inmediato";
+"audio.crew.roles.mixerOpAsst.title" = "Asistente del Operador de Consola";
+"audio.crew.roles.mixerOpAsst.item1" = "Asiste al operador en la configuración, pruebas y ajustes";
+"audio.crew.roles.mixerOpAsst.item2" = "Administra la distribución y recolección de micrófonos entre partes del programa";
+"audio.crew.roles.mixerOpAsst.item3" = "Apoya en la resolución de problemas de audio durante el programa";
+"audio.crew.roles.assistiveListening.title" = "Operador de Dispositivos de Asistencia Auditiva";
+"audio.crew.roles.assistiveListening.item1" = "Distribuye y recoge los dispositivos de asistencia auditiva para los asistentes";
+"audio.crew.roles.assistiveListening.item2" = "Monitorea los niveles de batería y los reemplaza según sea necesario durante el programa";
+"audio.crew.roles.assistiveListening.item3" = "Asiste a los asistentes con el uso correcto y la resolución de problemas de los dispositivos";
+"audio.crew.roles.loudspeaker.title" = "Operador de Altavoces";
+"audio.crew.roles.loudspeaker.item1" = "Posiciona y dirige los altavoces para una cobertura óptima de la audiencia";
+"audio.crew.roles.loudspeaker.item2" = "Monitorea los niveles de los altavoces y ajusta para áreas exteriores o de desbordamiento";
+"audio.crew.roles.loudspeaker.item3" = "Reporta cualquier mal funcionamiento de los altavoces o problemas de calidad de sonido de inmediato";
+
+// Video Dashboard
+"video.dashboard.title" = "Video";
+"video.crew.title" = "Directrices del Equipo de Video";
+"video.volunteer.crewInfo" = "Directrices del Equipo de Video";
+"video.volunteer.shotGuidelines" = "Guía de Tomas";
+
+// Video Crew Roles (CO-160 Ch. 4)
+"video.crew.roles.technicalDirector.title" = "Director Técnico";
+"video.crew.roles.technicalDirector.item1" = "Dirige a todos los operadores de cámara y decide las tomas durante el programa";
+"video.crew.roles.technicalDirector.item2" = "Coordina con el operador de conmutadora para transiciones fluidas";
+"video.crew.roles.technicalDirector.item3" = "Monitorea el flujo del programa y se comunica con el equipo de plataforma";
+"video.crew.roles.switcherOp.title" = "Operador de Conmutadora";
+"video.crew.roles.switcherOp.item1" = "Opera la conmutadora de video para seleccionar fuentes de cámara a indicación";
+"video.crew.roles.switcherOp.item2" = "Prepara la reproducción de medios para segmentos de video y cánticos";
+"video.crew.roles.switcherOp.item3" = "Mantiene transiciones suaves y sin distracción entre fuentes";
+"video.crew.roles.mediaOp.title" = "Operador de Medios";
+"video.crew.roles.mediaOp.item1" = "Administra la reproducción de cánticos, videos y segmentos del programa";
+"video.crew.roles.mediaOp.item2" = "Asegura que todos los archivos estén precargados y verificados antes del programa";
+"video.crew.roles.mediaOp.item3" = "Coordina el tiempo de los medios con el Director Técnico";
+"video.crew.roles.cameraOp.title" = "Operador de Cámara";
+"video.crew.roles.cameraOp.item1" = "Opera cámara PTZ o manual según asignación";
+"video.crew.roles.cameraOp.item2" = "Sigue las directrices de encuadre del CO-160 Cap. 4";
+"video.crew.roles.cameraOp.item3" = "Responde a las indicaciones del director con puntualidad y profesionalismo";
+"video.crew.roles.cameraOp.item4" = "Mantiene movimiento estable — evita zoom y paneo innecesarios";
+"video.crew.roles.recordingMonitor.title" = "Monitor de Grabación";
+"video.crew.roles.recordingMonitor.item1" = "Monitorea la calidad de grabación y almacenamiento durante el programa";
+"video.crew.roles.recordingMonitor.item2" = "Alerta al Director Técnico sobre cualquier problema de grabación de inmediato";
+"video.crew.roles.commProtocol.title" = "Protocolo de Comunicación";
+"video.crew.roles.commProtocol.item1" = "Usar auriculares para toda comunicación del equipo — ser breve y profesional";
+"video.crew.roles.commProtocol.item2" = "Seguir los comandos del Director Técnico sin demora durante el programa en vivo";
+"video.crew.roles.commProtocol.item3" = "Anunciar que la cámara está lista antes de cada transición de toma";
+"video.crew.roles.commProtocol.item4" = "Estar atento a las luces tally — una luz encendida significa que su cámara está al aire";
+
+// Video Shot Guidelines
+"video.shot.mediumCloseUp" = "Plano Medio Cercano";
+"video.shot.stageWide" = "Plano General del Escenario";
+"video.shot.transitionShot" = "Toma de Transición";
+"video.shot.interviewMidShot" = "Plano Medio de Entrevista";
+"video.shot.generalGuidelines" = "Directrices Generales";
+"video.shot.guideline.followDirector" = "Siempre seguir las indicaciones del Director Técnico — no cambiar tomas de forma independiente";
+"video.shot.guideline.avoidZoom" = "Evitar zoom innecesario; usar movimientos deliberados y suaves únicamente";
+"video.shot.guideline.steadyMovement" = "Mantener la cámara estable — usar los bloqueos del trípode cuando esté estacionaria";
+"video.shot.guideline.checkMonitor" = "Revisar el monitor frecuentemente para asegurar encuadre y exposición correctos";
+
+// Stage Dashboard
+"stage.dashboard.title" = "Plataforma";
+"stage.dashboard.walkThroughs" = "Recorridos";
+"stage.dashboard.walkThroughsCount" = "%d completados";
+"stage.dashboard.stageConfig" = "Configuración de Plataforma";
+"stage.dashboard.stageConfigSub" = "Lados de entrada/salida, mobiliario, marcas en el piso";
+"stage.dashboard.makeup" = "Coordinación de Maquillaje";
+"stage.dashboard.makeupSub" = "Suministros y asignación de hermanas";
+
+// Stage Volunteer
+"stage.volunteer.quickActions" = "Acciones Rápidas";
+"stage.volunteer.participantChecklist" = "Lista de Recordatorios al Participante";
+"stage.volunteer.crewInfo" = "Directrices del Equipo de Plataforma";
+"stage.volunteer.yourRole" = "Tu Rol";
+"stage.volunteer.roleTitle" = "Voluntario de Plataforma";
+"stage.volunteer.roleDesc" = "Apoya el programa preparando la plataforma, coordinando con los participantes y asegurando transiciones fluidas entre las partes.";
+"stage.volunteer.keyReminders" = "Recordatorios Clave";
+"stage.volunteer.reminder1" = "Llega al menos 30 minutos antes de que comience la sesión";
+"stage.volunteer.reminder2" = "Guía a los participantes al lado correcto de entrada/salida";
+"stage.volunteer.reminder3" = "Recuerda a los participantes quitar credenciales y pines grandes";
+"stage.volunteer.reminder4" = "Observa las señales del presidente para cambios en la plataforma";
+
+// Stage Crew Info
+"stage.crew.title" = "Directrices del Equipo de Plataforma";
+"stage.crew.roles.micAdjuster.item1" = "Ajusta la altura y el ángulo del micrófono para cada participante antes de hablar";
+"stage.crew.roles.micAdjuster.item2" = "Coordina con el equipo de audio sobre el tipo y colocación del micrófono";
+"stage.crew.roles.micAdjuster.item3" = "Prueba los niveles del micrófono con los participantes durante los recorridos";
+"stage.crew.roles.participantReminder.item1" = "Repasa los recordatorios del Apéndice F con cada participante inmediatamente antes de subir a la plataforma";
+"stage.crew.roles.participantReminder.item2" = "Confirma que el participante conozca los lados de entrada/salida y las marcas en el piso";
+"stage.crew.roles.participantReminder.item3" = "Se asegura de que se retiren gafetes, cordones y pines grandes";
+"stage.crew.roles.stageConfig.item1" = "Configura y reposiciona el mobiliario de plataforma según el programa";
+"stage.crew.roles.stageConfig.item2" = "Coloca las marcas en el piso para entrada/salida y posiciones de micrófono";
+"stage.crew.roles.stageConfig.item3" = "Coordina los cambios de mobiliario con el departamento de Instalación";
+"stage.crew.roles.makeupAssistant.item1" = "Aplica maquillaje a los participantes solo cuando se usa video — solo hermanas";
+"stage.crew.roles.makeupAssistant.item2" = "Usa aplicadores limpios y desechables para cada participante";
+"stage.crew.roles.makeupAssistant.item3" = "Aplica de manera conservadora para una apariencia natural ante la cámara";
+"stage.crew.roles.appearanceCheck.item1" = "Realiza una verificación final de apariencia cerca de la entrada de la plataforma";
+"stage.crew.roles.appearanceCheck.item2" = "Verifica que la ropa, el arreglo personal y los accesorios sean apropiados";
+
+// Stage Pre-Show (Appendix F)
+"stage.preShow.participantName" = "Nombre del Participante (Opcional)";
+"stage.preShow.participantNamePlaceholder" = "ej. Juan Pérez";
+"stage.preShow.done" = "Listo — Participante Preparado";
+
+// Stage Configuration
+"stage.config.title" = "Configuración de Plataforma";
+"stage.config.sides" = "Lados de Entrada y Salida";
+"stage.config.bothSidesEntry" = "Los participantes usan ambos lados";
+"stage.config.entryLabel" = "Lado de Entrada";
+"stage.config.exitLabel" = "Lado de Salida";
+"stage.config.leftSide" = "Izquierdo";
+"stage.config.rightSide" = "Derecho";
+"stage.config.confirmations" = "Confirmaciones";
+"stage.config.floorMarks" = "Marcas en el piso colocadas y confirmadas";
+"stage.config.confidenceMonitor" = "Monitor de confianza visible desde la plataforma";
+"stage.config.furnitureNotes" = "Notas de Mobiliario y Disposición";
+"stage.config.furnitureHint" = "Registrar posiciones del mobiliario según CO-13/S-343 para cada parte del programa";
+"stage.config.additionalNotes" = "Notas Adicionales";
+
+// Makeup Coordination
+"stage.makeup.title" = "Coordinación de Maquillaje";
+"stage.makeup.videoToggle" = "Uso de Video";
+"stage.makeup.videoInUse" = "Se usa video en este evento";
+"stage.makeup.videoOffHint" = "La coordinación de maquillaje solo se necesita cuando se usa video.";
+"stage.makeup.supplies" = "Suministros";
+"stage.makeup.disposableAvailable" = "Suministros desechables disponibles";
+"stage.makeup.suppliesHint" = "Según CO-160 Cap. 3:7 — usar solo aplicadores desechables y suministros de higiene";
+"stage.makeup.guidelines" = "Directrices (CO-160 Cap. 3:6-8)";
+"stage.makeup.guideline1" = "El maquillaje lo aplican solo hermanas, con el consentimiento del participante";
+"stage.makeup.guideline2" = "Usar solo aplicadores limpios y desechables — nunca compartir entre participantes";
+"stage.makeup.guideline3" = "Aplicar de forma conservadora — apariencia natural únicamente";
+"stage.makeup.notes" = "Notas";
+
+// MARK: - Event Tab
+"eventTab.back" = "Atrás";

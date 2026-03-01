@@ -1,21 +1,20 @@
 mutation SetAreaCaptain($input: SetAreaCaptainInput!) {
-    setAreaCaptain(input: $input) {
-        id
-        area {
-            id
-            name
-        }
-        session {
-            id
-            name
-        }
-        eventVolunteer {
-            id
-            volunteerId
-            user {
-                firstName
-                lastName
-            }
-        }
+  setAreaCaptain(input: $input) {
+    id
+    area {
+      id
+      name
     }
+    session {
+      id
+      name
+    }
+    eventVolunteer {
+      id
+      user {
+        firstName
+        lastName
+      }
+    }
+  }
 }
