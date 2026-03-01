@@ -20,6 +20,25 @@ export async function createTestApp() {
   app.use(cors());
   app.use(express.json());
 
+  // Health check endpoint for tests
+  app.get('/health', async (_req, res) => {
+    try {
+      const prisma = (await import('../config/database.js')).default;
+      await prisma.$queryRaw`SELECT 1`;
+      res.status(200).json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        services: { database: 'connected' },
+      });
+    } catch (error) {
+      res.status(503).json({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        services: { database: 'disconnected' },
+      });
+    }
+  });
+
   server = new ApolloServer<Context>({
     typeDefs,
     resolvers,

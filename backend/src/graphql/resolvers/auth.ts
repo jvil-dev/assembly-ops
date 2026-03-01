@@ -68,9 +68,9 @@ const authResolvers = {
 
       return {
         user: result.user,
-        accessToken: result.tokens.accessToken,
-        refreshToken: result.tokens.refreshToken,
-        expiresIn: result.tokens.expiresIn,
+        accessToken: result.tokens!.accessToken,
+        refreshToken: result.tokens!.refreshToken,
+        expiresIn: result.tokens!.expiresIn,
       };
     },
 
@@ -84,9 +84,9 @@ const authResolvers = {
 
       return {
         user: result.user,
-        accessToken: result.tokens.accessToken,
-        refreshToken: result.tokens.refreshToken,
-        expiresIn: result.tokens.expiresIn,
+        accessToken: result.tokens!.accessToken,
+        refreshToken: result.tokens!.refreshToken,
+        expiresIn: result.tokens!.expiresIn,
       };
     },
 
