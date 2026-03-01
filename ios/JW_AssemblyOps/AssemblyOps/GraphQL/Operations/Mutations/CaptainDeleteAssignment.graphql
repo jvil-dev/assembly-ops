@@ -1,0 +1,3 @@
+mutation CaptainDeleteAssignment($eventId: ID!, $assignmentId: ID!) {
+  captainDeleteAssignment(eventId: $eventId, assignmentId: $assignmentId)
+}

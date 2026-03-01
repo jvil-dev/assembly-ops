@@ -1,0 +1,28 @@
+mutation CaptainSwapVolunteer($input: CaptainSwapInput!, $eventId: ID!) {
+  captainSwapVolunteer(input: $input, eventId: $eventId) {
+    id
+    status
+    post {
+      id
+      name
+    }
+    session {
+      id
+      name
+    }
+    shift {
+      id
+      name
+      startTime
+      endTime
+    }
+    eventVolunteer {
+      id
+      user {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+mutation CreateShift($input: CreateShiftInput!) {
+  createShift(input: $input) {
+    id
+    name
+    startTime
+    endTime
+    session {
+      id
+      name
+    }
+    post {
+      id
+      name
+    }
+    createdAt
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+  }
+}
