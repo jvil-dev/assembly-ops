@@ -46,6 +46,10 @@ import postSessionStatusResolvers from './postSessionStatus.js';
 import facilityLocationResolvers from './facilityLocation.js';
 import adminResolvers from './admin.js';
 import audioVideoResolvers from './audioVideo.js';
+import shiftResolvers from './shift.js';
+import captainSchedulingResolvers from './captainScheduling.js';
+import reminderResolvers from './reminder.js';
+import lanyardResolvers from './lanyard.js';
 
 const baseResolvers = {
   DateTime: DateTimeResolver,
@@ -99,6 +103,10 @@ const resolvers = {
     ...facilityLocationResolvers.Query,
     ...adminResolvers.Query,
     ...audioVideoResolvers.Query,
+    ...shiftResolvers.Query,
+    ...captainSchedulingResolvers.Query,
+    ...reminderResolvers.Query,
+    ...lanyardResolvers.Query,
   },
 
   Mutation: {
@@ -122,6 +130,10 @@ const resolvers = {
     ...facilityLocationResolvers.Mutation,
     ...adminResolvers.Mutation,
     ...audioVideoResolvers.Mutation,
+    ...shiftResolvers.Mutation,
+    ...captainSchedulingResolvers.Mutation,
+    ...reminderResolvers.Mutation,
+    ...lanyardResolvers.Mutation,
   },
 
   User: authResolvers.User,
@@ -137,6 +149,7 @@ const resolvers = {
   EventVolunteer: volunteerProfileResolvers.EventVolunteer,
   Volunteer: volunteerResolvers.Volunteer,
   Area: areaResolvers.Area,
+  AreaCaptainAssignment: areaResolvers.AreaCaptainAssignment,
   Message: messageResolvers.Message,
   Conversation: messageResolvers.Conversation,
   ConversationParticipant: messageResolvers.ConversationParticipant,
@@ -145,6 +158,7 @@ const resolvers = {
   AVDamageReport: audioVideoResolvers.AVDamageReport,
   AVHazardAssessment: audioVideoResolvers.AVHazardAssessment,
   AVSafetyBriefing: audioVideoResolvers.AVSafetyBriefing,
+  Shift: shiftResolvers.Shift,
 };
 
 export default resolvers;

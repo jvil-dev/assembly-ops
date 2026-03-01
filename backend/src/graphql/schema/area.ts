@@ -53,6 +53,11 @@ export const areaTypeDefs = `#graphql
     area: Area!
     session: Session!
     eventVolunteer: EventVolunteer!
+    status: AssignmentStatus!
+    respondedAt: DateTime
+    declineReason: String
+    acceptedDeadline: DateTime
+    forceAssigned: Boolean!
     createdAt: DateTime!
   }
 
@@ -90,6 +95,17 @@ export const areaTypeDefs = `#graphql
     areaId: ID!
     sessionId: ID!
     eventVolunteerId: ID!
+    forceAssigned: Boolean
+    acceptedDeadline: DateTime
+  }
+
+  input AcceptAreaCaptainInput {
+    areaCaptainId: ID!
+  }
+
+  input DeclineAreaCaptainInput {
+    areaCaptainId: ID!
+    reason: String
   }
 
   input RemoveAreaCaptainInput {
@@ -106,6 +122,7 @@ export const areaTypeDefs = `#graphql
     departmentAreas(departmentId: ID!): [Area!]!
     areaGroup(areaId: ID!, sessionId: ID!): AreaGroup
     myAreaGroups: [AreaGroup!]!
+    myCaptainAssignments(eventId: ID!): [AreaCaptainAssignment!]!
   }
 
   extend type Mutation {
@@ -116,5 +133,7 @@ export const areaTypeDefs = `#graphql
     removeAreaCaptain(input: RemoveAreaCaptainInput!): Boolean!
     assignPostToArea(postId: ID!, areaId: ID!): Post!
     removePostFromArea(postId: ID!): Post!
+    acceptAreaCaptain(input: AcceptAreaCaptainInput!): AreaCaptainAssignment!
+    declineAreaCaptain(input: DeclineAreaCaptainInput!): AreaCaptainAssignment!
   }
 `;

@@ -107,6 +107,154 @@ export async function resolveUserEventVolunteer(
 }
 
 /**
+ * Require that the current user is a captain for the given event.
+ * A captain is any volunteer with isCaptain=true on any ScheduleAssignment.
+ * Overseers with event access bypass the captain check.
+ */
+export async function requireCaptain(
+  context: Context,
+  eventId: string
+): Promise<{ eventVolunteerId: string; departmentId: string }> {
+  requireAuth(context);
+
+  // Overseers with event access bypass the captain check
+  if (context.user!.isOverseer) {
+    const eventAdmin = await context.prisma.eventAdmin.findUnique({
+      where: { userId_eventId: { userId: context.user!.id, eventId } },
+    });
+
+    if (eventAdmin) {
+      const ev = await context.prisma.eventVolunteer.findUnique({
+        where: { userId_eventId: { userId: context.user!.id, eventId } },
+      });
+
+      return {
+        eventVolunteerId: ev?.id ?? eventAdmin.userId,
+        departmentId: eventAdmin.departmentId!,
+      };
+    }
+  }
+
+  const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
+    where: { userId_eventId: { userId: context.user!.id, eventId } },
+  });
+
+  if (!eventVolunteer || !eventVolunteer.departmentId) {
+    throw new AuthorizationError('Not a department volunteer for this event');
+  }
+
+  // Check ScheduleAssignment.isCaptain OR accepted AreaCaptain assignment
+  const [captainAssignment, areaCaptain] = await Promise.all([
+    context.prisma.scheduleAssignment.findFirst({
+      where: {
+        eventVolunteerId: eventVolunteer.id,
+        isCaptain: true,
+      },
+    }),
+    context.prisma.areaCaptain.findFirst({
+      where: {
+        eventVolunteerId: eventVolunteer.id,
+        status: 'ACCEPTED',
+      },
+    }),
+  ]);
+
+  if (!captainAssignment && !areaCaptain) {
+    throw new AuthorizationError('Captain access required');
+  }
+
+  return {
+    eventVolunteerId: eventVolunteer.id,
+    departmentId: eventVolunteer.departmentId,
+  };
+}
+
+/**
+ * Require that the current user has department-level management access.
+ * Returns true if:
+ *   1. User is the department's EventAdmin (DEPARTMENT_OVERSEER), OR
+ *   2. User has ASSISTANT_OVERSEER role in DepartmentHierarchy for that department
+ *
+ * Returns the eventId, userId, and whether they are the primary overseer.
+ */
+export async function requireDeptAccess(
+  context: Context,
+  departmentId: string
+): Promise<{ eventId: string; userId: string; isOverseer: boolean }> {
+  requireUser(context);
+
+  const department = await context.prisma.department.findUnique({
+    where: { id: departmentId },
+    select: { eventId: true, overseer: { select: { userId: true } } },
+  });
+
+  if (!department) {
+    throw new AuthorizationError('Department not found');
+  }
+
+  // Path 1: Department Overseer (via EventAdmin)
+  if (department.overseer?.userId === context.user!.id) {
+    return { eventId: department.eventId, userId: context.user!.id, isOverseer: true };
+  }
+
+  // Path 2: Assistant Overseer (via DepartmentHierarchy)
+  const ev = await context.prisma.eventVolunteer.findUnique({
+    where: { userId_eventId: { userId: context.user!.id, eventId: department.eventId } },
+    select: { id: true },
+  });
+
+  if (ev) {
+    const hierarchy = await context.prisma.departmentHierarchy.findFirst({
+      where: {
+        departmentId,
+        eventVolunteerId: ev.id,
+        hierarchyRole: 'ASSISTANT_OVERSEER',
+      },
+    });
+
+    if (hierarchy) {
+      return { eventId: department.eventId, userId: context.user!.id, isOverseer: false };
+    }
+  }
+
+  throw new AuthorizationError('Department overseer or assistant overseer access required');
+}
+
+/**
+ * Check if the current user has department-level access for an event.
+ * Resolves the user's department from their EventVolunteer record, then
+ * checks DepartmentHierarchy for ASSISTANT_OVERSEER.
+ *
+ * Returns null if the user is not an assistant overseer for any department in this event.
+ * Used as a fallback after requireAdmin + requireEventAccess fails.
+ */
+export async function tryRequireDeptAccessByEvent(
+  context: Context,
+  eventId: string
+): Promise<{ departmentId: string; userId: string } | null> {
+  if (!context.user) return null;
+
+  const ev = await context.prisma.eventVolunteer.findUnique({
+    where: { userId_eventId: { userId: context.user.id, eventId } },
+    select: { id: true, departmentId: true },
+  });
+
+  if (!ev?.departmentId) return null;
+
+  const hierarchy = await context.prisma.departmentHierarchy.findFirst({
+    where: {
+      departmentId: ev.departmentId,
+      eventVolunteerId: ev.id,
+      hierarchyRole: 'ASSISTANT_OVERSEER',
+    },
+  });
+
+  if (!hierarchy) return null;
+
+  return { departmentId: ev.departmentId, userId: context.user.id };
+}
+
+/**
  * Non-throwing admin check — returns true if the user is an overseer, false otherwise.
  * Used for dual-auth patterns where either admin OR area overseer can proceed.
  */

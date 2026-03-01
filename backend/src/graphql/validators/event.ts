@@ -26,7 +26,7 @@ export const joinDepartmentByCodeSchema = z.object({
 
 export const assignHierarchyRoleSchema = z.object({
   departmentId: z.string().min(1, 'Department ID is required'),
-  eventVolunteerId: z.string().min(1, 'Event Volunteer ID is required'),
+  eventVolunteerId: z.string().min(1, 'Event volunteer ID is required'),
   hierarchyRole: z.enum(['ASSISTANT_OVERSEER'], {
     error: 'Invalid hierarchy role',
   }),

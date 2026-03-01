@@ -70,6 +70,7 @@ const eventTypeDefs = `#graphql
     departmentAccessCode: String
     # Volunteer-specific
     eventVolunteerId: ID
+    hierarchyRole: HierarchyRole
   }
 
   # ============================================
