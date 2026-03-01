@@ -285,3 +285,11 @@ private final class CongregationSearcher: ObservableObject {
         }
     }
 }
+
+#Preview {
+    CongregationSearchField(
+        selectedName: .constant(""),
+        selectedId: .constant(nil)
+    )
+    .padding()
+}

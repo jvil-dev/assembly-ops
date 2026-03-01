@@ -42,26 +42,24 @@ struct GenericDepartmentView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: AppTheme.Spacing.xl) {
-                    if isOverseer {
-                        overseerContent
-                    } else {
-                        volunteerContent
-                    }
+        ScrollView {
+            VStack(spacing: AppTheme.Spacing.xl) {
+                if isOverseer {
+                    overseerContent
+                } else {
+                    volunteerContent
                 }
-                .screenPadding()
-                .padding(.top, AppTheme.Spacing.l)
-                .padding(.bottom, AppTheme.Spacing.xxl)
             }
-            .themedBackground(scheme: colorScheme)
-            .navigationTitle(membership.departmentName ?? "Department")
-            .navigationBarTitleDisplayMode(.large)
-            .onAppear {
-                withAnimation(AppTheme.entranceAnimation) {
-                    hasAppeared = true
-                }
+            .screenPadding()
+            .padding(.top, AppTheme.Spacing.l)
+            .padding(.bottom, AppTheme.Spacing.xxl)
+        }
+        .themedBackground(scheme: colorScheme)
+        .navigationTitle(membership.departmentName ?? "Department")
+        .navigationBarTitleDisplayMode(.large)
+        .onAppear {
+            withAnimation(AppTheme.entranceAnimation) {
+                hasAppeared = true
             }
         }
     }
@@ -290,4 +288,24 @@ struct GenericDepartmentView: View {
         .cardPadding()
         .themedCard(scheme: colorScheme)
     }
+}
+
+#Preview {
+    GenericDepartmentView(
+        membership: EventMembershipItem(
+            id: "1", eventId: "1",
+            eventName: "2026 Circuit Assembly",
+            eventType: "CIRCUIT_ASSEMBLY_CO",
+            theme: nil,
+            venue: "Assembly Hall", address: "123 Main St",
+            startDate: Date(), endDate: Date().addingTimeInterval(86400 * 2),
+            volunteerCount: 45, membershipType: .overseer,
+            overseerRole: "DEPARTMENT_OVERSEER",
+            departmentId: "d1", departmentName: "Parking",
+            departmentType: "PARKING",
+            departmentAccessCode: "PKG456",
+            eventVolunteerId: nil, volunteerId: nil
+        )
+    )
+    .environmentObject(AppState.shared)
 }

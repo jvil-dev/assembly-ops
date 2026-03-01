@@ -71,13 +71,14 @@ struct VolunteerPickerSheet: View {
                     volunteerList
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .themedBackground(scheme: colorScheme)
             .searchable(text: $searchText, prompt: "Search volunteers")
             .navigationTitle("Select Volunteers")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("common.cancel".localized) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isAssigning {

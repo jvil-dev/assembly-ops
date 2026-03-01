@@ -26,7 +26,7 @@ const types = `#graphql
   enum DepartmentType {
     ACCOUNTS
     ATTENDANT
-    AUDIO_VIDEO
+    AUDIO
     BAPTISM
     CLEANING
     FIRST_AID
@@ -35,7 +35,9 @@ const types = `#graphql
     LOST_FOUND_CHECKROOM
     PARKING
     ROOMING
+    STAGE
     TRUCKING_EQUIPMENT
+    VIDEO
   }
 
   enum AppointmentStatus {
@@ -156,6 +158,7 @@ const types = `#graphql
 
   type Volunteer {
     id: ID!
+    userId: String!
     firstName: String!
     lastName: String!
     fullName: String!

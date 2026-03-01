@@ -1,0 +1,13 @@
+query AVEquipmentSummary($eventId: ID!) {
+  avEquipmentSummary(eventId: $eventId) {
+    totalItems
+    checkedOutCount
+    needsRepairCount
+    outOfServiceCount
+    byCategory {
+      category
+      count
+      checkedOutCount
+    }
+  }
+}

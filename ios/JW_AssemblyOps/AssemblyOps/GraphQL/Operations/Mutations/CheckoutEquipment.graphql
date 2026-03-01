@@ -1,0 +1,23 @@
+mutation CheckoutEquipment($input: CheckoutEquipmentInput!) {
+  checkoutEquipment(input: $input) {
+    id
+    equipment {
+      id
+      name
+      category
+    }
+    checkedOutBy {
+      id
+      user {
+        firstName
+        lastName
+      }
+    }
+    checkedOutAt
+    session {
+      id
+      name
+    }
+    notes
+  }
+}

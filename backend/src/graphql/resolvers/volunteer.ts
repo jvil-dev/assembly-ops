@@ -50,6 +50,8 @@ const volunteerResolvers = {
   // Type resolver: maps EventVolunteer (Prisma) → Volunteer (GraphQL)
   // EventVolunteer stores user data via .user relation; GraphQL Volunteer type expects flat fields.
   Volunteer: {
+    userId: (parent: Record<string, unknown>) =>
+      (parent as { user?: { userId?: string } }).user?.userId ?? '',
     firstName: (parent: Record<string, unknown>) =>
       (parent as { user?: { firstName?: string } }).user?.firstName ?? parent.firstName,
     lastName: (parent: Record<string, unknown>) =>

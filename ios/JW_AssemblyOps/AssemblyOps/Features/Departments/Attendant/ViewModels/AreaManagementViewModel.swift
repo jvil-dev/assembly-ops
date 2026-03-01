@@ -75,7 +75,7 @@ final class AreaManagementViewModel: ObservableObject {
     }
 
     /// Update an existing area
-    func updateArea(id: String, name: String?, description: String?, sortOrder: Int?) async {
+    func updateArea(id: String, name: String, description: String?, sortOrder: Int?) async {
         error = nil
 
         do {

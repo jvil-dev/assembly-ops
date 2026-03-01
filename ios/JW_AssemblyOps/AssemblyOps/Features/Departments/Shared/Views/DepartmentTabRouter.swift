@@ -12,7 +12,13 @@
 //
 // Routing:
 //   - Attendant (Overseer) → AttendantDashboardView
-//   - Attendant (Volunteer) → Attendant volunteer features
+//   - Attendant (Volunteer) → AttendantVolunteerDeptView
+//   - Audio (Overseer) → AudioDashboardView
+//   - Audio (Volunteer) → AudioVolunteerDeptView
+//   - Video (Overseer) → VideoDashboardView
+//   - Video (Volunteer) → VideoVolunteerDeptView
+//   - Stage (Overseer) → StageDashboardView
+//   - Stage (Volunteer) → StageVolunteerDeptView
 //   - All other depts → GenericDepartmentView (placeholder)
 //
 // The overseer's department view includes volunteer management, settings,
@@ -38,8 +44,9 @@ struct DepartmentTabRouter: View {
     }
 
     var body: some View {
-        Group {
-            if let deptType = departmentType {
+        NavigationStack {
+            Group {
+                if let deptType = departmentType {
                 switch deptType.uppercased() {
                 case "ATTENDANT":
                     if isOverseer {
@@ -47,11 +54,33 @@ struct DepartmentTabRouter: View {
                     } else {
                         attendantVolunteerView
                     }
+                case "AUDIO":
+                    if isOverseer {
+                        AudioDashboardView()
+                    } else {
+                        AudioVolunteerDeptView()
+                            .environmentObject(appState)
+                    }
+                case "VIDEO":
+                    if isOverseer {
+                        VideoDashboardView()
+                    } else {
+                        VideoVolunteerDeptView()
+                            .environmentObject(appState)
+                    }
+                case "STAGE":
+                    if isOverseer {
+                        StageDashboardView()
+                    } else {
+                        StageVolunteerDeptView()
+                            .environmentObject(appState)
+                    }
                 default:
                     GenericDepartmentView(membership: membership)
                 }
-            } else {
-                noDepartmentView
+                } else {
+                    noDepartmentView
+                }
             }
         }
     }
@@ -75,6 +104,26 @@ struct DepartmentTabRouter: View {
     }
 }
 
+#Preview {
+    DepartmentTabRouter(
+        membership: EventMembershipItem(
+            id: "1", eventId: "1",
+            eventName: "2026 Circuit Assembly",
+            eventType: "CIRCUIT_ASSEMBLY_CO",
+            theme: nil,
+            venue: "Assembly Hall", address: "123 Main St",
+            startDate: Date(), endDate: Date().addingTimeInterval(86400 * 2),
+            volunteerCount: 45, membershipType: .overseer,
+            overseerRole: "DEPARTMENT_OVERSEER",
+            departmentId: "d1", departmentName: "Attendant",
+            departmentType: "ATTENDANT",
+            departmentAccessCode: "ABC123",
+            eventVolunteerId: nil, volunteerId: nil
+        )
+    )
+    .environmentObject(AppState.shared)
+}
+
 // MARK: - Attendant Volunteer Department View
 
 /// Container view surfacing all attendant volunteer features as the department tab content.
@@ -91,53 +140,51 @@ struct AttendantVolunteerDeptView: View {
     @State private var showWalkThrough = false
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: AppTheme.Spacing.xl) {
-                    // Quick Actions
-                    quickActionsCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+        ScrollView {
+            VStack(spacing: AppTheme.Spacing.xl) {
+                // Quick Actions
+                quickActionsCard
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                    // Meetings
-                    meetingsCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+                // Meetings
+                meetingsCard
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
 
-                    // Info & Protocol
-                    resourcesCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.10)
-                }
-                .screenPadding()
-                .padding(.top, AppTheme.Spacing.l)
-                .padding(.bottom, AppTheme.Spacing.xxl)
+                // Info & Protocol
+                resourcesCard
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.10)
             }
-            .themedBackground(scheme: colorScheme)
-            .navigationTitle("Attendant")
-            .navigationBarTitleDisplayMode(.large)
-            .sheet(isPresented: $showReportIncident) {
-                ReportSafetyIncidentView()
+            .screenPadding()
+            .padding(.top, AppTheme.Spacing.l)
+            .padding(.bottom, AppTheme.Spacing.xxl)
+        }
+        .themedBackground(scheme: colorScheme)
+        .navigationTitle("Attendant")
+        .navigationBarTitleDisplayMode(.large)
+        .sheet(isPresented: $showReportIncident) {
+            ReportSafetyIncidentView()
+        }
+        .sheet(isPresented: $showReportLostPerson) {
+            ReportLostPersonView()
+        }
+        .sheet(isPresented: $showAttendantInfo) {
+            AttendantInfoView()
+        }
+        .sheet(isPresented: $showWalkThrough) {
+            WalkThroughChecklistView(attendantVM: attendantVM, sessions: sessions)
+        }
+        .onAppear {
+            withAnimation(AppTheme.entranceAnimation) {
+                hasAppeared = true
             }
-            .sheet(isPresented: $showReportLostPerson) {
-                ReportLostPersonView()
-            }
-            .sheet(isPresented: $showAttendantInfo) {
-                AttendantInfoView()
-            }
-            .sheet(isPresented: $showWalkThrough) {
-                WalkThroughChecklistView(attendantVM: attendantVM, sessions: sessions)
-            }
-            .onAppear {
-                withAnimation(AppTheme.entranceAnimation) {
-                    hasAppeared = true
-                }
-            }
-            .task {
-                if let eventId = appState.currentEventId {
-                    await attendantVM.loadMyMeetings(eventId: eventId)
-                    do {
-                        sessions = try await AttendanceService.shared.fetchVolunteerSessions(eventId: eventId)
-                    } catch {
-                        print("[AttendantDept] Failed to load sessions: \(error)")
-                    }
+        }
+        .task {
+            if let eventId = appState.currentEventId {
+                await attendantVM.loadMyMeetings(eventId: eventId)
+                do {
+                    sessions = try await AttendanceService.shared.fetchVolunteerSessions(eventId: eventId)
+                } catch {
+                    print("[AttendantDept] Failed to load sessions: \(error)")
                 }
             }
         }

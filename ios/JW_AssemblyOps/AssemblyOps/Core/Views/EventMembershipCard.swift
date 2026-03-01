@@ -132,3 +132,30 @@ struct EventMembershipCard: View {
         }
     }
 }
+
+#Preview {
+    EventMembershipCard(
+        item: EventMembershipItem(
+            id: "1",
+            eventId: "1",
+            eventName: "2026 Circuit Assembly",
+            eventType: "CIRCUIT_ASSEMBLY_CO",
+            theme: "Declare the Good News!",
+            venue: "Assembly Hall of Jehovah's Witnesses",
+            address: "123 Main St, Anytown, USA",
+            startDate: Date(),
+            endDate: Date().addingTimeInterval(86400 * 2),
+            volunteerCount: 45,
+            membershipType: .overseer,
+            overseerRole: "DEPARTMENT_OVERSEER",
+            departmentId: "d1",
+            departmentName: "Attendant",
+            departmentType: "ATTENDANT",
+            departmentAccessCode: "ABC123",
+            eventVolunteerId: nil,
+            volunteerId: nil
+        ),
+        colorScheme: .light
+    )
+    .padding()
+}

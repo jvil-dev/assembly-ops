@@ -44,14 +44,13 @@ final class AttendantMeetingViewModel: ObservableObject {
         }
     }
 
-    func createMeeting(eventId: String, sessionId: String, meetingDate: Date, notes: String?, attendeeIds: [String]) async {
+    func createMeeting(eventId: String, sessionId: String, meetingDate: String, notes: String?, attendeeIds: [String]) async {
         isSaving = true
         error = nil
         defer { isSaving = false }
         do {
-            let dateString = ISO8601DateFormatter().string(from: meetingDate)
             _ = try await AttendantService.shared.createMeeting(
-                eventId: eventId, sessionId: sessionId, meetingDate: dateString,
+                eventId: eventId, sessionId: sessionId, meetingDate: meetingDate,
                 notes: notes, attendeeIds: attendeeIds
             )
             HapticManager.shared.success()

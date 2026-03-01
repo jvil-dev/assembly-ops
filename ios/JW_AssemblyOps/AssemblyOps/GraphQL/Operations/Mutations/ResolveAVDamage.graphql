@@ -1,0 +1,13 @@
+mutation ResolveAVDamage($id: ID!, $resolutionNotes: String) {
+  resolveAVDamage(id: $id, resolutionNotes: $resolutionNotes) {
+    id
+    resolved
+    resolvedAt
+    resolvedBy {
+      id
+      firstName
+      lastName
+    }
+    resolutionNotes
+  }
+}

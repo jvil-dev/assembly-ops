@@ -22,10 +22,15 @@ import SwiftUI
 struct AssignmentStatusBadge: View {
     let status: AssignmentStatus
     let isCaptain: Bool
+    var departmentType: String? = nil
+
+    private var showCaptainStar: Bool {
+        isCaptain && !["AUDIO", "VIDEO", "STAGE"].contains(departmentType?.uppercased() ?? "")
+    }
 
     var body: some View {
         HStack(spacing: 4) {
-            if isCaptain {
+            if showCaptainStar {
                 Image(systemName: "star.fill")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.yellow)

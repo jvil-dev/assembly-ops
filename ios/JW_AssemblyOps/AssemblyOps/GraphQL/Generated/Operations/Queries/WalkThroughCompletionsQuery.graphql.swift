@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "WalkThroughCompletions"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query WalkThroughCompletions($eventId: ID!, $sessionId: ID) { walkThroughCompletions(eventId: $eventId, sessionId: $sessionId) { __typename id session { __typename id name } eventVolunteer { __typename id user { __typename firstName lastName } } completedAt itemCount notes } }"#
+        #"query WalkThroughCompletions($eventId: ID!, $sessionId: ID) { walkThroughCompletions(eventId: $eventId, sessionId: $sessionId) { __typename id session { __typename id name } eventVolunteer { __typename id user { __typename firstName lastName } } completedAt itemCount notes checklistType } }"#
       ))
 
     public var eventId: ID
@@ -60,6 +60,7 @@ extension AssemblyOpsAPI {
           .field("completedAt", String.self),
           .field("itemCount", Int.self),
           .field("notes", String?.self),
+          .field("checklistType", String?.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
           WalkThroughCompletionsQuery.Data.WalkThroughCompletion.self
@@ -71,6 +72,7 @@ extension AssemblyOpsAPI {
         var completedAt: String { __data["completedAt"] }
         var itemCount: Int { __data["itemCount"] }
         var notes: String? { __data["notes"] }
+        var checklistType: String? { __data["checklistType"] }
 
         /// WalkThroughCompletion.Session
         ///

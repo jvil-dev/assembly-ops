@@ -66,9 +66,6 @@ final class VolunteerEventDiscoveryViewModel: ObservableObject {
 
     struct AccessCodeJoinResult: Identifiable {
         let id = UUID()
-        let volunteerId: String
-        let token: String
-        let inviteMessage: String?
     }
 
     // MARK: - Sectioned Event Lists
@@ -207,12 +204,8 @@ final class VolunteerEventDiscoveryViewModel: ObservableObject {
                 self?.isJoiningByCode = false
                 switch result {
                 case .success(let graphQLResult):
-                    if let data = graphQLResult.data?.joinDepartmentByAccessCode {
-                        self?.accessCodeResult = AccessCodeJoinResult(
-                            volunteerId: data.volunteerId,
-                            token: data.token,
-                            inviteMessage: data.inviteMessage
-                        )
+                    if graphQLResult.data?.joinDepartmentByAccessCode != nil {
+                        self?.accessCodeResult = AccessCodeJoinResult()
                         HapticManager.shared.success()
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
                         self?.errorMessage = errors.first?.message ?? "volunteerDiscovery.accessCode.failed".localized

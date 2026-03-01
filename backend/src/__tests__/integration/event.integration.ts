@@ -205,7 +205,7 @@ describe('Event Operations', () => {
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
       expect(Array.isArray(response.body.data.availableDepartments)).toBe(true);
-      expect(response.body.data.availableDepartments.length).toBe(11); // 12 - 1 purchased
+      expect(response.body.data.availableDepartments.length).toBe(13); // 14 - 1 purchased
       expect(response.body.data.availableDepartments).not.toContain('ATTENDANT');
     });
   });

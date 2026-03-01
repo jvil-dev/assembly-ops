@@ -81,7 +81,7 @@ struct MyAttendantMeetingsView: View {
             // Meeting date
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "clock")
-                    .font(.system(size: 12))
+                    .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 Text(meeting.meetingDate, style: .date)
                     .font(AppTheme.Typography.subheadline)
@@ -91,7 +91,7 @@ struct MyAttendantMeetingsView: View {
             // Created by
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person.fill")
-                    .font(.system(size: 12))
+                    .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 Text(meeting.createdByName)
                     .font(AppTheme.Typography.caption)
@@ -103,7 +103,7 @@ struct MyAttendantMeetingsView: View {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     HStack(spacing: 6) {
                         Image(systemName: "note.text")
-                            .font(.system(size: 12))
+                            .font(AppTheme.Typography.caption)
                             .foregroundStyle(AppTheme.themeColor)
                         Text("attendant.meetings.notes".localized.uppercased())
                             .font(AppTheme.Typography.caption)
@@ -124,7 +124,7 @@ struct MyAttendantMeetingsView: View {
             // Attendee count
             HStack(spacing: 6) {
                 Image(systemName: "person.3")
-                    .font(.system(size: 12))
+                    .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.themeColor)
                 Text("\(meeting.attendees.count) \("attendant.meetings.attendees".localized)")
                     .font(AppTheme.Typography.caption)

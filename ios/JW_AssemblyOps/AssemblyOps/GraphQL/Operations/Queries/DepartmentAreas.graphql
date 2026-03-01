@@ -22,7 +22,6 @@ query DepartmentAreas($departmentId: ID!) {
             }
             eventVolunteer {
                 id
-                volunteerId
                 user {
                     firstName
                     lastName

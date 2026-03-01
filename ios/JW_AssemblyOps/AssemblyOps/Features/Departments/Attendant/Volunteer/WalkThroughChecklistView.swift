@@ -149,7 +149,7 @@ struct WalkThroughChecklistView: View {
                                 HStack(spacing: AppTheme.Spacing.xs) {
                                     if attendantVM.hasCompletedWalkThrough(for: session.id) {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .font(.system(size: 12))
+                                            .font(AppTheme.Typography.caption)
                                     }
                                     Text(session.name)
                                 }
@@ -323,4 +323,18 @@ struct WalkThroughChecklistView: View {
         .buttonStyle(.plain)
         .disabled(!isComplete || attendantVM.isSaving || isSessionAlreadyCompleted)
     }
+}
+
+#Preview {
+    WalkThroughChecklistView(
+        attendantVM: AttendantVolunteerViewModel(),
+        sessions: [
+            VolunteerSessionItem(
+                id: "s1", name: "Morning Session",
+                date: Date(), startTime: Date(),
+                endTime: Date().addingTimeInterval(3600 * 3)
+            )
+        ]
+    )
+    .environmentObject(AppState.shared)
 }

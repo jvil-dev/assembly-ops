@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "SubmitWalkThroughCompletion"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation SubmitWalkThroughCompletion($input: SubmitWalkThroughCompletionInput!) { submitWalkThroughCompletion(input: $input) { __typename id session { __typename id name } completedAt itemCount notes } }"#
+        #"mutation SubmitWalkThroughCompletion($input: SubmitWalkThroughCompletionInput!) { submitWalkThroughCompletion(input: $input) { __typename id session { __typename id name } completedAt itemCount notes checklistType } }"#
       ))
 
     public var input: SubmitWalkThroughCompletionInput
@@ -48,6 +48,7 @@ extension AssemblyOpsAPI {
           .field("completedAt", String.self),
           .field("itemCount", Int.self),
           .field("notes", String?.self),
+          .field("checklistType", String?.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
           SubmitWalkThroughCompletionMutation.Data.SubmitWalkThroughCompletion.self
@@ -58,6 +59,7 @@ extension AssemblyOpsAPI {
         var completedAt: String { __data["completedAt"] }
         var itemCount: Int { __data["itemCount"] }
         var notes: String? { __data["notes"] }
+        var checklistType: String? { __data["checklistType"] }
 
         /// SubmitWalkThroughCompletion.Session
         ///

@@ -97,8 +97,8 @@ struct DepartmentSettingsView: View {
                 viewModel.successMessage = nil
             }
         }
-        .alert("Error", isPresented: $showError) {
-            Button("OK") { viewModel.errorMessage = nil }
+        .alert("common.error".localized, isPresented: $showError) {
+            Button("common.ok".localized) { viewModel.errorMessage = nil }
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
@@ -130,7 +130,7 @@ struct DepartmentSettingsView: View {
                     viewModel.removeAssistantOverseer(eventVolunteerId: target.eventVolunteerId)
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button("common.cancel".localized, role: .cancel) {}
         }
     }
 
@@ -275,7 +275,7 @@ struct DepartmentSettingsView: View {
                 Spacer()
 
                 Image(systemName: "lock.fill")
-                    .font(.system(size: 12))
+                    .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
             .padding(AppTheme.Spacing.m)
@@ -557,5 +557,12 @@ struct AssistantOverseerPickerSheet: View {
         guard !trimmed.isEmpty else { return }
         onAssign(trimmed)
     }
+}
+
+#Preview {
+    NavigationStack {
+        DepartmentSettingsView(departmentId: "VIDEO")
+    }
+    .environmentObject(AppState.shared)
 }
 

@@ -1,7 +1,7 @@
 query Volunteers($eventId: ID!, $departmentId: ID) {
   volunteers(eventId: $eventId, departmentId: $departmentId) {
     id
-    volunteerId
+    userId
     firstName
     lastName
     fullName

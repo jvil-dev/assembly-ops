@@ -37,6 +37,14 @@ struct ConversationDetailView: View {
         ))
     }
 
+#Preview {
+    ConversationDetailView(
+        conversationId: "conv-1",
+        otherParticipantName: "John Smith",
+        currentUserId: "user-1"
+    )
+}
+
     var body: some View {
         VStack(spacing: 0) {
             // Messages area

@@ -111,3 +111,10 @@ struct ConversationListView: View {
         }
     }
 }
+
+#Preview {
+    ConversationListView(
+        viewModel: ConversationListViewModel(eventId: "event-1", currentUserId: "user-1"),
+        currentUserId: "user-1"
+    )
+}

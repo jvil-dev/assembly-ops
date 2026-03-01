@@ -188,7 +188,7 @@ struct AttendanceCountBreakdownView: View {
             HStack(spacing: AppTheme.Spacing.l) {
                 HStack(spacing: AppTheme.Spacing.xs) {
                     Image(systemName: "person.fill")
-                        .font(.system(size: 10))
+                        .font(AppTheme.Typography.captionSmall)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                     Text(count.submittedByName)
                         .font(AppTheme.Typography.caption)
@@ -197,7 +197,7 @@ struct AttendanceCountBreakdownView: View {
 
                 HStack(spacing: AppTheme.Spacing.xs) {
                     Image(systemName: "clock")
-                        .font(.system(size: 10))
+                        .font(AppTheme.Typography.captionSmall)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                     Text(count.updatedAt, style: .relative)
                         .font(AppTheme.Typography.caption)
@@ -292,5 +292,11 @@ struct AttendanceCountBreakdownView: View {
         } catch {
             self.error = error.localizedDescription
         }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        AttendanceCountBreakdownView()
     }
 }

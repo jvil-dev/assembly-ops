@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "JoinDepartmentByCode"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation JoinDepartmentByCode($input: JoinDepartmentByCodeInput!) { joinDepartmentByAccessCode(input: $input) { __typename eventVolunteer { __typename id } volunteerId token inviteMessage } }"#
+        #"mutation JoinDepartmentByCode($input: JoinDepartmentByCodeInput!) { joinDepartmentByAccessCode(input: $input) { __typename id user { __typename id firstName lastName } department { __typename id name departmentType } } }"#
       ))
 
     public var input: JoinDepartmentByCodeInput
@@ -35,45 +35,70 @@ extension AssemblyOpsAPI {
 
       /// JoinDepartmentByAccessCode
       ///
-      /// Parent Type: `EventVolunteerCredentials`
+      /// Parent Type: `EventVolunteer`
       struct JoinDepartmentByAccessCode: AssemblyOpsAPI.SelectionSet {
         let __data: DataDict
         init(_dataDict: DataDict) { __data = _dataDict }
 
-        static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.EventVolunteerCredentials }
+        static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.EventVolunteer }
         static var __selections: [ApolloAPI.Selection] { [
           .field("__typename", String.self),
-          .field("eventVolunteer", EventVolunteer.self),
-          .field("volunteerId", String.self),
-          .field("token", String.self),
-          .field("inviteMessage", String.self),
+          .field("id", AssemblyOpsAPI.ID.self),
+          .field("user", User.self),
+          .field("department", Department?.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
           JoinDepartmentByCodeMutation.Data.JoinDepartmentByAccessCode.self
         ] }
 
-        var eventVolunteer: EventVolunteer { __data["eventVolunteer"] }
-        var volunteerId: String { __data["volunteerId"] }
-        var token: String { __data["token"] }
-        var inviteMessage: String { __data["inviteMessage"] }
+        var id: AssemblyOpsAPI.ID { __data["id"] }
+        var user: User { __data["user"] }
+        var department: Department? { __data["department"] }
 
-        /// JoinDepartmentByAccessCode.EventVolunteer
+        /// JoinDepartmentByAccessCode.User
         ///
-        /// Parent Type: `EventVolunteer`
-        struct EventVolunteer: AssemblyOpsAPI.SelectionSet {
+        /// Parent Type: `User`
+        struct User: AssemblyOpsAPI.SelectionSet {
           let __data: DataDict
           init(_dataDict: DataDict) { __data = _dataDict }
 
-          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.EventVolunteer }
+          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.User }
           static var __selections: [ApolloAPI.Selection] { [
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
+            .field("firstName", String.self),
+            .field("lastName", String.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-            JoinDepartmentByCodeMutation.Data.JoinDepartmentByAccessCode.EventVolunteer.self
+            JoinDepartmentByCodeMutation.Data.JoinDepartmentByAccessCode.User.self
           ] }
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
+          var firstName: String { __data["firstName"] }
+          var lastName: String { __data["lastName"] }
+        }
+
+        /// JoinDepartmentByAccessCode.Department
+        ///
+        /// Parent Type: `Department`
+        struct Department: AssemblyOpsAPI.SelectionSet {
+          let __data: DataDict
+          init(_dataDict: DataDict) { __data = _dataDict }
+
+          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Department }
+          static var __selections: [ApolloAPI.Selection] { [
+            .field("__typename", String.self),
+            .field("id", AssemblyOpsAPI.ID.self),
+            .field("name", String.self),
+            .field("departmentType", GraphQLEnum<AssemblyOpsAPI.DepartmentType>.self),
+          ] }
+          static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+            JoinDepartmentByCodeMutation.Data.JoinDepartmentByAccessCode.Department.self
+          ] }
+
+          var id: AssemblyOpsAPI.ID { __data["id"] }
+          var name: String { __data["name"] }
+          var departmentType: GraphQLEnum<AssemblyOpsAPI.DepartmentType> { __data["departmentType"] }
         }
       }
     }

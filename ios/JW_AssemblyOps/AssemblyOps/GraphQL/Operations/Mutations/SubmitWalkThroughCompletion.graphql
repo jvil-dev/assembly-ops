@@ -8,5 +8,6 @@ mutation SubmitWalkThroughCompletion($input: SubmitWalkThroughCompletionInput!) 
     completedAt
     itemCount
     notes
+    checklistType
   }
 }

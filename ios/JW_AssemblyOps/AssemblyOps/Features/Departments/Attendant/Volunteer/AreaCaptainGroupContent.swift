@@ -174,3 +174,21 @@ private struct AreaGroupMemberRow: View {
         .padding(.vertical, 8)
     }
 }
+
+#Preview {
+    AreaCaptainGroupContent(
+        group: nil,
+        isLoading: false,
+        onCheckIn: {}
+    )
+    .padding()
+}
+
+#Preview("Loading") {
+    AreaCaptainGroupContent(
+        group: nil,
+        isLoading: true,
+        onCheckIn: {}
+    )
+    .padding()
+}

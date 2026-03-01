@@ -31,7 +31,12 @@
  * Called by: ../graphql/resolvers/event.ts
  */
 import { PrismaClient, EventRole, DepartmentType, HierarchyRole } from '@prisma/client';
-import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '../utils/errors.js';
+import {
+  NotFoundError,
+  ConflictError,
+  ValidationError,
+  AuthorizationError,
+} from '../utils/errors.js';
 import { timeStringToDate } from '../utils/time.js';
 import {
   purchaseDepartmentSchema,
@@ -46,7 +51,7 @@ import {
 const DEPARTMENT_NAMES: Record<DepartmentType, string> = {
   ACCOUNTS: 'Accounts',
   ATTENDANT: 'Attendant',
-  AUDIO_VIDEO: 'Audio/Video',
+  AUDIO: 'Audio',
   BAPTISM: 'Baptism',
   CLEANING: 'Cleaning',
   FIRST_AID: 'First Aid',
@@ -55,14 +60,16 @@ const DEPARTMENT_NAMES: Record<DepartmentType, string> = {
   LOST_FOUND_CHECKROOM: 'Lost & Found / Checkroom',
   PARKING: 'Parking',
   ROOMING: 'Rooming',
+  STAGE: 'Stage',
   TRUCKING_EQUIPMENT: 'Trucking & Equipment',
+  VIDEO: 'Video',
 };
 
 // 3-char prefixes for access code generation
 const DEPARTMENT_ACCESS_CODE_PREFIX: Record<DepartmentType, string> = {
   ACCOUNTS: 'ACC',
   ATTENDANT: 'ATT',
-  AUDIO_VIDEO: 'AUD',
+  AUDIO: 'AUD',
   BAPTISM: 'BAP',
   CLEANING: 'CLN',
   FIRST_AID: 'AID',
@@ -71,7 +78,108 @@ const DEPARTMENT_ACCESS_CODE_PREFIX: Record<DepartmentType, string> = {
   LOST_FOUND_CHECKROOM: 'LFC',
   PARKING: 'PRK',
   ROOMING: 'ROM',
+  STAGE: 'STG',
   TRUCKING_EQUIPMENT: 'TRK',
+  VIDEO: 'VID',
+};
+
+// Default posts auto-seeded when a department is purchased (CO-160 positions).
+// Each entry: { name, description?, category?, capacity, sortOrder }
+const DEPARTMENT_DEFAULT_POSTS: Partial<
+  Record<
+    DepartmentType,
+    Array<{
+      name: string;
+      description?: string;
+      category?: string;
+      capacity: number;
+      sortOrder: number;
+    }>
+  >
+> = {
+  AUDIO: [
+    {
+      name: 'Mixer Operator',
+      description: 'Operates the mixing console during sessions',
+      category: 'Audio',
+      capacity: 1,
+      sortOrder: 0,
+    },
+    {
+      name: 'Mixer Operator Assistant',
+      description: 'Assists the mixer operator and monitors audio levels',
+      category: 'Audio',
+      capacity: 1,
+      sortOrder: 1,
+    },
+  ],
+  VIDEO: [
+    {
+      name: 'Technical Director',
+      description: 'Directs all video operations during sessions',
+      category: 'Video',
+      capacity: 1,
+      sortOrder: 0,
+    },
+    {
+      name: 'Switcher Operator',
+      description: 'Switches between camera feeds and media sources',
+      category: 'Video',
+      capacity: 1,
+      sortOrder: 1,
+    },
+    {
+      name: 'Media Operator',
+      description: 'Controls media playback and presentation slides',
+      category: 'Video',
+      capacity: 2,
+      sortOrder: 2,
+    },
+    {
+      name: 'PTZ Camera Operator',
+      description: 'Remotely controls all PTZ cameras from the video desk',
+      category: 'Video',
+      capacity: 1,
+      sortOrder: 3,
+    },
+    {
+      name: 'Manned Camera Operator',
+      description: 'Operates manned cameras near the stage for close-up coverage',
+      category: 'Video',
+      capacity: 2,
+      sortOrder: 4,
+    },
+  ],
+  STAGE: [
+    {
+      name: 'Microphone Adjuster',
+      description: 'Adjusts microphone positions for each speaker',
+      category: 'Stage',
+      capacity: 2,
+      sortOrder: 0,
+    },
+    {
+      name: 'Participant Reminder',
+      description: 'Gives Appendix F reminders to participants before going on stage',
+      category: 'Stage',
+      capacity: 1,
+      sortOrder: 1,
+    },
+    {
+      name: 'Stage Configuration',
+      description: 'Marks floor positions, manages furniture placement and entry/exit sides',
+      category: 'Stage',
+      capacity: 1,
+      sortOrder: 2,
+    },
+    {
+      name: 'Makeup',
+      description: 'Applies makeup for speakers appearing on video',
+      category: 'Stage',
+      capacity: 4,
+      sortOrder: 3,
+    },
+  ],
 };
 
 // Characters for access code shortcode (excludes ambiguous: O, 0, I, 1)
@@ -197,12 +305,27 @@ export class EventService {
       },
     });
 
+    // Auto-seed required posts for department types that have defaults (CO-160)
+    const defaultPosts = DEPARTMENT_DEFAULT_POSTS[departmentType];
+    if (defaultPosts && defaultPosts.length > 0) {
+      await this.prisma.post.createMany({
+        data: defaultPosts.map((p) => ({
+          name: p.name,
+          description: p.description,
+          category: p.category,
+          capacity: p.capacity,
+          sortOrder: p.sortOrder,
+          departmentId: department.id,
+        })),
+      });
+    }
+
     // Auto-create default sessions if this is the first department (no sessions yet)
     const sessionCount = await this.prisma.session.count({ where: { eventId } });
     if (sessionCount === 0) {
-      const dayCount = Math.round(
-        (event.endDate.getTime() - event.startDate.getTime()) / (1000 * 60 * 60 * 24)
-      ) + 1;
+      const dayCount =
+        Math.round((event.endDate.getTime() - event.startDate.getTime()) / (1000 * 60 * 60 * 24)) +
+        1;
 
       for (let d = 0; d < dayCount; d++) {
         const date = new Date(event.startDate);
@@ -220,16 +343,6 @@ export class EventService {
 
         await this.prisma.session.create({
           data: {
-            name: 'Noon',
-            date,
-            startTime: timeStringToDate('12:00'),
-            endTime: timeStringToDate('13:30'),
-            eventId,
-          },
-        });
-
-        await this.prisma.session.create({
-          data: {
             name: 'Afternoon',
             date,
             startTime: timeStringToDate('13:30'),
@@ -241,15 +354,21 @@ export class EventService {
 
       // Seed standard department roles (CO-1 hierarchy)
       const defaultRoles = [
-        { name: 'Volunteer',          description: 'General department volunteer',               sortOrder: 0 },
-        { name: 'Captain',            description: 'Leads volunteers during a session or shift', sortOrder: 1 },
-        { name: 'Keyman',             description: 'Supervises a specific area or function',     sortOrder: 2 },
-        { name: 'Assistant Overseer', description: 'Assists the department overseer',            sortOrder: 3 },
+        { name: 'Volunteer', description: 'General department volunteer', sortOrder: 0 },
+        {
+          name: 'Captain',
+          description: 'Leads volunteers during a session or shift',
+          sortOrder: 1,
+        },
+        { name: 'Keyman', description: 'Supervises a specific area or function', sortOrder: 2 },
+        {
+          name: 'Assistant Overseer',
+          description: 'Assists the department overseer',
+          sortOrder: 3,
+        },
       ];
       await Promise.all(
-        defaultRoles.map(r =>
-          this.prisma.role.create({ data: { ...r, eventId } })
-        )
+        defaultRoles.map((r) => this.prisma.role.create({ data: { ...r, eventId } }))
       );
     }
 
@@ -507,7 +626,7 @@ export class EventService {
     const seen = new Set<string>();
     const results: Array<{
       eventId: string;
-      event: typeof eventAdmins[0]['event'] | typeof eventVolunteers[0]['event'];
+      event: (typeof eventAdmins)[0]['event'] | (typeof eventVolunteers)[0]['event'];
       membershipType: 'OVERSEER' | 'VOLUNTEER';
       overseerRole: string | null;
       departmentId: string | null;

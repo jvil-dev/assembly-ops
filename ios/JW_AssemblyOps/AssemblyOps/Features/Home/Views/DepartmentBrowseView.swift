@@ -311,3 +311,10 @@ struct DepartmentBrowseView: View {
         return "\(startStr) – \(endStr)"
     }
 }
+
+#Preview {
+    NavigationStack {
+        DepartmentBrowseView()
+    }
+    .environmentObject(AppState.shared)
+}

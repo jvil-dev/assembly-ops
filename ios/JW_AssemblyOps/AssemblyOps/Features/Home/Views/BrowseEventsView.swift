@@ -28,3 +28,10 @@ struct BrowseEventsView: View {
         }
     }
 }
+
+#Preview {
+    NavigationStack {
+        BrowseEventsView()
+    }
+    .environmentObject(AppState.shared)
+}

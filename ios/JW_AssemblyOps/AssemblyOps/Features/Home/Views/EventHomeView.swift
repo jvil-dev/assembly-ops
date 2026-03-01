@@ -5,20 +5,16 @@
 //  Created by Jorge Villeda on 2/26/26.
 //
 
-// MARK: - Event Home View
+// MARK: - Event Home View (Overseer)
 //
-// Unified home tab for all users inside an event context.
-// Shows event-level information and upcoming assignments.
+// Home tab for overseers inside an event context.
+// Shows event details and today's department assignments.
 //
 // Sections:
 //   - Settings circle (top-left toolbar)
-//   - Event details card (name, venue, dates, type)
-//   - Department badge/tag showing user's department
-//   - Upcoming assignments preview
-//   - Future: event-wide cross-department stats
-//
-// This view does NOT contain overseer management features —
-// those live in the Department tab (DepartmentTabRouter).
+//   - Event details banner (theme + type badge, venue, dates, volunteers)
+//   - Department tag showing user's department + role
+//   - Today's assignments — posts with assigned volunteers for today's sessions
 //
 
 import SwiftUI
@@ -28,6 +24,7 @@ struct EventHomeView: View {
 
     @EnvironmentObject private var appState: AppState
     @Environment(\.colorScheme) var colorScheme
+    @StateObject private var coverageVM = CoverageMatrixViewModel()
     @State private var hasAppeared = false
     @State private var showSettings = false
 
@@ -36,19 +33,6 @@ struct EventHomeView: View {
             return DepartmentColor.color(for: deptType)
         }
         return AppTheme.themeColor
-    }
-
-    private var eventTypeDisplay: String {
-        switch membership.eventType.uppercased() {
-        case "CIRCUIT_ASSEMBLY", "CIRCUIT_ASSEMBLY_CO":
-            return "Circuit Assembly"
-        case "REGIONAL_CONVENTION":
-            return "Regional Convention"
-        case "SPECIAL_CONVENTION":
-            return "Special Convention"
-        default:
-            return membership.eventType
-        }
     }
 
     private var dateRangeString: String {
@@ -64,7 +48,7 @@ struct EventHomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xl) {
-                    // Event details card
+                    // Event details banner
                     eventDetailsCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
@@ -74,8 +58,8 @@ struct EventHomeView: View {
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
                     }
 
-                    // Upcoming assignments placeholder
-                    upcomingAssignmentsCard
+                    // Today's assignments
+                    todaysAssignmentsSection
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.10)
                 }
                 .screenPadding()
@@ -98,6 +82,10 @@ struct EventHomeView: View {
                 withAnimation(AppTheme.entranceAnimation) {
                     hasAppeared = true
                 }
+            }
+            .task {
+                coverageVM.departmentId = membership.departmentId
+                await coverageVM.loadCoverage()
             }
         }
     }
@@ -124,58 +112,41 @@ struct EventHomeView: View {
 
     private var eventDetailsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            // Header
-            HStack(spacing: 8) {
-                Image(systemName: "calendar")
-                    .foregroundStyle(departmentColor)
-                Text("Event Details")
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-            }
+            // Theme + Event Type badge
+            Text(membership.themeBadgeText)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(departmentColor)
+                .padding(.horizontal, AppTheme.Spacing.m)
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(departmentColor.opacity(0.10))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
 
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-                // Event type badge
-                Text(eventTypeDisplay)
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(departmentColor)
-                    .padding(.horizontal, AppTheme.Spacing.s)
-                    .padding(.vertical, 4)
-                    .background(departmentColor.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-
-                // Venue
-                HStack(spacing: AppTheme.Spacing.s) {
-                    Image(systemName: "mappin.circle")
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        .frame(width: 20)
-                    Text(membership.venue)
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(.primary)
-                }
-
-                // Dates
-                HStack(spacing: AppTheme.Spacing.s) {
-                    Image(systemName: "clock")
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        .frame(width: 20)
-                    Text(dateRangeString)
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(.primary)
-                }
-
-                // Volunteer count
-                HStack(spacing: AppTheme.Spacing.s) {
-                    Image(systemName: "person.3")
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        .frame(width: 20)
-                    Text("\(membership.volunteerCount) volunteers")
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(.primary)
-                }
+            // Info rows
+            HStack(spacing: AppTheme.Spacing.l) {
+                infoColumn(icon: "mappin.circle", text: membership.venue)
+                Divider().frame(height: 32)
+                infoColumn(icon: "calendar", text: dateRangeString)
+                Divider().frame(height: 32)
+                infoColumn(icon: "person.3", text: "\(membership.volunteerCount)")
             }
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+
+    private func infoColumn(icon: String, text: String) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            Text(text)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Department Tag Card
@@ -214,45 +185,160 @@ struct EventHomeView: View {
         .themedCard(scheme: colorScheme)
     }
 
-    // MARK: - Upcoming Assignments Card
+    // MARK: - Today's Assignments
 
-    private var upcomingAssignmentsCard: some View {
+    private var todaySessions: [CoverageSession] {
+        let calendar = Calendar.current
+        return coverageVM.sessions.filter { calendar.isDateInToday($0.date) }
+    }
+
+    @ViewBuilder
+    private var todaysAssignmentsSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack(spacing: 8) {
                 Image(systemName: "calendar.badge.clock")
                     .foregroundStyle(departmentColor)
-                Text("Upcoming Assignments")
+                Text("Today's Schedule")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
 
-            HStack {
-                Spacer()
-                VStack(spacing: AppTheme.Spacing.s) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 28))
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                    Text("View your assignments in the Assignments tab")
-                        .font(AppTheme.Typography.subheadline)
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        .multilineTextAlignment(.center)
+            if coverageVM.isLoading {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                        .tint(departmentColor)
+                    Spacer()
                 }
-                Spacer()
+                .padding(.vertical, AppTheme.Spacing.l)
+            } else if todaySessions.isEmpty {
+                noSessionsPlaceholder
+            } else {
+                ForEach(todaySessions) { session in
+                    sessionAssignmentsCard(session: session)
+                }
             }
-            .padding(.vertical, AppTheme.Spacing.l)
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
     }
 
+    private var noSessionsPlaceholder: some View {
+        HStack {
+            Spacer()
+            VStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "calendar.badge.minus")
+                    .font(.system(size: 28))
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                Text("No sessions scheduled for today")
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            }
+            Spacer()
+        }
+        .padding(.vertical, AppTheme.Spacing.l)
+    }
+
+    private func sessionAssignmentsCard(session: CoverageSession) -> some View {
+        let sessionSlots = coverageVM.slots(for: session.id)
+
+        return VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+            // Session header
+            HStack {
+                Text(session.name)
+                    .font(AppTheme.Typography.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.primary)
+
+                Text("·")
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+                Text(sessionTimeString(session))
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+                Spacer()
+
+                // Fill status
+                let filledCount = sessionSlots.filter { $0.isFilled }.count
+                Text("\(filledCount)/\(sessionSlots.count)")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(filledCount == sessionSlots.count
+                        ? AppTheme.StatusColors.accepted
+                        : AppTheme.StatusColors.pending)
+            }
+            .padding(.bottom, 2)
+
+            // Post rows
+            ForEach(sessionSlots, id: \.id) { slot in
+                postRow(slot: slot)
+            }
+        }
+        .padding(AppTheme.Spacing.m)
+        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+    }
+
+    private func postRow(slot: CoverageSlot) -> some View {
+        HStack(spacing: AppTheme.Spacing.s) {
+            // Fill indicator dot
+            Circle()
+                .fill(slot.isFilled
+                    ? AppTheme.StatusColors.accepted
+                    : (slot.assignments.isEmpty ? AppTheme.StatusColors.declined : AppTheme.StatusColors.pending))
+                .frame(width: 8, height: 8)
+
+            // Post name
+            VStack(alignment: .leading, spacing: 2) {
+                Text(slot.postName)
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(.primary)
+
+                // Volunteer names or unfilled indicator
+                if slot.assignments.isEmpty {
+                    Text("Unfilled")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.StatusColors.declined)
+                } else {
+                    Text(slot.assignments.map { volunteerDisplayName($0.volunteer) }.joined(separator: ", "))
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer()
+
+            // Capacity badge
+            Text("\(slot.filled)/\(slot.capacity)")
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .foregroundStyle(slot.isFilled
+                    ? AppTheme.StatusColors.accepted
+                    : AppTheme.textTertiary(for: colorScheme))
+        }
+        .padding(.vertical, 2)
+    }
+
     // MARK: - Helpers
+
+    private func volunteerDisplayName(_ v: CoverageVolunteer) -> String {
+        "\(v.firstName) \(v.lastName.prefix(1))."
+    }
+
+    private func sessionTimeString(_ session: CoverageSession) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter.string(from: session.startTime)
+    }
 
     private var departmentIcon: String {
         guard let type = membership.departmentType else { return "building.2" }
         switch type.uppercased() {
         case "PARKING": return "car"
         case "ATTENDANT": return "person.badge.shield.checkmark"
-        case "AUDIO_VIDEO", "AV": return "video"
+        case "AUDIO": return "speaker.wave.3"
+        case "VIDEO": return "video"
+        case "STAGE": return "light.overhead.left"
         case "CLEANING": return "sparkles"
         case "COMMITTEE": return "person.3"
         case "FIRST_AID", "FIRSTAID": return "cross"
@@ -266,4 +352,24 @@ struct EventHomeView: View {
         default: return "building.2"
         }
     }
+}
+
+#Preview {
+    EventHomeView(
+        membership: EventMembershipItem(
+            id: "1", eventId: "1",
+            eventName: "2026 Circuit Assembly",
+            eventType: "CIRCUIT_ASSEMBLY_CO",
+            theme: "Declare the Good News!",
+            venue: "Assembly Hall", address: "123 Main St",
+            startDate: Date(), endDate: Date().addingTimeInterval(86400 * 2),
+            volunteerCount: 45, membershipType: .overseer,
+            overseerRole: "DEPARTMENT_OVERSEER",
+            departmentId: "d1", departmentName: "Attendant",
+            departmentType: "ATTENDANT",
+            departmentAccessCode: "ABC123",
+            eventVolunteerId: nil, volunteerId: nil
+        )
+    )
+    .environmentObject(AppState.shared)
 }

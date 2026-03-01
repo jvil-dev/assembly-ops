@@ -33,23 +33,22 @@ final class LostPersonViewModel: ObservableObject {
 
     var unresolvedCount: Int { alerts.filter { !$0.resolved }.count }
 
-    func loadAlerts(eventId: String) async {
+    func loadAlerts(eventId: String, resolved: Bool? = nil) async {
         isLoading = true
         error = nil
         defer { isLoading = false }
         do {
-            let resolved: Bool? = showResolved ? nil : false
-            alerts = try await AttendantService.shared.fetchLostPersonAlerts(eventId: eventId, resolved: resolved)
+            let filter: Bool? = resolved ?? (showResolved ? nil : false)
+            alerts = try await AttendantService.shared.fetchLostPersonAlerts(eventId: eventId, resolved: filter)
         } catch {
             self.error = error.localizedDescription
         }
     }
 
-    func resolveAlert(id: String, notes: String, eventId: String) async {
+    func resolveAlert(id: String, resolutionNotes: String) async {
         do {
-            try await AttendantService.shared.resolveLostPersonAlert(id: id, resolutionNotes: notes)
+            try await AttendantService.shared.resolveLostPersonAlert(id: id, resolutionNotes: resolutionNotes)
             HapticManager.shared.success()
-            await loadAlerts(eventId: eventId)
         } catch {
             self.error = error.localizedDescription
             HapticManager.shared.error()

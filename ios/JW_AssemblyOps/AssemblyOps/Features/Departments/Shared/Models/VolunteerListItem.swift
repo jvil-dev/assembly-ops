@@ -12,7 +12,7 @@
 //
 // Properties:
 //   - id: Internal database ID
-//   - volunteerId: Human-readable volunteer ID for login
+//   - userId: 6-char User account ID (from User.userId)
 //   - fullName/firstName/lastName: Display name variations
 //   - congregation: Home congregation
 //   - phone/email: Optional contact info
@@ -30,7 +30,7 @@ import Foundation
 
 struct VolunteerListItem: Identifiable {
     let id: String
-    let volunteerId: String
+    let userId: String?
     let fullName: String
     let firstName: String
     let lastName: String

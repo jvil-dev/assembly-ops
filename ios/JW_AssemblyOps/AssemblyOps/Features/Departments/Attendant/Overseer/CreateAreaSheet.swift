@@ -194,3 +194,10 @@ struct CreateAreaSheet: View {
         }
     }
 }
+
+#Preview {
+    CreateAreaSheet(
+        departmentId: "dept-1",
+        viewModel: AreaManagementViewModel()
+    )
+}

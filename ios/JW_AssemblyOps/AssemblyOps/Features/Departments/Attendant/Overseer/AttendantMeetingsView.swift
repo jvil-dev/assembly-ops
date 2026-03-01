@@ -125,14 +125,14 @@ struct AttendantMeetingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "person.3")
-                        .font(.system(size: 12))
+                        .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.themeColor)
                     Text(expandedMeetingId == meeting.id ? "attendant.meetings.hideAttendees".localized : "attendant.meetings.showAttendees".localized)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.themeColor)
                     Spacer()
                     Image(systemName: expandedMeetingId == meeting.id ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 10))
+                        .font(AppTheme.Typography.captionSmall)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                 }
             }
@@ -143,7 +143,7 @@ struct AttendantMeetingsView: View {
                     ForEach(meeting.attendees) { attendee in
                         HStack(spacing: AppTheme.Spacing.s) {
                             Image(systemName: "person.fill")
-                                .font(.system(size: 12))
+                                .font(AppTheme.Typography.caption)
                                 .foregroundStyle(AppTheme.themeColor)
                             Text(attendee.volunteerName)
                                 .font(AppTheme.Typography.subheadline)

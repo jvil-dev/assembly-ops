@@ -15,5 +15,6 @@ query WalkThroughCompletions($eventId: ID!, $sessionId: ID) {
     completedAt
     itemCount
     notes
+    checklistType
   }
 }

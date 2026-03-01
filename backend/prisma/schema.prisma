@@ -39,6 +39,9 @@ model User {
   resolvedIncidents      SafetyIncident[]     @relation("ResolvedIncidents")
   resolvedAlerts         LostPersonAlert[]    @relation("ResolvedAlerts")
   attendantMeetings      AttendantMeeting[]
+  resolvedDamageReports          AVDamageReport[]       @relation("ResolvedDamageReports")
+  conductedBriefings             AVSafetyBriefing[]
+  completedHazardAssessments     AVHazardAssessment[]
   congregationRef        Congregation?        @relation(fields: [congregationId], references: [id])
 
   @@index([email])
@@ -206,13 +209,16 @@ model DepartmentHierarchy {
   departmentId     String
   eventVolunteerId String
   hierarchyRole    HierarchyRole
+  areaId           String?
   assignedAt       DateTime       @default(now())
   department       Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   eventVolunteer   EventVolunteer @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
+  area             Area?          @relation(fields: [areaId], references: [id])
 
   @@unique([departmentId, hierarchyRole, eventVolunteerId])
   @@index([departmentId])
   @@index([eventVolunteerId])
+  @@index([areaId])
 }
 
 // ─────────────────────────────────────────────
@@ -258,6 +264,9 @@ model Event {
   facilityLocations      FacilityLocation[]
   conversations          Conversation[]
   joinRequests           EventJoinRequest[]
+  avEquipment            AVEquipmentItem[]
+  avHazardAssessments    AVHazardAssessment[]
+  avSafetyBriefings      AVSafetyBriefing[]
 
   @@unique([eventType, venue, startDate, language])
   @@index([joinCode])
@@ -335,6 +344,9 @@ model EventVolunteer {
   walkThroughCompletions WalkThroughCompletion[]
   postSessionStatuses    PostSessionStatus[]     @relation("PostSessionStatusUpdatedBy")
   hierarchyRoles         DepartmentHierarchy[]
+  avEquipmentCheckouts           AVEquipmentCheckout[]
+  avDamageReports                AVDamageReport[]
+  avSafetyBriefingAttendances    AVSafetyBriefingAttendee[]
 
   @@unique([userId, eventId]) // One membership per user per event
   @@index([eventId])
@@ -614,6 +626,9 @@ model Session {
   areaCaptains           AreaCaptain[]
   walkThroughCompletions WalkThroughCompletion[]
   postSessionStatuses    PostSessionStatus[]
+  avEquipmentCheckouts   AVEquipmentCheckout[]
+  avDamageReports        AVDamageReport[]
+  avHazardAssessments    AVHazardAssessment[]
 
   @@index([date])
   @@index([eventId])
@@ -632,9 +647,11 @@ model Area {
   departmentId String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  department   Department    @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  posts        Post[]
-  captains     AreaCaptain[]
+  department      Department          @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  posts           Post[]
+  captains        AreaCaptain[]
+  equipmentItems  AVEquipmentItem[]
+  hierarchyRoles  DepartmentHierarchy[]
 
   @@unique([departmentId, category, name])
   @@index([departmentId])
@@ -667,6 +684,7 @@ model WalkThroughCompletion {
   completedAt      DateTime       @default(now())
   itemCount        Int
   notes            String?
+  checklistType    String?        // "APPENDIX_E" | "APPENDIX_F" | "APPENDIX_G" | null (Attendant default)
   event            Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
   session          Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   eventVolunteer   EventVolunteer @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
@@ -740,7 +758,7 @@ enum DateFilter {
 enum DepartmentType {
   ACCOUNTS
   ATTENDANT
-  AUDIO_VIDEO
+  AUDIO
   BAPTISM
   CLEANING
   FIRST_AID
@@ -749,7 +767,9 @@ enum DepartmentType {
   LOST_FOUND_CHECKROOM
   PARKING
   ROOMING
+  STAGE
   TRUCKING_EQUIPMENT
+  VIDEO
 }
 
 enum EventRole {
@@ -758,6 +778,7 @@ enum EventRole {
 
 enum HierarchyRole {
   ASSISTANT_OVERSEER
+  AREA_OVERSEER
 }
 
 enum EventType {
@@ -802,4 +823,162 @@ enum SafetyIncidentType {
   SEVERE_WEATHER
   ACTIVE_SHOOTER
   OTHER
+}
+
+// ─────────────────────────────────────────────
+// AV DEPARTMENT — EQUIPMENT & SAFETY
+// ─────────────────────────────────────────────
+
+enum AVEquipmentCategory {
+  CAMERA_PTZ
+  CAMERA_MANNED
+  TRIPOD
+  AUDIO_MIXER
+  VIDEO_SWITCHER
+  MEDIA_PLAYER
+  LED_PANEL
+  LOUDSPEAKER
+  MICROPHONE
+  STAGE_MONITOR
+  INTERCOM
+  CABLE
+  STAGE_LIGHTING
+  RECORDING_DEVICE
+  ASSISTIVE_LISTENING
+  ACCESSORY
+}
+
+enum AVEquipmentCondition {
+  GOOD
+  NEEDS_REPAIR
+  OUT_OF_SERVICE
+}
+
+enum AVDamageSeverity {
+  MINOR
+  MODERATE
+  SEVERE
+}
+
+enum AVHazardType {
+  WORKING_AT_HEIGHT
+  ELECTRICAL_EXPOSURE
+  ELEVATED_PLATFORM
+  POWER_TOOLS
+  MOVING_EQUIPMENT
+  NEAR_STAIRS
+  UNEVEN_SURFACE
+  HEAVY_LIFTING
+  PINCH_CRUSH_CUT
+  EXTREME_CONDITIONS
+}
+
+model AVEquipmentItem {
+  id            String               @id @default(cuid())
+  name          String
+  model         String?
+  serialNumber  String?
+  category      AVEquipmentCategory
+  condition     AVEquipmentCondition @default(GOOD)
+  location      String?
+  notes         String?
+  areaId        String?
+  eventId       String
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  area          Area?                @relation(fields: [areaId], references: [id])
+  event         Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  checkouts     AVEquipmentCheckout[]
+  damageReports AVDamageReport[]
+
+  @@index([eventId])
+  @@index([areaId])
+  @@index([category])
+}
+
+model AVEquipmentCheckout {
+  id             String          @id @default(cuid())
+  equipmentId    String
+  checkedOutById String
+  checkedOutAt   DateTime        @default(now())
+  checkedInAt    DateTime?
+  sessionId      String?
+  notes          String?
+
+  equipment      AVEquipmentItem @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  checkedOutBy   EventVolunteer  @relation(fields: [checkedOutById], references: [id])
+  session        Session?        @relation(fields: [sessionId], references: [id])
+
+  @@index([equipmentId])
+  @@index([checkedOutById])
+  @@index([checkedInAt])
+}
+
+model AVDamageReport {
+  id              String              @id @default(cuid())
+  equipmentId     String
+  description     String
+  severity        AVDamageSeverity
+  reportedById    String
+  sessionId       String?
+  resolved        Boolean             @default(false)
+  resolvedAt      DateTime?
+  resolvedById    String?
+  resolutionNotes String?
+  createdAt       DateTime            @default(now())
+
+  equipment       AVEquipmentItem     @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  reportedBy      EventVolunteer      @relation(fields: [reportedById], references: [id])
+  resolvedBy      User?               @relation("ResolvedDamageReports", fields: [resolvedById], references: [id])
+  session         Session?            @relation(fields: [sessionId], references: [id])
+
+  @@index([equipmentId])
+  @@index([resolved])
+}
+
+model AVHazardAssessment {
+  id            String       @id @default(cuid())
+  eventId       String
+  title         String
+  hazardType    AVHazardType
+  description   String
+  controls      String
+  ppeRequired   String[]
+  completedById String
+  sessionId     String?
+  completedAt   DateTime     @default(now())
+
+  event         Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  completedBy   User         @relation(fields: [completedById], references: [id])
+  session       Session?     @relation(fields: [sessionId], references: [id])
+
+  @@index([eventId])
+}
+
+model AVSafetyBriefing {
+  id            String                     @id @default(cuid())
+  eventId       String
+  topic         String
+  notes         String?
+  conductedById String
+  conductedAt   DateTime                   @default(now())
+
+  event         Event                      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  conductedBy   User                       @relation(fields: [conductedById], references: [id])
+  attendees     AVSafetyBriefingAttendee[]
+
+  @@index([eventId])
+}
+
+model AVSafetyBriefingAttendee {
+  id               String           @id @default(cuid())
+  briefingId       String
+  eventVolunteerId String
+  createdAt        DateTime         @default(now())
+
+  briefing         AVSafetyBriefing @relation(fields: [briefingId], references: [id], onDelete: Cascade)
+  eventVolunteer   EventVolunteer   @relation(fields: [eventVolunteerId], references: [id])
+
+  @@unique([briefingId, eventVolunteerId])
 }

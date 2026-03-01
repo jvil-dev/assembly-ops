@@ -30,8 +30,12 @@ enum DepartmentColor {
             return Color("Department: Parking")
         case "ATTENDANT":
             return Color("Department: Attendant")
-        case "AUDIO/VIDEO", "AV", "AUDIO_VIDEO":
-            return Color("Department: Audio-Video")
+        case "AUDIO":
+            return Color("Department: Audio")
+        case "VIDEO":
+            return Color("Department: Video")
+        case "STAGE":
+            return Color("Department: Stage")
         case "CLEANING":
             return Color("Department: Cleaning")
         case "COMMITTEE":
@@ -70,7 +74,9 @@ enum DepartmentColor {
         switch departmentType.uppercased() {
         case "PARKING": return "Yellow"
         case "ATTENDANT": return "Orange"
-        case "AUDIO_VIDEO", "AV", "AUDIO/VIDEO": return "Green"
+        case "AUDIO": return "Blue-Green"
+        case "VIDEO": return "Teal"
+        case "STAGE": return "Purple"
         case "CLEANING": return "Teal"
         case "COMMITTEE": return "White"
         case "FIRST_AID", "FIRSTAID": return "Red"

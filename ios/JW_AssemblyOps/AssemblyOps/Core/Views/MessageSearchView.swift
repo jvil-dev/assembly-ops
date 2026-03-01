@@ -48,6 +48,10 @@ struct MessageSearchView: View {
                     hasSearched = false
                     return
                 }
+
+#Preview {
+    MessageSearchView(eventId: "event-1")
+}
                 searchTask = Task {
                     try? await Task.sleep(nanoseconds: 400_000_000) // 400ms debounce
                     guard !Task.isCancelled else { return }

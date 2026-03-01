@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MyAllEvents"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query MyAllEvents { myAllEvents { __typename eventId membershipType overseerRole departmentId departmentName departmentType eventVolunteerId volunteerId departmentAccessCode event { __typename id name eventType venue address startDate endDate volunteerCount } } }"#
+        #"query MyAllEvents { myAllEvents { __typename eventId membershipType overseerRole departmentId departmentName departmentType eventVolunteerId departmentAccessCode event { __typename id name eventType theme venue address startDate endDate volunteerCount } } }"#
       ))
 
     public init() {}
@@ -44,7 +44,6 @@ extension AssemblyOpsAPI {
           .field("departmentName", String?.self),
           .field("departmentType", GraphQLEnum<AssemblyOpsAPI.DepartmentType>?.self),
           .field("eventVolunteerId", AssemblyOpsAPI.ID?.self),
-          .field("volunteerId", String?.self),
           .field("departmentAccessCode", String?.self),
           .field("event", Event.self),
         ] }
@@ -59,7 +58,6 @@ extension AssemblyOpsAPI {
         var departmentName: String? { __data["departmentName"] }
         var departmentType: GraphQLEnum<AssemblyOpsAPI.DepartmentType>? { __data["departmentType"] }
         var eventVolunteerId: AssemblyOpsAPI.ID? { __data["eventVolunteerId"] }
-        var volunteerId: String? { __data["volunteerId"] }
         var departmentAccessCode: String? { __data["departmentAccessCode"] }
         var event: Event { __data["event"] }
 
@@ -76,6 +74,7 @@ extension AssemblyOpsAPI {
             .field("id", AssemblyOpsAPI.ID.self),
             .field("name", String.self),
             .field("eventType", GraphQLEnum<AssemblyOpsAPI.EventType>.self),
+            .field("theme", String?.self),
             .field("venue", String.self),
             .field("address", String.self),
             .field("startDate", AssemblyOpsAPI.DateTime.self),
@@ -89,6 +88,7 @@ extension AssemblyOpsAPI {
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var name: String { __data["name"] }
           var eventType: GraphQLEnum<AssemblyOpsAPI.EventType> { __data["eventType"] }
+          var theme: String? { __data["theme"] }
           var venue: String { __data["venue"] }
           var address: String { __data["address"] }
           var startDate: AssemblyOpsAPI.DateTime { __data["startDate"] }

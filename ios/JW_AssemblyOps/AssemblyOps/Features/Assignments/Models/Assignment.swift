@@ -158,6 +158,11 @@ struct Assignment: Identifiable, Equatable {
         checkInStatus == .checkedOut
     }
 
+    /// Whether this assignment belongs to an AV department (Audio, Video, or Stage)
+    var isAVDepartment: Bool {
+        ["AUDIO", "VIDEO", "STAGE"].contains(departmentType.uppercased())
+    }
+
     /// Status display text
     var statusText: String {
         switch checkInStatus {
