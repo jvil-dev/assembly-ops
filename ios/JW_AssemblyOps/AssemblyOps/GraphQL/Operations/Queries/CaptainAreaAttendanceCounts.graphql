@@ -1,0 +1,27 @@
+query CaptainAreaAttendanceCounts($eventId: ID!) {
+  captainAreaAttendanceCounts(eventId: $eventId) {
+    post {
+      id
+      name
+      location
+      area {
+        id
+        name
+      }
+    }
+    session {
+      id
+      name
+      date
+    }
+    count
+    section
+    notes
+    submittedBy {
+      id
+      firstName
+      lastName
+    }
+    submittedAt
+  }
+}

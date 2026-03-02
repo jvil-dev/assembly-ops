@@ -16,6 +16,8 @@ import {
   requireAdmin,
   requireAuth,
   requireEventAccess,
+  requireDeptAccess,
+  tryRequireAdmin,
   resolveUserEventVolunteer,
 } from '../guards/auth.js';
 import { AreaService } from '../../services/areaService.js';
@@ -24,7 +26,26 @@ import type {
   UpdateAreaInput,
   SetAreaCaptainInput,
   RemoveAreaCaptainInput,
+  AcceptAreaCaptainInput,
+  DeclineAreaCaptainInput,
 } from '../validators/area.js';
+
+/**
+ * Check overseer OR assistant overseer access via area's department.
+ */
+async function requireAreaMgmtAccess(context: Context, areaService: AreaService, areaId: string) {
+  if (tryRequireAdmin(context)) {
+    const eventId = await areaService.getAreaEventId(areaId);
+    await requireEventAccess(context, eventId);
+    return;
+  }
+  const area = await context.prisma.area.findUnique({
+    where: { id: areaId },
+    select: { departmentId: true },
+  });
+  if (!area) throw new Error('Area not found');
+  await requireDeptAccess(context, area.departmentId);
+}
 
 const areaResolvers = {
   Query: {
@@ -100,6 +121,17 @@ const areaResolvers = {
       const areaService = new AreaService(context.prisma);
       return areaService.getMyAreaGroups(eventVolunteerId);
     },
+
+    myCaptainAssignments: async (
+      _parent: unknown,
+      { eventId }: { eventId: string },
+      context: Context
+    ) => {
+      requireAuth(context);
+      const ev = await resolveUserEventVolunteer(context.user!.id, eventId, context.prisma);
+      const areaService = new AreaService(context.prisma);
+      return areaService.getMyCaptainAssignments(ev.id);
+    },
   },
 
   Mutation: {
@@ -108,14 +140,16 @@ const areaResolvers = {
       { departmentId, input }: { departmentId: string; input: CreateAreaInput },
       context: Context
     ) => {
-      requireAdmin(context);
-
-      const department = await context.prisma.department.findUnique({
-        where: { id: departmentId },
-        select: { eventId: true },
-      });
-      if (department) {
-        await requireEventAccess(context, department.eventId);
+      if (tryRequireAdmin(context)) {
+        const department = await context.prisma.department.findUnique({
+          where: { id: departmentId },
+          select: { eventId: true },
+        });
+        if (department) {
+          await requireEventAccess(context, department.eventId);
+        }
+      } else {
+        await requireDeptAccess(context, departmentId);
       }
 
       const areaService = new AreaService(context.prisma);
@@ -127,10 +161,8 @@ const areaResolvers = {
       { id, input }: { id: string; input: UpdateAreaInput },
       context: Context
     ) => {
-      requireAdmin(context);
       const areaService = new AreaService(context.prisma);
-      const eventId = await areaService.getAreaEventId(id);
-      await requireEventAccess(context, eventId);
+      await requireAreaMgmtAccess(context, areaService, id);
 
       return areaService.updateArea(id, input);
     },
@@ -140,10 +172,8 @@ const areaResolvers = {
       { id }: { id: string },
       context: Context
     ) => {
-      requireAdmin(context);
       const areaService = new AreaService(context.prisma);
-      const eventId = await areaService.getAreaEventId(id);
-      await requireEventAccess(context, eventId);
+      await requireAreaMgmtAccess(context, areaService, id);
 
       return areaService.deleteArea(id);
     },
@@ -153,10 +183,8 @@ const areaResolvers = {
       { input }: { input: SetAreaCaptainInput },
       context: Context
     ) => {
-      requireAdmin(context);
       const areaService = new AreaService(context.prisma);
-      const eventId = await areaService.getAreaEventId(input.areaId);
-      await requireEventAccess(context, eventId);
+      await requireAreaMgmtAccess(context, areaService, input.areaId);
 
       return areaService.setAreaCaptain(input);
     },
@@ -166,12 +194,52 @@ const areaResolvers = {
       { input }: { input: RemoveAreaCaptainInput },
       context: Context
     ) => {
-      requireAdmin(context);
       const areaService = new AreaService(context.prisma);
-      const eventId = await areaService.getAreaEventId(input.areaId);
-      await requireEventAccess(context, eventId);
+      await requireAreaMgmtAccess(context, areaService, input.areaId);
 
       return areaService.removeAreaCaptain(input);
+    },
+
+    acceptAreaCaptain: async (
+      _parent: unknown,
+      { input }: { input: AcceptAreaCaptainInput },
+      context: Context
+    ) => {
+      requireAuth(context);
+      const areaCaptain = await context.prisma.areaCaptain.findUnique({
+        where: { id: input.areaCaptainId },
+        include: { area: { include: { department: { select: { eventId: true } } } } },
+      });
+      if (!areaCaptain) throw new Error('Captain assignment not found');
+
+      const ev = await resolveUserEventVolunteer(
+        context.user!.id,
+        areaCaptain.area.department.eventId,
+        context.prisma
+      );
+      const areaService = new AreaService(context.prisma);
+      return areaService.acceptAreaCaptain(ev.id, input);
+    },
+
+    declineAreaCaptain: async (
+      _parent: unknown,
+      { input }: { input: DeclineAreaCaptainInput },
+      context: Context
+    ) => {
+      requireAuth(context);
+      const areaCaptain = await context.prisma.areaCaptain.findUnique({
+        where: { id: input.areaCaptainId },
+        include: { area: { include: { department: { select: { eventId: true } } } } },
+      });
+      if (!areaCaptain) throw new Error('Captain assignment not found');
+
+      const ev = await resolveUserEventVolunteer(
+        context.user!.id,
+        areaCaptain.area.department.eventId,
+        context.prisma
+      );
+      const areaService = new AreaService(context.prisma);
+      return areaService.declineAreaCaptain(ev.id, input);
     },
 
     assignPostToArea: async (
@@ -179,10 +247,8 @@ const areaResolvers = {
       { postId, areaId }: { postId: string; areaId: string },
       context: Context
     ) => {
-      requireAdmin(context);
       const areaService = new AreaService(context.prisma);
-      const eventId = await areaService.getAreaEventId(areaId);
-      await requireEventAccess(context, eventId);
+      await requireAreaMgmtAccess(context, areaService, areaId);
 
       return areaService.assignPostToArea(postId, areaId);
     },
@@ -192,11 +258,21 @@ const areaResolvers = {
       { postId }: { postId: string },
       context: Context
     ) => {
-      requireAdmin(context);
-      const areaService = new AreaService(context.prisma);
-      const eventId = await areaService.getPostEventId(postId);
-      await requireEventAccess(context, eventId);
+      const post = await context.prisma.post.findUnique({
+        where: { id: postId },
+        select: { departmentId: true },
+      });
+      if (post) {
+        if (tryRequireAdmin(context)) {
+          const areaService = new AreaService(context.prisma);
+          const eventId = await areaService.getPostEventId(postId);
+          await requireEventAccess(context, eventId);
+        } else {
+          await requireDeptAccess(context, post.departmentId);
+        }
+      }
 
+      const areaService = new AreaService(context.prisma);
       return areaService.removePostFromArea(postId);
     },
   },
@@ -205,6 +281,24 @@ const areaResolvers = {
   Area: {
     postCount: (area: { _count?: { posts: number }; posts?: unknown[] }) => {
       return area._count?.posts ?? (area.posts as unknown[])?.length ?? 0;
+    },
+  },
+
+  AreaCaptainAssignment: {
+    area: (parent: { area?: unknown; areaId: string }, _args: unknown, context: Context) => {
+      if (parent.area) return parent.area;
+      return context.prisma.area.findUnique({ where: { id: parent.areaId } });
+    },
+    session: (parent: { session?: unknown; sessionId: string }, _args: unknown, context: Context) => {
+      if (parent.session) return parent.session;
+      return context.prisma.session.findUnique({ where: { id: parent.sessionId } });
+    },
+    eventVolunteer: (parent: { eventVolunteer?: unknown; eventVolunteerId: string }, _args: unknown, context: Context) => {
+      if (parent.eventVolunteer) return parent.eventVolunteer;
+      return context.prisma.eventVolunteer.findUnique({
+        where: { id: parent.eventVolunteerId },
+        include: { user: true },
+      });
     },
   },
 };

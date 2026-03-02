@@ -1,0 +1,14 @@
+query MyAttendanceStatus($eventId: ID!) {
+  myAttendanceStatus(eventId: $eventId) {
+    session {
+      id
+      name
+      date
+      startTime
+      endTime
+    }
+    hasSubmitted
+    postId
+    postName
+  }
+}

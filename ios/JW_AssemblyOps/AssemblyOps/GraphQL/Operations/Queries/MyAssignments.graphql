@@ -1,5 +1,5 @@
-query MyAssignments {
-  myAssignments {
+query MyAssignments($eventId: ID!) {
+  myAssignments(eventId: $eventId) {
     id
     status
     isCaptain
@@ -11,7 +11,6 @@ query MyAssignments {
       id
       name
       location
-      capacity
       category
       area {
         id
@@ -30,6 +29,12 @@ query MyAssignments {
       id
       name
       date
+      startTime
+      endTime
+    }
+    shift {
+      id
+      name
       startTime
       endTime
     }

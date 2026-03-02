@@ -36,6 +36,8 @@ struct AreaDetailSheet: View {
     @State private var showCreatePost = false
     @State private var showError = false
     @State private var isDeleting = false
+    @State private var postToDelete: CoveragePost?
+    @State private var showDeletePostConfirmation = false
 
     private var currentCaptain: AreaCaptainItem? {
         area.captains.first { $0.sessionId == session.id }
@@ -86,6 +88,20 @@ struct AreaDetailSheet: View {
             } message: {
                 Text("area.deleteWarning".localized)
             }
+            .alert("area.deletePostConfirm".localized, isPresented: $showDeletePostConfirmation) {
+                Button("common.cancel".localized, role: .cancel) {
+                    postToDelete = nil
+                }
+                Button("common.delete".localized, role: .destructive) {
+                    if let post = postToDelete {
+                        Task { await deletePost(post) }
+                    }
+                }
+            } message: {
+                if let post = postToDelete {
+                    Text(String(format: "area.deletePostWarning".localized, post.name))
+                }
+            }
             .alert("common.error".localized, isPresented: $showError) {
                 Button("common.ok".localized) { areaViewModel.error = nil }
             } message: {
@@ -99,12 +115,14 @@ struct AreaDetailSheet: View {
             .sheet(isPresented: $showCaptainPicker) {
                 VolunteerPickerForCaptain(
                     departmentId: departmentId,
-                    onSelect: { eventVolunteerId in
+                    onSelect: { eventVolunteerId, forceAssigned, acceptedDeadline in
                         Task {
                             await areaViewModel.setAreaCaptain(
                                 areaId: area.id,
                                 sessionId: session.id,
-                                eventVolunteerId: eventVolunteerId
+                                eventVolunteerId: eventVolunteerId,
+                                forceAssigned: forceAssigned,
+                                acceptedDeadline: acceptedDeadline
                             )
                             showCaptainPicker = false
                         }
@@ -184,19 +202,26 @@ struct AreaDetailSheet: View {
                 HStack {
                     ZStack {
                         Circle()
-                            .fill(AppTheme.themeColor.opacity(0.15))
+                            .fill(DepartmentColor.color(for: "ATTENDANT").opacity(0.15))
                             .frame(width: 36, height: 36)
                         Text(captainInitials(captain.volunteerName))
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundStyle(AppTheme.themeColor)
+                            .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(captain.volunteerName)
                             .font(AppTheme.Typography.bodyMedium)
-                        Text("area.captainAssigned".localized)
-                            .font(AppTheme.Typography.caption)
-                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+                        HStack(spacing: 6) {
+                            AssignmentStatusBadgeCompact(status: captain.status)
+
+                            if captain.forceAssigned {
+                                Text("captain.assignment.forceAssigned".localized)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                            }
+                        }
                     }
 
                     Spacer()
@@ -222,6 +247,23 @@ struct AreaDetailSheet: View {
                             .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                     }
                 }
+
+                // Show decline reason if captain declined
+                if captain.status == .declined || captain.status == .autoDeclined,
+                   let reason = captain.declineReason, !reason.isEmpty {
+                    HStack(spacing: 6) {
+                        Image(systemName: "text.quote")
+                            .font(.system(size: 12))
+                            .foregroundStyle(AppTheme.StatusColors.declined)
+                        Text(reason)
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                            .italic()
+                    }
+                    .padding(AppTheme.Spacing.s)
+                    .background(AppTheme.StatusColors.declinedBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                }
             } else {
                 Button {
                     showCaptainPicker = true
@@ -229,10 +271,10 @@ struct AreaDetailSheet: View {
                 } label: {
                     HStack {
                         Image(systemName: "plus.circle")
-                            .foregroundStyle(AppTheme.themeColor)
+                            .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
                         Text("area.assignCaptain".localized)
                             .font(AppTheme.Typography.body)
-                            .foregroundStyle(AppTheme.themeColor)
+                            .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
                     }
                 }
             }
@@ -278,10 +320,10 @@ struct AreaDetailSheet: View {
             } label: {
                 HStack {
                     Image(systemName: "plus.circle")
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
                     Text("area.createPost".localized)
                         .font(AppTheme.Typography.body)
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
                 }
             }
         }
@@ -292,16 +334,20 @@ struct AreaDetailSheet: View {
     private func postRow(post: CoveragePost, isLast: Bool) -> some View {
         VStack(spacing: 0) {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(post.name)
-                        .font(AppTheme.Typography.body)
-                }
+                Text(post.name)
+                    .font(AppTheme.Typography.body)
 
                 Spacer()
 
-                Text("Cap: \(post.capacity)")
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                Button {
+                    postToDelete = post
+                    showDeletePostConfirmation = true
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14))
+                        .foregroundStyle(AppTheme.StatusColors.declined.opacity(0.7))
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, AppTheme.Spacing.m)
             .padding(.vertical, AppTheme.Spacing.m)
@@ -376,6 +422,21 @@ struct AreaDetailSheet: View {
         }
     }
 
+    private func deletePost(_ post: CoveragePost) async {
+        do {
+            let _ = try await NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.DeletePostMutation(id: post.id)
+            )
+            HapticManager.shared.success()
+            await coverageViewModel.loadCoverage()
+            await areaViewModel.loadAreas(departmentId: departmentId)
+        } catch {
+            areaViewModel.error = error.localizedDescription
+            HapticManager.shared.error()
+        }
+        postToDelete = nil
+    }
+
     private func captainInitials(_ name: String) -> String {
         let parts = name.split(separator: " ")
         let first = parts.first?.prefix(1) ?? ""
@@ -406,13 +467,17 @@ struct AreaDetailSheet: View {
 
 struct VolunteerPickerForCaptain: View {
     let departmentId: String
-    let onSelect: (String) -> Void
+    let onSelect: (String, Bool, Date?) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = VolunteersViewModel()
 
     @State private var searchText = ""
+    @State private var selectedVolunteer: VolunteerListItem?
+    @State private var forceAssigned = false
+    @State private var setDeadline = false
+    @State private var acceptedDeadline = Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
 
     private var filteredVolunteers: [VolunteerListItem] {
         if searchText.isEmpty {
@@ -427,54 +492,175 @@ struct VolunteerPickerForCaptain: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                if viewModel.isLoading {
-                    HStack {
-                        Spacer()
-                        ProgressView()
-                        Spacer()
-                    }
-                    .listRowBackground(Color.clear)
-                } else if filteredVolunteers.isEmpty {
-                    Text("No volunteers found")
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                        .listRowBackground(Color.clear)
+            Group {
+                if let volunteer = selectedVolunteer {
+                    assignmentOptionsView(volunteer: volunteer)
                 } else {
-                    ForEach(filteredVolunteers) { volunteer in
-                        Button {
-                            onSelect(volunteer.id)
-                            HapticManager.shared.lightTap()
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("\(volunteer.firstName) \(volunteer.lastName)")
-                                        .font(AppTheme.Typography.body)
-                                        .foregroundStyle(.primary)
-                                    Text(volunteer.congregation)
-                                        .font(AppTheme.Typography.caption)
-                                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                                }
-                                Spacer()
-                            }
+                    volunteerListView
+                }
+            }
+            .themedBackground(scheme: colorScheme)
+            .navigationTitle(selectedVolunteer != nil ? "area.assignOptions".localized : "area.selectCaptain".localized)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("common.cancel".localized) {
+                        if selectedVolunteer != nil {
+                            selectedVolunteer = nil
+                            forceAssigned = false
+                            setDeadline = false
+                        } else {
+                            dismiss()
                         }
                     }
                 }
             }
-            .searchable(text: $searchText, prompt: "common.search".localized)
-            .themedBackground(scheme: colorScheme)
-            .scrollContentBackground(.hidden)
-            .navigationTitle("area.selectCaptain".localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("common.cancel".localized) { dismiss() }
-                }
-            }
+            .tint(DepartmentColor.color(for: "ATTENDANT"))
             .task {
                 viewModel.departmentId = departmentId
                 await viewModel.loadVolunteers()
             }
         }
+    }
+
+    // MARK: - Volunteer List
+
+    private var volunteerListView: some View {
+        List {
+            if viewModel.isLoading {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+                .listRowBackground(Color.clear)
+            } else if filteredVolunteers.isEmpty {
+                Text("No volunteers found")
+                    .font(AppTheme.Typography.body)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    .listRowBackground(Color.clear)
+            } else {
+                ForEach(filteredVolunteers) { volunteer in
+                    Button {
+                        selectedVolunteer = volunteer
+                        HapticManager.shared.lightTap()
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("\(volunteer.firstName) \(volunteer.lastName)")
+                                    .font(AppTheme.Typography.body)
+                                    .foregroundStyle(.primary)
+                                Text(volunteer.congregation)
+                                    .font(AppTheme.Typography.caption)
+                                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .searchable(text: $searchText, prompt: "common.search".localized)
+        .scrollContentBackground(.hidden)
+    }
+
+    // MARK: - Assignment Options
+
+    private func assignmentOptionsView(volunteer: VolunteerListItem) -> some View {
+        ScrollView {
+            VStack(spacing: AppTheme.Spacing.xl) {
+                // Selected volunteer card
+                HStack(spacing: AppTheme.Spacing.m) {
+                    ZStack {
+                        Circle()
+                            .fill(DepartmentColor.color(for: "ATTENDANT").opacity(0.15))
+                            .frame(width: 44, height: 44)
+                        Text(initials(volunteer.firstName, volunteer.lastName))
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(volunteer.firstName) \(volunteer.lastName)")
+                            .font(AppTheme.Typography.bodyMedium)
+                        Text(volunteer.congregation)
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    }
+
+                    Spacer()
+                }
+                .cardPadding()
+                .themedCard(scheme: colorScheme)
+
+                // Assignment options card
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+                    SectionHeaderLabel(icon: "gearshape", title: "captain.assignment.options".localized)
+
+                    // Force assign toggle
+                    Toggle(isOn: $forceAssigned) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("captain.assignment.forceAssign".localized)
+                                .font(AppTheme.Typography.body)
+                            Text("captain.assignment.forceAssignDesc".localized)
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                        }
+                    }
+                    .tint(DepartmentColor.color(for: "ATTENDANT"))
+
+                    if !forceAssigned {
+                        Divider()
+
+                        // Deadline toggle
+                        Toggle(isOn: $setDeadline) {
+                            Text("captain.assignment.setDeadline".localized)
+                                .font(AppTheme.Typography.body)
+                        }
+                        .tint(DepartmentColor.color(for: "ATTENDANT"))
+
+                        if setDeadline {
+                            DatePicker(
+                                "captain.assignment.deadline".localized,
+                                selection: $acceptedDeadline,
+                                in: Date()...,
+                                displayedComponents: .date
+                            )
+                            .font(AppTheme.Typography.body)
+                        }
+                    }
+                }
+                .cardPadding()
+                .themedCard(scheme: colorScheme)
+
+                // Assign button
+                Button {
+                    let deadline = (!forceAssigned && setDeadline) ? acceptedDeadline : nil
+                    onSelect(volunteer.id, forceAssigned, deadline)
+                    HapticManager.shared.success()
+                } label: {
+                    Text("captain.assignment.assign".localized)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: AppTheme.ButtonHeight.large)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(.white)
+                        .background(DepartmentColor.color(for: "ATTENDANT"))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
+                }
+            }
+            .screenPadding()
+            .padding(.top, AppTheme.Spacing.l)
+            .padding(.bottom, AppTheme.Spacing.xxl)
+        }
+    }
+
+    private func initials(_ firstName: String, _ lastName: String) -> String {
+        let f = firstName.prefix(1)
+        let l = lastName.prefix(1)
+        return String(f + l).uppercased()
     }
 }

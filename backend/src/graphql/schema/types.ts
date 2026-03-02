@@ -179,7 +179,6 @@ const types = `#graphql
     name: String!
     description: String
     location: String
-    capacity: Int!
     category: String
     sortOrder: Int!
     department: Department!
@@ -197,6 +196,7 @@ const types = `#graphql
     endTime: DateTime!
     event: Event!
     assignments: [ScheduleAssignment!]!
+    shifts: [Shift!]!
     assignmentCount: Int!
     createdAt: DateTime!
   }
@@ -207,6 +207,7 @@ const types = `#graphql
     volunteer: Volunteer
     post: Post!
     session: Session!
+    shift: Shift
     checkIn: CheckIn
     isCheckedIn: Boolean!
     isCaptain: Boolean!
@@ -215,6 +216,7 @@ const types = `#graphql
     declineReason: String
     acceptDeadline: DateTime
     forceAssigned: Boolean!
+    createdBy: User
     createdAt: DateTime!
     updatedAt: DateTime!
   }

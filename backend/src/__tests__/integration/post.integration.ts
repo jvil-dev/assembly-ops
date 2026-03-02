@@ -11,7 +11,7 @@
  *   3. Purchase a department (ATTENDANT)
  *
  * Tests:
- *   - createPost: Create single post with name, description, location, capacity
+ *   - createPost: Create single post with name, description, location
  *   - createPosts: Bulk create multiple posts in one mutation
  *   - posts: Query posts by departmentId with assignmentCount
  *
@@ -113,7 +113,6 @@ describe('Post Operations', () => {
                 name
                 description
                 location
-                capacity
               }
             }
           `,
@@ -123,7 +122,6 @@ describe('Post Operations', () => {
               name: 'East Lobby',
               description: 'Main entrance',
               location: 'Building A',
-              capacity: 2,
             },
           },
         });
@@ -131,7 +129,6 @@ describe('Post Operations', () => {
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
       expect(response.body.data.createPost.name).toBe('East Lobby');
-      expect(response.body.data.createPost.capacity).toBe(2);
       // postId = response.body.data.createPost.id;
     });
   });
@@ -152,7 +149,6 @@ describe('Post Operations', () => {
               createPosts(input: $input) {
                 id
                 name
-                capacity
               }
             }
           `,
@@ -160,9 +156,9 @@ describe('Post Operations', () => {
             input: {
               departmentId,
               posts: [
-                { name: 'West Lobby', capacity: 2 },
-                { name: 'South Lobby', capacity: 1 },
-                { name: 'Auditorium', capacity: 5 },
+                { name: 'West Lobby' },
+                { name: 'South Lobby' },
+                { name: 'Auditorium' },
               ],
             },
           },
@@ -190,7 +186,6 @@ describe('Post Operations', () => {
               posts(departmentId: $departmentId) {
                 id
                 name
-                capacity
                 assignmentCount
               }
             }

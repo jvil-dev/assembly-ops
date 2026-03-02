@@ -113,14 +113,16 @@ final class AreaManagementViewModel: ObservableObject {
     // MARK: - Captain Management
 
     /// Set captain for an area + session
-    func setAreaCaptain(areaId: String, sessionId: String, eventVolunteerId: String) async {
+    func setAreaCaptain(areaId: String, sessionId: String, eventVolunteerId: String, forceAssigned: Bool = false, acceptedDeadline: Date? = nil) async {
         error = nil
 
         do {
             let captain = try await areaService.setAreaCaptain(
                 areaId: areaId,
                 sessionId: sessionId,
-                eventVolunteerId: eventVolunteerId
+                eventVolunteerId: eventVolunteerId,
+                forceAssigned: forceAssigned,
+                acceptedDeadline: acceptedDeadline
             )
             // Update local captain list for this area
             if let areaIndex = areas.firstIndex(where: { $0.id == areaId }) {

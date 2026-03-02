@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "SetAreaCaptain"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation SetAreaCaptain($input: SetAreaCaptainInput!) { setAreaCaptain(input: $input) { __typename id area { __typename id name } session { __typename id name } eventVolunteer { __typename id user { __typename firstName lastName } } } }"#
+        #"mutation SetAreaCaptain($input: SetAreaCaptainInput!) { setAreaCaptain(input: $input) { __typename id status respondedAt declineReason acceptedDeadline forceAssigned area { __typename id name } session { __typename id name } eventVolunteer { __typename id user { __typename firstName lastName } } } }"#
       ))
 
     public var input: SetAreaCaptainInput
@@ -44,6 +44,11 @@ extension AssemblyOpsAPI {
         static var __selections: [ApolloAPI.Selection] { [
           .field("__typename", String.self),
           .field("id", AssemblyOpsAPI.ID.self),
+          .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
+          .field("respondedAt", AssemblyOpsAPI.DateTime?.self),
+          .field("declineReason", String?.self),
+          .field("acceptedDeadline", AssemblyOpsAPI.DateTime?.self),
+          .field("forceAssigned", Bool.self),
           .field("area", Area.self),
           .field("session", Session.self),
           .field("eventVolunteer", EventVolunteer.self),
@@ -53,6 +58,11 @@ extension AssemblyOpsAPI {
         ] }
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
+        var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
+        var respondedAt: AssemblyOpsAPI.DateTime? { __data["respondedAt"] }
+        var declineReason: String? { __data["declineReason"] }
+        var acceptedDeadline: AssemblyOpsAPI.DateTime? { __data["acceptedDeadline"] }
+        var forceAssigned: Bool { __data["forceAssigned"] }
         var area: Area { __data["area"] }
         var session: Session { __data["session"] }
         var eventVolunteer: EventVolunteer { __data["eventVolunteer"] }

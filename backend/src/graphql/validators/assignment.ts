@@ -32,6 +32,7 @@ export const createAssignmentSchema = z.object({
   volunteerId: z.string().min(1, 'Volunteer ID is required'),
   postId: z.string().min(1, 'Post ID is required'),
   sessionId: z.string().min(1, 'Session ID is required'),
+  shiftId: z.string().min(1).nullish().transform((v: string | null | undefined) => v || null),
 });
 
 export const createAssignmentsSchema = z.object({
@@ -60,6 +61,7 @@ export const forceAssignmentSchema = z.object({
   volunteerId: z.string().min(1, 'Volunteer ID is required'),
   postId: z.string().min(1, 'Post ID is required'),
   sessionId: z.string().min(1, 'Session ID is required'),
+  shiftId: z.string().min(1).nullish().transform((v: string | null | undefined) => v || null),
   isCaptain: z.boolean().optional().default(false),
 });
 

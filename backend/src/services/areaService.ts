@@ -38,15 +38,20 @@ import {
   updateAreaSchema,
   setAreaCaptainSchema,
   removeAreaCaptainSchema,
+  acceptAreaCaptainSchema,
+  declineAreaCaptainSchema,
   type CreateAreaInput,
   type UpdateAreaInput,
   type SetAreaCaptainInput,
   type RemoveAreaCaptainInput,
+  type AcceptAreaCaptainInput,
+  type DeclineAreaCaptainInput,
 } from '../graphql/validators/area.js';
 import {
   NotFoundError,
   ValidationError,
   ConflictError,
+  AuthorizationError,
 } from '../utils/errors.js';
 
 export class AreaService {
@@ -281,6 +286,11 @@ export class AreaService {
 
     if (!volunteer) throw new NotFoundError('EventVolunteer');
 
+    const forceAssigned = result.data.forceAssigned ?? false;
+    const status = forceAssigned ? 'ACCEPTED' : 'PENDING';
+    const respondedAt = forceAssigned ? new Date() : null;
+    const acceptedDeadline = result.data.acceptedDeadline ?? null;
+
     // Upsert: replace existing captain or create new
     return this.prisma.areaCaptain.upsert({
       where: {
@@ -290,9 +300,18 @@ export class AreaService {
         areaId,
         sessionId,
         eventVolunteerId: resolvedEventVolunteerId,
+        status,
+        forceAssigned,
+        respondedAt,
+        acceptedDeadline,
       },
       update: {
         eventVolunteerId: resolvedEventVolunteerId,
+        status,
+        forceAssigned,
+        respondedAt,
+        acceptedDeadline,
+        declineReason: null,
       },
       include: {
         area: true,
@@ -380,9 +399,9 @@ export class AreaService {
   }
 
   async getMyAreaGroups(eventVolunteerId: string) {
-    // Find all areas where this volunteer is captain
+    // Find all areas where this volunteer is an accepted captain
     const captainAssignments = await this.prisma.areaCaptain.findMany({
-      where: { eventVolunteerId },
+      where: { eventVolunteerId, status: 'ACCEPTED' },
       include: {
         area: {
           include: {
@@ -427,6 +446,107 @@ export class AreaService {
     );
 
     return groups;
+  }
+
+  // MARK: - Captain Acceptance
+
+  async acceptAreaCaptain(contextVolunteerId: string, input: AcceptAreaCaptainInput) {
+    const result = acceptAreaCaptainSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+
+    const areaCaptain = await this.prisma.areaCaptain.findUnique({
+      where: { id: result.data.areaCaptainId },
+    });
+    if (!areaCaptain) {
+      throw new NotFoundError('AreaCaptain');
+    }
+
+    if (areaCaptain.eventVolunteerId !== contextVolunteerId) {
+      throw new AuthorizationError('This captain assignment does not belong to you');
+    }
+
+    if (areaCaptain.status !== 'PENDING') {
+      throw new ValidationError(`Captain assignment already ${areaCaptain.status.toLowerCase()}`);
+    }
+
+    return this.prisma.areaCaptain.update({
+      where: { id: areaCaptain.id },
+      data: {
+        status: 'ACCEPTED',
+        respondedAt: new Date(),
+      },
+      include: {
+        area: true,
+        session: true,
+        eventVolunteer: { include: { user: true } },
+      },
+    });
+  }
+
+  async declineAreaCaptain(contextVolunteerId: string, input: DeclineAreaCaptainInput) {
+    const result = declineAreaCaptainSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+
+    const areaCaptain = await this.prisma.areaCaptain.findUnique({
+      where: { id: result.data.areaCaptainId },
+    });
+    if (!areaCaptain) {
+      throw new NotFoundError('AreaCaptain');
+    }
+
+    if (areaCaptain.eventVolunteerId !== contextVolunteerId) {
+      throw new AuthorizationError('This captain assignment does not belong to you');
+    }
+
+    if (areaCaptain.status !== 'PENDING') {
+      throw new ValidationError(`Captain assignment already ${areaCaptain.status.toLowerCase()}`);
+    }
+
+    if (areaCaptain.forceAssigned) {
+      throw new ValidationError('Cannot decline a force-assigned captain assignment');
+    }
+
+    return this.prisma.areaCaptain.update({
+      where: { id: areaCaptain.id },
+      data: {
+        status: 'DECLINED',
+        respondedAt: new Date(),
+        declineReason: result.data.reason,
+      },
+      include: {
+        area: true,
+        session: true,
+        eventVolunteer: { include: { user: true } },
+      },
+    });
+  }
+
+  async getMyCaptainAssignments(eventVolunteerId: string) {
+    return this.prisma.areaCaptain.findMany({
+      where: { eventVolunteerId },
+      include: {
+        area: {
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                departmentType: true,
+                eventId: true,
+                event: { select: { id: true } },
+              },
+            },
+          },
+        },
+        session: true,
+        eventVolunteer: { include: { user: true } },
+      },
+      orderBy: [{ session: { date: 'asc' } }, { session: { startTime: 'asc' } }],
+    });
   }
 
   // MARK: - Access Control Helpers

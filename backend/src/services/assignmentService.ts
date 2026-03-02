@@ -10,7 +10,7 @@
  *   - Captain role with group check-in capabilities
  *   - Force-assign for critical posts (bypasses acceptance)
  *   - Conflict detection: One volunteer per session
- *   - Capacity enforcement: Posts have max volunteer limits
+ *   - Unlimited assignment per post (no capacity limits)
  *   - Coverage matrix: Posts × Sessions grid (ACCEPTED assignments only)
  *
  * Assignment Status Flow:
@@ -35,7 +35,7 @@
  * Business Rules:
  *   - Volunteer, Post, and Session must belong to the same Event
  *   - A volunteer can only have ONE assignment per session (no double-booking)
- *   - A post cannot exceed its capacity for any session
+ *   - No capacity limits — overseers can assign unlimited volunteers per post
  *   - Only ACCEPTED assignments count toward coverage
  *
  * Used by: ../graphql/resolvers/assignment.ts
@@ -71,7 +71,6 @@ export interface CoverageSlot {
   post: {
     id: string;
     name: string;
-    capacity: number;
     category: string | null;
     location: string | null;
     sortOrder: number;
@@ -85,6 +84,12 @@ export interface CoverageSlot {
     startTime: Date;
     endTime: Date;
   };
+  shifts: Array<{
+    id: string;
+    name: string;
+    startTime: Date;
+    endTime: Date;
+  }>;
   assignments: Array<{
     id: string;
     volunteer: {
@@ -98,10 +103,10 @@ export interface CoverageSlot {
     } | null;
     status: string;
     forceAssigned: boolean;
+    shiftId: string | null;
+    shiftName: string | null;
   }>;
   filled: number;
-  capacity: number;
-  isFilled: boolean;
 }
 
 export class AssignmentService {
@@ -126,7 +131,7 @@ export class AssignmentService {
       throw new ValidationError(result.error.issues[0].message);
     }
 
-    const { volunteerId, postId, sessionId } = result.data;
+    const { volunteerId, postId, sessionId, shiftId } = result.data;
 
     const [volunteer, post, session] = await Promise.all([
       this.prisma.eventVolunteer.findUnique({
@@ -153,34 +158,48 @@ export class AssignmentService {
       throw new ValidationError('Volunteer, post, and session must belong to the same event');
     }
 
-    // Check if volunteer already has an assignment for this session
-    const existingAssignment = await this.prisma.scheduleAssignment.findUnique({
-      where: {
-        eventVolunteerId_sessionId: {
+    // If shiftId provided, validate it belongs to the session
+    if (shiftId) {
+      const shift = await this.prisma.shift.findUnique({
+        where: { id: shiftId },
+        select: { sessionId: true, startTime: true, endTime: true },
+      });
+      if (!shift) throw new NotFoundError('Shift');
+      if (shift.sessionId !== sessionId) {
+        throw new ValidationError('Shift does not belong to the specified session');
+      }
+
+      // Check for overlapping shift assignments for this volunteer in this session
+      const volunteerShiftAssignments = await this.prisma.scheduleAssignment.findMany({
+        where: {
           eventVolunteerId: volunteerId,
           sessionId,
+          shiftId: { not: null },
         },
-      },
-    });
+        include: { shift: true },
+      });
+      for (const existing of volunteerShiftAssignments) {
+        if (existing.shift && shift.startTime < existing.shift.endTime && shift.endTime > existing.shift.startTime) {
+          throw new ConflictError(
+            `${volunteer.user.firstName} ${volunteer.user.lastName} has an overlapping shift assignment in this session`
+          );
+        }
+      }
+    } else {
+      // No shift — check for existing whole-session assignment (legacy behavior)
+      const existingNullShift = await this.prisma.scheduleAssignment.findFirst({
+        where: {
+          eventVolunteerId: volunteerId,
+          sessionId,
+          shiftId: null,
+        },
+      });
 
-    if (existingAssignment) {
-      throw new ConflictError(
-        `${volunteer.user.firstName} ${volunteer.user.lastName} is already assigned to another post for this session`
-      );
-    }
-
-    // Check if post has reached capacity for this session
-    const postAssignmentCount = await this.prisma.scheduleAssignment.count({
-      where: {
-        postId,
-        sessionId,
-      },
-    });
-
-    if (postAssignmentCount >= post.capacity) {
-      throw new ConflictError(
-        `${post.name} has reached its capacity of ${post.capacity} for this session`
-      );
+      if (existingNullShift) {
+        throw new ConflictError(
+          `${volunteer.user.firstName} ${volunteer.user.lastName} is already assigned to another post for this session`
+        );
+      }
     }
 
     return this.prisma.scheduleAssignment.create({
@@ -188,11 +207,13 @@ export class AssignmentService {
         eventVolunteerId: volunteerId,
         postId,
         sessionId,
+        shiftId: shiftId || undefined,
       },
       include: {
         eventVolunteer: { include: { user: true } },
         post: { include: { department: true } },
         session: true,
+        shift: true,
         checkIn: true,
       },
     });
@@ -378,7 +399,7 @@ export class AssignmentService {
       },
       include: {
         eventVolunteer: { include: { user: true } },
-        post: { include: { department: true } },
+        post: { include: { department: { include: { event: true } }, area: true } },
         session: true,
         checkIn: true,
       },
@@ -452,10 +473,13 @@ export class AssignmentService {
       return [];
     }
 
-    // Get all ACCEPTED + PENDING assignments for these posts
+    // Get all ACCEPTED + PENDING assignments for these posts (include shift data)
+    const postIds = posts.map((p) => p.id);
+    const sessionIds = sessions.map((s) => s.id);
+
     const assignments = await this.prisma.scheduleAssignment.findMany({
       where: {
-        postId: { in: posts.map((p) => p.id) },
+        postId: { in: postIds },
         status: { in: ['ACCEPTED', 'PENDING'] },
       },
       include: {
@@ -465,8 +489,26 @@ export class AssignmentService {
         checkIn: {
           select: { id: true, checkInTime: true },
         },
+        shift: {
+          select: { id: true, name: true, startTime: true, endTime: true },
+        },
       },
     });
+
+    // Fetch all shifts for these posts+sessions in one query
+    const shifts = await this.prisma.shift.findMany({
+      where: { sessionId: { in: sessionIds }, postId: { in: postIds } },
+      orderBy: { startTime: 'asc' },
+    });
+
+    // Build per-slot shift lookup: "postId-sessionId" -> Shift[]
+    const shiftsBySlot = new Map<string, typeof shifts>();
+    for (const shift of shifts) {
+      const key = `${shift.postId}-${shift.sessionId}`;
+      const arr = shiftsBySlot.get(key) || [];
+      arr.push(shift);
+      shiftsBySlot.set(key, arr);
+    }
 
     // Build the coverage matrix
     const coverageSlots: CoverageSlot[] = [];
@@ -481,11 +523,12 @@ export class AssignmentService {
           (a) => a.status === 'ACCEPTED'
         ).length;
 
+        const slotShifts = shiftsBySlot.get(`${post.id}-${session.id}`) || [];
+
         coverageSlots.push({
           post: {
             id: post.id,
             name: post.name,
-            capacity: post.capacity,
             category: post.category,
             location: post.location,
             sortOrder: post.sortOrder,
@@ -499,6 +542,12 @@ export class AssignmentService {
             startTime: session.startTime,
             endTime: session.endTime,
           },
+          shifts: slotShifts.map((s) => ({
+            id: s.id,
+            name: s.name,
+            startTime: s.startTime,
+            endTime: s.endTime,
+          })),
           assignments: slotAssignments.map((a) => ({
             id: a.id,
             volunteer: a.eventVolunteer?.user
@@ -511,10 +560,10 @@ export class AssignmentService {
             checkIn: a.checkIn,
             status: a.status,
             forceAssigned: a.forceAssigned,
+            shiftId: a.shift?.id ?? null,
+            shiftName: a.shift?.name ?? null,
           })),
           filled: acceptedCount,
-          capacity: post.capacity,
-          isFilled: acceptedCount >= post.capacity,
         });
       }
     }
@@ -523,11 +572,11 @@ export class AssignmentService {
   }
 
   /**
-   * Get coverage gaps (unfilled slots) for a department
+   * Get coverage gaps (slots with no assignments) for a department
    */
   async getDepartmentCoverageGaps(departmentId: string): Promise<CoverageSlot[]> {
     const coverage = await this.getDepartmentCoverage(departmentId);
-    return coverage.filter((slot) => !slot.isFilled);
+    return coverage.filter((slot) => slot.filled === 0);
   }
 
   /**
@@ -644,13 +693,13 @@ export class AssignmentService {
   /**
    * Force-assign a volunteer (overseer action) - bypasses acceptance workflow
    */
-  async forceAssignment(input: ForceAssignmentInput): Promise<ScheduleAssignment> {
+  async forceAssignment(input: ForceAssignmentInput, createdByUserId?: string): Promise<ScheduleAssignment> {
     const result = forceAssignmentSchema.safeParse(input);
     if (!result.success) {
       throw new ValidationError(result.error.issues[0].message);
     }
 
-    const { volunteerId, postId, sessionId, isCaptain } = result.data;
+    const { volunteerId, postId, sessionId, shiftId, isCaptain } = result.data;
 
     // Verify eventVolunteer exists
     const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
@@ -682,10 +731,24 @@ export class AssignmentService {
       throw new NotFoundError('Session');
     }
 
-    // Check if assignment already exists
-    const existing = await this.prisma.scheduleAssignment.findUnique({
+    // If shiftId provided, validate it belongs to the session
+    if (shiftId) {
+      const shift = await this.prisma.shift.findUnique({
+        where: { id: shiftId },
+        select: { sessionId: true },
+      });
+      if (!shift) throw new NotFoundError('Shift');
+      if (shift.sessionId !== sessionId) {
+        throw new ValidationError('Shift does not belong to the specified session');
+      }
+    }
+
+    // Check if assignment already exists for this volunteer/session/shift combo
+    const existing = await this.prisma.scheduleAssignment.findFirst({
       where: {
-        eventVolunteerId_sessionId: { eventVolunteerId: volunteerId, sessionId },
+        eventVolunteerId: volunteerId,
+        sessionId,
+        shiftId: shiftId || null,
       },
     });
 
@@ -703,6 +766,7 @@ export class AssignmentService {
           eventVolunteer: { include: { user: true } },
           post: { include: { department: true } },
           session: true,
+          shift: true,
         },
       });
     }
@@ -713,15 +777,19 @@ export class AssignmentService {
         eventVolunteerId: volunteerId,
         postId,
         sessionId,
+        shiftId: shiftId || undefined,
         status: 'ACCEPTED',
         forceAssigned: true,
         isCaptain: isCaptain ?? false,
         respondedAt: new Date(),
+        ...(createdByUserId ? { createdByUserId } : {}),
       },
       include: {
         eventVolunteer: { include: { user: true } },
         post: { include: { department: true } },
         session: true,
+        shift: true,
+        createdBy: true,
       },
     });
   }
@@ -928,7 +996,9 @@ export class AssignmentService {
   async autoDeclinePastDeadline(): Promise<number> {
     const now = new Date();
 
-    // Get assignments past their deadline
+    let totalCount = 0;
+
+    // Auto-decline ScheduleAssignments past their deadline
     const pastDeadline = await this.prisma.scheduleAssignment.findMany({
       where: {
         status: 'PENDING',
@@ -936,22 +1006,41 @@ export class AssignmentService {
       },
     });
 
-    if (pastDeadline.length === 0) {
-      return 0;
+    if (pastDeadline.length > 0) {
+      const result = await this.prisma.scheduleAssignment.updateMany({
+        where: {
+          id: { in: pastDeadline.map((a) => a.id) },
+        },
+        data: {
+          status: 'AUTO_DECLINED',
+          respondedAt: now,
+        },
+      });
+      totalCount += result.count;
     }
 
-    // Update all to AUTO_DECLINED
-    const result = await this.prisma.scheduleAssignment.updateMany({
+    // Auto-decline AreaCaptain assignments past their deadline
+    const pastDeadlineCaptains = await this.prisma.areaCaptain.findMany({
       where: {
-        id: { in: pastDeadline.map((a) => a.id) },
-      },
-      data: {
-        status: 'AUTO_DECLINED',
-        respondedAt: now,
+        status: 'PENDING',
+        acceptedDeadline: { lt: now },
       },
     });
 
-    return result.count;
+    if (pastDeadlineCaptains.length > 0) {
+      const captainResult = await this.prisma.areaCaptain.updateMany({
+        where: {
+          id: { in: pastDeadlineCaptains.map((a) => a.id) },
+        },
+        data: {
+          status: 'AUTO_DECLINED',
+          respondedAt: now,
+        },
+      });
+      totalCount += captainResult.count;
+    }
+
+    return totalCount;
   }
 
   /**

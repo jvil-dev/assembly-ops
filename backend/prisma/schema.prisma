@@ -42,6 +42,8 @@ model User {
   resolvedDamageReports          AVDamageReport[]       @relation("ResolvedDamageReports")
   conductedBriefings             AVSafetyBriefing[]
   completedHazardAssessments     AVHazardAssessment[]
+  createdShifts                  Shift[]                @relation("ShiftCreator")
+  createdAssignments             ScheduleAssignment[]   @relation("AssignmentCreator")
   congregationRef        Congregation?        @relation(fields: [congregationId], references: [id])
 
   @@index([email])
@@ -267,6 +269,7 @@ model Event {
   avEquipment            AVEquipmentItem[]
   avHazardAssessments    AVHazardAssessment[]
   avSafetyBriefings      AVSafetyBriefing[]
+  lanyardCheckouts       LanyardCheckout[]
 
   @@unique([eventType, venue, startDate, language])
   @@index([joinCode])
@@ -347,6 +350,8 @@ model EventVolunteer {
   avEquipmentCheckouts           AVEquipmentCheckout[]
   avDamageReports                AVDamageReport[]
   avSafetyBriefingAttendances    AVSafetyBriefingAttendee[]
+  reminderConfirmations          ReminderConfirmation[]
+  lanyardCheckouts               LanyardCheckout[]
 
   @@unique([userId, eventId]) // One membership per user per event
   @@index([eventId])
@@ -491,7 +496,6 @@ model Post {
   name             String
   description      String?
   location         String?
-  capacity         Int                  @default(1)
   category         String?
   sortOrder        Int                  @default(0)
   departmentId     String
@@ -504,6 +508,7 @@ model Post {
   attendanceCounts    AttendanceCount[]
   incidents           SafetyIncident[]
   postSessionStatuses PostSessionStatus[]
+  shifts              Shift[]
 
   @@index([departmentId])
   @@index([areaId])
@@ -583,6 +588,7 @@ model ScheduleAssignment {
   eventVolunteerId String // FK to EventVolunteer
   postId           String
   sessionId        String
+  shiftId          String? // FK to Shift (null = whole-session assignment)
   status           AssignmentStatus @default(PENDING)
   isCaptain        Boolean          @default(false)
   respondedAt      DateTime?
@@ -591,16 +597,45 @@ model ScheduleAssignment {
   forceAssigned    Boolean          @default(false)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+  createdByUserId  String?
   checkIn          CheckIn?
   post             Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
   session          Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  shift            Shift?           @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   eventVolunteer   EventVolunteer   @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
+  createdBy        User?            @relation("AssignmentCreator", fields: [createdByUserId], references: [id])
 
-  @@unique([eventVolunteerId, sessionId])
+  @@unique([eventVolunteerId, sessionId, shiftId])
   @@index([postId])
   @@index([sessionId])
+  @@index([shiftId])
   @@index([eventVolunteerId])
   @@index([status])
+}
+
+// ─────────────────────────────────────────────
+// SHIFT (sub-session time blocks)
+// ─────────────────────────────────────────────
+
+model Shift {
+  id              String               @id @default(cuid())
+  sessionId       String
+  postId          String
+  name            String
+  startTime       DateTime             @db.Time(6)
+  endTime         DateTime             @db.Time(6)
+  createdByUserId String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  session                Session              @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  post                   Post                 @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdBy              User?                @relation("ShiftCreator", fields: [createdByUserId], references: [id])
+  assignments            ScheduleAssignment[]
+  reminderConfirmations  ReminderConfirmation[]
+
+  @@index([sessionId])
+  @@index([postId])
+  @@unique([sessionId, postId, startTime])
 }
 
 // ─────────────────────────────────────────────
@@ -626,6 +661,8 @@ model Session {
   areaCaptains           AreaCaptain[]
   walkThroughCompletions WalkThroughCompletion[]
   postSessionStatuses    PostSessionStatus[]
+  shifts                 Shift[]
+  reminderConfirmations  ReminderConfirmation[]
   avEquipmentCheckouts   AVEquipmentCheckout[]
   avDamageReports        AVDamageReport[]
   avHazardAssessments    AVHazardAssessment[]
@@ -658,18 +695,24 @@ model Area {
 }
 
 model AreaCaptain {
-  id               String         @id @default(cuid())
+  id               String           @id @default(cuid())
   areaId           String
   sessionId        String
   eventVolunteerId String
-  createdAt        DateTime       @default(now())
-  area             Area           @relation(fields: [areaId], references: [id], onDelete: Cascade)
-  session          Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  eventVolunteer   EventVolunteer @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
+  status           AssignmentStatus @default(PENDING)
+  respondedAt      DateTime?
+  declineReason    String?
+  acceptedDeadline DateTime?
+  forceAssigned    Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  area             Area             @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  session          Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  eventVolunteer   EventVolunteer   @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
 
   @@unique([areaId, sessionId])
   @@index([eventVolunteerId])
   @@index([sessionId])
+  @@index([status])
 }
 
 // ─────────────────────────────────────────────
@@ -969,6 +1012,45 @@ model AVSafetyBriefing {
   attendees     AVSafetyBriefingAttendee[]
 
   @@index([eventId])
+}
+
+// ─────────────────────────────────────────────
+// REMINDER CONFIRMATION
+// ─────────────────────────────────────────────
+// Tracks when a volunteer confirms they've read shift reminders (CO-23).
+// Uses shiftId for shift-level confirmations, sessionId as fallback for non-shift depts.
+
+model ReminderConfirmation {
+  id                 String          @id @default(cuid())
+  eventVolunteerId   String
+  shiftId            String?
+  sessionId          String?
+  confirmedAt        DateTime        @default(now())
+
+  eventVolunteer     EventVolunteer  @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
+  shift              Shift?          @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  session            Session?        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([eventVolunteerId, shiftId])
+  @@unique([eventVolunteerId, sessionId])
+  @@index([eventVolunteerId])
+}
+
+model LanyardCheckout {
+  id               String          @id @default(cuid())
+  eventVolunteerId String
+  eventId          String
+  date             DateTime        @db.Date
+  pickedUpAt       DateTime?
+  returnedAt       DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  eventVolunteer   EventVolunteer  @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
+  event            Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventVolunteerId, date])
+  @@index([eventId, date])
 }
 
 model AVSafetyBriefingAttendee {

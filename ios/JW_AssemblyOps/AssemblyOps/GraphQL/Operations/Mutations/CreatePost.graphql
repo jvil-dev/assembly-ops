@@ -4,7 +4,6 @@ mutation CreatePost($departmentId: ID!, $input: CreatePostInput!) {
         name
         description
         location
-        capacity
         category
         sortOrder
         createdAt

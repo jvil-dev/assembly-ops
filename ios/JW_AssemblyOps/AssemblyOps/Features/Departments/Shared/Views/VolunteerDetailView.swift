@@ -8,26 +8,8 @@
 // MARK: - Volunteer Detail View
 //
 // Detail screen showing complete volunteer information.
-// Uses the app's design system with warm background and floating cards.
-//
-// Parameters:
-//   - volunteer: VolunteerListItem containing all volunteer data
-//   - isEditable: Whether this volunteer can be modified (department-scoped)
-//   - onRemoved: Callback when volunteer is removed from department
-//
-// Sections:
-//   - Profile header: Avatar with initials, name, congregation, appointment
-//   - Department card: Department name with color indicator
-//   - Contact card: Phone and email details
-//   - Credentials card: Volunteer ID with copy button
-//   - Remove button (editable only): Delete volunteer from department
-//
-// Features:
-//   - Warm gradient background
-//   - Floating cards with layered shadows
-//   - Staggered entrance animations
-//   - Conditional editing based on isEditable flag
-//   - Confirmation dialog before removal
+// Sections: Profile header, Department card, Contact card,
+// Credentials card, Remove/Delete buttons (editable only).
 //
 
 import SwiftUI
@@ -104,9 +86,6 @@ struct VolunteerDetailView: View {
         withAnimation(AppTheme.entranceAnimation) {
             hasAppeared = true
         }
-        if isEditable {
-            Task { await viewModel.loadAssignments() }
-        }
     }
 
     private var removeDialogButtons: some View {
@@ -170,11 +149,6 @@ struct VolunteerDetailView: View {
             if volunteer.departmentName != nil {
                 departmentCard
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
-            }
-
-            if isEditable && !viewModel.assignments.isEmpty {
-                assignmentsCard
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.08)
             }
 
             if volunteer.phone != nil || volunteer.email != nil {
@@ -292,85 +266,7 @@ struct VolunteerDetailView: View {
             }
 
             Spacer()
-
-            // Role badge if assigned
-            if let role = volunteer.roleName {
-                Text(role)
-                    .font(AppTheme.Typography.captionBold)
-                    .foregroundStyle(departmentColor)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(departmentColor.opacity(0.1))
-                    .clipShape(Capsule())
-            }
         }
-        .cardPadding()
-        .themedCard(scheme: colorScheme)
-    }
-
-    // MARK: - Assignments Card
-
-    private var assignmentsCard: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: AppTheme.Spacing.s) {
-                Image(systemName: "calendar.badge.checkmark")
-                    .foregroundStyle(AppTheme.themeColor)
-                Text("Assignments")
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-            }
-
-            if viewModel.isLoadingAssignments {
-                HStack {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
-                }
-            } else {
-                ForEach(Array(viewModel.assignments.enumerated()), id: \.element.id) { index, assignment in
-                    if index > 0 { Divider() }
-
-                    if isAVDepartment {
-                        // AV departments: read-only row (no captain toggle)
-                        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                            Text(assignment.sessionName)
-                                .font(AppTheme.Typography.bodyMedium)
-                                .foregroundStyle(.primary)
-                            Text(assignment.postName)
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        }
-                    } else {
-                        // Non-AV departments: captain toggle
-                        Toggle(isOn: Binding(
-                            get: { assignment.isCaptain },
-                            set: { newValue in
-                                Task { await viewModel.setCaptain(assignmentId: assignment.id, isCaptain: newValue) }
-                            }
-                        )) {
-                            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                                HStack(spacing: AppTheme.Spacing.xs) {
-                                    Text(assignment.sessionName)
-                                        .font(AppTheme.Typography.bodyMedium)
-                                        .foregroundStyle(.primary)
-                                    if assignment.isCaptain {
-                                        Image(systemName: "star.fill")
-                                            .font(AppTheme.Typography.captionSmall)
-                                            .foregroundStyle(AppTheme.themeColor)
-                                    }
-                                }
-                                Text(assignment.postName)
-                                    .font(AppTheme.Typography.caption)
-                                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                            }
-                        }
-                        .tint(AppTheme.themeColor)
-                        .disabled(assignment.status == "DECLINED" || assignment.status == "AUTO_DECLINED")
-                    }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .cardPadding()
         .themedCard(scheme: colorScheme)
     }
@@ -555,10 +451,6 @@ struct VolunteerDetailView: View {
 
     // MARK: - Helpers
 
-    private var isAVDepartment: Bool {
-        ["AUDIO", "VIDEO", "STAGE"].contains(volunteer.departmentType?.uppercased() ?? "")
-    }
-
     private var departmentColor: Color {
         if let type = volunteer.departmentType {
             return DepartmentColor.color(for: type)
@@ -620,7 +512,7 @@ struct VolunteerDetailView: View {
                 departmentName: "Attendant",
                 departmentType: "ATTENDANT",
                 roleId: nil,
-                roleName: "Captain"
+                roleName: nil
             ),
             isEditable: true
         )

@@ -78,7 +78,7 @@ describe('Captain Operations', () => {
         query: `mutation($departmentId: ID!, $input: CreatePostInput!) { createPost(departmentId: $departmentId, input: $input) { id } }`,
         variables: {
           departmentId,
-          input: { name: 'Captain Post', capacity: 5 },
+          input: { name: 'Captain Post' },
         },
       });
     postId = postRes.body.data.createPost.id;

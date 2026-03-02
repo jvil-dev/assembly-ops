@@ -1,0 +1,3 @@
+mutation CaptainDeleteShift($id: ID!, $eventId: ID!) {
+  captainDeleteShift(id: $id, eventId: $eventId)
+}

@@ -47,7 +47,8 @@ struct EventTabView: View {
     @State private var isReady = false
 
     var isOverseer: Bool {
-        membership.membershipType == .overseer
+        membership.membershipType == .overseer ||
+        membership.hierarchyRole == "ASSISTANT_OVERSEER"
     }
 
     private var departmentTabLabel: String {
@@ -94,14 +95,11 @@ struct EventTabView: View {
                             .animation(.easeInOut, value: NetworkMonitor.shared.isConnected)
 
                         TabView(selection: $selectedTab) {
-                            // Tab 1: Home
-                            Group {
-                                if isOverseer {
-                                    EventHomeView(membership: membership)
-                                } else {
-                                    HomeView(switchToTab: { selectedTab = $0 })
-                                }
-                            }
+                            // Tab 1: Home (unified for both roles)
+                            EventHomeView(
+                                membership: membership,
+                                switchToTab: { selectedTab = $0 }
+                            )
                             .environmentObject(appState)
                             .tabItem {
                                 Label("tab.home".localized, systemImage: "house")
@@ -121,7 +119,7 @@ struct EventTabView: View {
                                 if isOverseer {
                                     AssignmentsView()
                                 } else {
-                                    AssignmentsListView()
+                                    AssignmentsListView(eventId: membership.eventId)
                                 }
                             }
                             .environmentObject(appState)
@@ -163,7 +161,7 @@ struct EventTabView: View {
             switch newPhase {
             case .active:
                 messageBadgeManager.startRefreshing()
-                pendingBadgeManager.startRefreshing()
+                pendingBadgeManager.startRefreshing(eventId: membership.eventId)
             case .inactive, .background:
                 messageBadgeManager.stopRefreshing()
                 pendingBadgeManager.stopRefreshing()
@@ -174,7 +172,7 @@ struct EventTabView: View {
         .onAppear {
             if scenePhase == .active {
                 messageBadgeManager.startRefreshing()
-                pendingBadgeManager.startRefreshing()
+                pendingBadgeManager.startRefreshing(eventId: membership.eventId)
             }
         }
     }
@@ -190,11 +188,11 @@ struct EventTabView: View {
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(tabTintColor)
                         .frame(width: 32, height: 32)
                         .background(
                             Circle()
-                                .fill(AppTheme.themeColor.opacity(colorScheme == .dark ? 0.2 : 0.1))
+                                .fill(tabTintColor.opacity(colorScheme == .dark ? 0.2 : 0.1))
                         )
                 }
                 .accessibilityLabel("eventTab.back".localized)
@@ -225,7 +223,7 @@ struct EventTabView: View {
     // MARK: - Context Setup
 
     private func setupContext() async {
-        if membership.membershipType == .overseer {
+        if membership.membershipType == .overseer || membership.hierarchyRole == "ASSISTANT_OVERSEER" {
             EventSessionState.shared.loadForEvent(membership)
         } else {
             appState.currentEventId = membership.eventId
@@ -268,7 +266,8 @@ struct EventTabView: View {
             departmentType: "ATTENDANT",
             departmentAccessCode: "ABC123",
             eventVolunteerId: nil,
-            volunteerId: nil
+            volunteerId: nil,
+            hierarchyRole: nil
         )
     )
     .environmentObject(AppState.shared)

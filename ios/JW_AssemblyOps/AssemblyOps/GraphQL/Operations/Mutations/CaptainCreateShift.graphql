@@ -1,0 +1,21 @@
+mutation CaptainCreateShift($input: CaptainCreateShiftInput!) {
+  captainCreateShift(input: $input) {
+    id
+    name
+    startTime
+    endTime
+    session {
+      id
+      name
+    }
+    post {
+      id
+      name
+    }
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+  }
+}

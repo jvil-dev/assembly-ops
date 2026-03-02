@@ -13,7 +13,7 @@
  * Mutations:
  *   - createPost(departmentId, input): Create single post in a department
  *   - createPosts(input): Bulk create multiple posts
- *   - updatePost(id, input): Update post details (name, description, location, capacity)
+ *   - updatePost(id, input): Update post details (name, description, location)
  *   - deletePost(id): Remove a post
  *
  * Field Resolvers:
@@ -25,18 +25,41 @@
  */
 import { Context } from '../context.js';
 import { PostService } from '../../services/postService.js';
-import { requireAdmin, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireEventAccess, requireDeptAccess, tryRequireAdmin } from '../guards/auth.js';
 import { Post } from '@prisma/client';
 import { CreatePostInput, CreatePostsInput, UpdatePostInput } from '../validators/post.js';
+
+/**
+ * Check overseer OR assistant overseer access for a department.
+ * Tries requireAdmin + requireEventAccess first, falls back to requireDeptAccess.
+ */
+async function requirePostDeptAccess(context: Context, departmentId: string) {
+  if (tryRequireAdmin(context)) {
+    const department = await context.prisma.department.findUnique({
+      where: { id: departmentId },
+      select: { eventId: true },
+    });
+    if (department) {
+      await requireEventAccess(context, department.eventId);
+      return;
+    }
+  }
+  await requireDeptAccess(context, departmentId);
+}
 
 const postResolvers = {
   Query: {
     post: async (_parent: unknown, { id }: { id: string }, context: Context) => {
-      requireAdmin(context);
       const postService = new PostService(context.prisma);
 
-      // Verify access
-      await postService.verifyPostAccess(id, context.user!.id);
+      // Get post's department to check access
+      const post = await context.prisma.post.findUnique({
+        where: { id },
+        select: { departmentId: true },
+      });
+      if (post) {
+        await requirePostDeptAccess(context, post.departmentId);
+      }
 
       return postService.getPost(id);
     },
@@ -46,17 +69,7 @@ const postResolvers = {
       { departmentId }: { departmentId: string },
       context: Context
     ) => {
-      requireAdmin(context);
-
-      // Get department's eventId for access check
-      const department = await context.prisma.department.findUnique({
-        where: { id: departmentId },
-        select: { eventId: true },
-      });
-
-      if (department) {
-        await requireEventAccess(context, department.eventId);
-      }
+      await requirePostDeptAccess(context, departmentId);
 
       const postService = new PostService(context.prisma);
       return postService.getDepartmentPosts(departmentId);
@@ -77,17 +90,7 @@ const postResolvers = {
       { departmentId, input }: { departmentId: string; input: CreatePostInput },
       context: Context
     ) => {
-      requireAdmin(context);
-
-      // Get department's eventId for access check
-      const department = await context.prisma.department.findUnique({
-        where: { id: departmentId },
-        select: { eventId: true },
-      });
-
-      if (department) {
-        await requireEventAccess(context, department.eventId);
-      }
+      await requirePostDeptAccess(context, departmentId);
 
       const postService = new PostService(context.prisma);
       return postService.createPost(departmentId, input);
@@ -98,17 +101,7 @@ const postResolvers = {
       { input }: { input: CreatePostsInput },
       context: Context
     ) => {
-      requireAdmin(context);
-
-      // Get department's eventId for access check
-      const department = await context.prisma.department.findUnique({
-        where: { id: input.departmentId },
-        select: { eventId: true },
-      });
-
-      if (department) {
-        await requireEventAccess(context, department.eventId);
-      }
+      await requirePostDeptAccess(context, input.departmentId);
 
       const postService = new PostService(context.prisma);
       return postService.createPosts(input);
@@ -119,20 +112,28 @@ const postResolvers = {
       { id, input }: { id: string; input: UpdatePostInput },
       context: Context
     ) => {
-      requireAdmin(context);
+      const post = await context.prisma.post.findUnique({
+        where: { id },
+        select: { departmentId: true },
+      });
+      if (post) {
+        await requirePostDeptAccess(context, post.departmentId);
+      }
 
       const postService = new PostService(context.prisma);
-      await postService.verifyPostAccess(id, context.user!.id);
-
       return postService.updatePost(id, input);
     },
 
     deletePost: async (_parent: unknown, { id }: { id: string }, context: Context) => {
-      requireAdmin(context);
+      const post = await context.prisma.post.findUnique({
+        where: { id },
+        select: { departmentId: true },
+      });
+      if (post) {
+        await requirePostDeptAccess(context, post.departmentId);
+      }
 
       const postService = new PostService(context.prisma);
-      await postService.verifyPostAccess(id, context.user!.id);
-
       return postService.deletePost(id);
     },
   },

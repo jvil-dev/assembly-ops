@@ -197,7 +197,6 @@
 "post.name" = "Post Name";
 "post.description" = "Description";
 "post.location" = "Location";
-"post.capacity" = "Capacity";
 "post.category" = "Category (e.g., Seating, Doors)";
 "post.single" = "Single";
 "post.bulkAdd" = "Bulk Add";
@@ -241,9 +240,72 @@
 "area.delete" = "Delete Area";
 "area.deleteConfirm" = "Delete Area";
 "area.deleteWarning" = "This will delete the area and all its posts. Assignments to these posts will also be removed.";
+"area.deletePostConfirm" = "Delete Post";
+"area.deletePostWarning" = "Are you sure you want to delete \"%@\"? All assignments for this post will also be removed.";
 
 // MARK: - Attendant Department
 "attendant.dashboard.title" = "Attendant Department";
+"attendant.dashboard.volunteers" = "Volunteers";
+"attendant.dashboard.volunteersDesc" = "Manage department volunteers";
+"attendant.dashboard.settings" = "Settings";
+"attendant.dashboard.settingsDesc" = "Department configuration";
+"attendant.dashboard.shifts" = "Shift Management";
+"attendant.dashboard.shiftsDesc" = "Create and manage session shifts";
+
+// Shifts
+"shift.management.title" = "Shift Management";
+"shift.session" = "Session";
+"shift.list.title" = "Shifts";
+"shift.count" = "shifts";
+"shift.create" = "Create Shift";
+"shift.edit" = "Edit Shift";
+"shift.update" = "Update Shift";
+"shift.details" = "Shift Details";
+"shift.name" = "Shift Name";
+"shift.namePlaceholder" = "e.g., Exterior Shift 1";
+"shift.times" = "Shift Times";
+"shift.startTime" = "Start Time";
+"shift.endTime" = "End Time";
+"shift.timeError" = "End time must be after start time";
+"shift.empty" = "No shifts yet";
+"shift.empty.hint" = "Tap + to create shifts for this session";
+"shift.noSession" = "Select a session to manage shifts";
+"shift.post" = "Post";
+"shift.noPosts" = "No posts available";
+
+// Slot Detail — Shifts & Assignments
+"slot.shifts.title" = "Shifts & Assignments";
+"slot.shifts.wholeSession" = "Whole Session";
+"slot.shifts.createHint" = "Add shifts to break this session into time blocks";
+"slot.shifts.noAssignments" = "No volunteers assigned";
+"slot.shifts.count" = "%d shifts";
+"slot.shifts.assignToShift" = "Assign to Shift";
+"slot.volunteers" = "Volunteers";
+"slot.addVolunteer" = "Assign Volunteer";
+"slot.forceAssigned" = "Force Assigned";
+
+// Captain Scheduling
+"captain.scheduling.title" = "Scheduling";
+"captain.scheduling.desc" = "Manage shifts and volunteer assignments";
+"captain.scheduling.createHint" = "Tap + to create shifts for this session";
+"captain.scheduling.addVolunteer" = "Add Volunteer";
+"captain.scheduling.selectVolunteer" = "Select Volunteer";
+"captain.scheduling.searchVolunteers" = "Search volunteers";
+"captain.scheduling.assign" = "Assign";
+"captain.scheduling.noVolunteers" = "No Volunteers";
+"captain.scheduling.noVolunteersHint" = "No volunteers are available in your department";
+
+// Captain Attendance
+"captain.attendance.title" = "Attendance Counts";
+"captain.attendance.desc" = "View attendance counts for your area";
+"captain.attendance.empty" = "No Counts Yet";
+"captain.attendance.emptyDesc" = "Attendance counts for posts in your area will appear here once submitted.";
+
+// Attendance Reminder
+"attendance.reminder.title" = "Submit Count";
+"attendance.reminder.message" = "Submit attendance count for %@ before %@ ends";
+"attendance.reminder.messageNoPost" = "Submit attendance count before %@ ends";
+"attendance.reminder.submit" = "Submit";
 
 // Attendant Posts
 "attendant.posts.title" = "My Posts";
@@ -699,6 +761,7 @@
 "eventsHub.browse" = "Browse Events";
 "eventsHub.role.eventOverseer" = "Event Overseer";
 "eventsHub.role.deptOverseer" = "%@ Overseer";
+"eventsHub.role.asstOverseer" = "%@ Asst. Overseer";
 "eventsHub.role.volunteer" = "Volunteer";
 "eventsHub.status.active" = "Active Now";
 "eventsHub.loading" = "Loading event...";
@@ -772,6 +835,13 @@
 "volunteerDiscovery.joining" = "Joining...";
 "volunteerDiscovery.joinSuccess.title" = "Welcome!";
 "volunteerDiscovery.joinSuccess.message" = "You've been added to the department. Return to My Events to get started.";
+
+// Department Selection (Join Request)
+"discovery.selectDepartment" = "SELECT A DEPARTMENT";
+"discovery.submitRequest" = "Submit Request";
+"discovery.notePlaceholder" = "Add a note (optional)";
+"discovery.noDepartments" = "No departments available yet.";
+"discovery.cancel" = "Cancel";
 
 // Department Settings
 "deptSettings.title" = "Department Settings";
@@ -1335,6 +1405,88 @@
 "stage.makeup.guideline2" = "Use only clean, disposable applicators — never share between participants";
 "stage.makeup.guideline3" = "Apply conservatively — natural appearance only";
 "stage.makeup.notes" = "Notes";
+
+// MARK: - Shift Reminders
+"reminder.title" = "Pre-Shift Reminder";
+"reminder.header" = "Mandatory Reminders";
+"reminder.subtitle" = "Please read all reminders before starting your shift: %@";
+"reminder.scrollHint" = "Scroll to the bottom to enable the confirmation button";
+"reminder.listTitle" = "CO-23 Attendant Reminders";
+"reminder.confirm" = "I've Read and Understood";
+"reminder.item1.title" = "Be at Your Post on Time";
+"reminder.item1.detail" = "Arrive at your assigned position no later than 15 minutes before doors open. Remain at your post until relieved or replaced. Wear your attendant badge at all times.";
+"reminder.item2.title" = "Verify Exits and Evacuation Routes";
+"reminder.item2.detail" = "Before the session, check that all exit doors in your area are unlocked and unobstructed from the inside. Know the appropriate evacuation route for your assigned section.";
+"reminder.item3.title" = "Know Key Department Locations";
+"reminder.item3.detail" = "Be familiar with how to reach First Aid, Lost & Found, the Attendant Overseer, and the Chairman's Office so you can direct attendees or report incidents quickly.";
+"reminder.item4.title" = "Carry a Flashlight";
+"reminder.item4.detail" = "Have a flashlight on your person in case of a power failure.";
+"reminder.item5.title" = "Scan for Safety Hazards";
+"reminder.item5.detail" = "Watch for building defects, objects in aisles, wet floors, faulty chairs, uneven surfaces, loose handrails, and railing gaps. Report anything you cannot correct to the attendant overseer.";
+"reminder.item6.title" = "Emergency Reporting Protocol";
+"reminder.item6.detail" = "When reporting any emergency, provide: (a) type and scope, (b) location, (c) your name, phone number, and location, and (d) any other helpful details.";
+"reminder.item7.title" = "Violent Individual Response: Avoid, Deny, Defend";
+"reminder.item7.detail" = "Avoid (move away), Deny (barricade/hide), Defend (protect yourself and others as last resort). In an active threat, anyone may call police immediately — do not wait for authorization.";
+"reminder.item8.title" = "Handle Disruptions with Kindness";
+"reminder.item8.detail" = "Approach concerns with at least two attendants. Attempt to calm agitated individuals and speak with them outside the auditorium. Escalate to the overseer if someone refuses to cooperate. Do not use force except in defense.";
+"reminder.item9.title" = "Assist the Elderly, Disabled, and Families";
+"reminder.item9.detail" = "Proactively help them find seating, navigate stairs, and use escalators/elevators safely. Treat all with dignity and respect.";
+"reminder.item10.title" = "Know Your Attendance Count Timing";
+"reminder.item10.detail" = "Be ready to count those in your assigned section at the designated times without causing unnecessary distraction. Count all adults and young children who are listening.";
+
+// MARK: - Reminder Compliance (Overseer)
+"reminder.compliance.title" = "Reminder Compliance";
+"reminder.compliance.selectShift" = "Select Shift";
+"reminder.compliance.status" = "Confirmation Status";
+"reminder.compliance.pending" = "Pending";
+"reminder.compliance.noAssignments" = "No volunteers assigned to this shift";
+"attendant.dashboard.reminders" = "Reminders";
+"attendant.dashboard.remindersDesc" = "View shift reminder compliance";
+
+// MARK: - Lanyard Tracking
+"lanyard.title" = "Lanyard Status";
+"lanyard.status.notPickedUp" = "Not Picked Up";
+"lanyard.status.pickedUp" = "Picked Up";
+"lanyard.status.returned" = "Returned";
+"lanyard.status.today" = "Today";
+"lanyard.actions" = "Actions";
+"lanyard.pickUp" = "Pick Up";
+"lanyard.return" = "Return";
+"lanyard.allDone" = "Lanyard returned for today";
+"lanyard.banner.pickUp" = "Pick up your lanyard before your shift";
+"lanyard.banner.return" = "Remember to return your lanyard after your shift";
+"lanyard.grid.title" = "Lanyard Tracking";
+"lanyard.grid.search" = "Search volunteers";
+"lanyard.grid.summary" = "Today's Summary";
+"lanyard.grid.notPickedUp" = "Not Picked Up";
+"lanyard.grid.pickedUp" = "Picked Up";
+"lanyard.grid.returned" = "Returned";
+"lanyard.grid.volunteers" = "Volunteers";
+"lanyard.grid.noVolunteers" = "No volunteers found";
+"lanyard.urgent.title" = "Lanyard Needed!";
+"lanyard.urgent.message" = "Your shift starts soon — pick up your lanyard now";
+"lanyard.urgent.alertMessage" = "Your first shift starts in less than 15 minutes. Please pick up your lanyard immediately.";
+"lanyard.urgent.goPickup" = "Pick Up";
+"lanyard.urgent.dismiss" = "OK";
+"attendant.dashboard.lanyard" = "Lanyards";
+"attendant.dashboard.lanyardDesc" = "Track lanyard pickup and return";
+
+// MARK: - Captain Assignment Acceptance
+"captain.role" = "Captain";
+"captain.assignment.pending" = "Pending Captain Roles";
+"captain.assignment.accept" = "Accept";
+"captain.assignment.decline" = "Decline";
+"captain.assignment.accepted" = "Accepted";
+"captain.assignment.declined" = "Declined";
+"captain.assignment.autoDeclined" = "Auto-Declined";
+"captain.assignment.forceAssigned" = "Force Assigned";
+"captain.assignment.forceAssign" = "Force Assign";
+"captain.assignment.forceAssignDesc" = "Skip acceptance — captain is immediately active";
+"captain.assignment.setDeadline" = "Set Response Deadline";
+"captain.assignment.deadline" = "Deadline";
+"captain.assignment.options" = "ASSIGNMENT OPTIONS";
+"captain.assignment.assign" = "Assign Captain";
+"area.assignOptions" = "Assignment Options";
 
 // MARK: - Event Tab
 "eventTab.back" = "Back";

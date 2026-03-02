@@ -41,6 +41,10 @@ import { postSessionStatusTypeDefs } from './postSessionStatus.js';
 import { facilityLocationTypeDefs } from './facilityLocation.js';
 import adminTypeDefs from './admin.js';
 import { audioVideoTypeDefs } from './audioVideo.js';
+import { shiftTypeDefs } from './shift.js';
+import { captainSchedulingTypeDefs } from './captainScheduling.js';
+import { reminderTypeDefs } from './reminder.js';
+import { lanyardTypeDefs } from './lanyard.js';
 
 const baseTypeDefs = `#graphql
   scalar DateTime
@@ -84,6 +88,10 @@ const typeDefs = [
   facilityLocationTypeDefs,
   adminTypeDefs,
   audioVideoTypeDefs,
+  shiftTypeDefs,
+  captainSchedulingTypeDefs,
+  reminderTypeDefs,
+  lanyardTypeDefs,
 ];
 
 export default typeDefs;

@@ -31,7 +31,8 @@ struct GenericDepartmentView: View {
     @State private var hasAppeared = false
 
     private var isOverseer: Bool {
-        membership.membershipType == .overseer
+        membership.membershipType == .overseer ||
+        membership.hierarchyRole == "ASSISTANT_OVERSEER"
     }
 
     private var departmentColor: Color {
@@ -304,7 +305,8 @@ struct GenericDepartmentView: View {
             departmentId: "d1", departmentName: "Parking",
             departmentType: "PARKING",
             departmentAccessCode: "PKG456",
-            eventVolunteerId: nil, volunteerId: nil
+            eventVolunteerId: nil, volunteerId: nil,
+            hierarchyRole: nil
         )
     )
     .environmentObject(AppState.shared)

@@ -11,7 +11,8 @@
 // Used by CoverageMatrixViewModel and AssignmentsView for scheduling display.
 //
 // Types:
-//   - CoverageSlot: Post + Session combination with assignment data
+//   - CoverageShift: Shift time block within a slot
+//   - CoverageSlot: Post + Session combination with shift and assignment data
 //   - CoverageAssignment: Single volunteer assignment within a slot
 //   - CoverageVolunteer: Lightweight volunteer info for coverage display
 //   - CoverageCheckInInfo: Check-in timestamp data
@@ -26,16 +27,37 @@
 
 import Foundation
 
+struct CoverageShift: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let startTime: String
+    let endTime: String
+
+    var timeRangeDisplay: String {
+        let start = Self.formatTimeField(startTime)
+        let end = Self.formatTimeField(endTime)
+        return "\(start) – \(end)"
+    }
+
+    private static func formatTimeField(_ timeString: String) -> String {
+        if let date = DateUtils.parseISO8601(timeString) {
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            return formatter.string(from: date)
+        }
+        return timeString
+    }
+}
+
 struct CoverageSlot: Identifiable, Equatable {
     var id: String { "\(postId)-\(sessionId)" }
     let postId: String
     let sessionId: String
     let postName: String
     let sessionName: String
+    let shifts: [CoverageShift]
     let assignments: [CoverageAssignment]
     let filled: Int
-    let capacity: Int
-    let isFilled: Bool
 
     var pendingCount: Int { assignments.filter { $0.isPending }.count }
 
@@ -44,10 +66,9 @@ struct CoverageSlot: Identifiable, Equatable {
         lhs.sessionId == rhs.sessionId &&
         lhs.postName == rhs.postName &&
         lhs.sessionName == rhs.sessionName &&
+        lhs.shifts == rhs.shifts &&
         lhs.assignments == rhs.assignments &&
-        lhs.filled == rhs.filled &&
-        lhs.capacity == rhs.capacity &&
-        lhs.isFilled == rhs.isFilled
+        lhs.filled == rhs.filled
     }
 }
 
@@ -57,6 +78,8 @@ struct CoverageAssignment: Identifiable, Equatable {
     let checkIn: CoverageCheckInInfo?
     let status: AssignmentStatus
     let forceAssigned: Bool
+    let shiftId: String?
+    let shiftName: String?
 
     var isPending: Bool { status == .pending }
     var isAccepted: Bool { status == .accepted }
@@ -76,7 +99,6 @@ struct CoverageCheckInInfo: Equatable {
 struct CoveragePost: Identifiable {
     let id: String
     let name: String
-    let capacity: Int
     let category: String?
     let location: String?
     let sortOrder: Int

@@ -198,7 +198,8 @@ struct DepartmentTypeInfo: Hashable {
                 circuit: "CA-5", state: "CA",
                 venue: "Assembly Hall", address: "123 Main St",
                 startDate: "2026-03-15", endDate: "2026-03-16",
-                theme: nil, isPublic: true, volunteerCount: 30
+                theme: nil, isPublic: true, volunteerCount: 30,
+                departments: []
             )
         )
     }

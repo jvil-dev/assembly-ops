@@ -415,3 +415,21 @@ enum ConcernItem: Identifiable {
         }
     }
 }
+
+// MARK: - Reminder Confirmation Item
+
+struct ReminderConfirmationItem: Identifiable {
+    let id: String
+    let eventVolunteerId: String
+    let shiftId: String?
+    let sessionId: String?
+    let confirmedAt: String
+
+    init(from data: AssemblyOpsAPI.MyReminderConfirmationsQuery.Data.MyReminderConfirmation) {
+        self.id = data.id
+        self.eventVolunteerId = data.eventVolunteerId
+        self.shiftId = data.shiftId
+        self.sessionId = data.sessionId
+        self.confirmedAt = data.confirmedAt
+    }
+}

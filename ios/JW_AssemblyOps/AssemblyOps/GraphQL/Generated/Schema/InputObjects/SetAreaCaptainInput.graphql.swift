@@ -14,12 +14,16 @@ extension AssemblyOpsAPI {
     init(
       areaId: ID,
       sessionId: ID,
-      eventVolunteerId: ID
+      eventVolunteerId: ID,
+      forceAssigned: GraphQLNullable<Bool> = nil,
+      acceptedDeadline: GraphQLNullable<DateTime> = nil
     ) {
       __data = InputDict([
         "areaId": areaId,
         "sessionId": sessionId,
-        "eventVolunteerId": eventVolunteerId
+        "eventVolunteerId": eventVolunteerId,
+        "forceAssigned": forceAssigned,
+        "acceptedDeadline": acceptedDeadline
       ])
     }
 
@@ -36,6 +40,16 @@ extension AssemblyOpsAPI {
     var eventVolunteerId: ID {
       get { __data["eventVolunteerId"] }
       set { __data["eventVolunteerId"] = newValue }
+    }
+
+    var forceAssigned: GraphQLNullable<Bool> {
+      get { __data["forceAssigned"] }
+      set { __data["forceAssigned"] = newValue }
+    }
+
+    var acceptedDeadline: GraphQLNullable<DateTime> {
+      get { __data["acceptedDeadline"] }
+      set { __data["acceptedDeadline"] = newValue }
     }
   }
 

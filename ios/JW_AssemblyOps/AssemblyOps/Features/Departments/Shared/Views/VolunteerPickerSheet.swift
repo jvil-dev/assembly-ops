@@ -13,13 +13,12 @@
 // Parameters:
 //   - postId: Target post for the assignment
 //   - sessionId: Target session for the assignment
-//   - remainingCapacity: Max number of volunteers that can be selected
 //   - onComplete: Callback with success status after assignment
 //
 // Features:
 //   - Warm gradient background
 //   - Floating volunteer cards with avatar
-//   - Multi-select with capacity limit
+//   - Multi-select
 //   - Search volunteers by name
 //   - Entrance animations
 //   - Default: creates PENDING assignments via BulkCreateAssignmentsMutation
@@ -32,13 +31,20 @@ import Apollo
 struct VolunteerPickerSheet: View {
     let postId: String
     let sessionId: String
-    var remainingCapacity: Int = 1
+    var shiftId: String? = nil
     let onComplete: (Bool) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = VolunteersViewModel()
     @ObservedObject private var sessionState = EventSessionState.shared
+
+    private var deptColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
+    }
 
     @State private var searchText = ""
     @State private var isAssigning = false
@@ -58,7 +64,6 @@ struct VolunteerPickerSheet: View {
     }
 
     private var selectionCount: Int { selectedIds.count }
-    private var atCapacity: Bool { selectionCount >= remainingCapacity }
 
     var body: some View {
         NavigationStack {
@@ -145,30 +150,24 @@ struct VolunteerPickerSheet: View {
                 forceAssignCard
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                if remainingCapacity > 1 {
-                    capacityInfoCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.01)
-                }
-
                 ForEach(Array(filteredVolunteers.enumerated()), id: \.element.id) { index, volunteer in
                     let isSelected = selectedIds.contains(volunteer.id)
                     Button {
                         HapticManager.shared.lightTap()
                         if isSelected {
                             selectedIds.remove(volunteer.id)
-                        } else if !atCapacity {
+                        } else {
                             selectedIds.insert(volunteer.id)
                         }
                     } label: {
                         VolunteerPickerRow(
                             volunteer: volunteer,
                             isSelected: isSelected,
-                            isDisabled: !isSelected && atCapacity,
-                            colorScheme: colorScheme
+                            colorScheme: colorScheme,
+                            accentColor: deptColor
                         )
                     }
                     .buttonStyle(.plain)
-                    .disabled(!isSelected && atCapacity)
                     .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index + 1) * 0.02)
                 }
             }
@@ -176,34 +175,6 @@ struct VolunteerPickerSheet: View {
             .padding(.top, AppTheme.Spacing.s)
             .padding(.bottom, AppTheme.Spacing.xxl)
         }
-    }
-
-    // MARK: - Capacity Info Card
-
-    private var capacityInfoCard: some View {
-        HStack(spacing: AppTheme.Spacing.s) {
-            Image(systemName: "info.circle.fill")
-                .foregroundStyle(AppTheme.themeColor)
-
-            Text("\(selectionCount)/\(remainingCapacity) slots selected")
-                .font(AppTheme.Typography.subheadline)
-                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-
-            Spacer()
-
-            if selectionCount > 0 {
-                Button {
-                    HapticManager.shared.lightTap()
-                    selectedIds.removeAll()
-                } label: {
-                    Text("Clear")
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.themeColor)
-                }
-            }
-        }
-        .cardPadding()
-        .themedCard(scheme: colorScheme)
     }
 
     // MARK: - Force Assign Card
@@ -219,7 +190,7 @@ struct VolunteerPickerSheet: View {
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             }
         }
-        .tint(AppTheme.themeColor)
+        .tint(deptColor)
         .onChange(of: forceAssign) {
             HapticManager.shared.lightTap()
         }
@@ -239,6 +210,8 @@ struct VolunteerPickerSheet: View {
         do {
             var success = false
 
+            let shiftIdParam: GraphQLNullable<String> = shiftId.map { .some($0) } ?? .none
+
             if forceAssign {
                 // Force assign requires sequential calls (no bulk endpoint)
                 var allSucceeded = true
@@ -246,7 +219,8 @@ struct VolunteerPickerSheet: View {
                     let input = AssemblyOpsAPI.ForceAssignmentInput(
                         volunteerId: volunteerId,
                         postId: postId,
-                        sessionId: sessionId
+                        sessionId: sessionId,
+                        shiftId: shiftIdParam
                     )
                     let result = try await NetworkClient.shared.apollo.perform(
                         mutation: AssemblyOpsAPI.ForceAssignmentMutation(input: input)
@@ -266,7 +240,8 @@ struct VolunteerPickerSheet: View {
                 let input = AssemblyOpsAPI.CreateAssignmentInput(
                     volunteerId: volunteerId,
                     postId: postId,
-                    sessionId: sessionId
+                    sessionId: sessionId,
+                    shiftId: shiftIdParam
                 )
                 let result = try await NetworkClient.shared.apollo.perform(
                     mutation: AssemblyOpsAPI.CreateAssignmentMutation(input: input)
@@ -282,7 +257,8 @@ struct VolunteerPickerSheet: View {
                     AssemblyOpsAPI.CreateAssignmentInput(
                         volunteerId: volunteerId,
                         postId: postId,
-                        sessionId: sessionId
+                        sessionId: sessionId,
+                        shiftId: shiftIdParam
                     )
                 }
                 let result = try await NetworkClient.shared.apollo.perform(
@@ -314,22 +290,21 @@ struct VolunteerPickerSheet: View {
 private struct VolunteerPickerRow: View {
     let volunteer: VolunteerListItem
     let isSelected: Bool
-    var isDisabled: Bool = false
     let colorScheme: ColorScheme
+    var accentColor: Color = AppTheme.themeColor
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.m) {
             // Avatar with initials
             ZStack {
                 Circle()
-                    .fill(isSelected ? AppTheme.themeColor.opacity(0.15) : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    .fill(isSelected ? accentColor.opacity(0.15) : AppTheme.cardBackgroundSecondary(for: colorScheme))
                     .frame(width: 44, height: 44)
 
                 Text(volunteer.initials)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(isSelected ? AppTheme.themeColor : AppTheme.textSecondary(for: colorScheme))
+                    .foregroundStyle(isSelected ? accentColor : AppTheme.textSecondary(for: colorScheme))
             }
-            .opacity(isDisabled ? 0.4 : 1)
 
             // Volunteer info
             VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
@@ -341,25 +316,23 @@ private struct VolunteerPickerRow: View {
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             }
-            .opacity(isDisabled ? 0.4 : 1)
 
             Spacer()
 
             // Selection indicator
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 22))
-                .foregroundStyle(isSelected ? AppTheme.themeColor : AppTheme.textTertiary(for: colorScheme))
-                .opacity(isDisabled ? 0.3 : 1)
+                .foregroundStyle(isSelected ? accentColor : AppTheme.textTertiary(for: colorScheme))
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
         .overlay(
             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
-                .strokeBorder(isSelected ? AppTheme.themeColor.opacity(0.3) : Color.clear, lineWidth: 2)
+                .strokeBorder(isSelected ? accentColor.opacity(0.3) : Color.clear, lineWidth: 2)
         )
     }
 }
 
 #Preview {
-    VolunteerPickerSheet(postId: "1", sessionId: "1", remainingCapacity: 3) { _ in }
+    VolunteerPickerSheet(postId: "1", sessionId: "1") { _ in }
 }

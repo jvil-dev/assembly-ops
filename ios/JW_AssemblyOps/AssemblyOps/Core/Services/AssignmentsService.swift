@@ -31,14 +31,18 @@ final class AssignmentsService {
     
     private init() {}
     
-    func fetchAssignments() async throws -> [Assignment] {
+    func fetchAssignments(eventId: String) async throws -> [Assignment] {
         try await withCheckedThrowingContinuation { continuation in
             NetworkClient.shared.apollo.fetch(
-                query: AssemblyOpsAPI.MyAssignmentsQuery(),
+                query: AssemblyOpsAPI.MyAssignmentsQuery(eventId: eventId),
                 cachePolicy: .fetchIgnoringCacheData
             ) { result in
                 switch result {
                 case .success(let graphQLResult):
+                    if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: NetworkError.graphQL(errors.first?.message ?? "Failed to fetch assignments"))
+                        return
+                    }
                     if let data = graphQLResult.data?.myAssignments {
                         let assignments = data.compactMap { Assignment(from: $0) }
                         continuation.resume(returning: assignments)
@@ -104,6 +108,81 @@ final class AssignmentsService {
 
                     continuation.resume(returning: ())
 
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    // MARK: - Captain Area Assignments
+
+    /// Fetch captain area assignments for a specific event
+    func fetchCaptainAssignments(eventId: String) async throws -> [CaptainAssignment] {
+        try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.MyCaptainAssignmentsQuery(eventId: eventId),
+                cachePolicy: .fetchIgnoringCacheData
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: NetworkError.graphQL(errors.first?.message ?? "Failed to fetch captain assignments"))
+                        return
+                    }
+                    if let data = graphQLResult.data?.myCaptainAssignments {
+                        let assignments = data.compactMap { CaptainAssignment(from: $0) }
+                        continuation.resume(returning: assignments)
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    /// Accept a captain area assignment
+    func acceptAreaCaptain(areaCaptainId: String) async throws {
+        let input = AssemblyOpsAPI.AcceptAreaCaptainInput(areaCaptainId: areaCaptainId)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.AcceptAreaCaptainMutation(input: input)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: NetworkError.graphQL(errors.first?.message ?? "Failed to accept captain assignment"))
+                        return
+                    }
+                    continuation.resume(returning: ())
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    /// Decline a captain area assignment with optional reason
+    func declineAreaCaptain(areaCaptainId: String, reason: String?) async throws {
+        let input = AssemblyOpsAPI.DeclineAreaCaptainInput(
+            areaCaptainId: areaCaptainId,
+            reason: reason.map { .some($0) } ?? .null
+        )
+
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.DeclineAreaCaptainMutation(input: input)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: NetworkError.graphQL(errors.first?.message ?? "Failed to decline captain assignment"))
+                        return
+                    }
+                    continuation.resume(returning: ())
                 case .failure(let error):
                     continuation.resume(throwing: error)
                 }

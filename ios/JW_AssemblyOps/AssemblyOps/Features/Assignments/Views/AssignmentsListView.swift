@@ -36,46 +36,46 @@
 import SwiftUI
 
 struct AssignmentsListView: View {
+    var eventId: String? = nil
     @StateObject private var viewModel = AssignmentsViewModel()
     @Environment(\.colorScheme) var colorScheme
     @State private var showTodayOnly = false
     @State private var hasAppeared = false
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if viewModel.isLoading && !viewModel.hasLoaded {
-                    LoadingView(message: "Loading schedule...")
-                } else if let error = viewModel.errorMessage, viewModel.isEmpty {
-                    ErrorView(message: error) {
-                        viewModel.refresh()
-                    }
-                } else if viewModel.isEmpty {
-                    ScrollView {
-                        EmptyAssignmentsView()
-                    }
-                    .refreshable {
-                        viewModel.refresh()
-                    }
-                } else {
-                    assignmentsList
+        Group {
+            if viewModel.isLoading && !viewModel.hasLoaded {
+                LoadingView(message: "Loading schedule...")
+            } else if let error = viewModel.errorMessage, viewModel.isEmpty {
+                ErrorView(message: error) {
+                    viewModel.refresh()
                 }
+            } else if viewModel.isEmpty {
+                ScrollView {
+                    EmptyAssignmentsView()
+                }
+                .refreshable {
+                    viewModel.refresh()
+                }
+            } else {
+                assignmentsList
             }
-            .navigationTitle("schedule.title".localized)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    filterButton
-                }
+        }
+        .themedBackground(scheme: colorScheme)
+        .navigationTitle("schedule.title".localized)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                filterButton
             }
-            .task {
-                if !viewModel.hasLoaded {
-                    viewModel.fetchAssignments()
-                }
+        }
+        .task {
+            if !viewModel.hasLoaded {
+                viewModel.fetchAssignments(eventId: eventId)
             }
-            .onAppear {
-                withAnimation(AppTheme.entranceAnimation) {
-                    hasAppeared = true
-                }
+        }
+        .onAppear {
+            withAnimation(AppTheme.entranceAnimation) {
+                hasAppeared = true
             }
         }
     }
@@ -115,6 +115,25 @@ struct AssignmentsListView: View {
 
             ScrollView {
                 LazyVStack(spacing: AppTheme.Spacing.l, pinnedViews: .sectionHeaders) {
+                    // Pending Captain Roles section
+                    if !viewModel.pendingCaptainAssignments.isEmpty {
+                        Section {
+                            ForEach(Array(viewModel.pendingCaptainAssignments.enumerated()), id: \.element.id) { index, captainAssignment in
+                                NavigationLink {
+                                    CaptainAssignmentDetailView(assignment: captainAssignment) {
+                                        viewModel.refresh()
+                                    }
+                                } label: {
+                                    CaptainAssignmentCardView(assignment: captainAssignment)
+                                }
+                                .buttonStyle(.plain)
+                                .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index) * 0.03)
+                            }
+                        } header: {
+                            captainSectionHeader
+                        }
+                    }
+
                     if showTodayOnly && filteredGroupedAssignments.isEmpty {
                         noTodayAssignmentsView
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
@@ -122,7 +141,12 @@ struct AssignmentsListView: View {
                         ForEach(Array(filteredGroupedAssignments.enumerated()), id: \.element.date) { groupIndex, group in
                             Section {
                                 ForEach(Array(group.assignments.enumerated()), id: \.element.id) { index, assignment in
-                                    NavigationLink(value: assignment) {
+                                    NavigationLink {
+                                        AssignmentDetailView(assignment: assignment)
+                                            .onDisappear {
+                                                viewModel.refresh()
+                                            }
+                                    } label: {
                                         AssignmentCardView(assignment: assignment)
                                     }
                                     .buttonStyle(.plain)
@@ -145,11 +169,6 @@ struct AssignmentsListView: View {
                 viewModel.refresh()
             }
             .themedBackground(scheme: colorScheme)
-            .navigationDestination(for: Assignment.self) { assignment in
-                AssignmentDetailView(assignment: assignment) {
-                    viewModel.refresh()
-                }
-            }
         }
     }
 
@@ -195,6 +214,23 @@ struct AssignmentsListView: View {
             .tint(AppTheme.themeColor)
         }
         .padding(.top, 60)
+    }
+
+    // MARK: - Captain Section Header
+
+    private var captainSectionHeader: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "star.fill")
+                .font(.system(size: 10))
+                .foregroundStyle(AppTheme.StatusColors.warning)
+            Text("captain.assignment.pending".localized)
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+            Spacer()
+        }
+        .padding(.vertical, AppTheme.Spacing.s)
+        .padding(.horizontal, AppTheme.Spacing.xs)
+        .background(.ultraThinMaterial)
     }
 
     // MARK: - Date Headers

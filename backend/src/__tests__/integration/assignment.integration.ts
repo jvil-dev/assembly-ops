@@ -8,7 +8,7 @@
  *   1. Register a test overseer
  *   2. Create a test event via Prisma
  *   3. Purchase a department (Attendant)
- *   4. Create a post (East Lobby, capacity 2)
+ *   4. Create a post (East Lobby)
  *   5. Create a session (Saturday Morning)
  *   6. Create a volunteer (John Smith)
  *
@@ -106,7 +106,7 @@ describe('Assignment Operations', () => {
         `,
         variables: {
           departmentId,
-          input: { name: 'East Lobby', capacity: 2 },
+          input: { name: 'East Lobby' },
         },
       });
 
@@ -216,7 +216,7 @@ describe('Assignment Operations', () => {
           `,
           variables: {
             departmentId,
-            input: { name: 'West Lobby', capacity: 2 },
+            input: { name: 'West Lobby' },
           },
         });
 
@@ -255,11 +255,9 @@ describe('Assignment Operations', () => {
           query: `
             query Coverage($departmentId: ID!) {
               departmentCoverage(departmentId: $departmentId) {
-                post { id name capacity }
+                post { id name }
                 session { id name }
                 filled
-                capacity
-                isFilled
                 assignments {
                   id
                   volunteer { firstName lastName }
@@ -293,8 +291,6 @@ describe('Assignment Operations', () => {
                 post { name }
                 session { name }
                 filled
-                capacity
-                isFilled
               }
             }
           `,
@@ -303,12 +299,6 @@ describe('Assignment Operations', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-
-      // All gaps should have isFilled = false
-      const gaps = response.body.data.departmentCoverageGaps;
-      gaps.forEach((gap: { isFilled: boolean }) => {
-        expect(gap.isFilled).toBe(false);
-      });
     });
   });
 

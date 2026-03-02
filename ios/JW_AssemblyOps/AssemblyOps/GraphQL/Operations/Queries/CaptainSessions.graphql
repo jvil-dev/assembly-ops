@@ -1,0 +1,10 @@
+query CaptainSessions($eventId: ID!) {
+  captainSessions(eventId: $eventId) {
+    id
+    name
+    date
+    startTime
+    endTime
+    assignmentCount
+  }
+}

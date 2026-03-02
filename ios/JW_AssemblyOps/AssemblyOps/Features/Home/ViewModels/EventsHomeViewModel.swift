@@ -45,6 +45,8 @@ struct EventMembershipItem: Identifiable, Hashable {
     // Volunteer-specific
     let eventVolunteerId: String?
     let volunteerId: String?
+    // Hierarchy role (e.g. ASSISTANT_OVERSEER for volunteers with elevated access)
+    let hierarchyRole: String?
 
     enum MembershipType: String, Hashable {
         case overseer
@@ -74,6 +76,9 @@ struct EventMembershipItem: Identifiable, Hashable {
             }
             return "eventsHub.role.overseer".localized
         case .volunteer:
+            if hierarchyRole == "ASSISTANT_OVERSEER", let dept = departmentName {
+                return String(format: "eventsHub.role.asstOverseer".localized, dept)
+            }
             return "eventsHub.role.volunteer".localized
         }
     }
@@ -162,7 +167,7 @@ final class EventsHomeViewModel: ObservableObject {
     // MARK: - Private
 
     private func processItems(_ raw: [AssemblyOpsAPI.MyAllEventsQuery.Data.MyAllEvent]) {
-        let items: [EventMembershipItem] = raw.compactMap { e in
+        let items: [EventMembershipItem] = raw.compactMap { e -> EventMembershipItem? in
             guard
                 let start = DateUtils.parseISO8601(e.event.startDate),
                 let end = DateUtils.parseISO8601(e.event.endDate)
@@ -193,7 +198,8 @@ final class EventsHomeViewModel: ObservableObject {
                 departmentType: e.departmentType?.rawValue,
                 departmentAccessCode: e.departmentAccessCode,
                 eventVolunteerId: e.eventVolunteerId,
-                volunteerId: nil
+                volunteerId: nil,
+                hierarchyRole: e.hierarchyRole?.rawValue
             )
         }
 

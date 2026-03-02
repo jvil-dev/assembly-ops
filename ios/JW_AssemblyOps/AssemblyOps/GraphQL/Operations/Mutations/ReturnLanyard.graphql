@@ -1,0 +1,10 @@
+mutation ReturnLanyard($eventId: ID!) {
+  returnLanyard(eventId: $eventId) {
+    id
+    eventVolunteerId
+    date
+    pickedUpAt
+    returnedAt
+    volunteerName
+  }
+}

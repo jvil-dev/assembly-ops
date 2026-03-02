@@ -198,7 +198,6 @@
 "post.name" = "Nombre del Puesto";
 "post.description" = "Descripción";
 "post.location" = "Ubicación";
-"post.capacity" = "Capacidad";
 "post.category" = "Categoría (ej., Asientos, Puertas)";
 "post.single" = "Individual";
 "post.bulkAdd" = "Crear en Lote";
@@ -242,9 +241,72 @@
 "area.delete" = "Eliminar Área";
 "area.deleteConfirm" = "Eliminar Área";
 "area.deleteWarning" = "Esto eliminará el área y todos sus puestos. Las asignaciones a estos puestos también se eliminarán.";
+"area.deletePostConfirm" = "Eliminar Puesto";
+"area.deletePostWarning" = "¿Estás seguro de que deseas eliminar \"%@\"? Todas las asignaciones para este puesto también se eliminarán.";
 
 // MARK: - Departamento de Acomodadores
 "attendant.dashboard.title" = "Departamento de Acomodadores";
+"attendant.dashboard.volunteers" = "Voluntarios";
+"attendant.dashboard.volunteersDesc" = "Administrar voluntarios del departamento";
+"attendant.dashboard.settings" = "Configuración";
+"attendant.dashboard.settingsDesc" = "Configuración del departamento";
+"attendant.dashboard.shifts" = "Gestión de Turnos";
+"attendant.dashboard.shiftsDesc" = "Crear y administrar turnos por sesión";
+
+// Turnos
+"shift.management.title" = "Gestión de Turnos";
+"shift.session" = "Sesión";
+"shift.list.title" = "Turnos";
+"shift.count" = "turnos";
+"shift.create" = "Crear Turno";
+"shift.edit" = "Editar Turno";
+"shift.update" = "Actualizar Turno";
+"shift.details" = "Detalles del Turno";
+"shift.name" = "Nombre del Turno";
+"shift.namePlaceholder" = "ej., Turno Exterior 1";
+"shift.times" = "Horarios del Turno";
+"shift.startTime" = "Hora de Inicio";
+"shift.endTime" = "Hora de Fin";
+"shift.timeError" = "La hora de fin debe ser posterior a la de inicio";
+"shift.empty" = "Sin turnos aún";
+"shift.empty.hint" = "Toca + para crear turnos para esta sesión";
+"shift.noSession" = "Selecciona una sesión para administrar turnos";
+"shift.post" = "Puesto";
+"shift.noPosts" = "No hay puestos disponibles";
+
+// Detalle de Asignación — Turnos y Asignaciones
+"slot.shifts.title" = "Turnos y Asignaciones";
+"slot.shifts.wholeSession" = "Sesión Completa";
+"slot.shifts.createHint" = "Agrega turnos para dividir esta sesión en bloques de tiempo";
+"slot.shifts.noAssignments" = "Sin voluntarios asignados";
+"slot.shifts.count" = "%d turnos";
+"slot.shifts.assignToShift" = "Asignar a Turno";
+"slot.volunteers" = "Voluntarios";
+"slot.addVolunteer" = "Asignar Voluntario";
+"slot.forceAssigned" = "Asignación Forzada";
+
+// Programación de Capitán
+"captain.scheduling.title" = "Programación";
+"captain.scheduling.desc" = "Administrar turnos y asignaciones de voluntarios";
+"captain.scheduling.createHint" = "Toca + para crear turnos para esta sesión";
+"captain.scheduling.addVolunteer" = "Agregar Voluntario";
+"captain.scheduling.selectVolunteer" = "Seleccionar Voluntario";
+"captain.scheduling.searchVolunteers" = "Buscar voluntarios";
+"captain.scheduling.assign" = "Asignar";
+"captain.scheduling.noVolunteers" = "Sin Voluntarios";
+"captain.scheduling.noVolunteersHint" = "No hay voluntarios disponibles en tu departamento";
+
+// Asistencia del Capitán
+"captain.attendance.title" = "Conteos de Asistencia";
+"captain.attendance.desc" = "Ver conteos de asistencia de tu área";
+"captain.attendance.empty" = "Sin Conteos";
+"captain.attendance.emptyDesc" = "Los conteos de asistencia de los puestos en tu área aparecerán aquí una vez enviados.";
+
+// Recordatorio de Asistencia
+"attendance.reminder.title" = "Enviar Conteo";
+"attendance.reminder.message" = "Envía el conteo de asistencia de %@ antes de que termine %@";
+"attendance.reminder.messageNoPost" = "Envía el conteo de asistencia antes de que termine %@";
+"attendance.reminder.submit" = "Enviar";
 
 // Puestos de Acomodadores
 "attendant.posts.title" = "Mis Puestos";
@@ -700,6 +762,7 @@
 "eventsHub.browse" = "Buscar Eventos";
 "eventsHub.role.eventOverseer" = "Superintendente de Evento";
 "eventsHub.role.deptOverseer" = "Superintendente de %@";
+"eventsHub.role.asstOverseer" = "Asist. Superintendente de %@";
 "eventsHub.role.volunteer" = "Voluntario";
 "eventsHub.status.active" = "Activo Ahora";
 "eventsHub.loading" = "Cargando evento...";
@@ -773,6 +836,13 @@
 "volunteerDiscovery.joining" = "Uniéndose...";
 "volunteerDiscovery.joinSuccess.title" = "¡Bienvenido!";
 "volunteerDiscovery.joinSuccess.message" = "Has sido agregado al departamento. Regresa a Mis Eventos para comenzar.";
+
+// Department Selection (Join Request)
+"discovery.selectDepartment" = "SELECCIONA UN DEPARTAMENTO";
+"discovery.submitRequest" = "Enviar solicitud";
+"discovery.notePlaceholder" = "Añadir una nota (opcional)";
+"discovery.noDepartments" = "No hay departamentos disponibles aún.";
+"discovery.cancel" = "Cancelar";
 
 // Department Settings
 "deptSettings.title" = "Configuración del Departamento";
@@ -1336,6 +1406,88 @@
 "stage.makeup.guideline2" = "Usar solo aplicadores limpios y desechables — nunca compartir entre participantes";
 "stage.makeup.guideline3" = "Aplicar de forma conservadora — apariencia natural únicamente";
 "stage.makeup.notes" = "Notas";
+
+// MARK: - Shift Reminders
+"reminder.title" = "Recordatorio Pre-Turno";
+"reminder.header" = "Recordatorios Obligatorios";
+"reminder.subtitle" = "Por favor lea todos los recordatorios antes de iniciar su turno: %@";
+"reminder.scrollHint" = "Desplácese hasta el final para habilitar el botón de confirmación";
+"reminder.listTitle" = "Recordatorios CO-23 para Acomodadores";
+"reminder.confirm" = "He Leído y Comprendido";
+"reminder.item1.title" = "Llegue a Su Puesto a Tiempo";
+"reminder.item1.detail" = "Preséntese en su posición asignada al menos 15 minutos antes de que se abran las puertas. Permanezca en su puesto hasta ser relevado. Use su identificación de acomodador en todo momento.";
+"reminder.item2.title" = "Verifique Salidas y Rutas de Evacuación";
+"reminder.item2.detail" = "Antes de la sesión, compruebe que todas las puertas de salida de su área estén desbloqueadas y sin obstrucciones por dentro. Conozca la ruta de evacuación apropiada para su sección.";
+"reminder.item3.title" = "Conozca la Ubicación de Departamentos Clave";
+"reminder.item3.detail" = "Familiarícese con cómo llegar a Primeros Auxilios, Objetos Perdidos, el Superintendente de Acomodadores y la Oficina del Presidente para poder dirigir a los asistentes o reportar incidentes rápidamente.";
+"reminder.item4.title" = "Lleve una Linterna";
+"reminder.item4.detail" = "Tenga una linterna consigo en caso de falla eléctrica.";
+"reminder.item5.title" = "Inspeccione los Peligros de Seguridad";
+"reminder.item5.detail" = "Busque defectos del edificio, objetos en pasillos, pisos mojados, sillas defectuosas, superficies irregulares, barandillas sueltas y espacios en las barandillas. Reporte lo que no pueda corregir al superintendente.";
+"reminder.item6.title" = "Protocolo de Reporte de Emergencias";
+"reminder.item6.detail" = "Al reportar cualquier emergencia, proporcione: (a) tipo y alcance, (b) ubicación, (c) su nombre, teléfono y ubicación, y (d) cualquier otro detalle útil.";
+"reminder.item7.title" = "Respuesta ante Individuo Violento: Evitar, Negar, Defender";
+"reminder.item7.detail" = "Evitar (alejarse), Negar (barricarse/esconderse), Defender (protegerse a sí mismo y a otros como último recurso). Ante una amenaza activa, cualquiera puede llamar a la policía inmediatamente — no espere autorización.";
+"reminder.item8.title" = "Maneje las Interrupciones con Bondad";
+"reminder.item8.detail" = "Acérquese a los problemas con al menos dos acomodadores. Intente calmar a las personas agitadas y hable con ellas fuera del auditorio. Escale al superintendente si alguien se niega a cooperar. No use la fuerza excepto en defensa.";
+"reminder.item9.title" = "Ayude a Ancianos, Discapacitados y Familias";
+"reminder.item9.detail" = "Ayúdelos proactivamente a encontrar asientos, navegar escaleras y usar escaleras mecánicas/elevadores de forma segura. Trate a todos con dignidad y respeto.";
+"reminder.item10.title" = "Conozca el Horario de Conteo de Asistencia";
+"reminder.item10.detail" = "Esté listo para contar a los presentes en su sección asignada en los horarios designados sin causar distracciones innecesarias. Cuente a todos los adultos y niños pequeños que estén escuchando.";
+
+// MARK: - Reminder Compliance (Overseer)
+"reminder.compliance.title" = "Cumplimiento de Recordatorios";
+"reminder.compliance.selectShift" = "Seleccionar Turno";
+"reminder.compliance.status" = "Estado de Confirmación";
+"reminder.compliance.pending" = "Pendiente";
+"reminder.compliance.noAssignments" = "No hay voluntarios asignados a este turno";
+"attendant.dashboard.reminders" = "Recordatorios";
+"attendant.dashboard.remindersDesc" = "Ver cumplimiento de recordatorios de turno";
+
+// MARK: - Lanyard Tracking
+"lanyard.title" = "Estado del Gafete";
+"lanyard.status.notPickedUp" = "No Recogido";
+"lanyard.status.pickedUp" = "Recogido";
+"lanyard.status.returned" = "Devuelto";
+"lanyard.status.today" = "Hoy";
+"lanyard.actions" = "Acciones";
+"lanyard.pickUp" = "Recoger";
+"lanyard.return" = "Devolver";
+"lanyard.allDone" = "Gafete devuelto por hoy";
+"lanyard.banner.pickUp" = "Recoja su gafete antes de su turno";
+"lanyard.banner.return" = "Recuerde devolver su gafete después de su turno";
+"lanyard.grid.title" = "Control de Gafetes";
+"lanyard.grid.search" = "Buscar voluntarios";
+"lanyard.grid.summary" = "Resumen de Hoy";
+"lanyard.grid.notPickedUp" = "No Recogido";
+"lanyard.grid.pickedUp" = "Recogido";
+"lanyard.grid.returned" = "Devuelto";
+"lanyard.grid.volunteers" = "Voluntarios";
+"lanyard.grid.noVolunteers" = "No se encontraron voluntarios";
+"lanyard.urgent.title" = "¡Necesitas tu gafete!";
+"lanyard.urgent.message" = "Tu turno comienza pronto — recoge tu gafete ahora";
+"lanyard.urgent.alertMessage" = "Tu primer turno comienza en menos de 15 minutos. Por favor recoge tu gafete de inmediato.";
+"lanyard.urgent.goPickup" = "Recoger";
+"lanyard.urgent.dismiss" = "OK";
+"attendant.dashboard.lanyard" = "Gafetes";
+"attendant.dashboard.lanyardDesc" = "Controlar recogida y devolución de gafetes";
+
+// MARK: - Captain Assignment Acceptance
+"captain.role" = "Capitán";
+"captain.assignment.pending" = "Roles de Capitán Pendientes";
+"captain.assignment.accept" = "Aceptar";
+"captain.assignment.decline" = "Rechazar";
+"captain.assignment.accepted" = "Aceptado";
+"captain.assignment.declined" = "Rechazado";
+"captain.assignment.autoDeclined" = "Rechazado Automáticamente";
+"captain.assignment.forceAssigned" = "Asignación Forzada";
+"captain.assignment.forceAssign" = "Asignación Forzada";
+"captain.assignment.forceAssignDesc" = "Omitir aceptación — el capitán queda activo de inmediato";
+"captain.assignment.setDeadline" = "Establecer Fecha Límite";
+"captain.assignment.deadline" = "Fecha Límite";
+"captain.assignment.options" = "OPCIONES DE ASIGNACIÓN";
+"captain.assignment.assign" = "Asignar Capitán";
+"area.assignOptions" = "Opciones de Asignación";
 
 // MARK: - Event Tab
 "eventTab.back" = "Atrás";

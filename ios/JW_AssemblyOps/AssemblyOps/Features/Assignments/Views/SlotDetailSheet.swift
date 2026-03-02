@@ -13,7 +13,7 @@
 // Sections:
 //   - Slot Info: Post name, session name, coverage count
 //   - Assigned Volunteers: List of current assignments with check-in status
-//   - Add Volunteer: Styled button (if not at capacity)
+//   - Add Volunteer: Styled button
 //
 // Features:
 //   - Warm gradient background
@@ -32,15 +32,17 @@ struct SlotDetailSheet: View {
     @ObservedObject private var sessionState = EventSessionState.shared
 
     @State private var showVolunteerPicker = false
+    @State private var assigningForShiftId: String? // nil = whole session
     @State private var hasAppeared = false
     @State private var assignmentToRemove: CoverageAssignment?
     @State private var showRemoveConfirmation = false
+    @State private var showCreateShift = false
+    @StateObject private var shiftViewModel = ShiftManagementViewModel()
 
     // Editable post fields
     @State private var editName = ""
     @State private var editLocation = ""
     @State private var editCategory = ""
-    @State private var editCapacity = 1
     @State private var isSaving = false
     @State private var hasEdits = false
 
@@ -49,6 +51,13 @@ struct SlotDetailSheet: View {
     @State private var selectedSub: String? = nil
     @State private var customSub: String = ""
     @State private var showCustomSub = false
+
+    private var deptColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
+    }
 
     private var isAttendantDept: Bool {
         sessionState.selectedDepartment?.departmentType == "ATTENDANT"
@@ -91,12 +100,19 @@ struct SlotDetailSheet: View {
                     slotInfoCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                    // Assigned volunteers card
-                    volunteersCard
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+                    if isAttendantDept {
+                        // Shifts & Assignments card (attendant only)
+                        shiftsAndAssignmentsCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
 
-                    // Add volunteer button
-                    if slot.filled < slot.capacity {
+                        // Create Shift button
+                        createShiftButton
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+                    } else {
+                        // Flat volunteer list for non-attendant departments
+                        volunteersCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+
                         addVolunteerButton
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
                     }
@@ -135,7 +151,7 @@ struct SlotDetailSheet: View {
                 VolunteerPickerSheet(
                     postId: slot.postId,
                     sessionId: slot.sessionId,
-                    remainingCapacity: max(slot.capacity - slot.filled, 1)
+                    shiftId: assigningForShiftId
                 ) { success in
                     if success {
                         Task {
@@ -143,6 +159,17 @@ struct SlotDetailSheet: View {
                         }
                     }
                 }
+            }
+            .sheet(isPresented: $showCreateShift, onDismiss: {
+                Task { await viewModel.loadCoverage() }
+            }) {
+                CreateShiftSheet(
+                    sessionId: slot.sessionId,
+                    postId: slot.postId,
+                    sessionName: slot.sessionName,
+                    postName: slot.postName,
+                    viewModel: shiftViewModel
+                )
             }
             .alert("Remove Assignment", isPresented: $showRemoveConfirmation) {
                 Button("Cancel", role: .cancel) {
@@ -163,7 +190,6 @@ struct SlotDetailSheet: View {
                     editName = post.name
                     editLocation = post.location ?? ""
                     editCategory = post.category ?? ""
-                    editCapacity = post.capacity
 
                     // Pre-select Attendant category picker from stored string
                     if isAttendantDept, let category = post.category, !category.isEmpty {
@@ -199,7 +225,7 @@ struct SlotDetailSheet: View {
             // Header
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "tablecells")
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(deptColor)
                 Text("Post Details")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -229,37 +255,6 @@ struct SlotDetailSheet: View {
                     editableField(label: "Category", text: $editCategory, placeholder: "Optional")
                 }
 
-                // Capacity: hidden for Audio/Video, Stage shows only for Makeup (max 4), others get full picker
-                if isStageDept && isMakeupPost {
-                    VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                        Text("Capacity")
-                            .font(AppTheme.Typography.caption)
-                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        Picker("Capacity", selection: $editCapacity) {
-                            ForEach(1...4, id: \.self) { value in
-                                Text("\(value)").tag(value)
-                            }
-                        }
-                        .pickerStyle(.wheel)
-                        .frame(height: 100)
-                        .onChange(of: editCapacity) { checkForEdits() }
-                    }
-                } else if !isAttendantDept && !isAVDept {
-                    VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                        Text("Capacity")
-                            .font(AppTheme.Typography.caption)
-                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        Picker("Capacity", selection: $editCapacity) {
-                            ForEach(1...20, id: \.self) { value in
-                                Text("\(value)").tag(value)
-                            }
-                        }
-                        .pickerStyle(.wheel)
-                        .frame(height: 100)
-                        .onChange(of: editCapacity) { checkForEdits() }
-                    }
-                }
-
                 // Session (read-only)
                 infoRow(label: "Session", value: slot.sessionName)
 
@@ -270,9 +265,9 @@ struct SlotDetailSheet: View {
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                     Spacer()
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(slot.filled)/\(slot.capacity)")
+                        Text("\(slot.filled) assigned")
                             .font(AppTheme.Typography.headline)
-                            .foregroundStyle(slot.isFilled ? AppTheme.StatusColors.accepted : AppTheme.StatusColors.warning)
+                            .foregroundStyle(slot.filled > 0 ? AppTheme.StatusColors.accepted : AppTheme.StatusColors.warning)
                         if slot.pendingCount > 0 {
                             Text("(\(slot.pendingCount) pending)")
                                 .font(AppTheme.Typography.captionSmall)
@@ -286,15 +281,34 @@ struct SlotDetailSheet: View {
         .themedCard(scheme: colorScheme)
     }
 
-    // MARK: - Volunteers Card
+    // MARK: - Shifts & Assignments Card
 
-    private var volunteersCard: some View {
+    /// Groups assignments by shiftId. Returns array of (shift, assignments) tuples.
+    private var assignmentsByShift: [(shift: CoverageShift?, assignments: [CoverageAssignment])] {
+        var groups: [(shift: CoverageShift?, assignments: [CoverageAssignment])] = []
+
+        // Group by defined shifts
+        for shift in slot.shifts {
+            let shiftAssignments = slot.assignments.filter { $0.shiftId == shift.id }
+            groups.append((shift: shift, assignments: shiftAssignments))
+        }
+
+        // "Whole Session" group — assignments with no shiftId
+        let unshifted = slot.assignments.filter { $0.shiftId == nil }
+        if !unshifted.isEmpty || slot.shifts.isEmpty {
+            groups.append((shift: nil, assignments: unshifted))
+        }
+
+        return groups
+    }
+
+    private var shiftsAndAssignmentsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Header
             HStack(spacing: AppTheme.Spacing.s) {
-                Image(systemName: "person.3.fill")
-                    .foregroundStyle(AppTheme.themeColor)
-                Text("Assigned Volunteers")
+                Image(systemName: "clock.arrow.2.circlepath")
+                    .foregroundStyle(deptColor)
+                Text("slot.shifts.title".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
 
@@ -312,78 +326,229 @@ struct SlotDetailSheet: View {
 
                 Text("\(slot.assignments.count)")
                     .font(AppTheme.Typography.captionBold)
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(deptColor)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(AppTheme.themeColor.opacity(0.1))
+                    .background(deptColor.opacity(0.1))
                     .clipShape(Capsule())
             }
 
-            if slot.assignments.isEmpty {
+            // Shift sections
+            ForEach(Array(assignmentsByShift.enumerated()), id: \.offset) { _, group in
+                shiftSection(shift: group.shift, assignments: group.assignments)
+            }
+
+            // Hint when no shifts exist
+            if slot.shifts.isEmpty && slot.assignments.isEmpty {
                 HStack {
                     Spacer()
                     VStack(spacing: AppTheme.Spacing.s) {
                         Image(systemName: "person.slash")
                             .font(.system(size: 28))
                             .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                        Text("No volunteers assigned")
+                        Text("slot.shifts.noAssignments".localized)
                             .font(AppTheme.Typography.subheadline)
                             .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        Text("slot.shifts.createHint".localized)
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                            .multilineTextAlignment(.center)
                     }
                     Spacer()
                 }
                 .padding(.vertical, AppTheme.Spacing.l)
-            } else {
-                List {
-                    ForEach(slot.assignments) { assignment in
-                        AssignmentRow(assignment: assignment, colorScheme: colorScheme)
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(
-                                top: AppTheme.Spacing.s / 2,
-                                leading: 0,
-                                bottom: AppTheme.Spacing.s / 2,
-                                trailing: 0
-                            ))
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button(role: .destructive) {
-                                    assignmentToRemove = assignment
-                                    showRemoveConfirmation = true
-                                } label: {
-                                    Label("Remove", systemImage: "trash")
-                                }
-                                .tint(.red)
-                            }
-                    }
-                }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .frame(minHeight: CGFloat(slot.assignments.count) * 60)
-                .scrollDisabled(true)
             }
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
     }
 
-    // MARK: - Add Volunteer Button
+    // MARK: - Shift Section
 
-    private var addVolunteerButton: some View {
+    private func shiftSection(shift: CoverageShift?, assignments: [CoverageAssignment]) -> some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+            // Shift header
+            HStack {
+                if let shift = shift {
+                    Image(systemName: "clock")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(deptColor)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(shift.name)
+                            .font(AppTheme.Typography.bodyMedium)
+                            .foregroundStyle(.primary)
+                        Text(shift.timeRangeDisplay)
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    }
+                } else {
+                    Image(systemName: "calendar")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    Text("slot.shifts.wholeSession".localized)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(.primary)
+                }
+
+                Spacer()
+
+                if shift != nil {
+                    // Delete shift
+                    Button {
+                        if let shift = shift {
+                            Task { await deleteShift(shift) }
+                        }
+                    } label: {
+                        Image(systemName: "trash.circle")
+                            .font(.title3)
+                            .foregroundStyle(AppTheme.StatusColors.declined)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            // Assignments for this shift
+            if assignments.isEmpty {
+                Text("slot.shifts.noAssignments".localized)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    .padding(.leading, AppTheme.Spacing.l)
+            } else {
+                ForEach(assignments) { assignment in
+                    AssignmentRow(assignment: assignment, colorScheme: colorScheme, accentColor: deptColor)
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                assignmentToRemove = assignment
+                                showRemoveConfirmation = true
+                            } label: {
+                                Label("Remove", systemImage: "trash")
+                            }
+                        }
+                }
+            }
+
+            // Per-shift assign button
+            Button {
+                assigningForShiftId = shift?.id
+                showVolunteerPicker = true
+            } label: {
+                HStack(spacing: AppTheme.Spacing.xs) {
+                    Image(systemName: "plus.circle")
+                        .font(AppTheme.Typography.caption)
+                    Text("slot.shifts.assignToShift".localized)
+                        .font(AppTheme.Typography.caption)
+                }
+                .foregroundStyle(deptColor)
+                .padding(.leading, AppTheme.Spacing.l)
+            }
+            .buttonStyle(.plain)
+
+            Divider()
+                .padding(.top, AppTheme.Spacing.xs)
+        }
+    }
+
+    // MARK: - Create Shift Button
+
+    private var createShiftButton: some View {
         Button {
-            showVolunteerPicker = true
+            showCreateShift = true
+            HapticManager.shared.lightTap()
         } label: {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "plus.circle.fill")
-                Text("Assign Volunteer")
+                Text("shift.create".localized)
             }
             .font(AppTheme.Typography.headline)
             .frame(maxWidth: .infinity)
             .frame(height: AppTheme.ButtonHeight.medium)
             .foregroundStyle(.white)
-            .background(AppTheme.themeColor)
+            .background(deptColor)
             .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Volunteers Card (non-attendant departments)
+
+    private var volunteersCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack {
+                SectionHeaderLabel(icon: "person.3", title: "slot.volunteers".localized)
+                Spacer()
+                if !slot.assignments.isEmpty {
+                    Text("\(slot.filled) assigned")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
+            }
+
+            if slot.assignments.isEmpty {
+                Text("slot.shifts.noAssignments".localized)
+                    .font(AppTheme.Typography.body)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppTheme.Spacing.l)
+            } else {
+                ForEach(slot.assignments, id: \.id) { assignment in
+                    HStack(spacing: AppTheme.Spacing.s) {
+                        Image(systemName: assignment.checkIn != nil ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(assignment.checkIn != nil ? AppTheme.StatusColors.accepted : AppTheme.textTertiary(for: colorScheme))
+                        Text("\(assignment.volunteer.firstName) \(assignment.volunteer.lastName)")
+                            .font(AppTheme.Typography.body)
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        if assignment.forceAssigned {
+                            Text("slot.forceAssigned".localized)
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                        }
+                    }
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            assignmentToRemove = assignment
+                            showRemoveConfirmation = true
+                        } label: {
+                            Label("common.remove".localized, systemImage: "trash")
+                        }
+                    }
+                }
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    private var addVolunteerButton: some View {
+        Button {
+            assigningForShiftId = nil
+            showVolunteerPicker = true
+            HapticManager.shared.lightTap()
+        } label: {
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "plus.circle.fill")
+                Text("slot.addVolunteer".localized)
+            }
+            .font(AppTheme.Typography.headline)
+            .frame(maxWidth: .infinity)
+            .frame(height: AppTheme.ButtonHeight.medium)
+            .foregroundStyle(.white)
+            .background(deptColor)
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Shift Actions
+
+    private func deleteShift(_ shift: CoverageShift) async {
+        do {
+            try await AttendantService.shared.deleteShift(id: shift.id)
+            HapticManager.shared.success()
+            await viewModel.loadCoverage()
+        } catch {
+            HapticManager.shared.error()
+        }
     }
 
     // MARK: - Attendant Category Picker
@@ -602,7 +767,6 @@ struct SlotDetailSheet: View {
         hasEdits = editName != post.name
             || editLocation != (post.location ?? "")
             || editCategory != (post.category ?? "")
-            || editCapacity != post.capacity
     }
 
     private func savePostEdits() async {
@@ -617,7 +781,6 @@ struct SlotDetailSheet: View {
         let input = AssemblyOpsAPI.UpdatePostInput(
             name: trimmedName != post.name ? .some(trimmedName) : .none,
             location: trimmedLocation != (post.location ?? "") ? (trimmedLocation.isEmpty ? .null : .some(trimmedLocation)) : .none,
-            capacity: editCapacity != post.capacity ? .some(editCapacity) : .none,
             category: trimmedCategory != (post.category ?? "") ? (trimmedCategory.isEmpty ? .null : .some(trimmedCategory)) : .none
         )
 
@@ -639,7 +802,8 @@ struct SlotDetailSheet: View {
         initialSlot: CoverageSlot(
             postId: "p1", sessionId: "s1",
             postName: "Main Entrance", sessionName: "Morning Session",
-            assignments: [], filled: 2, capacity: 4, isFilled: false
+            shifts: [],
+            assignments: [], filled: 2
         ),
         viewModel: CoverageMatrixViewModel()
     )
@@ -650,6 +814,7 @@ struct SlotDetailSheet: View {
 struct AssignmentRow: View {
     let assignment: CoverageAssignment
     let colorScheme: ColorScheme
+    var accentColor: Color = AppTheme.themeColor
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.m) {
@@ -713,6 +878,6 @@ struct AssignmentRow: View {
     private var avatarColor: Color {
         if assignment.checkIn != nil { return AppTheme.StatusColors.accepted }
         if assignment.isPending { return AppTheme.StatusColors.pending }
-        return AppTheme.themeColor
+        return accentColor
     }
 }

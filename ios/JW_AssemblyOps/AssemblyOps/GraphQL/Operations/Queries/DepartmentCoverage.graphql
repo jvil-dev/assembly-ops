@@ -3,7 +3,6 @@ query DepartmentCoverage($departmentId: ID!) {
     post {
       id
       name
-      capacity
       category
       location
       sortOrder
@@ -14,6 +13,12 @@ query DepartmentCoverage($departmentId: ID!) {
       id
       name
       date
+      startTime
+      endTime
+    }
+    shifts {
+      id
+      name
       startTime
       endTime
     }
@@ -30,9 +35,9 @@ query DepartmentCoverage($departmentId: ID!) {
       }
       status
       forceAssigned
+      shiftId
+      shiftName
     }
     filled
-    capacity
-    isFilled
   }
 }

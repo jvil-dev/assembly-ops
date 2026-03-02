@@ -78,7 +78,6 @@ extension AreaItem {
 struct AreaPostItem: Identifiable, Equatable {
     let id: String
     let name: String
-    let capacity: Int
     let category: String?
     let sortOrder: Int
 }
@@ -87,7 +86,6 @@ extension AreaPostItem {
     init(from data: AssemblyOpsAPI.DepartmentAreasQuery.Data.DepartmentArea.Post) {
         self.id = data.id
         self.name = data.name
-        self.capacity = data.capacity
         self.category = data.category
         self.sortOrder = data.sortOrder
     }
@@ -103,6 +101,11 @@ struct AreaCaptainItem: Identifiable, Equatable {
     let eventVolunteerId: String
     let volunteerId: String
     let volunteerName: String
+    var status: AssignmentStatus
+    var forceAssigned: Bool
+    var acceptedDeadline: Date?
+    var declineReason: String?
+    var respondedAt: Date?
 }
 
 extension AreaCaptainItem {
@@ -115,6 +118,11 @@ extension AreaCaptainItem {
         self.volunteerId = data.eventVolunteer.id
         let user = data.eventVolunteer.user
         self.volunteerName = "\(user.firstName) \(user.lastName)"
+        self.status = AssignmentStatus(rawValue: data.status.rawValue) ?? .pending
+        self.forceAssigned = data.forceAssigned
+        self.acceptedDeadline = data.acceptedDeadline.flatMap { DateUtils.parseISO8601($0) }
+        self.declineReason = data.declineReason
+        self.respondedAt = data.respondedAt.flatMap { DateUtils.parseISO8601($0) }
     }
 
     init(fromSet data: AssemblyOpsAPI.SetAreaCaptainMutation.Data.SetAreaCaptain) {
@@ -126,6 +134,11 @@ extension AreaCaptainItem {
         self.volunteerId = data.eventVolunteer.id
         let user = data.eventVolunteer.user
         self.volunteerName = "\(user.firstName) \(user.lastName)"
+        self.status = AssignmentStatus(rawValue: data.status.rawValue) ?? .pending
+        self.forceAssigned = data.forceAssigned
+        self.acceptedDeadline = data.acceptedDeadline.flatMap { DateUtils.parseISO8601($0) }
+        self.declineReason = data.declineReason
+        self.respondedAt = data.respondedAt.flatMap { DateUtils.parseISO8601($0) }
     }
 }
 

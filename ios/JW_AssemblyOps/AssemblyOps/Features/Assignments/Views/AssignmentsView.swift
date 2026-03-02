@@ -119,6 +119,15 @@ struct AssignmentsView: View {
         }
     }
 
+    // MARK: - Department Color
+
+    private var deptColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
+    }
+
     // MARK: - Session Card
 
     private func sessionCard(_ session: EventSessionItem) -> some View {
@@ -126,12 +135,12 @@ struct AssignmentsView: View {
             // Session icon
             ZStack {
                 Circle()
-                    .fill(AppTheme.themeColor.opacity(0.12))
+                    .fill(deptColor.opacity(0.12))
                     .frame(width: 44, height: 44)
 
                 Image(systemName: sessionIcon(for: session.name))
                     .font(.system(size: 20))
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(deptColor)
             }
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
@@ -225,7 +234,7 @@ struct AssignmentsView: View {
                     .font(AppTheme.Typography.bodyMedium)
             }
             .buttonStyle(.bordered)
-            .tint(AppTheme.themeColor)
+            .tint(deptColor)
 
             Spacer()
         }

@@ -35,7 +35,7 @@ import { ScheduleAssignment } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { Context } from '../context.js';
 import { AssignmentService } from '../../services/assignmentService.js';
-import { requireAdmin, requireAuth, requireEventAccess, resolveUserEventVolunteer, tryRequireAdmin, requireAreaOverseer } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireEventAccess, resolveUserEventVolunteer, tryRequireAdmin, requireAreaOverseer, tryRequireDeptAccessByEvent, requireDeptAccess } from '../guards/auth.js';
 import {
   CreateAssignmentInput,
   UpdateAssignmentInput,
@@ -50,7 +50,14 @@ import {
 const assignmentResolvers = {
   Query: {
     assignment: async (_parent: unknown, { id }: { id: string }, context: Context) => {
-      requireAdmin(context);
+      requireAuth(context);
+      // Allow overseer or assistant overseer
+      if (!tryRequireAdmin(context)) {
+        const assignmentService = new AssignmentService(context.prisma);
+        const eventId = await assignmentService.getAssignmentEventId(id);
+        const access = await tryRequireDeptAccessByEvent(context, eventId);
+        if (!access) throw new GraphQLError('Department access required', { extensions: { code: 'FORBIDDEN' } });
+      }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.getAssignments(id);
     },
@@ -70,9 +77,12 @@ const assignmentResolvers = {
       },
       context: Context
     ) => {
-      requireAdmin(context);
-      if (eventId) {
+      requireAuth(context);
+      if (tryRequireAdmin(context) && eventId) {
         await requireEventAccess(context, eventId);
+      } else if (eventId) {
+        const access = await tryRequireDeptAccessByEvent(context, eventId);
+        if (!access) throw new GraphQLError('Department access required', { extensions: { code: 'FORBIDDEN' } });
       }
       const assignmentService = new AssignmentService(context.prisma);
 
@@ -110,7 +120,19 @@ const assignmentResolvers = {
       { volunteerId }: { volunteerId: string },
       context: Context
     ) => {
-      requireAdmin(context);
+      // Allow overseer or assistant overseer
+      requireAuth(context);
+      if (!tryRequireAdmin(context)) {
+        // Resolve event from volunteer, then check dept access
+        const ev = await context.prisma.eventVolunteer.findUnique({
+          where: { id: volunteerId },
+          select: { eventId: true },
+        });
+        if (ev) {
+          const access = await tryRequireDeptAccessByEvent(context, ev.eventId);
+          if (!access) throw new GraphQLError('Department access required', { extensions: { code: 'FORBIDDEN' } });
+        }
+      }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.getVolunteerAssignments(volunteerId);
     },
@@ -131,9 +153,12 @@ const assignmentResolvers = {
       { filter }: { filter?: PendingAssignmentsFilter },
       context: Context
     ) => {
-      requireAdmin(context);
-      if (filter?.eventId) {
+      requireAuth(context);
+      if (tryRequireAdmin(context) && filter?.eventId) {
         await requireEventAccess(context, filter.eventId);
+      } else if (filter?.eventId) {
+        const access = await tryRequireDeptAccessByEvent(context, filter.eventId);
+        if (!access) throw new GraphQLError('Department access required', { extensions: { code: 'FORBIDDEN' } });
       }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.getPendingAssignments(filter ?? {});
@@ -144,9 +169,12 @@ const assignmentResolvers = {
       { eventId, departmentId }: { eventId?: string; departmentId?: string },
       context: Context
     ) => {
-      requireAdmin(context);
-      if (eventId) {
+      requireAuth(context);
+      if (tryRequireAdmin(context) && eventId) {
         await requireEventAccess(context, eventId);
+      } else if (eventId) {
+        const access = await tryRequireDeptAccessByEvent(context, eventId);
+        if (!access) throw new GraphQLError('Department access required', { extensions: { code: 'FORBIDDEN' } });
       }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.getDeclinedAssignments(eventId, departmentId);
@@ -205,13 +233,17 @@ const assignmentResolvers = {
       { departmentId }: { departmentId: string },
       context: Context
     ) => {
-      requireAdmin(context);
-      const dept = await context.prisma.department.findUnique({
-        where: { id: departmentId },
-        select: { eventId: true },
-      });
-      if (dept) {
-        await requireEventAccess(context, dept.eventId);
+      requireAuth(context);
+      if (tryRequireAdmin(context)) {
+        const dept = await context.prisma.department.findUnique({
+          where: { id: departmentId },
+          select: { eventId: true },
+        });
+        if (dept) {
+          await requireEventAccess(context, dept.eventId);
+        }
+      } else {
+        await requireDeptAccess(context, departmentId);
       }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.getDepartmentCoverage(departmentId);
@@ -222,13 +254,17 @@ const assignmentResolvers = {
       { departmentId }: { departmentId: string },
       context: Context
     ) => {
-      requireAdmin(context);
-      const dept = await context.prisma.department.findUnique({
-        where: { id: departmentId },
-        select: { eventId: true },
-      });
-      if (dept) {
-        await requireEventAccess(context, dept.eventId);
+      requireAuth(context);
+      if (tryRequireAdmin(context)) {
+        const dept = await context.prisma.department.findUnique({
+          where: { id: departmentId },
+          select: { eventId: true },
+        });
+        if (dept) {
+          await requireEventAccess(context, dept.eventId);
+        }
+      } else {
+        await requireDeptAccess(context, departmentId);
       }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.getDepartmentCoverageGaps(departmentId);
@@ -241,6 +277,7 @@ const assignmentResolvers = {
       { input }: { input: CreateAssignmentInput },
       context: Context
     ) => {
+      requireAuth(context);
       const isAdmin = tryRequireAdmin(context);
       if (isAdmin) {
         // Department overseer — verify event access
@@ -252,8 +289,15 @@ const assignmentResolvers = {
           await requireEventAccess(context, session.eventId);
         }
       } else {
-        // Area overseer — verify area access for the target post
-        await requireAreaOverseer(context, input.postId);
+        // Try assistant overseer first, then area overseer
+        const session = await context.prisma.session.findUnique({
+          where: { id: input.sessionId },
+          select: { eventId: true },
+        });
+        const deptAccess = session ? await tryRequireDeptAccessByEvent(context, session.eventId) : null;
+        if (!deptAccess) {
+          await requireAreaOverseer(context, input.postId);
+        }
       }
 
       const assignmentService = new AssignmentService(context.prisma);
@@ -265,30 +309,43 @@ const assignmentResolvers = {
       { id, input }: { id: string; input: UpdateAssignmentInput },
       context: Context
     ) => {
+      requireAuth(context);
       const isAdmin = tryRequireAdmin(context);
       if (isAdmin) {
         const assignmentService = new AssignmentService(context.prisma);
         const eventId = await assignmentService.getAssignmentEventId(id);
         await requireEventAccess(context, eventId);
       } else {
-        const assignment = await context.prisma.scheduleAssignment.findUnique({ where: { id }, select: { postId: true } });
-        if (!assignment) throw new GraphQLError('Assignment not found', { extensions: { code: 'NOT_FOUND' } });
-        await requireAreaOverseer(context, assignment.postId);
+        // Try assistant overseer first
+        const assignmentService = new AssignmentService(context.prisma);
+        const eventId = await assignmentService.getAssignmentEventId(id);
+        const deptAccess = await tryRequireDeptAccessByEvent(context, eventId);
+        if (!deptAccess) {
+          const assignment = await context.prisma.scheduleAssignment.findUnique({ where: { id }, select: { postId: true } });
+          if (!assignment) throw new GraphQLError('Assignment not found', { extensions: { code: 'NOT_FOUND' } });
+          await requireAreaOverseer(context, assignment.postId);
+        }
       }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.updateAssignment(id, input);
     },
 
     deleteAssignment: async (_parent: unknown, { id }: { id: string }, context: Context) => {
+      requireAuth(context);
       const isAdmin = tryRequireAdmin(context);
       if (isAdmin) {
         const assignmentService = new AssignmentService(context.prisma);
         const eventId = await assignmentService.getAssignmentEventId(id);
         await requireEventAccess(context, eventId);
       } else {
-        const assignment = await context.prisma.scheduleAssignment.findUnique({ where: { id }, select: { postId: true } });
-        if (!assignment) throw new GraphQLError('Assignment not found', { extensions: { code: 'NOT_FOUND' } });
-        await requireAreaOverseer(context, assignment.postId);
+        const assignmentService = new AssignmentService(context.prisma);
+        const eventId = await assignmentService.getAssignmentEventId(id);
+        const deptAccess = await tryRequireDeptAccessByEvent(context, eventId);
+        if (!deptAccess) {
+          const assignment = await context.prisma.scheduleAssignment.findUnique({ where: { id }, select: { postId: true } });
+          if (!assignment) throw new GraphQLError('Assignment not found', { extensions: { code: 'NOT_FOUND' } });
+          await requireAreaOverseer(context, assignment.postId);
+        }
       }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.deleteAssignment(id);
@@ -303,6 +360,7 @@ const assignmentResolvers = {
         return [];
       }
 
+      requireAuth(context);
       const isAdmin = tryRequireAdmin(context);
       if (isAdmin) {
         // Collect all unique session IDs and validate they exist and belong to the same event
@@ -327,8 +385,15 @@ const assignmentResolvers = {
 
         await requireEventAccess(context, eventIds[0]);
       } else {
-        // Area overseer — verify area access for the first post (all should be same area)
-        await requireAreaOverseer(context, inputs[0].postId);
+        // Try assistant overseer first
+        const session = await context.prisma.session.findUnique({
+          where: { id: inputs[0].sessionId },
+          select: { eventId: true },
+        });
+        const deptAccess = session ? await tryRequireDeptAccessByEvent(context, session.eventId) : null;
+        if (!deptAccess) {
+          await requireAreaOverseer(context, inputs[0].postId);
+        }
       }
 
       const assignmentService = new AssignmentService(context.prisma);
@@ -374,6 +439,7 @@ const assignmentResolvers = {
       { input }: { input: ForceAssignmentInput },
       context: Context
     ) => {
+      requireAuth(context);
       const isAdmin = tryRequireAdmin(context);
       if (isAdmin) {
         const session = await context.prisma.session.findUnique({
@@ -384,7 +450,14 @@ const assignmentResolvers = {
           await requireEventAccess(context, session.eventId);
         }
       } else {
-        await requireAreaOverseer(context, input.postId);
+        const session = await context.prisma.session.findUnique({
+          where: { id: input.sessionId },
+          select: { eventId: true },
+        });
+        const deptAccess = session ? await tryRequireDeptAccessByEvent(context, session.eventId) : null;
+        if (!deptAccess) {
+          await requireAreaOverseer(context, input.postId);
+        }
       }
 
       const assignmentService = new AssignmentService(context.prisma);
@@ -396,15 +469,21 @@ const assignmentResolvers = {
       { input }: { input: SetCaptainInput },
       context: Context
     ) => {
+      requireAuth(context);
       const isAdmin = tryRequireAdmin(context);
       if (isAdmin) {
         const assignmentService = new AssignmentService(context.prisma);
         const eventId = await assignmentService.getAssignmentEventId(input.assignmentId);
         await requireEventAccess(context, eventId);
       } else {
-        const assignment = await context.prisma.scheduleAssignment.findUnique({ where: { id: input.assignmentId }, select: { postId: true } });
-        if (!assignment) throw new GraphQLError('Assignment not found', { extensions: { code: 'NOT_FOUND' } });
-        await requireAreaOverseer(context, assignment.postId);
+        const assignmentService = new AssignmentService(context.prisma);
+        const eventId = await assignmentService.getAssignmentEventId(input.assignmentId);
+        const deptAccess = await tryRequireDeptAccessByEvent(context, eventId);
+        if (!deptAccess) {
+          const assignment = await context.prisma.scheduleAssignment.findUnique({ where: { id: input.assignmentId }, select: { postId: true } });
+          if (!assignment) throw new GraphQLError('Assignment not found', { extensions: { code: 'NOT_FOUND' } });
+          await requireAreaOverseer(context, assignment.postId);
+        }
       }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.setCaptain(input);
@@ -415,10 +494,15 @@ const assignmentResolvers = {
       { assignmentId, deadline }: { assignmentId: string; deadline: Date },
       context: Context
     ) => {
-      requireAdmin(context);
+      requireAuth(context);
       const assignmentService = new AssignmentService(context.prisma);
       const eventId = await assignmentService.getAssignmentEventId(assignmentId);
-      await requireEventAccess(context, eventId);
+      if (tryRequireAdmin(context)) {
+        await requireEventAccess(context, eventId);
+      } else {
+        const access = await tryRequireDeptAccessByEvent(context, eventId);
+        if (!access) throw new GraphQLError('Department access required', { extensions: { code: 'FORBIDDEN' } });
+      }
 
       return assignmentService.setAcceptDeadline(assignmentId, deadline);
     },
@@ -489,6 +573,18 @@ const assignmentResolvers = {
       if (parent.session) return parent.session;
       return context.prisma.session.findUnique({
         where: { id: parent.sessionId },
+      });
+    },
+
+    shift: async (
+      parent: ScheduleAssignment & { shift?: unknown; shiftId?: string | null },
+      _args: unknown,
+      context: Context
+    ) => {
+      if (parent.shift !== undefined) return parent.shift;
+      if (!parent.shiftId) return null;
+      return context.prisma.shift.findUnique({
+        where: { id: parent.shiftId },
       });
     },
 

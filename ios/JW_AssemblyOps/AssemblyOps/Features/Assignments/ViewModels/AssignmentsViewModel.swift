@@ -52,6 +52,7 @@ import Apollo
 @MainActor
 final class AssignmentsViewModel: ObservableObject {
     @Published var assignments: [Assignment] = []
+    @Published var captainAssignments: [CaptainAssignment] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var hasLoaded: Bool = false
@@ -60,13 +61,15 @@ final class AssignmentsViewModel: ObservableObject {
     private let cache = AssignmentCache.shared
     private let networkMonitor = NetworkMonitor.shared
     
-    /// Assignments grouped by date
+    /// Assignments grouped by date, sorted chronologically.
+    /// Attendant assignments with a shift use the shift start time for ordering;
+    /// all other assignments use the session start time.
     var groupedAssignments: [(date: Date, assignments: [Assignment])] {
         let grouped = Dictionary(grouping: assignments) { assignment in
             Calendar.current.startOfDay(for: assignment.date)
         }
         return grouped
-            .map { (date: $0.key, assignments: $0.value.sorted { $0.startTime < $1.startTime }) }
+            .map { (date: $0.key, assignments: $0.value.sorted { $0.displayStartTime < $1.displayStartTime }) }
             .sorted { $0.date < $1.date }
     }
     
@@ -80,14 +83,15 @@ final class AssignmentsViewModel: ObservableObject {
         assignments.filter { $0.isUpcoming }
     }
     
-    /// Check if there are any assignments
+    /// Check if there are any assignments (post or captain)
     var isEmpty: Bool {
-        assignments.isEmpty
+        assignments.isEmpty && captainAssignments.isEmpty
     }
 
-    /// Count of pending assignments requiring response
+    /// Count of pending assignments requiring response (post + captain)
     var pendingCount: Int {
-        assignments.filter { $0.status == .pending }.count
+        assignments.filter { $0.status == .pending }.count +
+        captainAssignments.filter { $0.status == .pending }.count
     }
 
     /// True if there are any pending assignments
@@ -95,20 +99,34 @@ final class AssignmentsViewModel: ObservableObject {
         pendingCount > 0
     }
 
-    /// Pending assignments sorted by date
+    /// Pending post assignments sorted by date
     var pendingAssignments: [Assignment] {
         assignments.filter { $0.status == .pending }
             .sorted { $0.date < $1.date }
     }
 
-    /// Accepted assignments sorted by date
+    /// Pending captain assignments sorted by date
+    var pendingCaptainAssignments: [CaptainAssignment] {
+        captainAssignments.filter { $0.status == .pending }
+            .sorted { $0.date < $1.date }
+    }
+
+    /// Accepted captain assignments
+    var acceptedCaptainAssignments: [CaptainAssignment] {
+        captainAssignments.filter { $0.status == .accepted }
+            .sorted { $0.date < $1.date }
+    }
+
+    /// Accepted post assignments sorted by date
     var acceptedAssignments: [Assignment] {
         assignments.filter { $0.status == .accepted }
             .sorted { $0.date < $1.date }
     }
 
     /// Fetch assignments from API
-    func fetchAssignments() {
+    func fetchAssignments(eventId: String? = nil) {
+        guard let resolvedEventId = eventId ?? AppState.shared.currentEventId else { return }
+        let eventId = resolvedEventId
         isLoading = true
         errorMessage = nil
 
@@ -130,12 +148,16 @@ final class AssignmentsViewModel: ObservableObject {
                 hasLoaded = true
             }
             do {
-                let fetched = try await AssignmentsService.shared.fetchAssignments()
-                assignments = fetched
+                async let fetchedAssignments = AssignmentsService.shared.fetchAssignments(eventId: eventId)
+                async let fetchedCaptain = AssignmentsService.shared.fetchCaptainAssignments(eventId: eventId)
+
+                let (postAssignments, captainResults) = try await (fetchedAssignments, fetchedCaptain)
+                assignments = postAssignments
+                captainAssignments = captainResults
                 isUsingCache = false
 
                 // Cache for offline use
-                cache.save(fetched)
+                cache.save(postAssignments)
             } catch {
                 // On network failure, fall back to cache
                 if let cached = cache.load() {

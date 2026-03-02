@@ -1,0 +1,16 @@
+mutation CaptainUpdateShift($id: ID!, $input: CaptainUpdateShiftInput!) {
+  captainUpdateShift(id: $id, input: $input) {
+    id
+    name
+    startTime
+    endTime
+    session {
+      id
+      name
+    }
+    post {
+      id
+      name
+    }
+  }
+}

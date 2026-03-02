@@ -34,6 +34,10 @@ struct CreateAreaSheet: View {
     @State private var selectedCategory: AttendantMainCategory?
     @State private var isSubmitting = false
 
+    private var departmentColor: Color {
+        DepartmentColor.color(for: "ATTENDANT")
+    }
+
     private var isFormValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty &&
         selectedCategory != nil
@@ -90,7 +94,7 @@ struct CreateAreaSheet: View {
                         .padding(.horizontal, AppTheme.Spacing.m)
                         .padding(.vertical, AppTheme.Spacing.s)
                         .background(selectedCategory == main
-                            ? DepartmentColor.color(for: "ATTENDANT")
+                            ? departmentColor
                             : AppTheme.cardBackgroundSecondary(for: colorScheme))
                         .foregroundStyle(selectedCategory == main ? .white : AppTheme.textSecondary(for: colorScheme))
                         .clipShape(Capsule())
@@ -148,7 +152,7 @@ struct CreateAreaSheet: View {
             .frame(height: AppTheme.ButtonHeight.large)
             .font(AppTheme.Typography.bodyMedium)
             .foregroundStyle(.white)
-            .background(isFormValid ? AppTheme.themeColor : AppTheme.themeColor.opacity(0.4))
+            .background(isFormValid ? departmentColor : departmentColor.opacity(0.4))
             .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
         }
         .disabled(!isFormValid || isSubmitting)

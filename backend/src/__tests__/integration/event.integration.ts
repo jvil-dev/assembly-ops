@@ -481,7 +481,7 @@ describe('Event Operations', () => {
           variables: {
             input: {
               departmentId,
-              eventVolunteerId: 'nonexistent-id',
+              userId: 'nonexistent-id',
               hierarchyRole: 'ASSISTANT_OVERSEER',
             },
           },
@@ -656,31 +656,51 @@ describe('Event Operations', () => {
     let eventVolunteerId: string;
 
     it('should assign assistant overseer role', async () => {
-      // Get volunteers in this event
-      const volsRes = await request(app)
+      // Register a volunteer and join the department
+      const email = `hier-vol-${Date.now()}@example.com`;
+      const registerRes = await request(app)
         .post('/graphql')
-        .set('Authorization', `Bearer ${accessToken}`)
         .send({
           query: `
-            query Volunteers($eventId: ID!) {
-              volunteers(eventId: $eventId) {
-                id
-                firstName
-                lastName
+            mutation Register($input: RegisterUserInput!) {
+              registerUser(input: $input) {
+                accessToken
               }
             }
           `,
-          variables: { eventId },
+          variables: {
+            input: {
+              email,
+              password: 'TestPassword123!',
+              firstName: 'Hierarchy',
+              lastName: 'Volunteer',
+              isOverseer: false,
+            },
+          },
         });
 
-      const volunteers = volsRes.body.data.volunteers;
-      if (!volunteers || volunteers.length === 0) {
-        console.log('Skipping - no volunteers to assign');
-        return;
-      }
+      const volToken = registerRes.body.data.registerUser.accessToken;
 
-      eventVolunteerId = volunteers[0].id;
+      // Join the department via access code — returns the EventVolunteer id
+      const joinRes = await request(app)
+        .post('/graphql')
+        .set('Authorization', `Bearer ${volToken}`)
+        .send({
+          query: `
+            mutation JoinByCode($input: JoinDepartmentByCodeInput!) {
+              joinDepartmentByAccessCode(input: $input) {
+                id
+              }
+            }
+          `,
+          variables: {
+            input: { accessCode: departmentAccessCode },
+          },
+        });
 
+      eventVolunteerId = joinRes.body.data.joinDepartmentByAccessCode.id;
+
+      // Assign hierarchy role using the eventVolunteerId
       const response = await request(app)
         .post('/graphql')
         .set('Authorization', `Bearer ${accessToken}`)

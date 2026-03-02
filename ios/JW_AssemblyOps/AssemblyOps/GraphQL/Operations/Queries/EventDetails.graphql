@@ -28,7 +28,6 @@ query EventDetails($eventId: ID!) {
                 name
                 description
                 location
-                capacity
             }
         }
         sessions {

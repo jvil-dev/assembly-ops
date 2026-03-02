@@ -84,7 +84,7 @@ const DEPARTMENT_ACCESS_CODE_PREFIX: Record<DepartmentType, string> = {
 };
 
 // Default posts auto-seeded when a department is purchased (CO-160 positions).
-// Each entry: { name, description?, category?, capacity, sortOrder }
+// Each entry: { name, description?, category?, sortOrder }
 const DEPARTMENT_DEFAULT_POSTS: Partial<
   Record<
     DepartmentType,
@@ -92,7 +92,6 @@ const DEPARTMENT_DEFAULT_POSTS: Partial<
       name: string;
       description?: string;
       category?: string;
-      capacity: number;
       sortOrder: number;
     }>
   >
@@ -102,14 +101,12 @@ const DEPARTMENT_DEFAULT_POSTS: Partial<
       name: 'Mixer Operator',
       description: 'Operates the mixing console during sessions',
       category: 'Audio',
-      capacity: 1,
       sortOrder: 0,
     },
     {
       name: 'Mixer Operator Assistant',
       description: 'Assists the mixer operator and monitors audio levels',
       category: 'Audio',
-      capacity: 1,
       sortOrder: 1,
     },
   ],
@@ -118,35 +115,30 @@ const DEPARTMENT_DEFAULT_POSTS: Partial<
       name: 'Technical Director',
       description: 'Directs all video operations during sessions',
       category: 'Video',
-      capacity: 1,
       sortOrder: 0,
     },
     {
       name: 'Switcher Operator',
       description: 'Switches between camera feeds and media sources',
       category: 'Video',
-      capacity: 1,
       sortOrder: 1,
     },
     {
       name: 'Media Operator',
       description: 'Controls media playback and presentation slides',
       category: 'Video',
-      capacity: 2,
       sortOrder: 2,
     },
     {
       name: 'PTZ Camera Operator',
       description: 'Remotely controls all PTZ cameras from the video desk',
       category: 'Video',
-      capacity: 1,
       sortOrder: 3,
     },
     {
       name: 'Manned Camera Operator',
       description: 'Operates manned cameras near the stage for close-up coverage',
       category: 'Video',
-      capacity: 2,
       sortOrder: 4,
     },
   ],
@@ -155,28 +147,24 @@ const DEPARTMENT_DEFAULT_POSTS: Partial<
       name: 'Microphone Adjuster',
       description: 'Adjusts microphone positions for each speaker',
       category: 'Stage',
-      capacity: 2,
       sortOrder: 0,
     },
     {
       name: 'Participant Reminder',
       description: 'Gives Appendix F reminders to participants before going on stage',
       category: 'Stage',
-      capacity: 1,
       sortOrder: 1,
     },
     {
       name: 'Stage Configuration',
       description: 'Marks floor positions, manages furniture placement and entry/exit sides',
       category: 'Stage',
-      capacity: 1,
       sortOrder: 2,
     },
     {
       name: 'Makeup',
       description: 'Applies makeup for speakers appearing on video',
       category: 'Stage',
-      capacity: 4,
       sortOrder: 3,
     },
   ],
@@ -313,7 +301,6 @@ export class EventService {
           name: p.name,
           description: p.description,
           category: p.category,
-          capacity: p.capacity,
           sortOrder: p.sortOrder,
           departmentId: department.id,
         })),
@@ -529,14 +516,29 @@ export class EventService {
       throw new AuthorizationError('Only the department overseer can assign hierarchy roles');
     }
 
-    // Verify the volunteer belongs to this department
-    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
+    // Resolve eventVolunteerId — try direct lookup first, then by human-readable userId
+    let eventVolunteer = await this.prisma.eventVolunteer.findUnique({
       where: { id: eventVolunteerId },
     });
 
-    if (!eventVolunteer || eventVolunteer.departmentId !== departmentId) {
-      throw new ValidationError('Volunteer does not belong to this department');
+    if (!eventVolunteer) {
+      // Try resolving as human-readable User.userId
+      const user = await this.prisma.user.findUnique({
+        where: { userId: eventVolunteerId },
+        select: { id: true },
+      });
+      if (user) {
+        eventVolunteer = await this.prisma.eventVolunteer.findUnique({
+          where: { userId_eventId: { userId: user.id, eventId: department.eventId } },
+        });
+      }
     }
+
+    if (!eventVolunteer || eventVolunteer.departmentId !== departmentId) {
+      throw new ValidationError('Volunteer is not a member of this department');
+    }
+
+    const resolvedEvId = eventVolunteer.id;
 
     // Upsert the hierarchy role
     return this.prisma.departmentHierarchy.upsert({
@@ -544,13 +546,13 @@ export class EventService {
         departmentId_hierarchyRole_eventVolunteerId: {
           departmentId,
           hierarchyRole: hierarchyRole as HierarchyRole,
-          eventVolunteerId,
+          eventVolunteerId: resolvedEvId,
         },
       },
       update: {},
       create: {
         departmentId,
-        eventVolunteerId,
+        eventVolunteerId: resolvedEvId,
         hierarchyRole: hierarchyRole as HierarchyRole,
       },
       include: {
@@ -566,7 +568,7 @@ export class EventService {
    * Remove a hierarchy role assignment.
    * Only the department overseer can do this.
    */
-  async removeHierarchyRole(departmentId: string, eventVolunteerId: string, userId: string) {
+  async removeHierarchyRole(departmentId: string, eventVolunteerId: string, callerUserId: string) {
     // Verify caller is the department overseer
     const department = await this.prisma.department.findUnique({
       where: { id: departmentId },
@@ -577,15 +579,36 @@ export class EventService {
       throw new NotFoundError('Department');
     }
 
-    if (!department.overseer || department.overseer.userId !== userId) {
+    if (!department.overseer || department.overseer.userId !== callerUserId) {
       throw new AuthorizationError('Only the department overseer can remove hierarchy roles');
+    }
+
+    // Resolve eventVolunteerId — try direct lookup first, then by human-readable userId
+    let resolvedEvId = eventVolunteerId;
+    const directLookup = await this.prisma.eventVolunteer.findUnique({
+      where: { id: eventVolunteerId },
+      select: { id: true },
+    });
+
+    if (!directLookup) {
+      const user = await this.prisma.user.findUnique({
+        where: { userId: eventVolunteerId },
+        select: { id: true },
+      });
+      if (user) {
+        const ev = await this.prisma.eventVolunteer.findUnique({
+          where: { userId_eventId: { userId: user.id, eventId: department.eventId } },
+          select: { id: true },
+        });
+        if (ev) resolvedEvId = ev.id;
+      }
     }
 
     // Delete any hierarchy role for this volunteer in this department
     await this.prisma.departmentHierarchy.deleteMany({
       where: {
         departmentId,
-        eventVolunteerId,
+        eventVolunteerId: resolvedEvId,
       },
     });
 
@@ -622,7 +645,19 @@ export class EventService {
       orderBy: { event: { startDate: 'asc' } },
     });
 
-    // 3. Merge, de-duplicate by eventId (overseer role wins if both exist)
+    // 3. Fetch hierarchy roles for all volunteer memberships (batch query)
+    const volunteerIds = eventVolunteers.map((ev) => ev.id);
+    const hierarchyRoles = volunteerIds.length > 0
+      ? await this.prisma.departmentHierarchy.findMany({
+          where: { eventVolunteerId: { in: volunteerIds } },
+          select: { eventVolunteerId: true, hierarchyRole: true },
+        })
+      : [];
+    const hierarchyByVolunteer = new Map(
+      hierarchyRoles.map((h) => [h.eventVolunteerId, h.hierarchyRole])
+    );
+
+    // 4. Merge, de-duplicate by eventId (overseer role wins if both exist)
     const seen = new Set<string>();
     const results: Array<{
       eventId: string;
@@ -634,6 +669,7 @@ export class EventService {
       departmentType: string | null;
       departmentAccessCode: string | null;
       eventVolunteerId: string | null;
+      hierarchyRole: string | null;
     }> = [];
 
     for (const ea of eventAdmins) {
@@ -648,6 +684,7 @@ export class EventService {
         departmentType: ea.department?.departmentType ?? null,
         departmentAccessCode: ea.department?.accessCode ?? null,
         eventVolunteerId: null,
+        hierarchyRole: null,
       });
     }
 
@@ -664,6 +701,7 @@ export class EventService {
         departmentType: ev.department?.departmentType ?? null,
         departmentAccessCode: null,
         eventVolunteerId: ev.id,
+        hierarchyRole: hierarchyByVolunteer.get(ev.id) ?? null,
       });
     }
 

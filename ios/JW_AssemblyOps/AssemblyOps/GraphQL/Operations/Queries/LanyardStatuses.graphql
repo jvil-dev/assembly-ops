@@ -1,0 +1,11 @@
+query LanyardStatuses($eventId: ID!, $date: String) {
+  lanyardStatuses(eventId: $eventId, date: $date) {
+    id
+    eventVolunteerId
+    eventId
+    date
+    pickedUpAt
+    returnedAt
+    volunteerName
+  }
+}

@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MyAllEvents"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query MyAllEvents { myAllEvents { __typename eventId membershipType overseerRole departmentId departmentName departmentType eventVolunteerId departmentAccessCode event { __typename id name eventType theme venue address startDate endDate volunteerCount } } }"#
+        #"query MyAllEvents { myAllEvents { __typename eventId membershipType overseerRole departmentId departmentName departmentType eventVolunteerId departmentAccessCode hierarchyRole event { __typename id name eventType theme venue address startDate endDate volunteerCount } } }"#
       ))
 
     public init() {}
@@ -45,6 +45,7 @@ extension AssemblyOpsAPI {
           .field("departmentType", GraphQLEnum<AssemblyOpsAPI.DepartmentType>?.self),
           .field("eventVolunteerId", AssemblyOpsAPI.ID?.self),
           .field("departmentAccessCode", String?.self),
+          .field("hierarchyRole", GraphQLEnum<AssemblyOpsAPI.HierarchyRole>?.self),
           .field("event", Event.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -59,6 +60,7 @@ extension AssemblyOpsAPI {
         var departmentType: GraphQLEnum<AssemblyOpsAPI.DepartmentType>? { __data["departmentType"] }
         var eventVolunteerId: AssemblyOpsAPI.ID? { __data["eventVolunteerId"] }
         var departmentAccessCode: String? { __data["departmentAccessCode"] }
+        var hierarchyRole: GraphQLEnum<AssemblyOpsAPI.HierarchyRole>? { __data["hierarchyRole"] }
         var event: Event { __data["event"] }
 
         /// MyAllEvent.Event

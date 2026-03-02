@@ -25,7 +25,8 @@
  */
 import { Context } from '../context.js';
 import { SessionService } from '../../services/sessionService.js';
-import { requireAdmin, requireEventAccess } from '../guards/auth.js';
+import { requireAuth, requireEventAccess, tryRequireAdmin, tryRequireDeptAccessByEvent } from '../guards/auth.js';
+import { AuthorizationError } from '../../utils/errors.js';
 import { Session } from '@prisma/client';
 import {
   CreateSessionInput,
@@ -33,21 +34,32 @@ import {
   UpdateSessionInput,
 } from '../validators/session.js';
 
+/**
+ * Check admin OR assistant overseer access for an event.
+ * Tries requireAdmin + requireEventAccess first, falls back to tryRequireDeptAccessByEvent.
+ */
+async function requireSessionAccess(context: Context, eventId: string) {
+  requireAuth(context);
+  if (tryRequireAdmin(context)) {
+    await requireEventAccess(context, eventId);
+  } else {
+    const access = await tryRequireDeptAccessByEvent(context, eventId);
+    if (!access) throw new AuthorizationError('Department access required');
+  }
+}
+
 const sessionResolvers = {
   Query: {
     session: async (_parent: unknown, { id }: { id: string }, context: Context) => {
-      requireAdmin(context);
-
       const sessionService = new SessionService(context.prisma);
       const eventId = await sessionService.getSessionEventId(id);
-      await requireEventAccess(context, eventId);
+      await requireSessionAccess(context, eventId);
 
       return sessionService.getSession(id);
     },
 
     sessions: async (_parent: unknown, { eventId }: { eventId: string }, context: Context) => {
-      requireAdmin(context);
-      await requireEventAccess(context, eventId);
+      await requireSessionAccess(context, eventId);
 
       const sessionService = new SessionService(context.prisma);
       return sessionService.getEventSessions(eventId);
@@ -60,8 +72,7 @@ const sessionResolvers = {
       { eventId, input }: { eventId: string; input: CreateSessionInput },
       context: Context
     ) => {
-      requireAdmin(context);
-      await requireEventAccess(context, eventId);
+      await requireSessionAccess(context, eventId);
 
       const sessionService = new SessionService(context.prisma);
       return sessionService.createSession(eventId, input);
@@ -72,8 +83,7 @@ const sessionResolvers = {
       { input }: { input: CreateSessionsInput },
       context: Context
     ) => {
-      requireAdmin(context);
-      await requireEventAccess(context, input.eventId);
+      await requireSessionAccess(context, input.eventId);
 
       const sessionService = new SessionService(context.prisma);
       return sessionService.createSessions(input);
@@ -84,21 +94,17 @@ const sessionResolvers = {
       { id, input }: { id: string; input: UpdateSessionInput },
       context: Context
     ) => {
-      requireAdmin(context);
-
       const sessionService = new SessionService(context.prisma);
       const eventId = await sessionService.getSessionEventId(id);
-      await requireEventAccess(context, eventId);
+      await requireSessionAccess(context, eventId);
 
       return sessionService.updateSession(id, input);
     },
 
     deleteSession: async (_parent: unknown, { id }: { id: string }, context: Context) => {
-      requireAdmin(context);
-
       const sessionService = new SessionService(context.prisma);
       const eventId = await sessionService.getSessionEventId(id);
-      await requireEventAccess(context, eventId);
+      await requireSessionAccess(context, eventId);
 
       return sessionService.deleteSession(id);
     },
@@ -115,6 +121,12 @@ const sessionResolvers = {
     },
     assignmentCount: (session: Session & { _count?: { assignments: number } }) => {
       return session._count?.assignments ?? 0;
+    },
+    shifts: async (session: Session, _args: unknown, context: Context) => {
+      return context.prisma.shift.findMany({
+        where: { sessionId: session.id },
+        orderBy: { startTime: 'asc' },
+      });
     },
   },
 };

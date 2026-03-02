@@ -137,7 +137,6 @@ struct AssignmentDetailView: View {
             DeclineReasonSheet(reason: $declineReason) {
                 Task {
                     await viewModel.declineAssignment(reason: declineReason.isEmpty ? nil : declineReason)
-                    onUpdate()
                     dismiss()
                 }
             }
@@ -223,6 +222,15 @@ struct AssignmentDetailView: View {
                     value: assignment.sessionName,
                     colorScheme: colorScheme
                 )
+
+                if let shiftName = assignment.shiftName, assignment.hasShift {
+                    DetailRow(
+                        icon: "clock.arrow.2.circlepath",
+                        title: "Shift",
+                        value: shiftName,
+                        colorScheme: colorScheme
+                    )
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -238,7 +246,6 @@ struct AssignmentDetailView: View {
             onAccept: {
                 Task {
                     await viewModel.acceptAssignment()
-                    onUpdate()
                     dismiss()
                 }
             },
