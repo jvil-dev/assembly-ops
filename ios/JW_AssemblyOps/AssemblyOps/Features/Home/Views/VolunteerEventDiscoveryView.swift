@@ -23,6 +23,7 @@ struct VolunteerEventDiscoveryView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.popToRoot) private var popToRoot
     @State private var hasAppeared = false
     @State private var showError = false
     @State private var accessCodeInput = ""
@@ -69,7 +70,7 @@ struct VolunteerEventDiscoveryView: View {
     private func successAlertActions() -> some View {
         Button("OK") {
             viewModel.accessCodeResult = nil
-            dismiss()
+            popToRoot()
         }
     }
     

@@ -657,8 +657,8 @@ export class EventService {
       hierarchyRoles.map((h) => [h.eventVolunteerId, h.hierarchyRole])
     );
 
-    // 4. Merge, de-duplicate by eventId (overseer role wins if both exist)
-    const seen = new Set<string>();
+    // 4. Merge all memberships (a user can be both overseer and volunteer
+    //    for the same event in different departments — return both)
     const results: Array<{
       eventId: string;
       event: (typeof eventAdmins)[0]['event'] | (typeof eventVolunteers)[0]['event'];
@@ -673,7 +673,6 @@ export class EventService {
     }> = [];
 
     for (const ea of eventAdmins) {
-      seen.add(ea.eventId);
       results.push({
         eventId: ea.eventId,
         event: ea.event,
@@ -689,8 +688,6 @@ export class EventService {
     }
 
     for (const ev of eventVolunteers) {
-      if (seen.has(ev.eventId)) continue; // Overseer membership takes priority
-      seen.add(ev.eventId);
       results.push({
         eventId: ev.eventId,
         event: ev.event,

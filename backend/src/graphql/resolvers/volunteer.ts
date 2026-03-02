@@ -38,7 +38,7 @@
  */
 import { Context } from '../context.js';
 import { VolunteerService, CreatedVolunteer } from '../../services/volunteerService.js';
-import { requireAdmin, requireAuth, requireOverseer, requireUser, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireOverseer, requireUser, requireEventAccess } from '../guards/auth.js';
 import {
   CreateVolunteerInput,
   CreateVolunteersInput,

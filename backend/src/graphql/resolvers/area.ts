@@ -13,7 +13,6 @@
  */
 import { Context } from '../context.js';
 import {
-  requireAdmin,
   requireAuth,
   requireEventAccess,
   requireDeptAccess,

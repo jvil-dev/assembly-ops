@@ -15,7 +15,7 @@
  */
 import { Context } from '../context.js';
 import { AudioVideoService } from '../../services/audioVideoService.js';
-import { requireAdmin, requireAuth, requireEventAccess, resolveUserEventVolunteer } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireEventAccess } from '../guards/auth.js';
 import {
   CreateAVEquipmentInput,
   BulkCreateAVEquipmentInput,

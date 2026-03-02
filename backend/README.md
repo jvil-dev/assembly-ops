@@ -5,12 +5,12 @@ GraphQL API for the AssemblyOps volunteer scheduling system.
 ## Tech Stack
 
 - **Runtime:** Node.js 20+
-- **Framework:** Express + Apollo Server 4
+- **Framework:** Express + Apollo Server 5
 - **API:** GraphQL with graphql-scalars
 - **Database:** PostgreSQL 16 with Prisma ORM
-- **Auth:** JWT (access tokens 15min, refresh tokens 7 days)
-- **Validation:** Zod 4 runtime schemas
-- **Testing:** Jest + Supertest
+- **Auth:** JWT (access tokens 15min, refresh tokens 7 days), OAuth (Google/Apple)
+- **Validation:** Zod runtime schemas
+- **Testing:** Vitest
 
 ## Quick Start
 
@@ -28,7 +28,7 @@ npm install
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your database credentials
+# Edit .env with your values (see Environment Variables below)
 
 # Generate Prisma client
 npm run prisma:generate
@@ -43,7 +43,7 @@ npm run prisma:seed
 npm run dev
 ```
 
-The GraphQL playground will be available at `http://localhost:4000/graphql`
+The Apollo Sandbox will be available at `http://localhost:4000/graphql` (introspection is disabled in production).
 
 ### Using Docker
 
@@ -58,19 +58,41 @@ npm run prisma:seed
 
 ## Environment Variables
 
+See `.env.example` for the full list with generation commands. Required variables:
+
 ```env
+# Database
 DATABASE_URL=postgresql://user:password@localhost:5432/assemblyops
-JWT_SECRET=your-secret-key
-JWT_REFRESH_SECRET=your-refresh-secret-key
+DIRECT_URL=postgresql://user:password@localhost:5432/assemblyops
+
+# JWT (min 32 chars each — generate: openssl rand -base64 32)
+JWT_SECRET=
+JWT_REFRESH_SECRET=
+
+# Encryption (64-char hex — generate: openssl rand -hex 32)
+VOLUNTEER_TOKEN_KEY=
+PII_ENCRYPTION_KEY=
+
+# OAuth (optional)
+GOOGLE_CLIENT_ID=
+APPLE_CLIENT_ID=
+
+# Server
+PORT=4000
+NODE_ENV=development
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4000
 ```
 
 ## Scripts
 
 | Command | Description |
-|---------|-------------|
+| ------- | ----------- |
 | `npm run dev` | Start dev server with hot reload |
 | `npm run build` | Compile TypeScript |
+| `npm start` | Start production server |
 | `npm test` | Run tests |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:coverage` | Run tests with coverage report |
 | `npm run lint` | ESLint check |
 | `npm run lint:fix` | Auto-fix lint issues |
 | `npm run format` | Prettier format |
@@ -81,7 +103,7 @@ JWT_REFRESH_SECRET=your-refresh-secret-key
 
 ## Project Structure
 
-```
+```text
 src/
 ├── graphql/
 │   ├── schema/        # GraphQL type definitions
@@ -94,7 +116,6 @@ src/
 ├── utils/             # JWT, password hashing, errors
 ├── config/            # Database client
 ├── __tests__/         # Integration tests
-├── app.ts             # Express app
 └── server.ts          # Entry point
 ```
 
@@ -103,52 +124,30 @@ src/
 ### Authentication
 
 ```graphql
-# Register admin (overseer)
+# Register a new user
 mutation {
-  registerAdmin(input: {
-    email: "overseer@example.com"
+  registerUser(input: {
+    email: "user@example.com"
     password: "SecurePass123"
     firstName: "John"
     lastName: "Doe"
-    congregation: "Central Congregation"
+    isOverseer: true
   }) {
     accessToken
     refreshToken
-    admin { id email }
+    user { id email }
   }
 }
 
 # Login
 mutation {
-  loginAdmin(input: {
-    email: "overseer@example.com"
+  loginUser(input: {
+    email: "user@example.com"
     password: "SecurePass123"
   }) {
     accessToken
     refreshToken
-  }
-}
-```
-
-### Events
-
-```graphql
-# Get available event templates
-query {
-  eventTemplates(serviceYear: 2026) {
-    id
-    name
-    eventType
-    startDate
-    endDate
-  }
-}
-
-# Activate an event
-mutation {
-  activateEvent(input: { templateId: "..." }) {
-    id
-    joinCode
+    user { id email }
   }
 }
 ```
@@ -161,13 +160,12 @@ mutation {
   createPosts(input: {
     departmentId: "..."
     posts: [
-      { name: "East Lobby", capacity: 2 }
-      { name: "Main Entrance", capacity: 3 }
+      { name: "East Lobby" }
+      { name: "Main Entrance" }
     ]
   }) {
     id
     name
-    capacity
   }
 }
 
@@ -191,7 +189,7 @@ mutation {
 All requests require `Authorization: Bearer <token>` header.
 
 | Role | Permissions |
-|------|-------------|
+| ---- | ----------- |
 | EVENT_OVERSEER | Full event access, manage sessions |
 | DEPARTMENT_OVERSEER | Department-scoped, manage posts & volunteers |
 | VOLUNTEER | View own assignments only |
@@ -200,13 +198,13 @@ All requests require `Authorization: Bearer <token>` header.
 
 See `prisma/schema.prisma` for the full data model. Key entities:
 
-- **Admin** - Overseers (email/password auth)
-- **Volunteer** - Workers (generated credentials)
-- **Event** - Activated from EventTemplate
-- **Department** - One of 12 convention departments
-- **Post** - Physical positions within a department
-- **Session** - Event-wide time blocks
-- **ScheduleAssignment** - Volunteer + Post + Session
+- **User** — All users (email/password + OAuth, `isOverseer` flag for role)
+- **Event** — Convention or assembly event with sessions and departments
+- **Department** — One of 14 convention departments
+- **EventVolunteer** — User membership in an event (linked to User)
+- **Post** — Physical positions within a department
+- **Session** — Event-wide time blocks
+- **ScheduleAssignment** — EventVolunteer + Post + Session
 
 ## Testing
 
@@ -215,17 +213,19 @@ See `prisma/schema.prisma` for the full data model. Key entities:
 npm test
 
 # Run specific test file
-npm test -- --testPathPattern="health"
+npm test -- health
 
 # Watch mode
 npm run test:watch
+
+# Coverage report
+npm run test:coverage
 ```
 
 ## Deployment
 
 The API deploys to AWS ECS Fargate via GitHub Actions:
 
-- Push to `development` → Deploy to staging
 - Push to `main` → Deploy to production
 
 See `.github/workflows/` for CI/CD configuration.

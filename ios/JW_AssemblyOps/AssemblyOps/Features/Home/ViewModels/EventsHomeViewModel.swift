@@ -172,8 +172,11 @@ final class EventsHomeViewModel: ObservableObject {
                 membership = .volunteer
             }
 
+            // Composite id: same event can appear twice if user has both overseer + volunteer roles
+            let uniqueId = "\(e.eventId)_\(e.membershipType.rawValue)"
+
             return EventMembershipItem(
-                id: e.eventId,
+                id: uniqueId,
                 eventId: e.eventId,
                 eventName: e.event.name,
                 eventType: e.event.eventType.rawValue,

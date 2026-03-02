@@ -27,7 +27,7 @@
  *   - searchMessages: Full-text search on subject + body
  */
 import { Prisma, PrismaClient, Message, MessageSenderType, RecipientType } from '@prisma/client';
-import { NotFoundError, ValidationError, AuthorizationError } from '../utils/errors';
+import { NotFoundError, ValidationError, AuthorizationError } from '../utils/errors.js';
 import {
   sendMessageSchema,
   sendDepartmentMessageSchema,
@@ -78,7 +78,12 @@ export class MessageService {
     const recipientId = result.data.recipientId;
 
     // Prevent self-messaging
-    if (recipientType && recipientId && sender.senderType === recipientType && sender.senderId === recipientId) {
+    if (
+      recipientType &&
+      recipientId &&
+      sender.senderType === recipientType &&
+      sender.senderId === recipientId
+    ) {
       throw new ValidationError('You cannot send a message to yourself');
     }
 
@@ -330,8 +335,7 @@ export class MessageService {
 
     // Check ownership: direct USER recipient OR message to user's EventVolunteer
     let isRecipient =
-      message.recipientType === RecipientType.USER &&
-      message.recipientId === identity.senderId;
+      message.recipientType === RecipientType.USER && message.recipientId === identity.senderId;
 
     if (!isRecipient && message.eventVolunteerId) {
       const ev = await this.prisma.eventVolunteer.findUnique({
@@ -426,10 +430,7 @@ export class MessageService {
   /**
    * Soft delete a message for sender or recipient
    */
-  async softDeleteMessage(
-    messageId: string,
-    identity: SenderIdentity
-  ): Promise<boolean> {
+  async softDeleteMessage(messageId: string, identity: SenderIdentity): Promise<boolean> {
     const message = await this.prisma.message.findUnique({
       where: { id: messageId },
     });
@@ -440,8 +441,7 @@ export class MessageService {
     const isSender = message.senderUserId === identity.senderId;
 
     let isRecipient =
-      message.recipientType === RecipientType.USER &&
-      message.recipientId === identity.senderId;
+      message.recipientType === RecipientType.USER && message.recipientId === identity.senderId;
 
     if (!isRecipient && message.eventVolunteerId) {
       const ev = await this.prisma.eventVolunteer.findUnique({
@@ -472,10 +472,7 @@ export class MessageService {
   /**
    * Start a new conversation thread (or return existing one between same participants)
    */
-  async startConversation(
-    sender: SenderIdentity,
-    input: StartConversationInput
-  ) {
+  async startConversation(sender: SenderIdentity, input: StartConversationInput) {
     const result = startConversationSchema.safeParse(input);
     if (!result.success) {
       throw new ValidationError(result.error.issues[0].message);
@@ -607,12 +604,7 @@ export class MessageService {
   /**
    * Get conversations for a user
    */
-  async getConversations(
-    identity: SenderIdentity,
-    eventId: string,
-    limit = 50,
-    offset = 0
-  ) {
+  async getConversations(identity: SenderIdentity, eventId: string, limit = 50, offset = 0) {
     return this.prisma.conversation.findMany({
       where: {
         eventId,
@@ -678,10 +670,7 @@ export class MessageService {
   /**
    * Mark a conversation as read for a participant
    */
-  async markConversationRead(
-    conversationId: string,
-    identity: SenderIdentity
-  ) {
+  async markConversationRead(conversationId: string, identity: SenderIdentity) {
     const participant = await this.prisma.conversationParticipant.findFirst({
       where: {
         conversationId,
@@ -708,10 +697,7 @@ export class MessageService {
   /**
    * Soft delete a conversation for a participant
    */
-  async deleteConversation(
-    conversationId: string,
-    identity: SenderIdentity
-  ): Promise<boolean> {
+  async deleteConversation(conversationId: string, identity: SenderIdentity): Promise<boolean> {
     const participant = await this.prisma.conversationParticipant.findFirst({
       where: {
         conversationId,
@@ -735,10 +721,7 @@ export class MessageService {
   /**
    * Send a message to multiple volunteers at once
    */
-  async sendMultiMessage(
-    sender: SenderIdentity,
-    input: SendMultiMessageInput
-  ): Promise<Message[]> {
+  async sendMultiMessage(sender: SenderIdentity, input: SendMultiMessageInput): Promise<Message[]> {
     const result = sendMultiMessageSchema.safeParse(input);
     if (!result.success) {
       throw new ValidationError(result.error.issues[0].message);
@@ -796,10 +779,7 @@ export class MessageService {
     const recipientFilter: Prisma.MessageWhereInput =
       identity.senderType === 'VOLUNTEER'
         ? {
-            OR: [
-              { eventVolunteerId: identity.senderId },
-              { senderVolId: identity.senderId },
-            ],
+            OR: [{ eventVolunteerId: identity.senderId }, { senderVolId: identity.senderId }],
           }
         : {
             OR: [
@@ -858,9 +838,7 @@ export class MessageService {
     });
 
     const recipientType =
-      otherParticipant?.participantType === 'USER'
-        ? RecipientType.USER
-        : RecipientType.VOLUNTEER;
+      otherParticipant?.participantType === 'USER' ? RecipientType.USER : RecipientType.VOLUNTEER;
 
     const message = await this.prisma.message.create({
       data: {
@@ -875,7 +853,7 @@ export class MessageService {
         // Set volunteer FK if recipient is a volunteer (for legacy compat)
         eventVolunteerId:
           recipientType === RecipientType.VOLUNTEER
-            ? otherParticipant?.participantId ?? null
+            ? (otherParticipant?.participantId ?? null)
             : null,
       },
       include: {
