@@ -4,7 +4,6 @@ mutation UpdatePost($id: ID!, $input: UpdatePostInput!) {
         name
         description
         location
-        capacity
         category
         sortOrder
         createdAt

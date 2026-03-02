@@ -35,11 +35,13 @@ final class PendingBadgeManager: ObservableObject {
     @Published var pendingCount: Int = 0
 
     private var refreshTask: Task<Void, Never>?
+    private var currentEventId: String?
 
     private init() {}
 
     /// Start periodic refresh of pending count
-    func startRefreshing() {
+    func startRefreshing(eventId: String? = nil) {
+        if let eventId { currentEventId = eventId }
         stopRefreshing()
 
         refreshTask = Task {
@@ -56,18 +58,23 @@ final class PendingBadgeManager: ObservableObject {
         refreshTask = nil
     }
 
-    /// Fetch pending count once
-    func fetchPendingCount() async {
+    /// Fetch pending count once (post assignments + captain assignments)
+    func fetchPendingCount(eventId: String? = nil) async {
+        guard let resolvedEventId = eventId ?? currentEventId ?? AppState.shared.currentEventId else { return }
         do {
-            let assignments = try await AssignmentsService.shared.fetchAssignments()
-            pendingCount = assignments.filter { $0.status == .pending }.count
+            async let postAssignments = AssignmentsService.shared.fetchAssignments(eventId: resolvedEventId)
+            async let captainAssignments = AssignmentsService.shared.fetchCaptainAssignments(eventId: resolvedEventId)
+
+            let (posts, captains) = try await (postAssignments, captainAssignments)
+            pendingCount = posts.filter { $0.status == .pending }.count +
+                           captains.filter { $0.status == .pending }.count
         } catch {
             print("Failed to fetch pending count: \(error)")
         }
     }
 
     /// Manual refresh trigger
-    func refresh() async {
-        await fetchPendingCount()
+    func refresh(eventId: String? = nil) async {
+        await fetchPendingCount(eventId: eventId)
     }
 }

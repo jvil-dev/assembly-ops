@@ -38,6 +38,8 @@ struct CreatePostSheet: View {
     @Environment(\.dismiss) var dismiss
     @State private var hasAppeared = false
     @State private var isBulkMode = false
+    @State private var createdPostName = ""
+    @State private var createdBulkCount = 0
 
     // Attendant category picker state
     @State private var selectedMain: AttendantMainCategory? = nil
@@ -47,6 +49,14 @@ struct CreatePostSheet: View {
 
     private var isAttendant: Bool {
         sessionState.selectedDepartment?.departmentType == "ATTENDANT"
+    }
+
+    private var departmentType: String {
+        sessionState.selectedDepartment?.departmentType ?? "DEFAULT"
+    }
+
+    private var departmentColor: Color {
+        DepartmentColor.color(for: departmentType)
     }
 
     /// When inside an area, determine the main category from the area's category string
@@ -98,8 +108,10 @@ struct CreatePostSheet: View {
                         Task {
                             guard let departmentId = sessionState.selectedDepartment?.id else { return }
                             if isBulkMode {
+                                createdBulkCount = viewModel.bulkPreviewNames.count
                                 await viewModel.createBulkPosts(departmentId: departmentId)
                             } else {
+                                createdPostName = viewModel.name
                                 await viewModel.createPost(departmentId: departmentId)
                             }
                         }
@@ -114,9 +126,9 @@ struct CreatePostSheet: View {
                 Button("common.ok".localized) { dismiss() }
             } message: {
                 if isBulkMode {
-                    Text("post.bulkCreatedMessage".localized(with: "\(viewModel.bulkPreviewNames.count)"))
+                    Text("post.bulkCreatedMessage".localized(with: "\(createdBulkCount)"))
                 } else {
-                    Text("post.createdMessage".localized(with: viewModel.name))
+                    Text("post.createdMessage".localized(with: createdPostName))
                 }
             }
             .alert("common.error".localized, isPresented: .constant(viewModel.error != nil)) {
@@ -302,7 +314,7 @@ struct CreatePostSheet: View {
                         .padding(.horizontal, AppTheme.Spacing.m)
                         .padding(.vertical, AppTheme.Spacing.s)
                         .background(selectedMain == main
-                            ? DepartmentColor.color(for: "ATTENDANT")
+                            ? departmentColor
                             : AppTheme.cardBackgroundSecondary(for: colorScheme))
                         .foregroundStyle(selectedMain == main ? .white : AppTheme.textSecondary(for: colorScheme))
                         .clipShape(Capsule())
@@ -327,16 +339,16 @@ struct CreatePostSheet: View {
                                     .padding(.horizontal, AppTheme.Spacing.m)
                                     .padding(.vertical, AppTheme.Spacing.s)
                                     .background(selectedSub == sub
-                                        ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                                        ? departmentColor.opacity(0.2)
                                         : AppTheme.cardBackgroundSecondary(for: colorScheme))
                                     .foregroundStyle(selectedSub == sub
-                                        ? DepartmentColor.color(for: "ATTENDANT")
+                                        ? departmentColor
                                         : AppTheme.textSecondary(for: colorScheme))
                                     .clipShape(Capsule())
                                     .overlay(
                                         Capsule()
                                             .strokeBorder(selectedSub == sub
-                                                ? DepartmentColor.color(for: "ATTENDANT")
+                                                ? departmentColor
                                                 : Color.clear, lineWidth: 1)
                                     )
                             }
@@ -357,16 +369,16 @@ struct CreatePostSheet: View {
                             .padding(.horizontal, AppTheme.Spacing.m)
                             .padding(.vertical, AppTheme.Spacing.s)
                             .background(showCustomSub
-                                ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                                ? departmentColor.opacity(0.2)
                                 : AppTheme.cardBackgroundSecondary(for: colorScheme))
                             .foregroundStyle(showCustomSub
-                                ? DepartmentColor.color(for: "ATTENDANT")
+                                ? departmentColor
                                 : AppTheme.textSecondary(for: colorScheme))
                             .clipShape(Capsule())
                             .overlay(
                                 Capsule()
                                     .strokeBorder(showCustomSub
-                                        ? DepartmentColor.color(for: "ATTENDANT")
+                                        ? departmentColor
                                         : Color.clear, lineWidth: 1)
                             )
                         }
@@ -409,16 +421,16 @@ struct CreatePostSheet: View {
                                 .padding(.horizontal, AppTheme.Spacing.m)
                                 .padding(.vertical, AppTheme.Spacing.s)
                                 .background(selectedSub == sub
-                                    ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                                    ? departmentColor.opacity(0.2)
                                     : AppTheme.cardBackgroundSecondary(for: colorScheme))
                                 .foregroundStyle(selectedSub == sub
-                                    ? DepartmentColor.color(for: "ATTENDANT")
+                                    ? departmentColor
                                     : AppTheme.textSecondary(for: colorScheme))
                                 .clipShape(Capsule())
                                 .overlay(
                                     Capsule()
                                         .strokeBorder(selectedSub == sub
-                                            ? DepartmentColor.color(for: "ATTENDANT")
+                                            ? departmentColor
                                             : Color.clear, lineWidth: 1)
                                 )
                         }
@@ -439,16 +451,16 @@ struct CreatePostSheet: View {
                         .padding(.horizontal, AppTheme.Spacing.m)
                         .padding(.vertical, AppTheme.Spacing.s)
                         .background(showCustomSub
-                            ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                            ? departmentColor.opacity(0.2)
                             : AppTheme.cardBackgroundSecondary(for: colorScheme))
                         .foregroundStyle(showCustomSub
-                            ? DepartmentColor.color(for: "ATTENDANT")
+                            ? departmentColor
                             : AppTheme.textSecondary(for: colorScheme))
                         .clipShape(Capsule())
                         .overlay(
                             Capsule()
                                 .strokeBorder(showCustomSub
-                                    ? DepartmentColor.color(for: "ATTENDANT")
+                                    ? departmentColor
                                     : Color.clear, lineWidth: 1)
                         )
                     }

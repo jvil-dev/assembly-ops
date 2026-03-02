@@ -7,32 +7,13 @@
 
 // MARK: - Volunteer Detail View Model
 //
-// Manages volunteer detail actions including removal and updates.
+// Manages volunteer detail actions including removal, updates, and deletion.
 //
-// Properties:
-//   - isLoading: True during async operations
-//   - errorMessage: Error text to display (nil on success)
-//
-// Methods:
-//   - removeFromDepartment(): Remove volunteer from their department
-//   - updateVolunteer(input:): Update volunteer fields
-//   - deleteVolunteer(): Delete volunteer permanently
-//
-// Used by: VolunteerDetailView
+// Used by: VolunteerDetailView, EditVolunteerSheet
 
 import Foundation
 import Combine
 import Apollo
-
-struct VolunteerAssignmentItem: Identifiable {
-    let id: String
-    var isCaptain: Bool
-    let status: String
-    let postName: String
-    let sessionId: String
-    let sessionName: String
-    let sessionDate: String
-}
 
 @MainActor
 class VolunteerDetailViewModel: ObservableObject {
@@ -42,9 +23,6 @@ class VolunteerDetailViewModel: ObservableObject {
     @Published var updatedVolunteer: VolunteerListItem?
     @Published var updateCount = 0
     @Published var didDelete = false
-    @Published var roles: [RoleItem] = []
-    @Published var assignments: [VolunteerAssignmentItem] = []
-    @Published var isLoadingAssignments = false
 
     private let volunteerId: String
     var onRemoved: (() -> Void)?
@@ -127,85 +105,6 @@ class VolunteerDetailViewModel: ObservableObject {
 
             didDelete = true
             HapticManager.shared.success()
-        } catch {
-            errorMessage = error.localizedDescription
-            HapticManager.shared.error()
-        }
-    }
-
-    func loadRoles(eventId: String) async {
-        do {
-            let result = try await NetworkClient.shared.apollo.fetch(
-                query: AssemblyOpsAPI.EventRolesQuery(eventId: eventId),
-                cachePolicy: .fetchIgnoringCacheData
-            )
-            if let data = result.data?.roles {
-                roles = data.map { RoleItem(id: $0.id, name: $0.name, sortOrder: $0.sortOrder) }
-            }
-        } catch {
-            print("Failed to load roles: \(error)")
-        }
-    }
-
-    func loadAssignments() async {
-        isLoadingAssignments = true
-        defer { isLoadingAssignments = false }
-
-        do {
-            let result = try await NetworkClient.shared.apollo.fetch(
-                query: AssemblyOpsAPI.VolunteerAssignmentsQuery(volunteerId: volunteerId),
-                cachePolicy: .fetchIgnoringCacheData
-            )
-
-            if let errors = result.errors, !errors.isEmpty {
-                errorMessage = errors.first?.message ?? "Failed to load assignments"
-                return
-            }
-
-            assignments = (result.data?.volunteerAssignments ?? []).map { a in
-                VolunteerAssignmentItem(
-                    id: a.id,
-                    isCaptain: a.isCaptain,
-                    status: a.status.rawValue,
-                    postName: a.post.name,
-                    sessionId: a.session.id,
-                    sessionName: a.session.name,
-                    sessionDate: {
-                        if let date = DateUtils.parseISO8601(a.session.date) {
-                            let fmt = DateFormatter()
-                            fmt.dateStyle = .medium
-                            fmt.timeStyle = .none
-                            return fmt.string(from: date)
-                        }
-                        return a.session.name
-                    }()
-                )
-            }
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
-
-    func setCaptain(assignmentId: String, isCaptain: Bool) async {
-        let input = AssemblyOpsAPI.SetCaptainInput(assignmentId: assignmentId, isCaptain: isCaptain)
-
-        do {
-            let result = try await NetworkClient.shared.apollo.perform(
-                mutation: AssemblyOpsAPI.SetCaptainMutation(input: input)
-            )
-
-            if let errors = result.errors, !errors.isEmpty {
-                errorMessage = errors.first?.message ?? "Failed to update captain status"
-                HapticManager.shared.error()
-                return
-            }
-
-            if let updated = result.data?.setCaptain {
-                if let idx = assignments.firstIndex(where: { $0.id == updated.id }) {
-                    assignments[idx].isCaptain = updated.isCaptain
-                }
-                HapticManager.shared.success()
-            }
         } catch {
             errorMessage = error.localizedDescription
             HapticManager.shared.error()

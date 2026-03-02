@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "DepartmentCoverage"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query DepartmentCoverage($departmentId: ID!) { departmentCoverage(departmentId: $departmentId) { __typename post { __typename id name capacity category location sortOrder areaId areaName } session { __typename id name date startTime endTime } assignments { __typename id volunteer { __typename id firstName lastName } checkIn { __typename id checkInTime } status forceAssigned } filled capacity isFilled } }"#
+        #"query DepartmentCoverage($departmentId: ID!) { departmentCoverage(departmentId: $departmentId) { __typename post { __typename id name category location sortOrder areaId areaName } session { __typename id name date startTime endTime } shifts { __typename id name startTime endTime } assignments { __typename id volunteer { __typename id firstName lastName } checkIn { __typename id checkInTime } status forceAssigned shiftId shiftName } filled } }"#
       ))
 
     public var departmentId: ID
@@ -45,10 +45,9 @@ extension AssemblyOpsAPI {
           .field("__typename", String.self),
           .field("post", Post.self),
           .field("session", Session.self),
+          .field("shifts", [Shift].self),
           .field("assignments", [Assignment].self),
           .field("filled", Int.self),
-          .field("capacity", Int.self),
-          .field("isFilled", Bool.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
           DepartmentCoverageQuery.Data.DepartmentCoverage.self
@@ -56,10 +55,9 @@ extension AssemblyOpsAPI {
 
         var post: Post { __data["post"] }
         var session: Session { __data["session"] }
+        var shifts: [Shift] { __data["shifts"] }
         var assignments: [Assignment] { __data["assignments"] }
         var filled: Int { __data["filled"] }
-        var capacity: Int { __data["capacity"] }
-        var isFilled: Bool { __data["isFilled"] }
 
         /// DepartmentCoverage.Post
         ///
@@ -73,7 +71,6 @@ extension AssemblyOpsAPI {
             .field("__typename", String.self),
             .field("id", AssemblyOpsAPI.ID.self),
             .field("name", String.self),
-            .field("capacity", Int.self),
             .field("category", String?.self),
             .field("location", String?.self),
             .field("sortOrder", Int.self),
@@ -86,7 +83,6 @@ extension AssemblyOpsAPI {
 
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var name: String { __data["name"] }
-          var capacity: Int { __data["capacity"] }
           var category: String? { __data["category"] }
           var location: String? { __data["location"] }
           var sortOrder: Int { __data["sortOrder"] }
@@ -121,6 +117,31 @@ extension AssemblyOpsAPI {
           var endTime: AssemblyOpsAPI.DateTime { __data["endTime"] }
         }
 
+        /// DepartmentCoverage.Shift
+        ///
+        /// Parent Type: `CoverageShift`
+        struct Shift: AssemblyOpsAPI.SelectionSet {
+          let __data: DataDict
+          init(_dataDict: DataDict) { __data = _dataDict }
+
+          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.CoverageShift }
+          static var __selections: [ApolloAPI.Selection] { [
+            .field("__typename", String.self),
+            .field("id", AssemblyOpsAPI.ID.self),
+            .field("name", String.self),
+            .field("startTime", AssemblyOpsAPI.DateTime.self),
+            .field("endTime", AssemblyOpsAPI.DateTime.self),
+          ] }
+          static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+            DepartmentCoverageQuery.Data.DepartmentCoverage.Shift.self
+          ] }
+
+          var id: AssemblyOpsAPI.ID { __data["id"] }
+          var name: String { __data["name"] }
+          var startTime: AssemblyOpsAPI.DateTime { __data["startTime"] }
+          var endTime: AssemblyOpsAPI.DateTime { __data["endTime"] }
+        }
+
         /// DepartmentCoverage.Assignment
         ///
         /// Parent Type: `CoverageAssignment`
@@ -136,6 +157,8 @@ extension AssemblyOpsAPI {
             .field("checkIn", CheckIn?.self),
             .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
             .field("forceAssigned", Bool.self),
+            .field("shiftId", AssemblyOpsAPI.ID?.self),
+            .field("shiftName", String?.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             DepartmentCoverageQuery.Data.DepartmentCoverage.Assignment.self
@@ -146,6 +169,8 @@ extension AssemblyOpsAPI {
           var checkIn: CheckIn? { __data["checkIn"] }
           var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
           var forceAssigned: Bool { __data["forceAssigned"] }
+          var shiftId: AssemblyOpsAPI.ID? { __data["shiftId"] }
+          var shiftName: String? { __data["shiftName"] }
 
           /// DepartmentCoverage.Assignment.Volunteer
           ///

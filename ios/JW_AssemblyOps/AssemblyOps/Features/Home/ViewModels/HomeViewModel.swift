@@ -151,7 +151,7 @@ final class HomeViewModel: ObservableObject {
 
     // MARK: - Data Loading
 
-    func loadAssignments() async {
+    func loadAssignments(eventId: String? = nil) async {
         isLoading = true
         errorMessage = nil
 
@@ -165,13 +165,17 @@ final class HomeViewModel: ObservableObject {
         }
 
         // Network fetch
+        guard let resolvedEventId = eventId ?? AppState.shared.currentEventId else {
+            isLoading = false
+            return
+        }
+        let eventId = resolvedEventId
         do {
-            let fetched = try await AssignmentsService.shared.fetchAssignments()
+            let fetched = try await AssignmentsService.shared.fetchAssignments(eventId: eventId)
             assignments = fetched
             cache.save(fetched)
             if !fetched.isEmpty {
                 AppState.shared.hasVolunteerEventMembership = true
-                AppState.shared.currentEventId = fetched.first?.eventId
             }
         } catch {
             // Fallback to cache on failure
@@ -185,8 +189,8 @@ final class HomeViewModel: ObservableObject {
         isLoading = false
     }
 
-    func refresh() async {
-        await loadAssignments()
+    func refresh(eventId: String? = nil) async {
+        await loadAssignments(eventId: eventId)
     }
 
     // MARK: - Check-In Actions

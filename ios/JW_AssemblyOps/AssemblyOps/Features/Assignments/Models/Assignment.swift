@@ -91,7 +91,13 @@ struct Assignment: Identifiable, Equatable {
     let date: Date
     let startTime: Date
     let endTime: Date
-    
+
+    // Shift times (for Attendant assignments with post-specific shifts)
+    let shiftId: String?
+    let shiftName: String?
+    let shiftStartTime: Date?
+    let shiftEndTime: Date?
+
     // Assignment status
     var status: AssignmentStatus
     var isCaptain: Bool
@@ -201,11 +207,26 @@ struct Assignment: Identifiable, Equatable {
         DepartmentColor.backgroundColor(for: departmentType)
     }
 
-    /// Formatted time range for display
+    /// Whether this is an Attendant assignment that has a specific shift time
+    var hasShift: Bool {
+        departmentType.uppercased() == "ATTENDANT" && shiftStartTime != nil && shiftEndTime != nil
+    }
+
+    /// The effective start time for display and sorting: shift time if available, otherwise session time
+    var displayStartTime: Date {
+        hasShift ? shiftStartTime! : startTime
+    }
+
+    /// The effective end time for display: shift time if available, otherwise session time
+    var displayEndTime: Date {
+        hasShift ? shiftEndTime! : endTime
+    }
+
+    /// Formatted time range for display (uses shift times for Attendant assignments with shifts)
     var timeRangeFormatted: String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
-        return "\(formatter.string(from: startTime)) - \(formatter.string(from: endTime))"
+        return "\(formatter.string(from: displayStartTime)) - \(formatter.string(from: displayEndTime))"
     }
 }
 
@@ -238,6 +259,19 @@ extension Assignment {
         self.date = date
         self.startTime = startTime
         self.endTime = endTime
+
+        // Parse optional shift times
+        if let shift = graphQL.shift {
+            self.shiftId = shift.id
+            self.shiftName = shift.name
+            self.shiftStartTime = isoFormatter.date(from: shift.startTime)
+            self.shiftEndTime = isoFormatter.date(from: shift.endTime)
+        } else {
+            self.shiftId = nil
+            self.shiftName = nil
+            self.shiftStartTime = nil
+            self.shiftEndTime = nil
+        }
 
         // Assignment acceptance workflow fields
         self.status = AssignmentStatus(rawValue: graphQL.status.rawValue) ?? .pending
@@ -279,6 +313,10 @@ extension Assignment {
             date: Date(),
             startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date())!,
             endTime: Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: Date())!,
+            shiftId: nil,
+            shiftName: nil,
+            shiftStartTime: nil,
+            shiftEndTime: nil,
             status: .accepted,
             isCaptain: false,
             respondedAt: nil,
@@ -308,6 +346,10 @@ extension Assignment {
             date: Calendar.current.date(byAdding: .day, value: 2, to: Date())!,
             startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date())!,
             endTime: Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: Date())!,
+            shiftId: nil,
+            shiftName: nil,
+            shiftStartTime: nil,
+            shiftEndTime: nil,
             status: .pending,
             isCaptain: false,
             respondedAt: nil,
@@ -337,6 +379,10 @@ extension Assignment {
             date: Date(),
             startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date())!,
             endTime: Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: Date())!,
+            shiftId: nil,
+            shiftName: nil,
+            shiftStartTime: nil,
+            shiftEndTime: nil,
             status: .accepted,
             isCaptain: true,
             respondedAt: Date(),
@@ -366,6 +412,10 @@ extension Assignment {
             date: Date(),
             startTime: Calendar.current.date(bySettingHour: 13, minute: 30, second: 0, of: Date())!,
             endTime: Calendar.current.date(bySettingHour: 16, minute: 30, second: 0, of: Date())!,
+            shiftId: nil,
+            shiftName: nil,
+            shiftStartTime: nil,
+            shiftEndTime: nil,
             status: .accepted,
             isCaptain: false,
             respondedAt: Date(),
@@ -395,6 +445,10 @@ extension Assignment {
             date: Date(),
             startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date())!,
             endTime: Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: Date())!,
+            shiftId: nil,
+            shiftName: nil,
+            shiftStartTime: nil,
+            shiftEndTime: nil,
             status: .accepted,
             isCaptain: false,
             respondedAt: Date(),
@@ -424,6 +478,10 @@ extension Assignment {
             date: Calendar.current.date(byAdding: .day, value: -1, to: Date())!,
             startTime: Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date())!,
             endTime: Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: Date())!,
+            shiftId: nil,
+            shiftName: nil,
+            shiftStartTime: nil,
+            shiftEndTime: nil,
             status: .accepted,
             isCaptain: false,
             respondedAt: Date(),
@@ -453,6 +511,10 @@ extension Assignment {
             date: Date(),
             startTime: Calendar.current.date(bySettingHour: 7, minute: 30, second: 0, of: Date())!,
             endTime: Calendar.current.date(bySettingHour: 9, minute: 30, second: 0, of: Date())!,
+            shiftId: nil,
+            shiftName: nil,
+            shiftStartTime: nil,
+            shiftEndTime: nil,
             status: .accepted,
             isCaptain: false,
             respondedAt: nil,

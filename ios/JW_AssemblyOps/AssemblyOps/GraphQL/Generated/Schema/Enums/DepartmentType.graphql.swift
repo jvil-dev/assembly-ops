@@ -8,7 +8,6 @@ extension AssemblyOpsAPI {
     case accounts = "ACCOUNTS"
     case attendant = "ATTENDANT"
     case audio = "AUDIO"
-    case audioVideo = "AUDIO_VIDEO"
     case baptism = "BAPTISM"
     case cleaning = "CLEANING"
     case firstAid = "FIRST_AID"

@@ -53,6 +53,9 @@ struct HomeView: View {
 
     private let concernsTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
+    /// Event ID passed from EventTabView for reliable data fetching
+    var eventId: String? = nil
+
     /// Closure to switch the parent tab view to a specific tab
     var switchToTab: ((EventTab) -> Void)?
 
@@ -164,7 +167,7 @@ struct HomeView: View {
                 }
             }
             .task {
-                await viewModel.loadAssignments()
+                await viewModel.loadAssignments(eventId: eventId)
                 if isAttendant {
                     await loadAttendantPosts()
                     if let eventId = appState.currentEventId {
@@ -181,10 +184,10 @@ struct HomeView: View {
                 }
             }
             .refreshable {
-                await viewModel.refresh()
+                await viewModel.refresh(eventId: eventId)
                 if isAttendant {
                     await loadAttendantPosts()
-                    if let eventId = appState.currentEventId {
+                    if let eventId = eventId ?? appState.currentEventId {
                         await attendantVM.loadConcerns(eventId: eventId)
                         await attendantVM.loadFacilityLocations(eventId: eventId)
                         if let sid = currentSessionId {
@@ -988,7 +991,8 @@ struct HomeView: View {
 
     /// Derive attendant posts from the volunteer's accepted assignments
     private func loadAttendantPosts() async {
-        if let assignments = try? await AssignmentsService.shared.fetchAssignments() {
+        guard let eventId = appState.currentEventId else { return }
+        if let assignments = try? await AssignmentsService.shared.fetchAssignments(eventId: eventId) {
             let unique = Dictionary(
                 assignments
                     .filter { $0.status == .accepted && $0.departmentType == "ATTENDANT" }

@@ -8,10 +8,16 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MyAssignments"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query MyAssignments { myAssignments { __typename id status isCaptain respondedAt declineReason acceptDeadline forceAssigned post { __typename id name location capacity category area { __typename id name } department { __typename id name departmentType event { __typename id } } } session { __typename id name date startTime endTime } checkIn { __typename id status checkInTime checkOutTime } } }"#
+        #"query MyAssignments($eventId: ID!) { myAssignments(eventId: $eventId) { __typename id status isCaptain respondedAt declineReason acceptDeadline forceAssigned post { __typename id name location category area { __typename id name } department { __typename id name departmentType event { __typename id } } } session { __typename id name date startTime endTime } shift { __typename id name startTime endTime } checkIn { __typename id status checkInTime checkOutTime } } }"#
       ))
 
-    public init() {}
+    public var eventId: ID
+
+    public init(eventId: ID) {
+      self.eventId = eventId
+    }
+
+    public var __variables: Variables? { ["eventId": eventId] }
 
     struct Data: AssemblyOpsAPI.SelectionSet {
       let __data: DataDict
@@ -19,7 +25,7 @@ extension AssemblyOpsAPI {
 
       static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Query }
       static var __selections: [ApolloAPI.Selection] { [
-        .field("myAssignments", [MyAssignment].self),
+        .field("myAssignments", [MyAssignment].self, arguments: ["eventId": .variable("eventId")]),
       ] }
       static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
         MyAssignmentsQuery.Data.self
@@ -46,6 +52,7 @@ extension AssemblyOpsAPI {
           .field("forceAssigned", Bool.self),
           .field("post", Post.self),
           .field("session", Session.self),
+          .field("shift", Shift?.self),
           .field("checkIn", CheckIn?.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -61,6 +68,7 @@ extension AssemblyOpsAPI {
         var forceAssigned: Bool { __data["forceAssigned"] }
         var post: Post { __data["post"] }
         var session: Session { __data["session"] }
+        var shift: Shift? { __data["shift"] }
         var checkIn: CheckIn? { __data["checkIn"] }
 
         /// MyAssignment.Post
@@ -76,7 +84,6 @@ extension AssemblyOpsAPI {
             .field("id", AssemblyOpsAPI.ID.self),
             .field("name", String.self),
             .field("location", String?.self),
-            .field("capacity", Int.self),
             .field("category", String?.self),
             .field("area", Area?.self),
             .field("department", Department.self),
@@ -88,7 +95,6 @@ extension AssemblyOpsAPI {
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var name: String { __data["name"] }
           var location: String? { __data["location"] }
-          var capacity: Int { __data["capacity"] }
           var category: String? { __data["category"] }
           var area: Area? { __data["area"] }
           var department: Department { __data["department"] }
@@ -182,6 +188,31 @@ extension AssemblyOpsAPI {
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var name: String { __data["name"] }
           var date: AssemblyOpsAPI.DateTime { __data["date"] }
+          var startTime: AssemblyOpsAPI.DateTime { __data["startTime"] }
+          var endTime: AssemblyOpsAPI.DateTime { __data["endTime"] }
+        }
+
+        /// MyAssignment.Shift
+        ///
+        /// Parent Type: `Shift`
+        struct Shift: AssemblyOpsAPI.SelectionSet {
+          let __data: DataDict
+          init(_dataDict: DataDict) { __data = _dataDict }
+
+          static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Shift }
+          static var __selections: [ApolloAPI.Selection] { [
+            .field("__typename", String.self),
+            .field("id", AssemblyOpsAPI.ID.self),
+            .field("name", String.self),
+            .field("startTime", AssemblyOpsAPI.DateTime.self),
+            .field("endTime", AssemblyOpsAPI.DateTime.self),
+          ] }
+          static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+            MyAssignmentsQuery.Data.MyAssignment.Shift.self
+          ] }
+
+          var id: AssemblyOpsAPI.ID { __data["id"] }
+          var name: String { __data["name"] }
           var startTime: AssemblyOpsAPI.DateTime { __data["startTime"] }
           var endTime: AssemblyOpsAPI.DateTime { __data["endTime"] }
         }

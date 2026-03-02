@@ -38,7 +38,6 @@ struct EmptyAssignmentsView: View {
         }
         .padding(AppTheme.Spacing.screenEdge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .themedBackground(scheme: colorScheme)
         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
         .onAppear {
             withAnimation(AppTheme.entranceAnimation) {

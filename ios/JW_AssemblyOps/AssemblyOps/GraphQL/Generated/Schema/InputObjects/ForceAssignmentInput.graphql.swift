@@ -15,12 +15,14 @@ extension AssemblyOpsAPI {
       volunteerId: ID,
       postId: ID,
       sessionId: ID,
+      shiftId: GraphQLNullable<ID> = nil,
       isCaptain: GraphQLNullable<Bool> = nil
     ) {
       __data = InputDict([
         "volunteerId": volunteerId,
         "postId": postId,
         "sessionId": sessionId,
+        "shiftId": shiftId,
         "isCaptain": isCaptain
       ])
     }
@@ -38,6 +40,11 @@ extension AssemblyOpsAPI {
     var sessionId: ID {
       get { __data["sessionId"] }
       set { __data["sessionId"] = newValue }
+    }
+
+    var shiftId: GraphQLNullable<ID> {
+      get { __data["shiftId"] }
+      set { __data["shiftId"] = newValue }
     }
 
     var isCaptain: GraphQLNullable<Bool> {

@@ -92,7 +92,15 @@ final class DepartmentBrowseViewModel: ObservableObject {
                                 endDate: e.endDate,
                                 theme: e.theme,
                                 isPublic: e.isPublic,
-                                volunteerCount: e.volunteerCount
+                                volunteerCount: e.volunteerCount,
+                                departments: e.departments.map { d in
+                                    EventDepartmentInfo(
+                                        id: d.id,
+                                        name: d.name,
+                                        departmentType: d.departmentType.rawValue,
+                                        volunteerCount: d.volunteerCount
+                                    )
+                                }
                             )
                         }
                     }

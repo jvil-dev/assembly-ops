@@ -644,8 +644,8 @@ struct VolunteerEventDiscoveryView: View {
 
     @ViewBuilder
     private func joinButtonRow(for event: DiscoverableEvent) -> some View {
-        let isRequesting = viewModel.pendingRequestIds.contains(event.id)
         let hasSent = viewModel.sentRequestIds.contains(event.id)
+        let isExpanded = viewModel.expandedEventId == event.id
 
         if hasSent {
             HStack(spacing: AppTheme.Spacing.s) {
@@ -657,35 +657,167 @@ struct VolunteerEventDiscoveryView: View {
                 Spacer()
             }
             .padding(.vertical, AppTheme.Spacing.xs)
+        } else if isExpanded {
+            departmentSelectionSection(for: event)
         } else {
             Button {
-                viewModel.requestToJoin(eventId: event.id)
+                withAnimation(AppTheme.quickAnimation) {
+                    viewModel.toggleExpand(eventId: event.id)
+                }
             } label: {
                 HStack(spacing: AppTheme.Spacing.s) {
-                    if isRequesting {
-                        ProgressView()
-                            .tint(.white)
-                            .scaleEffect(0.85)
-                    } else {
-                        Image(systemName: "paperplane.fill")
-                            .font(.system(size: 14))
-                        Text(NSLocalizedString("volunteer.eventDiscovery.requestToJoin", comment: ""))
-                            .font(AppTheme.Typography.bodyMedium)
-                    }
+                    Image(systemName: "paperplane.fill")
+                        .font(.system(size: 14))
+                    Text(NSLocalizedString("volunteer.eventDiscovery.requestToJoin", comment: ""))
+                        .font(AppTheme.Typography.bodyMedium)
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: AppTheme.ButtonHeight.medium)
             }
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
-                    .fill(isRequesting
-                          ? AppTheme.themeColor.opacity(0.6)
-                          : AppTheme.themeColor)
+                    .fill(AppTheme.themeColor)
             )
             .foregroundStyle(.white)
-            .disabled(isRequesting)
-            .animation(AppTheme.quickAnimation, value: isRequesting)
         }
+    }
+
+    // MARK: - Department Selection Section
+
+    @ViewBuilder
+    private func departmentSelectionSection(for event: DiscoverableEvent) -> some View {
+        let isRequesting = viewModel.pendingRequestIds.contains(event.id)
+
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            if event.departments.isEmpty {
+                // No departments available yet
+                HStack(spacing: AppTheme.Spacing.s) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 13))
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    Text("discovery.noDepartments".localized)
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                }
+                .padding(.vertical, AppTheme.Spacing.s)
+            } else {
+                Text("discovery.selectDepartment".localized)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+                // Department chips in wrapping layout
+                departmentChipGrid(for: event)
+
+                // Optional note field
+                TextField("discovery.notePlaceholder".localized, text: $viewModel.joinNote, axis: .vertical)
+                    .font(AppTheme.Typography.body)
+                    .lineLimit(1...3)
+                    .padding(AppTheme.Spacing.m)
+                    .background(
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                            .fill(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    )
+
+                // Submit button
+                Button {
+                    let note = viewModel.joinNote.trimmingCharacters(in: .whitespacesAndNewlines)
+                    viewModel.requestToJoin(
+                        eventId: event.id,
+                        departmentType: viewModel.selectedDepartmentType,
+                        note: note.isEmpty ? nil : note
+                    )
+                } label: {
+                    HStack(spacing: AppTheme.Spacing.s) {
+                        if isRequesting {
+                            ProgressView()
+                                .tint(.white)
+                                .scaleEffect(0.85)
+                        } else {
+                            Image(systemName: "paperplane.fill")
+                                .font(.system(size: 14))
+                            Text("discovery.submitRequest".localized)
+                                .font(AppTheme.Typography.bodyMedium)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: AppTheme.ButtonHeight.medium)
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                        .fill(viewModel.selectedDepartmentType == nil || isRequesting
+                              ? AppTheme.themeColor.opacity(0.4)
+                              : AppTheme.themeColor)
+                )
+                .foregroundStyle(.white)
+                .disabled(viewModel.selectedDepartmentType == nil || isRequesting)
+                .animation(AppTheme.quickAnimation, value: isRequesting)
+            }
+
+            // Collapse button
+            Button {
+                withAnimation(AppTheme.quickAnimation) {
+                    viewModel.toggleExpand(eventId: event.id)
+                }
+            } label: {
+                Text("discovery.cancel".localized)
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppTheme.Spacing.xs)
+            }
+        }
+    }
+
+    // MARK: - Department Chip Grid
+
+    private func departmentChipGrid(for event: DiscoverableEvent) -> some View {
+        FlowLayout(spacing: AppTheme.Spacing.s) {
+            ForEach(event.departments) { dept in
+                departmentChip(dept: dept)
+            }
+        }
+    }
+
+    private func departmentChip(dept: EventDepartmentInfo) -> some View {
+        let isSelected = viewModel.selectedDepartmentType == dept.departmentType
+        let deptColor = DepartmentColor.color(for: dept.departmentType)
+
+        return Button {
+            withAnimation(AppTheme.quickAnimation) {
+                viewModel.selectedDepartmentType = dept.departmentType
+            }
+            HapticManager.shared.lightTap()
+        } label: {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(deptColor)
+                    .frame(width: 10, height: 10)
+
+                Text(dept.name)
+                    .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .bold))
+                }
+            }
+            .padding(.horizontal, AppTheme.Spacing.m)
+            .padding(.vertical, AppTheme.Spacing.s)
+            .background(
+                Capsule()
+                    .fill(isSelected
+                          ? deptColor.opacity(colorScheme == .dark ? 0.3 : 0.15)
+                          : AppTheme.cardBackgroundSecondary(for: colorScheme))
+            )
+            .overlay(
+                Capsule()
+                    .strokeBorder(isSelected ? deptColor : Color.clear, lineWidth: 1.5)
+            )
+            .foregroundStyle(isSelected
+                             ? deptColor
+                             : AppTheme.textSecondary(for: colorScheme))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Helpers

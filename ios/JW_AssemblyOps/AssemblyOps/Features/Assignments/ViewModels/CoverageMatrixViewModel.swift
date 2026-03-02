@@ -89,7 +89,6 @@ final class CoverageMatrixViewModel: ObservableObject {
                     postsDict[post.id] = CoveragePost(
                         id: post.id,
                         name: post.name,
-                        capacity: post.capacity,
                         category: post.category,
                         location: post.location,
                         sortOrder: post.sortOrder,
@@ -110,6 +109,16 @@ final class CoverageMatrixViewModel: ObservableObject {
                     )
                 }
 
+                // Build shifts for this slot
+                let shifts = slot.shifts.map { shift in
+                    CoverageShift(
+                        id: shift.id,
+                        name: shift.name,
+                        startTime: shift.startTime,
+                        endTime: shift.endTime
+                    )
+                }
+
                 // Build slot with assignments
                 let assignments = slot.assignments.map { assignment in
                     CoverageAssignment(
@@ -126,7 +135,9 @@ final class CoverageMatrixViewModel: ObservableObject {
                             )
                         },
                         status: mapStatus(assignment.status),
-                        forceAssigned: assignment.forceAssigned
+                        forceAssigned: assignment.forceAssigned,
+                        shiftId: assignment.shiftId,
+                        shiftName: assignment.shiftName
                     )
                 }
 
@@ -135,10 +146,9 @@ final class CoverageMatrixViewModel: ObservableObject {
                     sessionId: session.id,
                     postName: post.name,
                     sessionName: session.name,
+                    shifts: shifts,
                     assignments: assignments,
-                    filled: slot.filled,
-                    capacity: slot.capacity,
-                    isFilled: slot.isFilled
+                    filled: slot.filled
                 )
                 mappedSlots.append(coverageSlot)
             }
@@ -175,9 +185,9 @@ final class CoverageMatrixViewModel: ObservableObject {
         case .all:
             return sessionSlots
         case .gaps:
-            return sessionSlots.filter { !$0.isFilled }
+            return sessionSlots.filter { $0.filled == 0 }
         case .filled:
-            return sessionSlots.filter { $0.isFilled }
+            return sessionSlots.filter { $0.filled > 0 }
         }
     }
 
@@ -186,9 +196,9 @@ final class CoverageMatrixViewModel: ObservableObject {
         case .all:
             return slots
         case .gaps:
-            return slots.filter { !$0.isFilled }
+            return slots.filter { $0.filled == 0 }
         case .filled:
-            return slots.filter { $0.isFilled }
+            return slots.filter { $0.filled > 0 }
         }
     }
 

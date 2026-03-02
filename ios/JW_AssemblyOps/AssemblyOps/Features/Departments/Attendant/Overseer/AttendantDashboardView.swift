@@ -8,8 +8,9 @@
 // MARK: - Attendant Dashboard View
 //
 // Hub for attendant department overseer features.
-// Shows summary cards for incidents, alerts, attendance, and meetings.
+// Shows summary cards for incidents, alerts, attendance, meetings, and more.
 // Each card navigates to its detail management view.
+// Note: Shift management was moved to SlotDetailSheet (per-post shifts).
 //
 // Sections:
 //   - Safety Incidents Card: Unresolved incident count
@@ -69,6 +70,18 @@ struct AttendantDashboardView: View {
 
                         facilityGuideCard
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
+
+                        reminderComplianceCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.30)
+
+                        lanyardTrackingCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.35)
+
+                        volunteersCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.45)
+
+                        settingsCard
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.50)
                     }
                     .screenPadding()
                     .padding(.top, AppTheme.Spacing.l)
@@ -325,6 +338,146 @@ struct AttendantDashboardView: View {
                 facilityLocations.append(newFacility)
             }
         }
+    }
+
+    // MARK: - Reminder Compliance Card
+
+    private var reminderComplianceCard: some View {
+        NavigationLink(destination: ReminderComplianceView()) {
+            HStack(spacing: AppTheme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                        .fill(accentColor.opacity(0.12))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "checkmark.shield")
+                        .font(.system(size: 20))
+                        .foregroundStyle(accentColor)
+                }
+
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                    Text("attendant.dashboard.reminders".localized.uppercased())
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    Text("attendant.dashboard.remindersDesc".localized)
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(.primary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .cardPadding()
+            .themedCard(scheme: colorScheme)
+        }
+        .buttonStyle(ScaleButtonStyle())
+    }
+
+    // MARK: - Lanyard Tracking Card
+
+    private var lanyardTrackingCard: some View {
+        NavigationLink(destination: LanyardGridView()) {
+            HStack(spacing: AppTheme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                        .fill(accentColor.opacity(0.12))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "lanyard")
+                        .font(.system(size: 20))
+                        .foregroundStyle(accentColor)
+                }
+
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                    Text("attendant.dashboard.lanyard".localized.uppercased())
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    Text("attendant.dashboard.lanyardDesc".localized)
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(.primary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .cardPadding()
+            .themedCard(scheme: colorScheme)
+        }
+        .buttonStyle(ScaleButtonStyle())
+    }
+
+    // MARK: - Volunteers Card
+
+    private var volunteersCard: some View {
+        NavigationLink(destination: VolunteerListView()) {
+            HStack(spacing: AppTheme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                        .fill(accentColor.opacity(0.12))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "person.3")
+                        .font(.system(size: 20))
+                        .foregroundStyle(accentColor)
+                }
+
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                    Text("attendant.dashboard.volunteers".localized.uppercased())
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    Text("attendant.dashboard.volunteersDesc".localized)
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(.primary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .cardPadding()
+            .themedCard(scheme: colorScheme)
+        }
+        .buttonStyle(ScaleButtonStyle())
+    }
+
+    // MARK: - Settings Card
+
+    private var settingsCard: some View {
+        NavigationLink(destination: DepartmentSettingsView(departmentId: sessionState.selectedDepartment?.id ?? "")) {
+            HStack(spacing: AppTheme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                        .fill(Color.gray.opacity(0.12))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.gray)
+                }
+
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                    Text("attendant.dashboard.settings".localized.uppercased())
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    Text("attendant.dashboard.settingsDesc".localized)
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(.primary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .cardPadding()
+            .themedCard(scheme: colorScheme)
+        }
+        .buttonStyle(ScaleButtonStyle())
     }
 
     // MARK: - Data Loading

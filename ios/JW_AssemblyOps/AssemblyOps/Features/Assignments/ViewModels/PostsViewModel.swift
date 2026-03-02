@@ -36,7 +36,6 @@ final class PostsViewModel: ObservableObject {
     @Published var name: String = ""
     @Published var description: String = ""
     @Published var location: String = ""
-    @Published var capacityText: String = "1"
     @Published var category: String = ""
 
     /// Area to assign the post to on creation (set when creating from within an area)
@@ -47,16 +46,12 @@ final class PostsViewModel: ObservableObject {
     @Published var bulkStartNumber: String = "1"
     @Published var bulkCount: String = "10"
 
-    var capacity: Int { Int(capacityText) ?? 1 }
-
     var isFormValid: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        capacity > 0
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var isBulkFormValid: Bool {
         !bulkPrefix.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        capacity > 0 &&
         (Int(bulkCount) ?? 0) >= 1 &&
         (Int(bulkCount) ?? 0) <= 50 &&
         (Int(bulkStartNumber) ?? 0) >= 0
@@ -81,7 +76,6 @@ final class PostsViewModel: ObservableObject {
             name: name,
             description: description.isEmpty ? .none : .some(description),
             location: location.isEmpty ? .none : .some(location),
-            capacity: .some(capacity),
             category: trimmedCategory.isEmpty ? .none : .some(trimmedCategory),
             areaId: areaId.map { .some($0) } ?? .none
         )
@@ -124,7 +118,6 @@ final class PostsViewModel: ObservableObject {
             name = ""
             description = ""
             location = ""
-            capacityText = "1"
             category = ""
 
         } catch {
@@ -147,7 +140,6 @@ final class PostsViewModel: ObservableObject {
         let posts = (start..<(start + count)).map { number in
             AssemblyOpsAPI.CreatePostInput(
                 name: "\(prefix)\(number)",
-                capacity: .some(capacity),
                 category: trimmedCategory.isEmpty ? .none : .some(trimmedCategory),
                 sortOrder: .some(number),
                 areaId: areaId.map { .some($0) } ?? .none
@@ -194,7 +186,6 @@ final class PostsViewModel: ObservableObject {
             bulkPrefix = ""
             bulkStartNumber = "1"
             bulkCount = "10"
-            capacityText = "1"
             category = ""
 
         } catch {
@@ -209,7 +200,6 @@ struct PostItem: Identifiable {
     let name: String
     let description: String?
     let location: String?
-    let capacity: Int
     let category: String?
     let sortOrder: Int
     let createdAt: Date

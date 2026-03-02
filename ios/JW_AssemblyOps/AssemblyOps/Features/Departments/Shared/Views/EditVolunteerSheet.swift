@@ -40,7 +40,6 @@ struct EditVolunteerSheet: View {
     @State private var notes: String
     @State private var isSubmitting = false
     @State private var errorMessage: String?
-    @State private var selectedRoleId: String?
 
     @State private var congregationName: String
     @State private var congregationId: String?
@@ -54,7 +53,6 @@ struct EditVolunteerSheet: View {
         _email = State(initialValue: volunteer.email ?? "")
         _appointment = State(initialValue: volunteer.appointmentStatus ?? "PUBLISHER")
         _notes = State(initialValue: "")
-        _selectedRoleId = State(initialValue: volunteer.roleId)
         _congregationName = State(initialValue: volunteer.congregation)
         _congregationId = State(initialValue: nil)
     }
@@ -72,9 +70,6 @@ struct EditVolunteerSheet: View {
                     requiredFieldsCard
                     optionalFieldsCard
                     appointmentCard
-                    if !viewModel.roles.isEmpty {
-                        roleCard
-                    }
                     notesCard
                 }
                 .screenPadding()
@@ -102,9 +97,6 @@ struct EditVolunteerSheet: View {
             }
             .task {
                 await prePopulateCongregation()
-                if let eventId = EventSessionState.shared.selectedEvent?.id {
-                    await viewModel.loadRoles(eventId: eventId)
-                }
             }
             .alert("common.error".localized, isPresented: Binding(
                 get: { errorMessage != nil },
@@ -180,56 +172,6 @@ struct EditVolunteerSheet: View {
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
-    }
-
-    // MARK: - Role Card
-
-    private var roleCard: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            SectionHeaderLabel(icon: "person.badge.key.fill", title: "Role")
-
-            VStack(spacing: 0) {
-                roleRow(id: nil, name: "None", isLast: false)
-                ForEach(Array(viewModel.roles.enumerated()), id: \.element.id) { index, role in
-                    roleRow(id: role.id, name: role.name, isLast: index == viewModel.roles.count - 1)
-                }
-            }
-            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-        }
-        .cardPadding()
-        .themedCard(scheme: colorScheme)
-    }
-
-    private func roleRow(id: String?, name: String, isLast: Bool) -> some View {
-        Button {
-            selectedRoleId = id
-            HapticManager.shared.lightTap()
-        } label: {
-            VStack(spacing: 0) {
-                HStack {
-                    Text(name)
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(id == nil
-                            ? AppTheme.textTertiary(for: colorScheme)
-                            : (colorScheme == .dark ? .white : .primary))
-                    Spacer()
-                    Image(systemName: selectedRoleId == id ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 20))
-                        .foregroundStyle(selectedRoleId == id
-                            ? AppTheme.themeColor
-                            : AppTheme.textTertiary(for: colorScheme))
-                }
-                .padding(.horizontal, AppTheme.Spacing.m)
-                .padding(.vertical, AppTheme.Spacing.m)
-
-                if !isLast {
-                    Divider()
-                        .padding(.leading, AppTheme.Spacing.m)
-                }
-            }
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Notes Card
@@ -332,10 +274,6 @@ struct EditVolunteerSheet: View {
 
         if !trimmedNotes.isEmpty {
             input.notes = .some(trimmedNotes)
-        }
-
-        if selectedRoleId != volunteer.roleId {
-            input.roleId = selectedRoleId.map { .some($0) } ?? .null
         }
 
         await viewModel.updateVolunteer(input: input)

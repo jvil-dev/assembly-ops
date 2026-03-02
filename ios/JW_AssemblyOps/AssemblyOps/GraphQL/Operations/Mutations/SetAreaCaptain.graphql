@@ -1,6 +1,11 @@
 mutation SetAreaCaptain($input: SetAreaCaptainInput!) {
   setAreaCaptain(input: $input) {
     id
+    status
+    respondedAt
+    declineReason
+    acceptedDeadline
+    forceAssigned
     area {
       id
       name

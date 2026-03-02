@@ -48,8 +48,13 @@ struct AssignmentCardView: View {
                     detailRow(icon: "mappin.circle.fill", text: location)
                 }
 
-                // Time
+                // Time (shows shift time for Attendant assignments with shifts)
                 detailRow(icon: "clock.fill", text: assignment.timeRangeFormatted)
+
+                // Shift name label (Attendant assignments with a specific shift)
+                if let shiftName = assignment.shiftName, assignment.hasShift {
+                    detailRow(icon: "clock.arrow.2.circlepath", text: shiftName)
+                }
 
                 // Deadline warning for pending
                 if let deadlineText = assignment.deadlineText {
@@ -181,17 +186,24 @@ struct AssignmentCardView: View {
 
     // MARK: - Card Background
 
-    private var cardBackground: Color {
-        if assignment.isPending {
-            return colorScheme == .dark
-                ? AppTheme.cardBackground(for: colorScheme)
-                : Color.white.opacity(0.95)
-        } else if assignment.isToday && assignment.isAccepted {
-            return colorScheme == .dark
-                ? AppTheme.cardBackground(for: colorScheme)
-                : Color.white
+    private var cardBackground: some View {
+        let base: Color = {
+            if assignment.isPending {
+                return colorScheme == .dark
+                    ? AppTheme.cardBackground(for: colorScheme)
+                    : Color.white.opacity(0.95)
+            } else if assignment.isToday && assignment.isAccepted {
+                return colorScheme == .dark
+                    ? AppTheme.cardBackground(for: colorScheme)
+                    : Color.white
+            }
+            return AppTheme.cardBackground(for: colorScheme)
+        }()
+
+        return ZStack {
+            base
+            assignment.departmentColor.opacity(colorScheme == .dark ? 0.08 : 0.06)
         }
-        return AppTheme.cardBackground(for: colorScheme)
     }
 }
 

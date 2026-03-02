@@ -126,7 +126,7 @@ struct WalkThroughChecklistView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "calendar")
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
                 Text("attendant.attendance.session".localized.uppercased())
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -158,7 +158,7 @@ struct WalkThroughChecklistView: View {
                                 .padding(.vertical, AppTheme.Spacing.s)
                                 .background(
                                     selectedSessionId == session.id
-                                        ? AppTheme.themeColor
+                                        ? DepartmentColor.color(for: "ATTENDANT")
                                         : AppTheme.cardBackgroundSecondary(for: colorScheme)
                                 )
                                 .foregroundStyle(selectedSessionId == session.id ? .white : .primary)
@@ -180,7 +180,7 @@ struct WalkThroughChecklistView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "checklist")
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
                 Text(String(format: "attendant.walkthrough.progress".localized, checkedItems.count, checklistItems.count))
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)
@@ -192,7 +192,7 @@ struct WalkThroughChecklistView: View {
             }
 
             ProgressView(value: Double(checkedItems.count), total: Double(checklistItems.count))
-                .tint(isComplete ? AppTheme.StatusColors.accepted : AppTheme.themeColor)
+                .tint(isComplete ? AppTheme.StatusColors.accepted : DepartmentColor.color(for: "ATTENDANT"))
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
@@ -204,7 +204,7 @@ struct WalkThroughChecklistView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "shield.fill")
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
                 Text("attendant.concerns.report".localized.uppercased())
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -317,7 +317,7 @@ struct WalkThroughChecklistView: View {
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, AppTheme.ButtonHeight.medium / 2)
-            .background(isComplete && !attendantVM.isSaving && !isSessionAlreadyCompleted ? AppTheme.themeColor : AppTheme.textTertiary(for: colorScheme))
+            .background(isComplete && !attendantVM.isSaving && !isSessionAlreadyCompleted ? DepartmentColor.color(for: "ATTENDANT") : AppTheme.textTertiary(for: colorScheme))
             .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
         }
         .buttonStyle(.plain)

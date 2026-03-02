@@ -63,7 +63,7 @@ struct AttendantInfoView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "book.closed.fill")
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
                     .font(.system(size: 20))
                 Text("attendant.info.title".localized)
                     .font(AppTheme.Typography.title)
@@ -96,7 +96,7 @@ struct AttendantInfoView: View {
                 HStack {
                     HStack(spacing: AppTheme.Spacing.s) {
                         Image(systemName: section.icon)
-                            .foregroundStyle(AppTheme.themeColor)
+                            .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
                         Text(section.titleKey.localized)
                             .font(AppTheme.Typography.caption)
                             .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -130,7 +130,7 @@ struct AttendantInfoView: View {
     private func reminderRow(_ reminder: AttendantReminder) -> some View {
         HStack(alignment: .top, spacing: AppTheme.Spacing.s) {
             Circle()
-                .fill(reminder.isHighlighted ? Color.red : AppTheme.themeColor)
+                .fill(reminder.isHighlighted ? Color.red : DepartmentColor.color(for: "ATTENDANT"))
                 .frame(width: 6, height: 6)
                 .padding(.top, 7)
 

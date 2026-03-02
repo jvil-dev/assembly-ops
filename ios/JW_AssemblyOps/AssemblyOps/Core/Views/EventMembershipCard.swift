@@ -17,6 +17,13 @@ struct EventMembershipCard: View {
     let item: EventMembershipItem
     let colorScheme: ColorScheme
 
+    private var accentColor: Color {
+        if let deptType = item.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
+    }
+
     private var statusColor: Color {
         switch item.dateStatus {
         case .active: return AppTheme.StatusColors.accepted
@@ -44,9 +51,9 @@ struct EventMembershipCard: View {
                     .padding(.vertical, AppTheme.Spacing.xs)
                     .background(
                         Capsule()
-                            .fill(AppTheme.themeColor.opacity(colorScheme == .dark ? 0.25 : 0.1))
+                            .fill(accentColor.opacity(colorScheme == .dark ? 0.25 : 0.1))
                     )
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
 
                 Spacer()
 
@@ -101,7 +108,7 @@ struct EventMembershipCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: item.membershipType == .overseer ? "shield.fill" : "person.fill")
                         .font(.system(size: 12))
-                        .foregroundStyle(item.membershipType == .overseer ? AppTheme.themeColor : AppTheme.textTertiary(for: colorScheme))
+                        .foregroundStyle(item.membershipType == .overseer ? accentColor : AppTheme.textTertiary(for: colorScheme))
 
                     Text(item.displayRole)
                         .font(AppTheme.Typography.caption)
@@ -124,7 +131,7 @@ struct EventMembershipCard: View {
         HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: icon)
                 .font(.system(size: 13))
-                .foregroundStyle(AppTheme.themeColor.opacity(0.7))
+                .foregroundStyle(accentColor.opacity(0.7))
                 .frame(width: 18)
             Text(text)
                 .font(AppTheme.Typography.subheadline)
@@ -153,7 +160,8 @@ struct EventMembershipCard: View {
             departmentType: "ATTENDANT",
             departmentAccessCode: "ABC123",
             eventVolunteerId: nil,
-            volunteerId: nil
+            volunteerId: nil,
+            hierarchyRole: nil
         ),
         colorScheme: .light
     )

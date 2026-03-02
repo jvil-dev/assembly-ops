@@ -12,5 +12,11 @@ query DiscoverEvents($eventType: EventType, $state: String, $language: String, $
     theme
     isPublic
     volunteerCount
+    departments {
+      id
+      name
+      departmentType
+      volunteerCount
+    }
   }
 }

@@ -152,11 +152,14 @@ final class AreaService {
     // MARK: - Captain Management
 
     /// Set captain for an area + session
-    func setAreaCaptain(areaId: String, sessionId: String, eventVolunteerId: String) async throws -> AreaCaptainItem {
+    func setAreaCaptain(areaId: String, sessionId: String, eventVolunteerId: String, forceAssigned: Bool = false, acceptedDeadline: Date? = nil) async throws -> AreaCaptainItem {
+        let deadlineString: GraphQLNullable<String> = acceptedDeadline.map { .some(ISO8601DateFormatter().string(from: $0)) } ?? .null
         let input = AssemblyOpsAPI.SetAreaCaptainInput(
             areaId: areaId,
             sessionId: sessionId,
-            eventVolunteerId: eventVolunteerId
+            eventVolunteerId: eventVolunteerId,
+            forceAssigned: .some(forceAssigned),
+            acceptedDeadline: deadlineString
         )
         return try await withCheckedThrowingContinuation { continuation in
             NetworkClient.shared.apollo.perform(

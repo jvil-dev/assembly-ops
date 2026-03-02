@@ -21,6 +21,13 @@ import Foundation
 import Combine
 import Apollo
 
+struct EventDepartmentInfo: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let departmentType: String
+    let volunteerCount: Int
+}
+
 struct DiscoverableEvent: Identifiable, Hashable {
     let id: String
     let name: String
@@ -34,6 +41,7 @@ struct DiscoverableEvent: Identifiable, Hashable {
     let theme: String?
     let isPublic: Bool
     let volunteerCount: Int
+    let departments: [EventDepartmentInfo]
 
     var isInviteOnly: Bool {
         eventType == "REGIONAL_CONVENTION" || eventType == "SPECIAL_CONVENTION"
@@ -59,6 +67,11 @@ final class VolunteerEventDiscoveryViewModel: ObservableObject {
     // Tracks pending requests by eventId
     @Published var pendingRequestIds: Set<String> = []
     @Published var sentRequestIds: Set<String> = []
+
+    // Expand / department selection state
+    @Published var expandedEventId: String?
+    @Published var selectedDepartmentType: String?
+    @Published var joinNote: String = ""
 
     // Access code join state
     @Published var isJoiningByCode = false
@@ -100,6 +113,20 @@ final class VolunteerEventDiscoveryViewModel: ObservableObject {
         return "\(startStr) \(endStr)"
     }
 
+    // MARK: - Expand / Collapse
+
+    func toggleExpand(eventId: String) {
+        if expandedEventId == eventId {
+            expandedEventId = nil
+            selectedDepartmentType = nil
+            joinNote = ""
+        } else {
+            expandedEventId = eventId
+            selectedDepartmentType = nil
+            joinNote = ""
+        }
+    }
+
     // MARK: - Network
 
     func loadEvents() {
@@ -134,7 +161,15 @@ final class VolunteerEventDiscoveryViewModel: ObservableObject {
                                 endDate: e.endDate,
                                 theme: e.theme,
                                 isPublic: e.isPublic,
-                                volunteerCount: e.volunteerCount
+                                volunteerCount: e.volunteerCount,
+                                departments: e.departments.map { d in
+                                    EventDepartmentInfo(
+                                        id: d.id,
+                                        name: d.name,
+                                        departmentType: d.departmentType.rawValue,
+                                        volunteerCount: d.volunteerCount
+                                    )
+                                }
                             )
                         }
                     }
@@ -172,6 +207,9 @@ final class VolunteerEventDiscoveryViewModel: ObservableObject {
                 case .success(let graphQLResult):
                     if graphQLResult.data?.requestToJoinEvent != nil {
                         self?.sentRequestIds.insert(eventId)
+                        self?.expandedEventId = nil
+                        self?.selectedDepartmentType = nil
+                        self?.joinNote = ""
                         HapticManager.shared.success()
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
                         self?.errorMessage = errors.first?.message ?? "Request failed"

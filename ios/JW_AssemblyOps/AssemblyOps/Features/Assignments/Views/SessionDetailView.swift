@@ -13,7 +13,7 @@
 //
 // Features:
 //   - Warm gradient background with entrance animations
-//   - Post cards with coverage status (filled/capacity)
+//   - Post cards with coverage status (assigned count)
 //   - Volunteer names listed on each card
 //   - Filter menu: show all, gaps only, or filled only
 //   - Tap post card → SlotDetailSheet for managing assignments
@@ -65,6 +65,13 @@ struct SessionDetailView: View {
     /// Whether any posts have categories assigned
     private var hasCategories: Bool {
         sessionPosts.contains { $0.category != nil }
+    }
+
+    private var deptColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
     }
 
     private var isAttendantDept: Bool {
@@ -371,7 +378,7 @@ struct SessionDetailView: View {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "rectangle.3.group")
                     .font(.system(size: 12))
-                    .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                    .foregroundStyle(deptColor)
 
                 Text(area.name)
                     .font(AppTheme.Typography.captionBold)
@@ -380,7 +387,7 @@ struct SessionDetailView: View {
                 if let captainName = captainName {
                     Text("★ \(captainName)")
                         .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(deptColor)
                 }
 
                 Spacer()
@@ -408,11 +415,11 @@ struct SessionDetailView: View {
             HStack(spacing: AppTheme.Spacing.m) {
                 ZStack {
                     Circle()
-                        .fill(DepartmentColor.color(for: "ATTENDANT").opacity(0.1))
+                        .fill(deptColor.opacity(0.1))
                         .frame(width: 36, height: 36)
                     Image(systemName: "rectangle.3.group")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                        .foregroundStyle(deptColor)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -428,13 +435,13 @@ struct SessionDetailView: View {
 
                 Image(systemName: "plus.circle")
                     .font(.system(size: 20))
-                    .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                    .foregroundStyle(deptColor)
             }
             .cardPadding()
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                     .strokeBorder(
-                        DepartmentColor.color(for: "ATTENDANT").opacity(0.3),
+                        deptColor.opacity(0.3),
                         style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
                     )
             )
@@ -461,11 +468,11 @@ struct SessionDetailView: View {
             HStack(spacing: AppTheme.Spacing.m) {
                 ZStack {
                     Circle()
-                        .fill(DepartmentColor.color(for: "ATTENDANT").opacity(0.1))
+                        .fill(deptColor.opacity(0.1))
                         .frame(width: 36, height: 36)
                     Image(systemName: "plus")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                        .foregroundStyle(deptColor)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -481,13 +488,13 @@ struct SessionDetailView: View {
 
                 Image(systemName: "rectangle.3.group.fill")
                     .font(.system(size: 16))
-                    .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                    .foregroundStyle(deptColor)
             }
             .cardPadding()
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                     .strokeBorder(
-                        DepartmentColor.color(for: "ATTENDANT").opacity(0.3),
+                        deptColor.opacity(0.3),
                         style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
                     )
             )
@@ -538,15 +545,11 @@ struct SessionDetailView: View {
     // MARK: - Summary Card
 
     private var summaryCard: some View {
-        let totalSlots = sessionSlots.count
-        let filledSlots = sessionSlots.filter { $0.isFilled }.count
         let totalAssigned = sessionSlots.reduce(0) { $0 + $1.filled }
-        let totalCapacity = sessionSlots.reduce(0) { $0 + $1.capacity }
 
         return HStack(spacing: AppTheme.Spacing.xl) {
             statBadge(value: "\(sessionPosts.count)", label: "Posts")
-            statBadge(value: "\(filledSlots)/\(totalSlots)", label: "Filled")
-            statBadge(value: "\(totalAssigned)/\(totalCapacity)", label: "Volunteers")
+            statBadge(value: "\(totalAssigned)", label: "Assigned")
         }
         .frame(maxWidth: .infinity)
         .cardPadding()
@@ -560,7 +563,7 @@ struct SessionDetailView: View {
         VStack(spacing: AppTheme.Spacing.xs) {
             Text(value)
                 .font(AppTheme.Typography.headline)
-                .foregroundStyle(AppTheme.themeColor)
+                .foregroundStyle(deptColor)
             Text(label)
                 .font(AppTheme.Typography.caption)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
@@ -573,14 +576,26 @@ struct SessionDetailView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             // Post header
             HStack {
-                Text(post.name)
-                    .font(AppTheme.Typography.headline)
-                    .foregroundStyle(.primary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(post.name)
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(.primary)
+
+                    if !slot.shifts.isEmpty {
+                        HStack(spacing: AppTheme.Spacing.xs) {
+                            Image(systemName: "clock")
+                                .font(.system(size: 10))
+                            Text("slot.shifts.count".localized(with: slot.shifts.count))
+                                .font(AppTheme.Typography.caption)
+                        }
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    }
+                }
 
                 Spacer()
 
-                // Coverage badge
-                Text("\(slot.filled)/\(slot.capacity)")
+                // Assigned count badge
+                Text("\(slot.filled) assigned")
                     .font(AppTheme.Typography.captionBold)
                     .foregroundStyle(statusColor(for: slot))
                     .padding(.horizontal, 10)
@@ -664,7 +679,7 @@ struct SessionDetailView: View {
                         .font(AppTheme.Typography.bodyMedium)
                 }
                 .buttonStyle(.bordered)
-                .tint(AppTheme.themeColor)
+                .tint(deptColor)
             }
 
             Spacer()
@@ -693,10 +708,8 @@ struct SessionDetailView: View {
     // MARK: - Helpers
 
     private func statusColor(for slot: CoverageSlot) -> Color {
-        if slot.isFilled {
+        if slot.filled > 0 {
             return AppTheme.StatusColors.accepted
-        } else if slot.filled > 0 {
-            return AppTheme.StatusColors.warning
         } else if slot.pendingCount > 0 {
             return AppTheme.StatusColors.pending
         } else {
@@ -705,10 +718,8 @@ struct SessionDetailView: View {
     }
 
     private func statusBackground(for slot: CoverageSlot) -> Color {
-        if slot.isFilled {
+        if slot.filled > 0 {
             return AppTheme.StatusColors.acceptedBackground
-        } else if slot.filled > 0 {
-            return AppTheme.StatusColors.warningBackground
         } else if slot.pendingCount > 0 {
             return AppTheme.StatusColors.pendingBackground
         } else {
@@ -725,7 +736,7 @@ struct SessionDetailView: View {
     private func volunteerColor(_ assignment: CoverageAssignment) -> Color {
         if assignment.checkIn != nil { return AppTheme.StatusColors.accepted }
         if assignment.isPending { return AppTheme.StatusColors.pending }
-        return AppTheme.themeColor
+        return deptColor
     }
 }
 

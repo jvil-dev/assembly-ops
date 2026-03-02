@@ -15,7 +15,6 @@ extension AssemblyOpsAPI {
       name: GraphQLNullable<String> = nil,
       description: GraphQLNullable<String> = nil,
       location: GraphQLNullable<String> = nil,
-      capacity: GraphQLNullable<Int> = nil,
       category: GraphQLNullable<String> = nil,
       sortOrder: GraphQLNullable<Int> = nil
     ) {
@@ -23,7 +22,6 @@ extension AssemblyOpsAPI {
         "name": name,
         "description": description,
         "location": location,
-        "capacity": capacity,
         "category": category,
         "sortOrder": sortOrder
       ])
@@ -42,11 +40,6 @@ extension AssemblyOpsAPI {
     var location: GraphQLNullable<String> {
       get { __data["location"] }
       set { __data["location"] = newValue }
-    }
-
-    var capacity: GraphQLNullable<Int> {
-      get { __data["capacity"] }
-      set { __data["capacity"] = newValue }
     }
 
     var category: GraphQLNullable<String> {

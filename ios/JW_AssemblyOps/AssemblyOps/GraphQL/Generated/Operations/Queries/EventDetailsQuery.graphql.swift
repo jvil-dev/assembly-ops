@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "EventDetails"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query EventDetails($eventId: ID!) { event(id: $eventId) { __typename id name eventType venue address startDate endDate joinCode volunteerCount departments { __typename id name departmentType description volunteerCount isClaimed overseer { __typename id user { __typename id fullName } } posts { __typename id name description location capacity } } sessions { __typename id name date startTime endTime } } }"#
+        #"query EventDetails($eventId: ID!) { event(id: $eventId) { __typename id name eventType venue address startDate endDate joinCode volunteerCount departments { __typename id name departmentType description volunteerCount isClaimed overseer { __typename id user { __typename id fullName } } posts { __typename id name description location } } sessions { __typename id name date startTime endTime } } }"#
       ))
 
     public var eventId: ID
@@ -159,7 +159,6 @@ extension AssemblyOpsAPI {
               .field("name", String.self),
               .field("description", String?.self),
               .field("location", String?.self),
-              .field("capacity", Int.self),
             ] }
             static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
               EventDetailsQuery.Data.Event.Department.Post.self
@@ -169,7 +168,6 @@ extension AssemblyOpsAPI {
             var name: String { __data["name"] }
             var description: String? { __data["description"] }
             var location: String? { __data["location"] }
-            var capacity: Int { __data["capacity"] }
           }
         }
 
