@@ -161,25 +161,34 @@ Comprehensive documentation added:
 
 ## Areas Needing Improvement
 
-### 1. Testing Coverage ⚠️ (Priority: HIGH)
+### 1. Testing Coverage ✅ (Priority: HIGH — Addressed in Sprint 7.2)
 
-**Current State:**
-- Only 2 integration tests (health check, basic auth)
-- No unit tests
-- No end-to-end tests
-- Unknown code coverage percentage
+**Current State (post Sprint 7.2):**
 
-**Recommendations:**
-1. Add unit tests for services (target: 80% coverage)
-2. Add integration tests for all GraphQL resolvers
-3. Add tests for authorization/access control
-4. Add tests for error scenarios
-5. Set up code coverage reporting in CI
-6. Add mutation testing
-7. Configure coverage thresholds (fail below 70%)
+- 15 integration test files covering most GraphQL resolvers (auth, event, volunteer, assignment, check-in, attendance, attendant, audioVideo, captain, message, admin)
+- 200 unit tests across 7 files covering the 5 highest-risk services + all authorization guards
+- Code coverage reporting via `@vitest/coverage-v8` with 70% threshold enforcement in CI
+- Coverage artifacts uploaded on every CI run
 
-**Effort:** 2-3 weeks  
-**Risk if not addressed:** High - bugs in production, difficult to refactor safely
+**Unit Test Coverage:**
+
+| File                        | Tests | Services/Guards Covered                     |
+| --------------------------- | ----- | ------------------------------------------- |
+| tokenService.unit.ts        | 19    | Token rotation, reuse detection, cleanup    |
+| authService.unit.ts         | 28    | Registration, login, OAuth, refresh tokens  |
+| authGuards.unit.ts          | 42    | All 11 authorization guards                 |
+| volunteerService.unit.ts    | 29    | CRUD, join requests, placeholder linking    |
+| assignmentService.unit.ts   | 36    | Shift overlap, acceptance workflow, captains |
+| eventService.unit.ts        | 24    | Department purchase, access codes, hierarchy |
+| messageService.unit.ts      | 22    | Messaging, conversations, broadcasts        |
+
+**Remaining Opportunities:**
+
+1. Add unit tests for remaining 14 lower-risk services (CRUD-heavy, lower priority)
+2. Add end-to-end tests for critical user flows
+3. Add mutation testing for high-risk code paths
+
+**Risk level:** Low — critical business logic and security boundaries are now covered
 
 ### 2. Observability & Monitoring ⚠️ (Priority: HIGH)
 
