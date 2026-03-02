@@ -167,6 +167,7 @@ const types = `#graphql
     congregation: String!
     appointmentStatus: AppointmentStatus
     notes: String
+    isPlaceholder: Boolean!
     event: Event!
     department: Department
     role: Role

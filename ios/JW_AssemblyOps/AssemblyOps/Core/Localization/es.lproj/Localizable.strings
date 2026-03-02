@@ -1489,5 +1489,20 @@
 "captain.assignment.assign" = "Asignar Capitán";
 "area.assignOptions" = "Opciones de Asignación";
 
+// MARK: - Sprint 7.1: Placeholder Users
+"addVolunteer.nonApp.header" = "CREAR PERFIL SIN APP";
+"addVolunteer.nonApp.title" = "Crear Usuario Sin App";
+"addVolunteer.nonApp.description" = "Para voluntarios que aún no pueden descargar la app. Pueden reclamar este perfil después.";
+"addVolunteer.nonApp.create" = "Crear Perfil Sin App";
+"volunteer.badge.nonApp" = "Sin App";
+"volunteerDetail.link.header" = "USUARIO SIN APP";
+"volunteerDetail.link.title" = "Vincular a Usuario Real";
+"volunteerDetail.link.description" = "Cuando este voluntario cree una cuenta, vincule su perfil para transferir todas las asignaciones e historial.";
+"volunteerDetail.link.button" = "Vincular Cuenta";
+"volunteerDetail.link.sheet.title" = "Vincular a Usuario Real";
+"volunteerDetail.link.sheet.description" = "Ingrese el ID de usuario de 6 caracteres del usuario real para fusionar este perfil.";
+"volunteerDetail.link.sheet.hint" = "El voluntario puede encontrar su ID de usuario en su Configuración.";
+"volunteerDetail.link.confirm" = "Vincular";
+
 // MARK: - Event Tab
 "eventTab.back" = "Atrás";

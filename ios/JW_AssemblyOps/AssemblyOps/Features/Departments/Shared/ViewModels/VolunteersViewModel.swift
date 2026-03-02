@@ -208,7 +208,8 @@ final class VolunteersViewModel: ObservableObject {
                             departmentName: data.department?.name,
                             departmentType: data.department?.departmentType.rawValue,
                             roleId: nil,
-                            roleName: nil
+                            roleName: nil,
+                            isPlaceholder: false
                         )
                         self?.departmentVolunteers.append(newItem)
                         self?.addedVolunteerName = fullName
@@ -222,6 +223,87 @@ final class VolunteersViewModel: ObservableObject {
                     HapticManager.shared.error()
                 }
             }
+        }
+    }
+
+    /// Create a non-app placeholder volunteer (overseer creates profile for someone without the app)
+    func createNonAppVolunteer(
+        firstName: String,
+        lastName: String,
+        congregation: String,
+        phone: String?,
+        email: String?,
+        appointmentStatus: GraphQLNullable<GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>>
+    ) async {
+        guard let eventId = EventSessionState.shared.selectedEvent?.id else {
+            error = "No active event selected."
+            return
+        }
+
+        let trimmedFirst = firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedLast = lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedCong = congregation.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmedFirst.isEmpty, !trimmedLast.isEmpty, !trimmedCong.isEmpty else {
+            error = "First name, last name, and congregation are required."
+            return
+        }
+
+        isAddingVolunteer = true
+        error = nil
+
+        let input = AssemblyOpsAPI.CreateVolunteerInput(
+            firstName: trimmedFirst,
+            lastName: trimmedLast,
+            email: .none,
+            phone: phone.flatMap { $0.isEmpty ? nil : $0 }.map { .some($0) } ?? .none,
+            congregation: trimmedCong,
+            appointmentStatus: appointmentStatus,
+            notes: .none,
+            departmentId: EventSessionState.shared.claimedDepartment.map { .some($0.id) } ?? .none,
+            roleId: .none
+        )
+
+        do {
+            let result = try await NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.CreateVolunteerMutation(eventId: eventId, input: input)
+            )
+
+            isAddingVolunteer = false
+
+            if let errors = result.errors, !errors.isEmpty {
+                error = errors.first?.message ?? "Failed to create volunteer"
+                HapticManager.shared.error()
+                return
+            }
+
+            if let data = result.data?.createVolunteer {
+                let fullName = "\(data.firstName) \(data.lastName)"
+                let newItem = VolunteerListItem(
+                    id: data.id,
+                    userId: nil,
+                    fullName: fullName,
+                    firstName: data.firstName,
+                    lastName: data.lastName,
+                    congregation: data.congregation,
+                    phone: phone,
+                    email: nil,
+                    appointmentStatus: nil,
+                    departmentId: EventSessionState.shared.claimedDepartment?.id,
+                    departmentName: EventSessionState.shared.claimedDepartment?.name,
+                    departmentType: EventSessionState.shared.claimedDepartment?.departmentType,
+                    roleId: nil,
+                    roleName: nil,
+                    isPlaceholder: true
+                )
+                departmentVolunteers.append(newItem)
+                addedVolunteerName = fullName
+                HapticManager.shared.success()
+            }
+        } catch {
+            isAddingVolunteer = false
+            self.error = error.localizedDescription
+            HapticManager.shared.error()
         }
     }
 
@@ -265,7 +347,8 @@ final class VolunteersViewModel: ObservableObject {
             departmentName: volunteer.department?.name,
             departmentType: volunteer.department?.departmentType.rawValue,
             roleId: volunteer.role?.id,
-            roleName: volunteer.role?.name
+            roleName: volunteer.role?.name,
+            isPlaceholder: volunteer.isPlaceholder
         )
     }
 }

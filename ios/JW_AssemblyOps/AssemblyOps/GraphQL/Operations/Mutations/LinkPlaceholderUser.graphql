@@ -1,0 +1,10 @@
+mutation LinkPlaceholderUser($placeholderUserId: String!, $realUserId: String!) {
+  linkPlaceholderUser(
+    placeholderUserId: $placeholderUserId
+    realUserId: $realUserId
+  ) {
+    success
+    mergedCount
+    message
+  }
+}

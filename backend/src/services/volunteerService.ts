@@ -82,6 +82,7 @@ export class VolunteerService {
             appointmentStatus: validated.appointmentStatus || 'PUBLISHER',
             congregation: validated.congregation,
             congregationId: congregationRecord.id,
+            isPlaceholder: !validated.email,
           },
         });
       }
@@ -154,6 +155,7 @@ export class VolunteerService {
               appointmentStatus: volunteerInput.appointmentStatus || 'PUBLISHER',
               congregation: volunteerInput.congregation,
               congregationId: congregationRecord.id,
+              isPlaceholder: !volunteerInput.email,
             },
           });
         }
@@ -477,6 +479,264 @@ export class VolunteerService {
     });
 
     return eventVolunteer;
+  }
+
+  /**
+   * Link a placeholder user to a real user account.
+   * Transfers all EventVolunteer records and their child data, then deletes the placeholder.
+   * Uses 6-char userId shortcodes for both inputs.
+   */
+  async linkPlaceholderUser(placeholderShortId: string, realUserShortId: string) {
+    const placeholder = await this.prisma.user.findUnique({
+      where: { userId: placeholderShortId },
+      include: { eventVolunteers: true },
+    });
+
+    if (!placeholder) {
+      throw new NotFoundError(`No user found with ID: ${placeholderShortId}`);
+    }
+
+    if (!placeholder.isPlaceholder) {
+      throw new ValidationError('The specified user is not a placeholder account.');
+    }
+
+    const realUser = await this.prisma.user.findUnique({
+      where: { userId: realUserShortId },
+      include: { eventVolunteers: true },
+    });
+
+    if (!realUser) {
+      throw new NotFoundError(`No user found with ID: ${realUserShortId}`);
+    }
+
+    if (realUser.isPlaceholder) {
+      throw new ValidationError('Real user cannot itself be a placeholder.');
+    }
+
+    let mergedCount = 0;
+
+    await this.prisma.$transaction(async (tx) => {
+      const realUserEventIds = new Set(realUser.eventVolunteers.map(ev => ev.eventId));
+
+      for (const placeholderEv of placeholder.eventVolunteers) {
+        if (!realUserEventIds.has(placeholderEv.eventId)) {
+          // Simple case: real user has no EV for this event — re-point
+          await tx.eventVolunteer.update({
+            where: { id: placeholderEv.id },
+            data: { userId: realUser.id },
+          });
+          mergedCount++;
+        } else {
+          // Conflict case: real user already has EV for this event — merge child records
+          const realEv = realUser.eventVolunteers.find(ev => ev.eventId === placeholderEv.eventId)!;
+
+          // --- Tables with unique constraints: delete conflicts first, then re-parent ---
+
+          // ScheduleAssignment: @@unique([eventVolunteerId, sessionId, shiftId])
+          const realAssignments = await tx.scheduleAssignment.findMany({
+            where: { eventVolunteerId: realEv.id },
+            select: { sessionId: true, shiftId: true },
+          });
+          const assignmentKeys = new Set(realAssignments.map(a => `${a.sessionId}|${a.shiftId}`));
+          const placeholderAssignments = await tx.scheduleAssignment.findMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            select: { id: true, sessionId: true, shiftId: true },
+          });
+          const conflictAssignmentIds = placeholderAssignments
+            .filter(a => assignmentKeys.has(`${a.sessionId}|${a.shiftId}`))
+            .map(a => a.id);
+          if (conflictAssignmentIds.length > 0) {
+            await tx.scheduleAssignment.deleteMany({ where: { id: { in: conflictAssignmentIds } } });
+          }
+          await tx.scheduleAssignment.updateMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            data: { eventVolunteerId: realEv.id },
+          });
+
+          // DepartmentHierarchy: @@unique([departmentId, hierarchyRole, eventVolunteerId])
+          const realHierarchy = await tx.departmentHierarchy.findMany({
+            where: { eventVolunteerId: realEv.id },
+            select: { departmentId: true, hierarchyRole: true },
+          });
+          const hierarchyKeys = new Set(realHierarchy.map(h => `${h.departmentId}|${h.hierarchyRole}`));
+          const placeholderHierarchy = await tx.departmentHierarchy.findMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            select: { id: true, departmentId: true, hierarchyRole: true },
+          });
+          const conflictHierarchyIds = placeholderHierarchy
+            .filter(h => hierarchyKeys.has(`${h.departmentId}|${h.hierarchyRole}`))
+            .map(h => h.id);
+          if (conflictHierarchyIds.length > 0) {
+            await tx.departmentHierarchy.deleteMany({ where: { id: { in: conflictHierarchyIds } } });
+          }
+          await tx.departmentHierarchy.updateMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            data: { eventVolunteerId: realEv.id },
+          });
+
+          // ReminderConfirmation: @@unique([eventVolunteerId, shiftId]) + @@unique([eventVolunteerId, sessionId])
+          const realReminders = await tx.reminderConfirmation.findMany({
+            where: { eventVolunteerId: realEv.id },
+            select: { shiftId: true, sessionId: true },
+          });
+          const reminderShiftKeys = new Set(realReminders.filter(r => r.shiftId).map(r => r.shiftId));
+          const reminderSessionKeys = new Set(realReminders.filter(r => r.sessionId).map(r => r.sessionId));
+          const placeholderReminders = await tx.reminderConfirmation.findMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            select: { id: true, shiftId: true, sessionId: true },
+          });
+          const conflictReminderIds = placeholderReminders
+            .filter(r =>
+              (r.shiftId && reminderShiftKeys.has(r.shiftId)) ||
+              (r.sessionId && reminderSessionKeys.has(r.sessionId))
+            )
+            .map(r => r.id);
+          if (conflictReminderIds.length > 0) {
+            await tx.reminderConfirmation.deleteMany({ where: { id: { in: conflictReminderIds } } });
+          }
+          await tx.reminderConfirmation.updateMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            data: { eventVolunteerId: realEv.id },
+          });
+
+          // LanyardCheckout: @@unique([eventVolunteerId, date])
+          const realLanyards = await tx.lanyardCheckout.findMany({
+            where: { eventVolunteerId: realEv.id },
+            select: { date: true },
+          });
+          const lanyardDates = new Set(realLanyards.map(l => l.date.toISOString()));
+          const placeholderLanyards = await tx.lanyardCheckout.findMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            select: { id: true, date: true },
+          });
+          const conflictLanyardIds = placeholderLanyards
+            .filter(l => lanyardDates.has(l.date.toISOString()))
+            .map(l => l.id);
+          if (conflictLanyardIds.length > 0) {
+            await tx.lanyardCheckout.deleteMany({ where: { id: { in: conflictLanyardIds } } });
+          }
+          await tx.lanyardCheckout.updateMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            data: { eventVolunteerId: realEv.id },
+          });
+
+          // MeetingAttendance: @@unique([meetingId, eventVolunteerId])
+          const realAttendance = await tx.meetingAttendance.findMany({
+            where: { eventVolunteerId: realEv.id },
+            select: { meetingId: true },
+          });
+          const attendanceKeys = new Set(realAttendance.map(a => a.meetingId));
+          const placeholderAttendance = await tx.meetingAttendance.findMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            select: { id: true, meetingId: true },
+          });
+          const conflictAttendanceIds = placeholderAttendance
+            .filter(a => attendanceKeys.has(a.meetingId))
+            .map(a => a.id);
+          if (conflictAttendanceIds.length > 0) {
+            await tx.meetingAttendance.deleteMany({ where: { id: { in: conflictAttendanceIds } } });
+          }
+          await tx.meetingAttendance.updateMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            data: { eventVolunteerId: realEv.id },
+          });
+
+          // AVSafetyBriefingAttendee: @@unique([briefingId, eventVolunteerId])
+          const realBriefings = await tx.aVSafetyBriefingAttendee.findMany({
+            where: { eventVolunteerId: realEv.id },
+            select: { briefingId: true },
+          });
+          const briefingKeys = new Set(realBriefings.map(b => b.briefingId));
+          const placeholderBriefings = await tx.aVSafetyBriefingAttendee.findMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            select: { id: true, briefingId: true },
+          });
+          const conflictBriefingIds = placeholderBriefings
+            .filter(b => briefingKeys.has(b.briefingId))
+            .map(b => b.id);
+          if (conflictBriefingIds.length > 0) {
+            await tx.aVSafetyBriefingAttendee.deleteMany({ where: { id: { in: conflictBriefingIds } } });
+          }
+          await tx.aVSafetyBriefingAttendee.updateMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            data: { eventVolunteerId: realEv.id },
+          });
+
+          // --- Tables without unique constraints: simple updateMany ---
+
+          // AreaCaptain (unique on areaId+sessionId, not volunteer)
+          await tx.areaCaptain.updateMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            data: { eventVolunteerId: realEv.id },
+          });
+
+          // WalkThroughCompletion
+          await tx.walkThroughCompletion.updateMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            data: { eventVolunteerId: realEv.id },
+          });
+
+          // PostSessionStatus (unique on postId+sessionId, not volunteer)
+          await tx.postSessionStatus.updateMany({
+            where: { updatedById: placeholderEv.id },
+            data: { updatedById: realEv.id },
+          });
+
+          // AVEquipmentCheckout
+          await tx.aVEquipmentCheckout.updateMany({
+            where: { checkedOutById: placeholderEv.id },
+            data: { checkedOutById: realEv.id },
+          });
+
+          // AVDamageReport
+          await tx.aVDamageReport.updateMany({
+            where: { reportedById: placeholderEv.id },
+            data: { reportedById: realEv.id },
+          });
+
+          // CheckIn (optional FK)
+          await tx.checkIn.updateMany({
+            where: { checkedInByVolId: placeholderEv.id },
+            data: { checkedInByVolId: realEv.id },
+          });
+
+          // Message (two optional FKs)
+          await tx.message.updateMany({
+            where: { senderVolId: placeholderEv.id },
+            data: { senderVolId: realEv.id },
+          });
+          await tx.message.updateMany({
+            where: { eventVolunteerId: placeholderEv.id },
+            data: { eventVolunteerId: realEv.id },
+          });
+
+          // LostPersonAlert
+          await tx.lostPersonAlert.updateMany({
+            where: { reportedById: placeholderEv.id },
+            data: { reportedById: realEv.id },
+          });
+
+          // SafetyIncident
+          await tx.safetyIncident.updateMany({
+            where: { reportedById: placeholderEv.id },
+            data: { reportedById: realEv.id },
+          });
+
+          // Delete the placeholder EventVolunteer (all children re-parented)
+          await tx.eventVolunteer.delete({ where: { id: placeholderEv.id } });
+          mergedCount++;
+        }
+      }
+
+      // Delete the placeholder User record
+      await tx.user.delete({ where: { id: placeholder.id } });
+    });
+
+    return {
+      success: true,
+      mergedCount,
+      message: `Linked ${mergedCount} event membership(s) from placeholder to real user.`,
+    };
   }
 
   /**

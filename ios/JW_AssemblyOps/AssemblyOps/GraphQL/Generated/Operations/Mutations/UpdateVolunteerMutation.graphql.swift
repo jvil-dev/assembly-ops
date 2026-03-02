@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "UpdateVolunteer"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation UpdateVolunteer($id: ID!, $input: UpdateVolunteerInput!) { updateVolunteer(id: $id, input: $input) { __typename id firstName lastName fullName congregation phone email appointmentStatus notes department { __typename id name departmentType } role { __typename id name } } }"#
+        #"mutation UpdateVolunteer($id: ID!, $input: UpdateVolunteerInput!) { updateVolunteer(id: $id, input: $input) { __typename id firstName lastName fullName congregation phone email appointmentStatus notes isPlaceholder department { __typename id name departmentType } role { __typename id name } } }"#
       ))
 
     public var id: ID
@@ -63,6 +63,7 @@ extension AssemblyOpsAPI {
           .field("email", String?.self),
           .field("appointmentStatus", GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>?.self),
           .field("notes", String?.self),
+          .field("isPlaceholder", Bool.self),
           .field("department", Department?.self),
           .field("role", Role?.self),
         ] }
@@ -79,6 +80,7 @@ extension AssemblyOpsAPI {
         var email: String? { __data["email"] }
         var appointmentStatus: GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>? { __data["appointmentStatus"] }
         var notes: String? { __data["notes"] }
+        var isPlaceholder: Bool { __data["isPlaceholder"] }
         var department: Department? { __data["department"] }
         var role: Role? { __data["role"] }
 

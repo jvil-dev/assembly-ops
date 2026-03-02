@@ -9,6 +9,7 @@ mutation UpdateVolunteer($id: ID!, $input: UpdateVolunteerInput!) {
     email
     appointmentStatus
     notes
+    isPlaceholder
     department {
       id
       name

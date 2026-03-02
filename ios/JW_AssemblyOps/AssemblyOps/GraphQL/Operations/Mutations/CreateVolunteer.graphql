@@ -1,0 +1,8 @@
+mutation CreateVolunteer($eventId: ID!, $input: CreateVolunteerInput!) {
+  createVolunteer(eventId: $eventId, input: $input) {
+    id
+    firstName
+    lastName
+    congregation
+  }
+}
