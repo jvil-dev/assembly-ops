@@ -462,11 +462,7 @@ struct DepartmentSettingsView: View {
     }
 
     private func formatDateRange(_ start: String, _ end: String) -> String {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "MMM d, yyyy"
-        let startStr = DateUtils.parseISO8601(start).map { fmt.string(from: $0) } ?? start
-        let endStr = DateUtils.parseISO8601(end).map { fmt.string(from: $0) } ?? end
-        return "\(startStr) – \(endStr)"
+        DateUtils.formatEventFullDateRange(from: start, to: end)
     }
 }
 

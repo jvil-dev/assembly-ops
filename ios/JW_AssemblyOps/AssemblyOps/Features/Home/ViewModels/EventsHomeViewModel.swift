@@ -55,10 +55,9 @@ struct EventMembershipItem: Identifiable, Hashable {
 
     var dateStatus: DateStatus {
         let now = Date()
-        // Active: starts on or before today AND ends on or after today
-        let calendar = Calendar.current
-        let startOfStartDay = calendar.startOfDay(for: startDate)
-        let endOfEndDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: endDate)) ?? endDate
+        let cal = DateUtils.utcCalendar
+        let startOfStartDay = cal.startOfDay(for: startDate)
+        let endOfEndDay = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: endDate)) ?? endDate
         if startOfStartDay <= now && now < endOfEndDay { return .active }
         if startOfStartDay > now { return .future }
         return .past
@@ -86,7 +85,7 @@ struct EventMembershipItem: Identifiable, Hashable {
     /// Events archive 30 days after they end
     var isArchived: Bool {
         guard dateStatus == .past else { return false }
-        let archiveDate = Calendar.current.date(byAdding: .day, value: 30, to: endDate)
+        let archiveDate = DateUtils.utcCalendar.date(byAdding: .day, value: 30, to: endDate)
         return Date() > (archiveDate ?? endDate)
     }
 
@@ -109,14 +108,7 @@ struct EventMembershipItem: Identifiable, Hashable {
     }
 
     var dateRangeString: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        let start = formatter.string(from: startDate)
-        let end = formatter.string(from: endDate)
-        let yearFormatter = DateFormatter()
-        yearFormatter.dateFormat = "yyyy"
-        let year = yearFormatter.string(from: startDate)
-        return "\(start) – \(end), \(year)"
+        DateUtils.formatEventDateRange(from: startDate, to: endDate)
     }
 }
 
