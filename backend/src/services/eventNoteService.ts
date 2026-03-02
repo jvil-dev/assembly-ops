@@ -14,13 +14,13 @@
  *   - getDepartmentEventId(departmentId): Get department's eventId for access control
  */
 import { PrismaClient, EventNote, Prisma } from '@prisma/client';
-import { NotFoundError, ValidationError } from '../utils/errors';
+import { NotFoundError, ValidationError } from '../utils/errors.js';
 import {
   createEventNoteSchema,
   updateEventNoteSchema,
   CreateEventNoteInput,
   UpdateEventNoteInput,
-} from '../graphql/validators/eventNote';
+} from '../graphql/validators/eventNote.js';
 
 export class EventNoteService {
   constructor(private prisma: PrismaClient) {}

@@ -27,7 +27,7 @@
  */
 import { Context } from '../context.js';
 import { AttendantService } from '../../services/attendantService.js';
-import { requireAdmin, requireAuth, requireEventAccess, resolveUserEventVolunteer } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireEventAccess } from '../guards/auth.js';
 import { decryptField } from '../../utils/encryption.js';
 import {
   ReportSafetyIncidentInput,

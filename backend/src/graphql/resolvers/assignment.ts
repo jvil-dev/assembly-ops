@@ -35,7 +35,7 @@ import { ScheduleAssignment } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { Context } from '../context.js';
 import { AssignmentService } from '../../services/assignmentService.js';
-import { requireAdmin, requireAuth, requireEventAccess, resolveUserEventVolunteer, tryRequireAdmin, requireAreaOverseer, tryRequireDeptAccessByEvent, requireDeptAccess } from '../guards/auth.js';
+import { requireAuth, requireEventAccess, resolveUserEventVolunteer, tryRequireAdmin, requireAreaOverseer, tryRequireDeptAccessByEvent, requireDeptAccess } from '../guards/auth.js';
 import {
   CreateAssignmentInput,
   UpdateAssignmentInput,

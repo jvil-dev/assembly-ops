@@ -12,22 +12,9 @@
  */
 import { Context } from '../context.js';
 import { WalkThroughService } from '../../services/walkThroughService.js';
-import { requireAdmin, requireAuth, requireEventAccess, resolveUserEventVolunteer } from '../guards/auth.js';
+import { requireAdmin, requireAuth, requireEventAccess } from '../guards/auth.js';
 import { SubmitWalkThroughCompletionInput } from '../validators/walkThrough.js';
 import { AuthorizationError } from '../../utils/errors.js';
-
-/**
- * Resolve EventVolunteer for authenticated user.
- * Requires eventId to look up the user's EventVolunteer record.
- */
-async function resolveEventVolunteer(
-  context: Context,
-  eventId: string
-): Promise<string> {
-  if (!context.user) throw new AuthorizationError('You must be logged in');
-  const ev = await resolveUserEventVolunteer(context.user.id, eventId, context.prisma);
-  return ev.id;
-}
 
 const walkThroughResolvers = {
   Query: {
