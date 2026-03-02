@@ -51,11 +51,7 @@ final class DepartmentBrowseViewModel: ObservableObject {
     }
 
     private static func formattedDateRange(_ start: String, _ end: String) -> String {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "MMMM d, yyyy"
-        let startStr = DateUtils.parseISO8601(start).map { fmt.string(from: $0) } ?? start
-        let endStr = DateUtils.parseISO8601(end).map { fmt.string(from: $0) } ?? end
-        return "\(startStr) \(endStr)"
+        DateUtils.formatEventFullDateRange(from: start, to: end)
     }
 
     // MARK: - Network

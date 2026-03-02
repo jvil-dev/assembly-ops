@@ -502,9 +502,7 @@ struct HomeView: View {
                 .multilineTextAlignment(.center)
 
             if let nextDate = viewModel.nextAssignmentDate {
-                let formatter = DateFormatter()
-                let _ = formatter.dateStyle = .medium
-                Text(String(format: "home.nextUp.nextDate".localized, formatter.string(from: nextDate)))
+                Text(String(format: "home.nextUp.nextDate".localized, DateUtils.eventFullDateFormatter.string(from: nextDate)))
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             }

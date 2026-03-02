@@ -31,9 +31,9 @@ final class ArchivedEventsViewModel: ObservableObject {
         let endDate: Date
 
         var dateRangeString: String {
-            let fmt = DateFormatter()
-            fmt.dateFormat = "MMM d, yyyy"
-            return "\(fmt.string(from: startDate)) – \(fmt.string(from: endDate))"
+            let startStr = DateUtils.eventFullDateFormatter.string(from: startDate)
+            let endStr = DateUtils.eventFullDateFormatter.string(from: endDate)
+            return "\(startStr) – \(endStr)"
         }
 
         var displayEventType: String {
@@ -67,7 +67,7 @@ final class ArchivedEventsViewModel: ObservableObject {
                     case .success(let graphQLResult):
                         if let events = graphQLResult.data?.myAllEvents {
                             let now = Date()
-                            let archiveThreshold = Calendar.current.date(byAdding: .day, value: -30, to: now) ?? now
+                            let archiveThreshold = DateUtils.utcCalendar.date(byAdding: .day, value: -30, to: now) ?? now
                             self?.archivedEvents = events.compactMap { e in
                                 guard let endDate = DateUtils.parseISO8601(e.event.endDate),
                                       let startDate = DateUtils.parseISO8601(e.event.startDate),
@@ -108,7 +108,7 @@ final class ArchivedEventsViewModel: ObservableObject {
                 case .success(let graphQLResult):
                     if let events = graphQLResult.data?.myAllEvents {
                         let now = Date()
-                        let archiveThreshold = Calendar.current.date(byAdding: .day, value: -30, to: now) ?? now
+                        let archiveThreshold = DateUtils.utcCalendar.date(byAdding: .day, value: -30, to: now) ?? now
 
                         self?.archivedEvents = events.compactMap { e in
                             guard let endDate = DateUtils.parseISO8601(e.event.endDate),

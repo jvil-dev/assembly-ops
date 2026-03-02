@@ -54,12 +54,7 @@ struct EventHomeView: View {
     }
 
     private var dateRangeString: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        let start = formatter.string(from: membership.startDate)
-        let end = formatter.string(from: membership.endDate)
-        return "\(start) – \(end)"
+        DateUtils.formatEventFullDateRange(from: membership.startDate, to: membership.endDate)
     }
 
     var body: some View {
@@ -578,9 +573,7 @@ struct EventHomeView: View {
                 .multilineTextAlignment(.center)
 
             if let nextDate = homeVM.nextAssignmentDate {
-                let formatter = DateFormatter()
-                let _ = formatter.dateStyle = .medium
-                Text(String(format: "home.nextUp.nextDate".localized, formatter.string(from: nextDate)))
+                Text(String(format: "home.nextUp.nextDate".localized, DateUtils.eventFullDateFormatter.string(from: nextDate)))
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             }
