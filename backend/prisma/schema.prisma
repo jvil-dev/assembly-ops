@@ -23,6 +23,7 @@ model User {
   congregationId    String? // FK to Congregation (optional)
   isOverseer        Boolean            @default(false) // Future monetization gate
   isAppAdmin        Boolean            @default(false)
+  isPlaceholder     Boolean            @default(false)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
@@ -49,6 +50,7 @@ model User {
   @@index([email])
   @@index([userId])
   @@index([congregationId])
+  @@index([isPlaceholder])
 }
 
 // ─────────────────────────────────────────────

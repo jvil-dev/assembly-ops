@@ -43,6 +43,7 @@ struct VolunteerListItem: Identifiable {
     let departmentType: String?
     let roleId: String?
     let roleName: String?
+    let isPlaceholder: Bool
 }
 
 struct RoleItem: Identifiable {

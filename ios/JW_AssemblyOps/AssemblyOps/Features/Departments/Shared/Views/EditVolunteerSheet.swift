@@ -315,7 +315,8 @@ struct EditVolunteerSheet: View {
             departmentName: "Attendant",
             departmentType: "ATTENDANT",
             roleId: nil,
-            roleName: nil
+            roleName: nil,
+            isPlaceholder: false
         ),
         viewModel: VolunteerDetailViewModel(volunteerId: "1")
     )

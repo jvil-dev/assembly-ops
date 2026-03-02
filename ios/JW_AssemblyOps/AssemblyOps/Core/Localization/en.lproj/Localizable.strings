@@ -1488,5 +1488,20 @@
 "captain.assignment.assign" = "Assign Captain";
 "area.assignOptions" = "Assignment Options";
 
+// MARK: - Sprint 7.1: Placeholder Users
+"addVolunteer.nonApp.header" = "CREATE NON-APP PROFILE";
+"addVolunteer.nonApp.title" = "Create Non-App User";
+"addVolunteer.nonApp.description" = "For volunteers who can't download the app yet. They can claim this profile later.";
+"addVolunteer.nonApp.create" = "Create Non-App Profile";
+"volunteer.badge.nonApp" = "Non-App";
+"volunteerDetail.link.header" = "NON-APP USER";
+"volunteerDetail.link.title" = "Link to Real User";
+"volunteerDetail.link.description" = "When this volunteer creates an account, link their profile to transfer all assignments and check-in history.";
+"volunteerDetail.link.button" = "Link Account";
+"volunteerDetail.link.sheet.title" = "Link to Real User";
+"volunteerDetail.link.sheet.description" = "Enter the real user's 6-character User ID to merge this placeholder profile into their account.";
+"volunteerDetail.link.sheet.hint" = "The volunteer can find their User ID in their account Settings.";
+"volunteerDetail.link.confirm" = "Link";
+
 // MARK: - Event Tab
 "eventTab.back" = "Back";

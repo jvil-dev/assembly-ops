@@ -76,7 +76,8 @@ class VolunteerDetailViewModel: ObservableObject {
                     departmentName: updated.department?.name,
                     departmentType: updated.department?.departmentType.rawValue,
                     roleId: updated.role?.id,
-                    roleName: updated.role?.name
+                    roleName: updated.role?.name,
+                    isPlaceholder: updated.isPlaceholder
                 )
                 didUpdate = true
                 updateCount += 1
@@ -105,6 +106,41 @@ class VolunteerDetailViewModel: ObservableObject {
 
             didDelete = true
             HapticManager.shared.success()
+        } catch {
+            errorMessage = error.localizedDescription
+            HapticManager.shared.error()
+        }
+    }
+
+    func linkPlaceholderUser(placeholderUserId: String, realUserId: String) async {
+        isLoading = true
+        defer { isLoading = false }
+
+        let trimmed = realUserId.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        guard trimmed.count >= 6 else {
+            errorMessage = "Please enter a valid 6-character User ID."
+            HapticManager.shared.error()
+            return
+        }
+
+        do {
+            let result = try await NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.LinkPlaceholderUserMutation(
+                    placeholderUserId: placeholderUserId,
+                    realUserId: trimmed
+                )
+            )
+
+            if let errors = result.errors, !errors.isEmpty {
+                errorMessage = errors.first?.message ?? "Failed to link user"
+                HapticManager.shared.error()
+                return
+            }
+
+            if let data = result.data?.linkPlaceholderUser, data.success {
+                didDelete = true
+                HapticManager.shared.success()
+            }
         } catch {
             errorMessage = error.localizedDescription
             HapticManager.shared.error()

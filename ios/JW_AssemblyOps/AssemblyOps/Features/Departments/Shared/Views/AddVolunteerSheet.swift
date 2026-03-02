@@ -26,6 +26,20 @@ struct AddVolunteerSheet: View {
     @State private var userIdInput = ""
     @State private var copiedCode = false
     @State private var showError = false
+    @State private var addMode: AddMode = .byUserId
+
+    // Non-app form fields
+    @State private var nonAppFirstName = ""
+    @State private var nonAppLastName = ""
+    @State private var nonAppCongregationName = ""
+    @State private var nonAppCongregationId: String?
+    @State private var nonAppPhone = ""
+    @State private var nonAppAppointment: AssemblyOpsAPI.AppointmentStatus = .publisher
+
+    enum AddMode: String, CaseIterable {
+        case byUserId = "By User ID"
+        case nonApp = "Non-App User"
+    }
 
     private var accessCode: String? {
         EventSessionState.shared.claimedDepartment?.accessCode
@@ -35,27 +49,42 @@ struct AddVolunteerSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppTheme.Spacing.xl) {
-                    // Section 1 — Access Code (primary)
-                    accessCodeSection
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
-
-                    // Divider
-                    HStack(spacing: AppTheme.Spacing.m) {
-                        Rectangle()
-                            .fill(AppTheme.textTertiary(for: colorScheme).opacity(0.3))
-                            .frame(height: 1)
-                        Text("addVolunteer.or".localized)
-                            .font(AppTheme.Typography.caption)
-                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                        Rectangle()
-                            .fill(AppTheme.textTertiary(for: colorScheme).opacity(0.3))
-                            .frame(height: 1)
+                    // Mode picker
+                    Picker("Add Mode", selection: $addMode) {
+                        ForEach(AddMode.allCases, id: \.self) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
                     }
-                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.08)
+                    .pickerStyle(.segmented)
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                    // Section 2 — Add by User ID (manual)
-                    addByUserIdSection
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.12)
+                    if addMode == .byUserId {
+                        // Section 1 — Access Code (primary)
+                        accessCodeSection
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.04)
+
+                        // Divider
+                        HStack(spacing: AppTheme.Spacing.m) {
+                            Rectangle()
+                                .fill(AppTheme.textTertiary(for: colorScheme).opacity(0.3))
+                                .frame(height: 1)
+                            Text("addVolunteer.or".localized)
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                            Rectangle()
+                                .fill(AppTheme.textTertiary(for: colorScheme).opacity(0.3))
+                                .frame(height: 1)
+                        }
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.08)
+
+                        // Section 2 — Add by User ID (manual)
+                        addByUserIdSection
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.12)
+                    } else {
+                        // Non-App User creation form
+                        createNonAppUserSection
+                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.04)
+                    }
                 }
                 .screenPadding()
                 .padding(.top, AppTheme.Spacing.l)
@@ -252,6 +281,139 @@ struct AddVolunteerSheet: View {
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Non-App User Section
+
+    private var createNonAppUserSection: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: 8) {
+                Image(systemName: "person.badge.plus")
+                    .foregroundStyle(AppTheme.StatusColors.warning)
+                Text("addVolunteer.nonApp.header".localized)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            Text("addVolunteer.nonApp.title".localized)
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+
+            Text("addVolunteer.nonApp.description".localized)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+            // Required fields
+            nonAppField(label: "First Name", text: $nonAppFirstName, required: true)
+            nonAppField(label: "Last Name", text: $nonAppLastName, required: true)
+
+            // Congregation search (same component used across all forms)
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                HStack(spacing: 4) {
+                    Text("Congregation")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    Text("*")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.StatusColors.warning)
+                }
+                CongregationSearchField(
+                    selectedName: $nonAppCongregationName,
+                    selectedId: $nonAppCongregationId
+                )
+            }
+
+            // Optional fields
+            nonAppField(label: "Phone", text: $nonAppPhone, required: false)
+                .keyboardType(.phonePad)
+
+            // Appointment status
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                Text("Appointment")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                Picker("Appointment", selection: $nonAppAppointment) {
+                    Text("Publisher").tag(AssemblyOpsAPI.AppointmentStatus.publisher)
+                    Text("Ministerial Servant").tag(AssemblyOpsAPI.AppointmentStatus.ministerialServant)
+                    Text("Elder").tag(AssemblyOpsAPI.AppointmentStatus.elder)
+                }
+                .pickerStyle(.segmented)
+            }
+
+            // Create button
+            Button {
+                HapticManager.shared.lightTap()
+                Task {
+                    await viewModel.createNonAppVolunteer(
+                        firstName: nonAppFirstName,
+                        lastName: nonAppLastName,
+                        congregation: nonAppCongregationName,
+                        phone: nonAppPhone.isEmpty ? nil : nonAppPhone,
+                        email: nil,
+                        appointmentStatus: .some(.case(nonAppAppointment))
+                    )
+                }
+            } label: {
+                Group {
+                    if viewModel.isAddingVolunteer {
+                        ProgressView()
+                            .tint(.white)
+                            .scaleEffect(0.85)
+                    } else {
+                        HStack(spacing: AppTheme.Spacing.s) {
+                            Image(systemName: "person.badge.plus")
+                            Text("addVolunteer.nonApp.create".localized)
+                        }
+                        .font(AppTheme.Typography.bodyMedium)
+                    }
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: AppTheme.ButtonHeight.medium)
+            }
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                    .fill(nonAppFormValid && !viewModel.isAddingVolunteer
+                          ? AppTheme.StatusColors.warning
+                          : AppTheme.StatusColors.warning.opacity(0.4))
+            )
+            .disabled(!nonAppFormValid || viewModel.isAddingVolunteer)
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    private var nonAppFormValid: Bool {
+        !nonAppFirstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !nonAppLastName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !nonAppCongregationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func nonAppField(label: String, text: Binding<String>, required: Bool) -> some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+            HStack(spacing: 4) {
+                Text(label)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                if required {
+                    Text("*")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.StatusColors.warning)
+                }
+            }
+            TextField(label, text: text)
+                .font(AppTheme.Typography.body)
+                .padding(.horizontal, AppTheme.Spacing.m)
+                .padding(.vertical, AppTheme.Spacing.m)
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                        .fill(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                        .strokeBorder(AppTheme.StatusColors.warning.opacity(0.3), lineWidth: 1)
+                )
+        }
     }
 }
 

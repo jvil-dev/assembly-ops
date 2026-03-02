@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "Volunteers"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query Volunteers($eventId: ID!, $departmentId: ID) { volunteers(eventId: $eventId, departmentId: $departmentId) { __typename id userId firstName lastName fullName email phone congregation appointmentStatus notes department { __typename id name departmentType } role { __typename id name } } }"#
+        #"query Volunteers($eventId: ID!, $departmentId: ID) { volunteers(eventId: $eventId, departmentId: $departmentId) { __typename id userId firstName lastName fullName email phone congregation appointmentStatus notes isPlaceholder department { __typename id name departmentType } role { __typename id name } } }"#
       ))
 
     public var eventId: ID
@@ -64,6 +64,7 @@ extension AssemblyOpsAPI {
           .field("congregation", String.self),
           .field("appointmentStatus", GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>?.self),
           .field("notes", String?.self),
+          .field("isPlaceholder", Bool.self),
           .field("department", Department?.self),
           .field("role", Role?.self),
         ] }
@@ -81,6 +82,7 @@ extension AssemblyOpsAPI {
         var congregation: String { __data["congregation"] }
         var appointmentStatus: GraphQLEnum<AssemblyOpsAPI.AppointmentStatus>? { __data["appointmentStatus"] }
         var notes: String? { __data["notes"] }
+        var isPlaceholder: Bool { __data["isPlaceholder"] }
         var department: Department? { __data["department"] }
         var role: Role? { __data["role"] }
 

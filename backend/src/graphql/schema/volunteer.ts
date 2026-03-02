@@ -17,6 +17,12 @@ const volunteerTypeDefs = `#graphql
     congregation: String!
   }
 
+  type LinkPlaceholderResult {
+    success: Boolean!
+    mergedCount: Int!
+    message: String!
+  }
+
   # ============================================
   # INPUTS
   # ============================================
@@ -81,6 +87,7 @@ const volunteerTypeDefs = `#graphql
     cancelJoinRequest(requestId: ID!): Boolean!
     approveJoinRequest(requestId: ID!): EventVolunteer!
     denyJoinRequest(requestId: ID!, reason: String): EventJoinRequest!
+    linkPlaceholderUser(placeholderUserId: String!, realUserId: String!): LinkPlaceholderResult!
   }
 `;
 

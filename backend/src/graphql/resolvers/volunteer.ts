@@ -71,6 +71,8 @@ const volunteerResolvers = {
       (parent as { user?: { appointmentStatus?: string } }).user?.appointmentStatus ?? parent.appointmentStatus,
     notes: (parent: Record<string, unknown>) =>
       (parent as { user?: { notes?: string } }).user?.notes ?? parent.notes,
+    isPlaceholder: (parent: Record<string, unknown>) =>
+      (parent as { user?: { isPlaceholder?: boolean } }).user?.isPlaceholder ?? false,
   },
 
   Query: {
@@ -339,6 +341,16 @@ const volunteerResolvers = {
       requireOverseer(context);
       const volunteerService = new VolunteerService(context.prisma);
       return volunteerService.denyJoinRequest(requestId, context.user!.id, reason);
+    },
+
+    linkPlaceholderUser: async (
+      _parent: unknown,
+      { placeholderUserId, realUserId }: { placeholderUserId: string; realUserId: string },
+      context: Context
+    ) => {
+      requireAdmin(context);
+      const volunteerService = new VolunteerService(context.prisma);
+      return volunteerService.linkPlaceholderUser(placeholderUserId, realUserId);
     },
   },
 

@@ -25,8 +25,10 @@ struct VolunteerDetailView: View {
     @State private var showRemoveConfirmation = false
     @State private var showDeleteConfirmation = false
     @State private var showEditSheet = false
+    @State private var showLinkSheet = false
     @State private var hasAppeared = false
     @State private var showCopiedToast = false
+    @State private var linkUserIdInput = ""
 
     init(volunteer: VolunteerListItem, isEditable: Bool, onRemoved: (() -> Void)? = nil) {
         _volunteer = State(initialValue: volunteer)
@@ -159,6 +161,11 @@ struct VolunteerDetailView: View {
             credentialsCard
                 .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
 
+            if volunteer.isPlaceholder && isEditable {
+                linkToRealUserCard
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.175)
+            }
+
             if isEditable {
                 VStack(spacing: AppTheme.Spacing.m) {
                     removeButton
@@ -219,6 +226,16 @@ struct VolunteerDetailView: View {
                     Text(volunteer.congregation)
                         .font(AppTheme.Typography.subheadline)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+                    if volunteer.isPlaceholder {
+                        Text("volunteer.badge.nonApp".localized)
+                            .font(AppTheme.Typography.captionBold)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(AppTheme.StatusColors.warning)
+                            .clipShape(Capsule())
+                    }
 
                     if let appointment = volunteer.appointmentStatus {
                         Text(formatAppointment(appointment))
@@ -349,6 +366,109 @@ struct VolunteerDetailView: View {
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Link to Real User Card
+
+    private var linkToRealUserCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "person.badge.shield.checkmark")
+                    .foregroundStyle(AppTheme.StatusColors.warning)
+                Text("volunteerDetail.link.header".localized)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+
+            Text("volunteerDetail.link.title".localized)
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.primary)
+
+            Text("volunteerDetail.link.description".localized)
+                .font(AppTheme.Typography.subheadline)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+            Button {
+                showLinkSheet = true
+                HapticManager.shared.lightTap()
+            } label: {
+                HStack(spacing: AppTheme.Spacing.s) {
+                    Image(systemName: "link")
+                    Text("volunteerDetail.link.button".localized)
+                }
+                .font(AppTheme.Typography.headline)
+                .frame(maxWidth: .infinity)
+                .frame(height: AppTheme.ButtonHeight.medium)
+                .foregroundStyle(.white)
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                        .fill(AppTheme.StatusColors.warning)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+        .sheet(isPresented: $showLinkSheet) {
+            linkSheet
+        }
+    }
+
+    private var linkSheet: some View {
+        NavigationStack {
+            VStack(spacing: AppTheme.Spacing.xl) {
+                VStack(spacing: AppTheme.Spacing.m) {
+                    Text("volunteerDetail.link.sheet.description".localized)
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        .multilineTextAlignment(.center)
+
+                    TextField("addVolunteer.userId.placeholder".localized, text: $linkUserIdInput)
+                        .font(.system(size: 24, weight: .semibold, design: .monospaced))
+                        .multilineTextAlignment(.center)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .padding()
+                        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium))
+
+                    Text("volunteerDetail.link.sheet.hint".localized)
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
+
+                if viewModel.isLoading {
+                    ProgressView()
+                }
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("volunteerDetail.link.sheet.title".localized)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("common.cancel".localized) {
+                        showLinkSheet = false
+                        linkUserIdInput = ""
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("volunteerDetail.link.confirm".localized) {
+                        guard let placeholderUserId = volunteer.userId else { return }
+                        Task {
+                            await viewModel.linkPlaceholderUser(
+                                placeholderUserId: placeholderUserId,
+                                realUserId: linkUserIdInput
+                            )
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(linkUserIdInput.trimmingCharacters(in: .whitespacesAndNewlines).count < 6 || viewModel.isLoading)
+                }
+            }
+        }
     }
 
     // MARK: - Remove Button
@@ -512,7 +632,8 @@ struct VolunteerDetailView: View {
                 departmentName: "Attendant",
                 departmentType: "ATTENDANT",
                 roleId: nil,
-                roleName: nil
+                roleName: nil,
+                isPlaceholder: true
             ),
             isEditable: true
         )
@@ -536,7 +657,8 @@ struct VolunteerDetailView: View {
                 departmentName: "Parking",
                 departmentType: "PARKING",
                 roleId: nil,
-                roleName: nil
+                roleName: nil,
+                isPlaceholder: false
             ),
             isEditable: false
         )

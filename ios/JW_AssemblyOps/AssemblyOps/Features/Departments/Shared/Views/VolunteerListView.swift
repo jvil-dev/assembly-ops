@@ -266,9 +266,21 @@ struct VolunteerRowView: View {
 
             // Details
             VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                Text(volunteer.fullName)
-                    .font(AppTheme.Typography.headline)
-                    .foregroundStyle(.primary)
+                HStack(spacing: AppTheme.Spacing.s) {
+                    Text(volunteer.fullName)
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(.primary)
+
+                    if volunteer.isPlaceholder {
+                        Text("volunteer.badge.nonApp".localized)
+                            .font(AppTheme.Typography.captionSmall)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(AppTheme.StatusColors.warning)
+                            .clipShape(Capsule())
+                    }
+                }
 
                 HStack(spacing: 6) {
                     Text(volunteer.congregation)
