@@ -1,22 +1,27 @@
 # AssemblyOps
 
-A volunteer scheduling and management system for Jehovah's Witnesses assembly and convention committees. Enables overseers to create events, manage departments, assign volunteers to posts across multiple sessions, and track attendance in real-time.
+A volunteer scheduling and management platform for Jehovah's Witnesses assembly and convention committees. AssemblyOps provides a unified system for event coordination, volunteer management, and real-time attendance tracking — replacing the fragmented mix of spreadsheets, documents, and group chats that committees currently rely on.
 
-## Why This Project?
+## Key Features
 
-Large religious events with 1,000+ attendees require coordinating hundreds of volunteers across multiple departments and time slots. Currently, organizers rely on fragmented tools — Word documents, spreadsheets, group chats — each overseer doing things their own way.
-
-AssemblyOps streamlines this by providing a unified platform for event scheduling, volunteer management, and real-time attendance tracking.
-
-**Why GraphQL?** Mobile apps on unreliable venue WiFi need to minimize network calls. A volunteer's dashboard requires nested data (assignments, sessions, posts, departments) — REST would need 5-6 round trips, GraphQL does it in one request.
+- **Event Management** — Create and configure events with departments, posts, and multi-day sessions
+- **Volunteer Scheduling** — Assign volunteers to posts across sessions with capacity management
+- **Assignment Workflows** — Acceptance/decline flow with configurable deadlines and captain roles
+- **Real-Time Attendance** — Check-in/check-out tracking with live attendance counts
+- **Role-Based Access** — Event Overseers, Department Overseers, and Volunteers each see what they need
+- **In-App Messaging** — Event-wide, department-specific, and post-specific communication
+- **Event Discovery** — Volunteers can browse public events and request to join
+- **Department-Specific Tools** — Safety incident reporting (Attendant), equipment management (Audio/Video), and more
+- **Bilingual Support** — English and Spanish localization
+- **OAuth Sign-In** — Google and Apple Sign In alongside email/password authentication
 
 ## Tech Stack
 
 | Layer          | Technology                                         |
 | -------------- | -------------------------------------------------- |
 | iOS App        | Swift, SwiftUI, Apollo iOS (GraphQL client)        |
-| API            | Node.js, Express, Apollo Server, GraphQL           |
-| Database       | PostgreSQL with Prisma ORM                         |
+| API            | Node.js, Express, Apollo Server 5, GraphQL         |
+| Database       | PostgreSQL 16 with Prisma ORM                      |
 | Auth           | JWT (access + refresh tokens), OAuth (Google/Apple)|
 | Validation     | Zod runtime schemas                                |
 | Infrastructure | AWS ECS Fargate, Supabase (managed Postgres)       |
@@ -24,7 +29,7 @@ AssemblyOps streamlines this by providing a unified platform for event schedulin
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                        Clients                              │
 │              iOS App (SwiftUI + Apollo iOS)                 │
@@ -41,7 +46,7 @@ AssemblyOps streamlines this by providing a unified platform for event schedulin
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │              Node.js + Apollo Server                  │  │
 │  │                                                       │  │
-│  │   Express → Apollo → Resolvers → Services → Prisma    │  │
+│  │   Express → Apollo → Resolvers → Services → Prisma   │  │
 │  └───────────────────────────────────────────────────────┘  │
 └─────────────────────┬───────────────────────────────────────┘
                       │
@@ -51,6 +56,57 @@ AssemblyOps streamlines this by providing a unified platform for event schedulin
 │                   with PgBouncer pooling                    │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js** 20+
+- **PostgreSQL** 16+ (or Docker)
+- **npm**
+- **Xcode** 15+ (for iOS development)
+
+### Backend
+
+```bash
+cd backend
+npm install
+cp .env.example .env    # Fill in your values (see .env.example for details)
+
+npm run prisma:generate # Generate Prisma client
+npm run prisma:migrate  # Run database migrations
+npm run prisma:seed     # Seed with event templates
+
+npm run dev             # Start dev server → http://localhost:4000/graphql
+```
+
+**With Docker:**
+
+```bash
+cd backend
+docker compose up       # Starts API + PostgreSQL
+# In another terminal:
+npm run prisma:migrate
+npm run prisma:seed
+```
+
+See [backend/README.md](./backend/README.md) for full API documentation, environment variables, and available scripts.
+
+### iOS App
+
+```bash
+cd ios/JW_AssemblyOps
+open AssemblyOps.xcodeproj  # Build and run in Xcode
+```
+
+After backend schema changes:
+
+```bash
+./apollo-ios-cli fetch-schema   # Re-fetch schema (backend must be running)
+./apollo-ios-cli generate       # Regenerate GraphQL types
+```
+
+> **Note:** The debug build points to a local network IP for the GraphQL endpoint. Update the URL in `Core/Network/NetworkClient.swift` to match your machine's local IP.
 
 ## User Roles
 
@@ -66,7 +122,7 @@ Accounts, Attendant, Audio/Video, Baptism, Cleaning, First Aid, Information & Vo
 
 ## Project Structure
 
-```
+```text
 AssemblyOps/
 ├── ios/               # iOS app (SwiftUI + Apollo iOS)
 ├── backend/           # Node.js GraphQL API
@@ -74,26 +130,18 @@ AssemblyOps/
 └── .github/           # CI/CD workflows
 ```
 
-## Getting Started
+## Contributing
 
-- **Backend:** See [backend/README.md](./backend/README.md) for API setup instructions.
-- **iOS:** Open `ios/JW_AssemblyOps/AssemblyOps.xcodeproj` in Xcode. Run `./apollo-ios-cli generate` to regenerate GraphQL code after schema changes.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development workflow, coding standards, and how to submit changes.
 
-## Development Status
+## Security
 
-**Current Phase:** Phase 7 — TestFlight & Beta Prep
+See [SECURITY.md](./SECURITY.md) for our security policy and how to report vulnerabilities.
 
-| Phase                              | Status         |
-| ---------------------------------- | -------------- |
-| Phase 0: DevOps Setup              | ✅ Complete    |
-| Phase 1: Backend Core              | ✅ Complete    |
-| Phase 2: Backend Scheduling        | ✅ Complete    |
-| Phase 3: iOS App (Volunteer-facing)| ✅ Complete    |
-| Phase 4: Backend Operations        | ✅ Complete    |
-| Phase 5: Assignment Acceptance & Captain Role | ✅ Complete |
-| Phase 6: iOS Overseer Features     | ✅ Complete    |
-| Phase 7: TestFlight & Beta Prep    | ⬜ In Progress |
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for a detailed history of changes.
 
 ## License
 
-Private - All rights reserved.
+Private — All rights reserved.
