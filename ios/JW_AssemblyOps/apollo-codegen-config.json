@@ -1,0 +1,38 @@
+{
+  "schemaNamespace": "AssemblyOpsAPI",
+  "input": {
+    "operationSearchPaths": ["AssemblyOps/GraphQL/Operations/**/*.graphql"],
+    "schemaSearchPaths": ["AssemblyOps/GraphQL/schema.graphql"]
+  },
+  "output": {
+    "testMocks": {
+      "none": {}
+    },
+    "schemaTypes": {
+      "path": "AssemblyOps/GraphQL/Generated",
+      "moduleType": {
+        "embeddedInTarget": {
+          "name": "AssemblyOps"
+        }
+      }
+    },
+    "operations": {
+      "inSchemaModule": {}
+    }
+  },
+  "schemaDownload": {
+    "downloadMethod": {
+      "introspection": {
+        "endpointURL": "http://localhost:4000/graphql",
+        "httpMethod": {
+          "POST": {}
+        },
+        "includeDeprecatedInputValues": false,
+        "outputFormat": "SDL"
+      }
+    },
+    "downloadTimeout": 60,
+    "headers": {},
+    "outputPath": "AssemblyOps/GraphQL/schema.graphql"
+  }
+}

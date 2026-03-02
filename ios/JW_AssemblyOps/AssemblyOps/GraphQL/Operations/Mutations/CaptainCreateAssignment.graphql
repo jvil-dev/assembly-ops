@@ -1,0 +1,34 @@
+mutation CaptainCreateAssignment($input: CaptainCreateAssignmentInput!) {
+  captainCreateAssignment(input: $input) {
+    id
+    status
+    isCaptain
+    post {
+      id
+      name
+    }
+    session {
+      id
+      name
+    }
+    shift {
+      id
+      name
+      startTime
+      endTime
+    }
+    eventVolunteer {
+      id
+      user {
+        id
+        firstName
+        lastName
+      }
+    }
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+  }
+}

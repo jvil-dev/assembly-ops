@@ -1,0 +1,23 @@
+query EventAttendanceSummary($eventId: ID!) {
+  eventAttendanceSummary(eventId: $eventId) {
+    session {
+      id
+      name
+      date
+      startTime
+      endTime
+    }
+    totalCount
+    sectionCounts {
+      id
+      count
+      notes
+      submittedBy {
+        id
+        firstName
+        lastName
+      }
+      createdAt
+    }
+  }
+}

@@ -1,0 +1,41 @@
+query EventDetails($eventId: ID!) {
+    event(id: $eventId) {
+        id
+        name
+        eventType
+        venue
+        address
+        startDate
+        endDate
+        joinCode
+        volunteerCount
+        departments {
+            id
+            name
+            departmentType
+            description
+            volunteerCount
+            isClaimed
+            overseer {
+                id
+                user {
+                    id
+                    fullName
+                }
+            }
+            posts {
+                id
+                name
+                description
+                location
+            }
+        }
+        sessions {
+            id
+            name
+            date
+            startTime
+            endTime
+        }
+    }
+}

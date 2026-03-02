@@ -1,0 +1,3 @@
+mutation RemoveAreaCaptain($input: RemoveAreaCaptainInput!) {
+    removeAreaCaptain(input: $input)
+}

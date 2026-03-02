@@ -1,0 +1,12 @@
+mutation AssignHierarchyRole($input: AssignHierarchyRoleInput!) {
+  assignHierarchyRole(input: $input) {
+    id
+    hierarchyRole
+    eventVolunteer {
+      id
+      firstName
+      lastName
+    }
+    assignedAt
+  }
+}

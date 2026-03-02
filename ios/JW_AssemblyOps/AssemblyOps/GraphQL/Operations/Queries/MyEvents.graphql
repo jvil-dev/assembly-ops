@@ -1,0 +1,23 @@
+query MyEvents {
+    myEvents {
+        id
+        role
+        claimedAt
+        event {
+            id
+            name
+            eventType
+            venue
+            address
+            startDate
+            endDate
+            volunteerCount
+        }
+        department {
+            id
+            name
+            departmentType
+            volunteerCount
+        }
+    }
+}

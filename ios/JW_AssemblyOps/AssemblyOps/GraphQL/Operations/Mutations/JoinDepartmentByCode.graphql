@@ -1,0 +1,15 @@
+mutation JoinDepartmentByCode($input: JoinDepartmentByCodeInput!) {
+  joinDepartmentByAccessCode(input: $input) {
+    id
+    user {
+      id
+      firstName
+      lastName
+    }
+    department {
+      id
+      name
+      departmentType
+    }
+  }
+}

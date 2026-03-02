@@ -1,0 +1,22 @@
+mutation CreateAttendantMeeting($input: CreateAttendantMeetingInput!) {
+  createAttendantMeeting(input: $input) {
+    id
+    session {
+      id
+      name
+    }
+    meetingDate
+    notes
+    attendees {
+      id
+      eventVolunteer {
+        id
+        user {
+          firstName
+          lastName
+        }
+      }
+    }
+    createdAt
+  }
+}

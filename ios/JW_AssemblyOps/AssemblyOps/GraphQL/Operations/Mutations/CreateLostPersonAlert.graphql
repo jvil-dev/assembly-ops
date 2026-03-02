@@ -1,0 +1,13 @@
+mutation CreateLostPersonAlert($input: CreateLostPersonAlertInput!) {
+  createLostPersonAlert(input: $input) {
+    id
+    personName
+    age
+    description
+    lastSeenLocation
+    lastSeenTime
+    contactName
+    contactPhone
+    createdAt
+  }
+}

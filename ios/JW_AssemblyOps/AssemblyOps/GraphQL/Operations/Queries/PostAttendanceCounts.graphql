@@ -1,0 +1,12 @@
+query PostAttendanceCounts($postId: ID!) {
+  postAttendanceCounts(postId: $postId) {
+    id
+    count
+    notes
+    session {
+      id
+      name
+    }
+    createdAt
+  }
+}

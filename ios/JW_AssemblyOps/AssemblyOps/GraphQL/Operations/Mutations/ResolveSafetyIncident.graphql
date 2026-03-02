@@ -1,0 +1,8 @@
+mutation ResolveSafetyIncident($id: ID!, $resolutionNotes: String) {
+  resolveSafetyIncident(id: $id, resolutionNotes: $resolutionNotes) {
+    id
+    resolved
+    resolvedAt
+    resolutionNotes
+  }
+}

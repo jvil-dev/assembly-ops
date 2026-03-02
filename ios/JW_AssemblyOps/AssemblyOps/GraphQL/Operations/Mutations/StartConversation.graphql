@@ -1,0 +1,23 @@
+mutation StartConversation($input: StartConversationInput!) {
+  startConversation(input: $input) {
+    id
+    subject
+    unreadCount
+    createdAt
+    updatedAt
+    lastMessage {
+      id
+      body
+      senderName
+      senderType
+      createdAt
+    }
+    participants {
+      id
+      participantType
+      participantId
+      displayName
+      lastReadAt
+    }
+  }
+}

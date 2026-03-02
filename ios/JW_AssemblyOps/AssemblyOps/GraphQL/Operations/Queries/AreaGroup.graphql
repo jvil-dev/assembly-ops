@@ -1,0 +1,45 @@
+query AreaGroup($areaId: ID!, $sessionId: ID!) {
+    areaGroup(areaId: $areaId, sessionId: $sessionId) {
+        area {
+            id
+            name
+            description
+            category
+        }
+        captain {
+            id
+            session {
+                id
+                name
+            }
+            eventVolunteer {
+                id
+                user {
+                    firstName
+                    lastName
+                }
+            }
+        }
+        members {
+            postName
+            postId
+            assignment {
+                id
+                status
+                isCaptain
+                volunteer {
+                    id
+                    firstName
+                    lastName
+                    congregation
+                    phone
+                }
+                checkIn {
+                    id
+                    status
+                    checkInTime
+                }
+            }
+        }
+    }
+}

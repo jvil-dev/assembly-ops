@@ -1,0 +1,37 @@
+query CaptainShifts($sessionId: ID!, $postId: ID) {
+  captainShifts(sessionId: $sessionId, postId: $postId) {
+    id
+    name
+    startTime
+    endTime
+    session {
+      id
+      name
+    }
+    post {
+      id
+      name
+    }
+    createdAt
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+    assignments {
+      id
+      eventVolunteer {
+        id
+        user {
+          id
+          firstName
+          lastName
+        }
+      }
+      status
+      checkIn {
+        id
+      }
+    }
+  }
+}

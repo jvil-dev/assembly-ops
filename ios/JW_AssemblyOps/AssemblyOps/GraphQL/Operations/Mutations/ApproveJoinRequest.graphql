@@ -1,0 +1,19 @@
+mutation ApproveJoinRequest($requestId: ID!) {
+  approveJoinRequest(requestId: $requestId) {
+    id
+    user {
+      id
+      firstName
+      lastName
+    }
+    event {
+      id
+      name
+    }
+    department {
+      id
+      name
+      departmentType
+    }
+  }
+}

@@ -1,0 +1,17 @@
+mutation CreateAVEquipment($input: CreateAVEquipmentInput!) {
+  createAVEquipment(input: $input) {
+    id
+    name
+    model
+    serialNumber
+    category
+    condition
+    location
+    notes
+    area {
+      id
+      name
+    }
+    createdAt
+  }
+}

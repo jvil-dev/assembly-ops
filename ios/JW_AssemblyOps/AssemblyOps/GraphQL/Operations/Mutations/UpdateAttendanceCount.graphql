@@ -1,0 +1,8 @@
+mutation UpdateAttendanceCount($id: ID!, $input: UpdateAttendanceCountInput!) {
+  updateAttendanceCount(id: $id, input: $input) {
+    id
+    count
+    notes
+    createdAt
+  }
+}

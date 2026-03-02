@@ -1,0 +1,17 @@
+query PostSessionStatuses($sessionId: ID!) {
+  postSessionStatuses(sessionId: $sessionId) {
+    id
+    post {
+      id
+      name
+      location
+      category
+    }
+    session {
+      id
+      name
+    }
+    status
+    updatedAt
+  }
+}

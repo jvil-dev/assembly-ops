@@ -1,0 +1,25 @@
+mutation SetAreaCaptain($input: SetAreaCaptainInput!) {
+  setAreaCaptain(input: $input) {
+    id
+    status
+    respondedAt
+    declineReason
+    acceptedDeadline
+    forceAssigned
+    area {
+      id
+      name
+    }
+    session {
+      id
+      name
+    }
+    eventVolunteer {
+      id
+      user {
+        firstName
+        lastName
+      }
+    }
+  }
+}

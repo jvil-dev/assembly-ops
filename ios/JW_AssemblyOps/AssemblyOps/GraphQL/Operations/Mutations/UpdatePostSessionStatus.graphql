@@ -1,0 +1,15 @@
+mutation UpdatePostSessionStatus($input: UpdatePostSessionStatusInput!) {
+  updatePostSessionStatus(input: $input) {
+    id
+    post {
+      id
+      name
+    }
+    session {
+      id
+      name
+    }
+    status
+    updatedAt
+  }
+}

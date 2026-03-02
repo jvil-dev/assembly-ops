@@ -1,0 +1,18 @@
+query EventAdmins($eventId: ID!) {
+  eventAdmins(eventId: $eventId) {
+    id
+    role
+    claimedAt
+    user {
+      id
+      firstName
+      lastName
+      email
+    }
+    department {
+      id
+      name
+      departmentType
+    }
+  }
+}

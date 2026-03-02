@@ -1,0 +1,10 @@
+mutation PickUpLanyard($eventId: ID!) {
+  pickUpLanyard(eventId: $eventId) {
+    id
+    eventVolunteerId
+    date
+    pickedUpAt
+    returnedAt
+    volunteerName
+  }
+}

@@ -1,0 +1,16 @@
+mutation UpdateShift($id: ID!, $input: UpdateShiftInput!) {
+  updateShift(id: $id, input: $input) {
+    id
+    name
+    startTime
+    endTime
+    session {
+      id
+      name
+    }
+    post {
+      id
+      name
+    }
+  }
+}

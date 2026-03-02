@@ -1,0 +1,20 @@
+mutation CreateAVHazardAssessment($input: CreateAVHazardAssessmentInput!) {
+  createAVHazardAssessment(input: $input) {
+    id
+    title
+    hazardType
+    description
+    controls
+    ppeRequired
+    completedBy {
+      id
+      firstName
+      lastName
+    }
+    session {
+      id
+      name
+    }
+    completedAt
+  }
+}

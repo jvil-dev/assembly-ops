@@ -1,0 +1,1507 @@
+/*
+  Localizable.strings (English)
+  AssemblyOps
+*/
+
+// MARK: - Common
+"common.cancel" = "Cancel";
+"common.done" = "Done";
+"common.save" = "Save";
+"common.delete" = "Delete";
+"common.edit" = "Edit";
+"common.loading" = "Loading...";
+"common.error" = "Error";
+"common.success" = "Success";
+"common.retry" = "Retry";
+"common.search" = "Search";
+"common.searchFailed" = "Search failed. Check your connection.";
+"common.add" = "Add";
+"common.remove" = "Remove";
+"common.copy" = "Copy";
+"common.share" = "Share";
+"common.ok" = "OK";
+"common.close" = "Close";
+
+// MARK: - Auth
+"auth.login" = "Sign In";
+"auth.logout" = "Sign Out";
+"auth.volunteerId" = "Volunteer ID";
+"auth.token" = "Token";
+"auth.invalidCredentials" = "Invalid credentials";
+"auth.needHelp" = "Need help? Ask your department overseer";
+
+// MARK: - Event Types
+"eventType.circuitAssembly" = "Circuit Assembly";
+"eventType.regionalConvention" = "Regional Convention";
+"eventType.specialConvention" = "Special Convention";
+
+// MARK: - Departments
+"department.accounts" = "Accounts";
+"department.attendant" = "Attendant";
+"department.baptism" = "Baptism";
+"department.cleaning" = "Cleaning";
+"department.firstAid" = "First Aid";
+"department.information" = "Information";
+"department.installation" = "Installation";
+"department.lostFound" = "Lost & Found";
+"department.parking" = "Parking";
+"department.rooming" = "Rooming";
+"department.trucking" = "Trucking";
+
+// MARK: - Appointment Status
+"appointmentStatus.publisher" = "Publisher";
+"appointmentStatus.ministerialServant" = "Ministerial Servant";
+"appointmentStatus.elder" = "Elder";
+
+// MARK: - Assignment Status
+"assignmentStatus.pending" = "Pending";
+"assignmentStatus.accepted" = "Accepted";
+"assignmentStatus.declined" = "Declined";
+"assignmentStatus.autoDeclined" = "Auto-Declined";
+
+// MARK: - Assignment Picker
+"assignment.forceAssign.toggle" = "Force Assign";
+"assignment.forceAssign.subtitle" = "Skips acceptance — volunteer is assigned immediately";
+"assignment.status.pending" = "Awaiting acceptance";
+
+// MARK: - Check-In Status
+"checkInStatus.checkedIn" = "Checked In";
+"checkInStatus.checkedOut" = "Checked Out";
+"checkInStatus.noShow" = "No Show";
+
+// MARK: - Home Dashboard
+"home.welcome" = "Welcome, %@!";
+"home.nextUp" = "NEXT UP";
+"home.nextUp.now" = "NOW";
+"home.nextUp.checkOut" = "Check Out";
+"home.nextUp.checkIn" = "Check In";
+"home.nextUp.allDone" = "You're all done for today!";
+"home.nextUp.nextDate" = "Next: %@";
+"home.nextUp.noAssignments" = "No assignments yet";
+"home.nextUp.noAssignments.subtitle" = "Your overseer will assign you soon.";
+"home.nextUp.viewDetails" = "View Details";
+"home.summary" = "TODAY'S SUMMARY";
+"home.summary.count" = "%d assignments";
+"home.summary.completed" = "%d completed";
+"home.summary.checkedIn" = "Checked In";
+"home.summary.done" = "Completed";
+"home.summary.ready" = "Ready to check in";
+"home.summary.upcoming" = "Upcoming";
+"home.actions.pending" = "%d pending assignments";
+"home.actions.pendingOne" = "1 pending assignment";
+"home.actions.unread" = "%d unread messages";
+"home.actions.unreadOne" = "1 unread message";
+"home.actions.respond" = "Respond";
+"home.actions.read" = "Read";
+"home.role.captain" = "Captain";
+"home.role.elder" = "Elder";
+"home.role.ministerialServant" = "Ministerial Servant";
+"home.role.publisher" = "Publisher";
+
+// MARK: - Tabs
+"tab.home" = "Home";
+"tab.schedule" = "Schedule";
+"tab.messages" = "Messages";
+"tab.findEvent" = "Find Event";
+"tab.dashboard" = "Dashboard";
+"tab.volunteers" = "Volunteers";
+"tab.assignments" = "Assignments";
+"tab.sections" = "Sections";
+
+// MARK: - Volunteer
+"volunteer.add" = "Add Volunteer";
+"volunteer.search" = "Search volunteers";
+"volunteer.credentials" = "Login Credentials";
+"volunteer.inviteMessage" = "Invite Message";
+"volunteer.shareInvite" = "Share Invite";
+"volunteer.copyMessage" = "Copy Message";
+"volunteer.addedSuccess" = "%@ has been added!";
+"volunteer.shareCredentials" = "Share the credentials below so they can log in";
+
+// MARK: - Roles
+"role.app_admin" = "App Administrator";
+"role.department_overseer" = "Department Overseer";
+
+// MARK: - Admin Management
+"admin.manage.title" = "Manage Administrators";
+"admin.promote.button" = "Promote to App Administrator";
+"admin.promote.alert.title" = "Promote to App Administrator?";
+"admin.promote.alert.message" = "%@ will have full access to all departments and can promote other overseers.";
+"admin.promote.success" = "Promoted successfully";
+"admin.list.empty" = "No other administrators";
+"admin.list.empty.subtitle" = "Share the event join code to add department overseers";
+
+// MARK: - Settings
+"settings.language" = "Language";
+"settings.english" = "English";
+"settings.spanish" = "Spanish";
+
+// MARK: - Attendance
+"attendance.title" = "Attendance";
+"attendance.submit" = "Submit Attendance";
+"attendance.summary" = "Attendance Summary";
+"attendance.session" = "Session";
+"attendance.section" = "Section (optional)";
+"attendance.section.placeholder" = "e.g., Main Floor, Balcony";
+"attendance.section.select" = "Select Section";
+"attendance.section.other" = "Other";
+"attendance.count" = "Count";
+"attendance.notes" = "Notes (optional)";
+"attendance.total" = "Total";
+"attendance.submit.button" = "Submit Count";
+"attendance.submitted" = "Count submitted";
+"attendance.delete.confirm" = "Delete this count?";
+"attendance.empty" = "No attendance counts recorded yet";
+"attendance.event.total" = "Event Total";
+
+// MARK: - Messages (Overseer)
+"messages.compose" = "Compose Message";
+"messages.send" = "Send";
+"messages.sent" = "Sent Messages";
+"messages.recipient" = "Recipient";
+"messages.recipient.individual" = "Individual Volunteer";
+"messages.recipient.department" = "Department";
+"messages.recipient.event" = "Event Broadcast";
+"messages.subject" = "Subject (optional)";
+"messages.body" = "Message";
+"messages.body.placeholder" = "Write your message...";
+"messages.sent.success" = "Message sent successfully";
+"messages.sent.count" = "Message sent to %d volunteers";
+"messages.select.volunteer" = "Select Volunteer";
+"messages.empty.sent" = "No messages sent yet";
+"messages.quick.department" = "Message Department";
+"messages.quick.broadcast" = "Event Broadcast";
+
+// MARK: - Check-In Stats
+"stats.checkin" = "Check-In Status";
+"stats.checked.in" = "Checked In";
+"stats.checked.out" = "Left";
+"stats.no.show" = "No Show";
+"stats.pending" = "Pending";
+"stats.total" = "Total Assignments";
+"stats.rate" = "Attendance Rate";
+
+// Session Creation
+"session.create" = "Create Session";
+"session.name" = "Session Name";
+"session.date" = "Date";
+"session.startTime" = "Start Time";
+"session.endTime" = "End Time";
+"session.timeFormat" = "Use 24-hour format (e.g., 09:00, 14:30)";
+"session.created" = "Session Created";
+"session.createdMessage" = "Session '%@' has been created.";
+"session.error.invalidTime" = "Invalid time format. Use HH:MM (24-hour).";
+
+// Post Creation
+"post.create" = "Create Post";
+"post.name" = "Post Name";
+"post.description" = "Description";
+"post.location" = "Location";
+"post.category" = "Category (e.g., Seating, Doors)";
+"post.single" = "Single";
+"post.bulkAdd" = "Bulk Add";
+"post.bulkSettings" = "Bulk Settings";
+"post.bulkPrefix" = "Prefix (e.g., S, D, E)";
+"post.bulkStartNumber" = "Start #";
+"post.bulkCount" = "Count";
+"post.bulkPreview" = "Preview";
+"post.postsTotal" = "posts total";
+"post.created" = "Post Created";
+"post.createdMessage" = "Post '%@' has been created.";
+"post.bulkCreatedMessage" = "%@ posts have been created.";
+"post.otherCategory" = "Other";
+"post.subcategory" = "Subcategory";
+"post.examples" = "Examples";
+
+// Suggestions
+"suggestion.addNew" = "Add '%@'";
+
+// Area Management
+"area.create" = "Create Area";
+"area.category" = "CATEGORY";
+"area.selectCategory" = "Select a category";
+"area.createInCategory" = "Create Area";
+"area.createInCategoryHint" = "Add a new %@ area";
+"area.createPost" = "Create Post";
+"area.details" = "AREA DETAILS";
+"area.name" = "Area Name";
+"area.namePlaceholder" = "e.g., Main Lobby, Seating Level 1";
+"area.description" = "Description";
+"area.descriptionPlaceholder" = "Optional description for this area";
+"area.sortOrder" = "Sort Order";
+"area.captain" = "CAPTAIN";
+"area.captainAssigned" = "Captain for this session";
+"area.assignCaptain" = "Assign Captain";
+"area.changeCaptain" = "Change Captain";
+"area.removeCaptain" = "Remove Captain";
+"area.selectCaptain" = "Select Captain";
+"area.posts" = "POSTS IN AREA";
+"area.noPosts" = "No posts in this area yet";
+"area.delete" = "Delete Area";
+"area.deleteConfirm" = "Delete Area";
+"area.deleteWarning" = "This will delete the area and all its posts. Assignments to these posts will also be removed.";
+"area.deletePostConfirm" = "Delete Post";
+"area.deletePostWarning" = "Are you sure you want to delete \"%@\"? All assignments for this post will also be removed.";
+
+// MARK: - Attendant Department
+"attendant.dashboard.title" = "Attendant Department";
+"attendant.dashboard.volunteers" = "Volunteers";
+"attendant.dashboard.volunteersDesc" = "Manage department volunteers";
+"attendant.dashboard.settings" = "Settings";
+"attendant.dashboard.settingsDesc" = "Department configuration";
+"attendant.dashboard.shifts" = "Shift Management";
+"attendant.dashboard.shiftsDesc" = "Create and manage session shifts";
+
+// Shifts
+"shift.management.title" = "Shift Management";
+"shift.session" = "Session";
+"shift.list.title" = "Shifts";
+"shift.count" = "shifts";
+"shift.create" = "Create Shift";
+"shift.edit" = "Edit Shift";
+"shift.update" = "Update Shift";
+"shift.details" = "Shift Details";
+"shift.name" = "Shift Name";
+"shift.namePlaceholder" = "e.g., Exterior Shift 1";
+"shift.times" = "Shift Times";
+"shift.startTime" = "Start Time";
+"shift.endTime" = "End Time";
+"shift.timeError" = "End time must be after start time";
+"shift.empty" = "No shifts yet";
+"shift.empty.hint" = "Tap + to create shifts for this session";
+"shift.noSession" = "Select a session to manage shifts";
+"shift.post" = "Post";
+"shift.noPosts" = "No posts available";
+
+// Slot Detail — Shifts & Assignments
+"slot.shifts.title" = "Shifts & Assignments";
+"slot.shifts.wholeSession" = "Whole Session";
+"slot.shifts.createHint" = "Add shifts to break this session into time blocks";
+"slot.shifts.noAssignments" = "No volunteers assigned";
+"slot.shifts.count" = "%d shifts";
+"slot.shifts.assignToShift" = "Assign to Shift";
+"slot.volunteers" = "Volunteers";
+"slot.addVolunteer" = "Assign Volunteer";
+"slot.forceAssigned" = "Force Assigned";
+
+// Captain Scheduling
+"captain.scheduling.title" = "Scheduling";
+"captain.scheduling.desc" = "Manage shifts and volunteer assignments";
+"captain.scheduling.createHint" = "Tap + to create shifts for this session";
+"captain.scheduling.addVolunteer" = "Add Volunteer";
+"captain.scheduling.selectVolunteer" = "Select Volunteer";
+"captain.scheduling.searchVolunteers" = "Search volunteers";
+"captain.scheduling.assign" = "Assign";
+"captain.scheduling.noVolunteers" = "No Volunteers";
+"captain.scheduling.noVolunteersHint" = "No volunteers are available in your department";
+
+// Captain Attendance
+"captain.attendance.title" = "Attendance Counts";
+"captain.attendance.desc" = "View attendance counts for your area";
+"captain.attendance.empty" = "No Counts Yet";
+"captain.attendance.emptyDesc" = "Attendance counts for posts in your area will appear here once submitted.";
+
+// Attendance Reminder
+"attendance.reminder.title" = "Submit Count";
+"attendance.reminder.message" = "Submit attendance count for %@ before %@ ends";
+"attendance.reminder.messageNoPost" = "Submit attendance count before %@ ends";
+"attendance.reminder.submit" = "Submit";
+
+// Attendant Posts
+"attendant.posts.title" = "My Posts";
+
+// Safety Incidents
+"attendant.incidents.title" = "Safety Incidents";
+"attendant.incidents.report" = "Report Incident";
+"attendant.incidents.report.success" = "Incident reported successfully";
+"attendant.incidents.type" = "Incident Type";
+"attendant.incidents.description" = "Description";
+"attendant.incidents.location" = "Location";
+"attendant.incidents.resolved" = "Resolved";
+"attendant.incidents.resolve" = "Resolve Incident";
+"attendant.incidents.notes" = "Resolution Notes";
+"attendant.incidents.empty" = "No incidents reported";
+"attendant.incidents.showResolved" = "Show Resolved";
+"attendant.incidents.unresolved" = "unresolved";
+"attendant.incidents.type.buildingDefect" = "Building Defect";
+"attendant.incidents.type.wetFloor" = "Wet Floor";
+"attendant.incidents.type.unsafeCondition" = "Unsafe Condition";
+"attendant.incidents.type.medicalEmergency" = "Medical Emergency";
+"attendant.incidents.type.disruptiveIndividual" = "Disruptive Individual";
+"attendant.incidents.type.other" = "Other";
+"attendant.incidents.description.placeholder" = "Describe what happened, what you observed, etc.";
+"attendant.incidents.section.incidentType" = "Incident Type";
+"attendant.incidents.section.details" = "Details";
+"attendant.incidents.section.location" = "Location";
+
+// Lost Person Alerts
+"attendant.lostPerson.title" = "Lost Person Alerts";
+"attendant.lostPerson.create" = "Report Lost Person";
+"attendant.lostPerson.report.success" = "Alert created successfully";
+"attendant.lostPerson.personName" = "Person Name";
+"attendant.lostPerson.age" = "Age";
+"attendant.lostPerson.description" = "Description";
+"attendant.lostPerson.lastSeen" = "Last Seen Location";
+"attendant.lostPerson.lastSeenTime" = "Last Seen Time";
+"attendant.lostPerson.contactName" = "Contact Name";
+"attendant.lostPerson.contactPhone" = "Contact Phone";
+"attendant.lostPerson.resolve" = "Resolve Alert";
+"attendant.lostPerson.resolutionNotes" = "Resolution Notes";
+"attendant.lostPerson.empty" = "No lost person alerts";
+"attendant.lostPerson.active" = "Active";
+"attendant.lostPerson.description.placeholder" = "Describe what the person looks like, what they're wearing, etc.";
+"attendant.lostPerson.includeTime" = "Include last seen time";
+"attendant.lostPerson.section.personDetails" = "Person Details";
+"attendant.lostPerson.section.lastSeen" = "Last Seen";
+"attendant.lostPerson.section.contactInfo" = "Contact Info";
+
+// Meetings
+"attendant.meetings.title" = "Pre-Event Meetings";
+"attendant.meetings.create" = "Create Meeting";
+"attendant.meetings.session" = "Session";
+"attendant.meetings.date" = "Meeting Date";
+"attendant.meetings.time" = "Meeting Time";
+"attendant.meetings.notes" = "Notes";
+"attendant.meetings.attendees" = "Attendees";
+"attendant.meetings.empty" = "No meetings recorded";
+"attendant.meetings.showAttendees" = "Show attendees";
+"attendant.meetings.hideAttendees" = "Hide attendees";
+"attendant.meetings.createdBy" = "Created by %@";
+
+// Attendance Count Submission
+"attendant.count.title" = "Submit Count";
+"attendant.count.post" = "Post";
+"attendant.count.session" = "Session";
+"attendant.count.count" = "Attendance Count";
+"attendant.count.submit" = "Submit Count";
+"attendant.count.success" = "Count submitted successfully";
+
+
+// Attendant Assignments
+"attendant.assign.noVolunteers" = "No volunteers found";
+
+// Attendant Meeting Multi-Select
+"attendant.meetings.selected" = "selected";
+"attendant.meetings.selectAll" = "Select All";
+"attendant.meetings.deselectAll" = "Deselect All";
+
+// Attendant Volunteer Views
+"attendant.volunteer.noPosts" = "No posts assigned";
+
+// Attendant Home Cards
+"attendant.home.posts" = "My Section";
+"attendant.home.meetings" = "Upcoming Meetings";
+"attendant.home.quickActions" = "Quick Actions";
+"attendant.home.reportIncident" = "Report Incident";
+"attendant.home.reportLostPerson" = "Report Lost Person";
+"attendant.home.noPosts" = "No posts assigned yet";
+"attendant.home.noMeetings" = "No upcoming meetings";
+
+// Attendant Detail Cards
+"attendant.detail.submitCount" = "Submit Attendance Count";
+
+"attendant.incidents.location.other" = "Other";
+"attendant.incidents.location.select" = "Select Location";
+"attendant.incidents.location.custom" = "Custom Location";
+"attendant.incidents.location.loading" = "Loading locations...";
+"attendant.volunteer.reportedBy" = "Reported by %@";
+
+// Attendant - New incident types
+"attendant.incidents.type.bombThreat" = "Bomb Threat";
+"attendant.incidents.type.violentIndividual" = "Violent Individual";
+"attendant.incidents.type.severeWeather" = "Severe Weather";
+"attendant.incidents.type.activeShooter" = "Active Shooter";
+
+// Attendant - Attendance count breakdown
+"attendant.attendance.title" = "Attendance Counts";
+"attendant.attendance.viewCounts" = "View Count Breakdown";
+"attendant.attendance.session" = "Session";
+"attendant.attendance.total" = "Total Count";
+"attendant.attendance.sections" = "sections";
+"attendant.attendance.general" = "General";
+"attendant.attendance.empty" = "No attendance data available";
+"attendant.attendance.noCounts" = "No counts submitted for this session";
+"attendant.attendance.submit" = "Submit Count";
+"attendant.attendance.notes.placeholder" = "Notes (optional)";
+"attendant.attendance.submitted" = "Attendance count submitted successfully";
+
+// Attendant - Concerns feed (volunteer view)
+"attendant.concerns.report" = "Report a Concern";
+"attendant.concerns.title" = "Concerns";
+"attendant.concerns.empty" = "No concerns reported";
+"attendant.concerns.reportedBy" = "Reported By";
+"attendant.concerns.elapsed" = "elapsed";
+"attendant.concerns.totalTime" = "total time";
+"attendant.concerns.status.active" = "Active";
+"attendant.lostPerson.contact" = "Contact";
+
+// Attendant - Volunteer meetings
+"attendant.meetings.myTitle" = "My Meetings";
+"attendant.meetings.noNotes" = "No notes for this meeting";
+"attendant.meetings.noMeetings" = "No meetings assigned";
+
+// MARK: - Attendant Info (CO-23 Quick Reference)
+"attendant.info.title" = "Attendant Reminders";
+"attendant.info.subtitle" = "Quick reference from the attendant instructions";
+"attendant.info.source" = "Based on CO-23-E 1/24";
+
+// Section titles
+"attendant.info.section.conduct" = "General Conduct & Preparation";
+"attendant.info.section.entrances" = "Entrances & Seating";
+"attendant.info.section.counting" = "Attendance Counting";
+"attendant.info.section.distractions" = "Handling Distractions";
+"attendant.info.section.safety" = "Safety & Emergencies";
+"attendant.info.section.lostPersons" = "Lost Persons & Threats";
+"attendant.info.section.facilities" = "Escalators, Stage & Baptism";
+"attendant.info.section.disruptions" = "Disruptions & Violence";
+
+// Conduct & Preparation
+"attendant.info.conduct.exemplary" = "Be exemplary in spiritual conduct — show kindness, helpfulness, and hospitality at all times";
+"attendant.info.conduct.alert" = "Remain alert and attentive — never become complacent";
+"attendant.info.conduct.meeting" = "Attend the attendant meeting before doors open on the first day";
+"attendant.info.conduct.position15min" = "Be at your assigned position at least 15 minutes before doors open";
+"attendant.info.conduct.badge" = "Always wear your attendant badge card while on duty";
+"attendant.info.conduct.stayAssigned" = "Remain at your assignment until you are relieved or replaced";
+
+// Entrances & Seating
+"attendant.info.entrances.elderly8am" = "8:00 AM — Elderly and infirm (with one caregiver) may enter";
+"attendant.info.entrances.general815" = "8:15 AM — General admission begins";
+"attendant.info.entrances.checkExits" = "Check all exit doors daily — they must be unlocked and unobstructed";
+"attendant.info.entrances.doorsNotPropped" = "Do not prop open exterior doors in climate-controlled buildings";
+"attendant.info.entrances.noSeatSaving" = "No overnight seat-saving or saving seats before doors open each day";
+"attendant.info.entrances.seatSavingRules" = "After 8:00 AM, seats may only be saved for family, travel companions, and Bible students";
+"attendant.info.entrances.strollers" = "Baby strollers and lawn chairs are not allowed in regular seating areas";
+"attendant.info.entrances.seatLatecomers" = "Take initiative to seat latecomers — use hand signals between entry and seating attendants";
+"attendant.info.entrances.assistElders" = "Assist elderly, disabled, and families with small children to find appropriate seating";
+
+// Attendance Counting
+"attendant.info.counting.informed" = "You will be informed of the specific times to take the attendance count";
+"attendant.info.counting.noDistraction" = "Take the count without causing unnecessary distraction";
+"attendant.info.counting.countAll" = "Count all adults and young children who are listening and benefiting from the program";
+
+// Handling Distractions
+"attendant.info.distractions.sources" = "Watch for: attendees talking, latecomers, cell phones, disruptive children, people in remote areas";
+"attendant.info.distractions.kindly" = "Address distractions in a loving, kind manner";
+"attendant.info.distractions.remote" = "Kindly suggest that people congregating in remote areas return to their seats";
+
+// Safety & Emergencies
+"attendant.info.safety.watch" = "Watch for: building defects, wet floors, objects in aisles, unsafe chairs, loose handrails";
+"attendant.info.safety.wetFloors" = "Direct people around wet areas and report them to the Cleaning Department";
+"attendant.info.safety.railings" = "In multilevel facilities, prevent children from sitting near railings where they could fall";
+"attendant.info.safety.upperLevels" = "Do not lean over railings or place items on upper-level ledges";
+"attendant.info.safety.nonmedical" = "Non-medical emergency: immediately contact the attendant overseer";
+"attendant.info.safety.flashlight" = "Each attendant should carry a flashlight for power failures";
+"attendant.info.safety.medical" = "Medical emergency: contact First Aid immediately — they will call emergency services if needed";
+"attendant.info.safety.reportInfo" = "When reporting an emergency, provide: type/scope, location, your name and phone number";
+
+// Lost Persons & Threats
+"attendant.info.lost.bringToLF" = "Bring lost persons (especially children) to the Lost & Found / Checkroom Department";
+"attendant.info.lost.notifyOverseer" = "Immediately notify the attendant overseer of any lost person";
+"attendant.info.lost.missingPerson" = "If someone is reported missing, inform the overseer and obtain identifying details and a photo";
+"attendant.info.lost.bombThreat" = "Take ALL bomb threats seriously — immediately inform the attendant overseer";
+"attendant.info.lost.noBombAlarm" = "DO NOT activate the fire alarm during a bomb threat";
+
+// Escalators, Stage & Baptism
+"attendant.info.facilities.escalators" = "Escalators and elevators should never be left unattended when in use";
+"attendant.info.facilities.escalatorStop" = "Know how to emergency-stop escalators at your location";
+"attendant.info.facilities.assistElderly" = "Assist elderly and young ones with careful use of escalators and elevators";
+"attendant.info.facilities.stageAccess" = "Always control access to the stage — only authorized persons allowed backstage";
+"attendant.info.facilities.noPhotos" = "No unauthorized photography or video recording on, in front of, or behind the stage";
+"attendant.info.facilities.baptism" = "During baptism, lead candidates to dressing rooms and provide crowd control around the pool";
+
+// Disruptions & Violence
+"attendant.info.disruptions.twoApproach" = "Two attendants should approach and greet a suspicious or disruptive individual together";
+"attendant.info.disruptions.apostates" = "If apostate demonstrators are outside, encourage attendees not to interact with them";
+"attendant.info.disruptions.calmFirst" = "Attempt to calm an agitated person — speak with them outside the auditorium, away from others";
+"attendant.info.disruptions.askToLeave" = "If disruptive behavior persists, ask the person to leave and warn that police will be contacted";
+"attendant.info.disruptions.noForce" = "Generally do NOT use physical force to remove a disruptive individual";
+"attendant.info.disruptions.avoidDenyDefend" = "Active threat: follow 'Avoid, Deny, Defend' — escape first, barricade second, fight only as last resort";
+"attendant.info.disruptions.callPolice" = "Call police immediately in a violent situation — anyone may call, do not wait";
+"attendant.info.disruptions.lockDoors" = "Lock and barricade doors to protect the largest number of attendees";
+"attendant.info.disruptions.noWeapons" = "Attendants are NOT permitted to carry weapons";
+
+// MARK: - Sprint 6.8 — Captain Walk-Through Checklist
+"attendant.walkthrough.title" = "Morning Walk-Through";
+"attendant.walkthrough.progress" = "%d of %d complete";
+"attendant.walkthrough.complete.button" = "Complete Walk-Through";
+"attendant.walkthrough.complete.title" = "Walk-Through Complete";
+"attendant.walkthrough.complete.message" = "All %d items confirmed for %@. Time: %@";
+"attendant.walkthrough.session.placeholder" = "Select session";
+"attendant.walkthrough.item.1" = "Suspicious packages checked — stage, underneath stage, all corridors";
+"attendant.walkthrough.item.2" = "All exit doors unlocked and unobstructed from inside";
+"attendant.walkthrough.item.3" = "Fire alarm pull stations attended";
+"attendant.walkthrough.item.4" = "Stage access controlled — attendant posted";
+"attendant.walkthrough.item.5" = "Escalator/elevator attendants in position";
+"attendant.walkthrough.item.6" = "All entrance posts staffed (15 min before doors open)";
+"attendant.walkthrough.item.7" = "Disabled/elderly entrance area clear and accessible";
+"attendant.walkthrough.item.8" = "First Aid and Lost & Found locations confirmed";
+"attendant.walkthrough.dismiss.title" = "Discard Progress?";
+"attendant.walkthrough.dismiss.message" = "%d of %d items checked. Progress will be lost.";
+"attendant.walkthrough.dismiss.confirm" = "Discard";
+
+// MARK: - Sprint 6.8 — Captain Post Incident Context
+"attendant.captain.postIncidents.title" = "Post Incidents";
+"attendant.captain.postIncidents.allClear" = "All Clear — No unresolved incidents at this post";
+
+// MARK: - Sprint 6.8 — Area Captain Group
+"attendant.captain.areaGroup.noMembers" = "No group members assigned to this area";
+"attendant.captain.areaGroup.noGroup" = "No area group found for this session";
+"attendant.location.category.other" = "Other";
+
+// MARK: - Sprint 6.8 — Attendance Count Category Grouping
+"attendant.count.groupByCategory" = "Group by Category";
+
+// MARK: - Incident Protocol Cards (CO-23 §17, §23-26)
+"attendant.protocol.subtitle" = "Review this protocol carefully before proceeding.";
+"attendant.protocol.steps" = "Required Actions";
+"attendant.protocol.acknowledge" = "I Understand";
+
+// Bomb Threat (CO-23 §17)
+"attendant.protocol.bombThreat.title" = "Bomb Threat Protocol";
+"attendant.protocol.bombThreat.step1" = "Take the threat seriously. Do NOT activate the fire alarm.";
+"attendant.protocol.bombThreat.step2" = "Immediately contact the attendant overseer or his assistant.";
+"attendant.protocol.bombThreat.step3" = "Provide as much information as possible about the individual and the reported bomb.";
+"attendant.protocol.bombThreat.step4" = "If a bomb is detonated, the fire alarm likely should be used at that point.";
+
+// Violent Individual (CO-23 §23-24)
+"attendant.protocol.violentIndividual.title" = "Disruptive / Violent Individual";
+"attendant.protocol.violentIndividual.step1" = "Do not confront the individual alone. At least two attendants should approach together.";
+"attendant.protocol.violentIndividual.step2" = "Attempt to speak with the person outside of the auditorium, away from others, and try to calm him.";
+"attendant.protocol.violentIndividual.step3" = "If the person persists in being disruptive, ask him to leave and inform the attendant overseer immediately.";
+"attendant.protocol.violentIndividual.step4" = "If the individual refuses to leave, inform him that the police will be contacted.";
+"attendant.protocol.violentIndividual.step5" = "If the individual becomes violent, see the Avoid / Deny / Defend protocol for an active shooter situation.";
+
+// Active Shooter (CO-23 §25-26)
+"attendant.protocol.activeShooter.title" = "Active Shooter — Avoid / Deny / Defend";
+"attendant.protocol.activeShooter.step1" = "AVOID: Pay attention to surroundings, have an exit plan, and quickly move away from the attacker.";
+"attendant.protocol.activeShooter.step2" = "DENY: If you cannot avoid the attacker, create barriers, turn off lights, remain out of sight and quiet.";
+"attendant.protocol.activeShooter.step3" = "DEFEND: Only as a last resort — protect yourself and others using any available means.";
+"attendant.protocol.activeShooter.step4" = "Call the police immediately. Any attendant may call — do not wait for the overseer. Advise the overseer that police have been called.";
+"attendant.protocol.activeShooter.step5" = "Direct attendees to escape routes away from the violence. If evacuation is not possible, encourage attendees to hide in locked rooms.";
+"attendant.protocol.activeShooter.step6" = "Remain calm. Instruct others to silence phones and follow police directions immediately upon their arrival.";
+
+// MARK: - Seating Section Status
+"attendant.seating.title" = "Seating Status";
+"attendant.seating.subtitle" = "Update this section's availability for entry-point attendants";
+"attendant.seating.status.open" = "Open";
+"attendant.seating.status.filling" = "Filling";
+"attendant.seating.status.full" = "Full";
+
+// MARK: - Walk-Through Status (Overseer Dashboard)
+"attendant.walkthrough.status.title" = "Walk-Through Status";
+"attendant.walkthrough.status.none" = "No walk-throughs completed yet";
+"attendant.walkthrough.status.unknown" = "Unknown";
+"attendant.walkthrough.status.items" = "items";
+
+// MARK: - Facility Guide
+"attendant.facility.title" = "Facility Guide";
+"attendant.facility.empty" = "No facility guide entries yet";
+"attendant.facility.create" = "Add Entry";
+"attendant.facility.name" = "Name";
+"attendant.facility.location" = "Location / Directions";
+"attendant.facility.description" = "Description (optional)";
+
+// MARK: - Schedule (Volunteer)
+"schedule.title" = "My Schedule";
+"schedule.filter.all" = "All";
+"schedule.filter.today" = "Today";
+"schedule.noToday.title" = "No Assignments Today";
+"schedule.noToday.subtitle" = "You don't have any assignments scheduled for today.";
+"schedule.showAll" = "Show All Assignments";
+
+// MARK: - Assignment Detail
+"assignment.title" = "Assignment";
+"assignment.section.details" = "DETAILS";
+"assignment.section.attendance" = "ATTENDANCE";
+"assignment.section.yourGroup" = "YOUR GROUP";
+"assignment.checkIn" = "Check-In";
+"assignment.checkedIn" = "Checked in";
+"assignment.readyToCheckIn" = "Ready to check in";
+"assignment.attendance.history" = "Previous Counts";
+"assignment.attendance.lastUpdated" = "Last updated";
+"assignment.attendance.noHistory" = "No counts submitted yet";
+
+// MARK: - General
+"general.cancel" = "Cancel";
+"general.done" = "Done";
+
+// MARK: - Messages (Volunteer)
+"messages.title" = "Messages";
+"messages.loading" = "Loading messages...";
+"messages.filter.all" = "All";
+"messages.filter.unread" = "Unread";
+"messages.markAllRead" = "Mark All Read";
+"messages.from" = "From:";
+"messages.detail.title" = "Message";
+"messages.detail.body" = "MESSAGE";
+"messages.empty.title" = "No Messages Yet";
+"messages.empty.subtitle" = "Messages will appear here when you receive them.";
+"messages.empty.unread.title" = "No Unread Messages";
+"messages.empty.unread.subtitle" = "You're all caught up!";
+"messages.delete" = "Delete";
+"messages.delete.confirm" = "Are you sure you want to delete this message?";
+"messages.reply" = "Reply";
+
+// MARK: - Conversations
+"messages.conversations.loading" = "Loading conversations...";
+"messages.conversations.empty.title" = "No Conversations";
+"messages.conversations.empty.subtitle" = "Start a conversation by composing a new message.";
+"messages.conversations.unavailable" = "Conversations are not available.";
+"messages.conversation.reply.placeholder" = "Type a reply...";
+
+// MARK: - Message Search
+"messages.search.title" = "Search Messages";
+"messages.search.placeholder" = "Search by subject or body";
+"messages.search.prompt" = "Type at least 2 characters to search";
+"messages.search.searching" = "Searching...";
+"messages.search.noResults" = "No Results";
+"messages.search.noResults.subtitle" = "Try a different search term.";
+
+// MARK: - Compose Message (Shared)
+"messages.compose.title" = "New Message";
+"messages.compose.send" = "Send";
+"messages.compose.sent" = "Message Sent";
+"messages.compose.sent.single" = "Message sent successfully.";
+"messages.compose.sent.multiple" = "Message sent to %d volunteers.";
+"messages.compose.recipient" = "RECIPIENT";
+"messages.compose.recipientType" = "RECIPIENT TYPE";
+"messages.compose.selectRecipient" = "Select a recipient";
+"messages.compose.selectRecipients" = "Select Recipients";
+"messages.compose.selectVolunteer" = "Select Volunteer";
+"messages.compose.selectedCount" = "%d selected";
+"messages.compose.noRecipients" = "No recipients available";
+"messages.compose.subject" = "Subject (optional)";
+"messages.compose.subject.placeholder" = "Enter subject...";
+"messages.compose.body" = "Message *";
+"messages.compose.message" = "MESSAGE";
+"messages.compose.multiSelect" = "Send to Multiple";
+"messages.compose.multiSelect.description" = "Send to multiple volunteers at once";
+"messages.compose.volunteer.description" = "Send a message to one specific volunteer";
+"messages.compose.admin.description" = "Send a message to an overseer";
+"messages.compose.department.description" = "Send to all volunteers in %@";
+"messages.compose.event.description" = "Send to all volunteers across the entire event";
+"messages.compose.yourDepartment" = "your department";
+"messages.compose.loadingVolunteers" = "Loading volunteers...";
+"messages.compose.searchVolunteers" = "Search volunteers...";
+"messages.compose.noVolunteers" = "No Volunteers";
+"messages.compose.noVolunteers.subtitle" = "Add volunteers to your department first";
+"messages.compose.noVolunteersSearch" = "No volunteers match your search";
+"messages.compose.selectAll" = "Select All";
+"messages.compose.deselectAll" = "Deselect All";
+
+// MARK: - Sent Messages (Overseer)
+"messages.sent.empty.title" = "No Messages Sent";
+"messages.sent.empty.subtitle" = "Messages you send will appear here.";
+
+// MARK: - Message Templates
+"messages.template.title" = "Message Templates";
+"messages.template.scheduleChange" = "Schedule Change";
+"messages.template.scheduleChange.subject" = "Schedule Update";
+"messages.template.scheduleChange.body" = "Your assignment schedule has been updated. Please check your schedule tab for the latest changes.";
+"messages.template.newAssignment" = "New Assignment";
+"messages.template.newAssignment.subject" = "New Assignment";
+"messages.template.newAssignment.body" = "You have been assigned to a new post. Please review your assignment details and confirm your availability.";
+"messages.template.shiftReminder" = "Shift Reminder";
+"messages.template.shiftReminder.subject" = "Upcoming Shift";
+"messages.template.shiftReminder.body" = "This is a reminder that your shift is coming up soon. Please arrive at your post on time.";
+"messages.template.checkInReminder" = "Check-In Reminder";
+"messages.template.checkInReminder.subject" = "Please Check In";
+"messages.template.checkInReminder.body" = "Please remember to check in when you arrive at your post. This helps us track attendance accurately.";
+"messages.template.meetingNotice" = "Meeting Notice";
+"messages.template.meetingNotice.subject" = "Meeting Scheduled";
+"messages.template.meetingNotice.body" = "A meeting has been scheduled. Please check the meetings section for details including time and location.";
+"messages.template.thankYou" = "Thank You";
+"messages.template.thankYou.subject" = "Thank You";
+"messages.template.thankYou.body" = "Thank you for your faithful service. Your hard work and dedication are truly appreciated.";
+"messages.template.importantNotice" = "Important Notice";
+"messages.template.importantNotice.subject" = "Important Notice";
+"messages.template.importantNotice.body" = "Please read this important notice carefully and follow any instructions provided.";
+
+// MARK: - Profile (used by SettingsView)
+"profile.logout" = "Log Out";
+"profile.logout.confirm" = "Are you sure you want to log out?";
+
+// Language
+"language.select" = "Select Language";
+"language.english" = "English";
+"language.spanish" = "Español";
+
+// MARK: - Sprint 6.11 — Unified Auth & Volunteer Discovery
+"auth.signin" = "Sign In";
+"auth.createAccount" = "Create Account";
+"auth.useCredentials" = "Use printed event credentials";
+"auth.isOverseer.toggle" = "I'm serving as a Department Overseer";
+"auth.isOverseer.explainer" = "You'll have access to event management tools";
+"auth.duplicate.email" = "An account with this email already exists.";
+"auth.duplicate.trySignIn" = "Try signing in instead.";
+
+"volunteer.eventDiscovery.requestToJoin" = "Request to Join";
+"volunteer.eventDiscovery.inviteOnly" = "Invite Only";
+"volunteer.eventDiscovery.requestSent" = "Request sent!";
+"volunteer.eventDiscovery.pendingStatus.title" = "Request Pending";
+"volunteer.eventDiscovery.pendingStatus.subtitle" = "Waiting for overseer approval. You'll be notified once added.";
+"volunteer.joinRequest.pending" = "Join Requests";
+
+"overseer.joinRequests.title" = "Join Requests";
+"overseer.joinRequests.subtitle" = "Review pending volunteer requests";
+"overseer.joinRequests.approve" = "Approve";
+"overseer.joinRequests.deny" = "Deny";
+
+"event.regional.inviteOnly" = "Regional conventions are invite-only";
+
+"profile.overseerMode" = "Overseer Mode";
+
+// MARK: - Sprint 6.11 Part A — Events Hub
+"eventsHub.title" = "My Events";
+"eventsHub.section.active" = "Active";
+"eventsHub.section.upcoming" = "Upcoming";
+"eventsHub.section.past" = "Past";
+"eventsHub.empty.title" = "No Events Yet";
+"eventsHub.empty.subtitle" = "Tap + to discover and join an upcoming assembly.";
+"eventsHub.browse" = "Browse Events";
+"eventsHub.role.eventOverseer" = "Event Overseer";
+"eventsHub.role.deptOverseer" = "%@ Overseer";
+"eventsHub.role.asstOverseer" = "%@ Asst. Overseer";
+"eventsHub.role.volunteer" = "Volunteer";
+"eventsHub.status.active" = "Active Now";
+"eventsHub.loading" = "Loading event...";
+
+// Settings
+"settings.title" = "Settings";
+"settings.editProfile" = "Edit Profile";
+"settings.appearance" = "Appearance";
+"settings.logout.confirm" = "Are you sure you want to log out?";
+"settings.language" = "Language";
+"settings.language.note" = "The app will update immediately when you switch languages.";
+"settings.archivedEvents" = "Archived Events";
+"settings.archivedEvents.subtitle" = "Past events older than 30 days";
+
+// MARK: - Sprint 6.12 — Department Autonomy & Browse Events Redesign
+
+// Browse Events — Overseer
+"browseEvents.overseer.title" = "Select an Event";
+"browseEvents.overseer.subtitle" = "Choose an event to purchase your department.";
+"browseEvents.empty.title" = "No Events Available";
+"browseEvents.empty.subtitle" = "Check back later for upcoming assemblies.";
+"browseEvents.section.circuitAssemblies" = "Circuit Assemblies";
+"browseEvents.section.conventions" = "Conventions";
+"browseEvents.search.placeholder" = "Search by city, venue, or date...";
+"browseEvents.search.noResults" = "No conventions match your search.";
+
+// Department Selection
+"departmentSelection.chooseTitle" = "Choose Your Department";
+"departmentSelection.confirm.title" = "Purchase Department";
+"departmentSelection.confirm.purchase" = "Confirm Purchase";
+"departmentSelection.confirm.message" = "Purchase %@ department for %@?";
+"departmentSelection.purchasing" = "Purchasing...";
+
+// Access Code Display
+"accessCode.title" = "Department Setup";
+"accessCode.success.title" = "Department Purchased!";
+"accessCode.success.subtitle" = "Share this access code with your volunteers.";
+"accessCode.label" = "ACCESS CODE";
+"accessCode.copy" = "Copy Code";
+"accessCode.copied" = "Copied!";
+"accessCode.share" = "Share";
+"accessCode.share.message" = "Join the %1$@ department for %2$@. Access code: %3$@";
+"accessCode.shareMessage" = "Join %@ department using this access code: %@";
+"accessCode.instructions.title" = "HOW TO SHARE";
+"accessCode.instructions.step1" = "Share this code with volunteers in your department";
+"accessCode.instructions.step2" = "They can enter it in the app to join your department instantly";
+"accessCode.instructions.step3" = "The code does not expire — share it anytime";
+"accessCode.instruction1" = "Share this code with volunteers in your department";
+"accessCode.instruction2" = "They can enter it in the app to join instantly";
+"accessCode.instruction3" = "The code does not expire — share it anytime";
+"accessCode.done" = "Go to My Events";
+
+// Volunteer Discovery
+"volunteerDiscovery.hero.title" = "Join Your Event";
+"volunteerDiscovery.hero.subtitle" = "Enter an access code, share your ID, or browse events.";
+"volunteerDiscovery.accessCode.header" = "QUICK JOIN";
+"volunteerDiscovery.accessCode.title" = "Enter Access Code";
+"volunteerDiscovery.accessCode.description" = "Got a code from your department overseer? Enter it below to join instantly.";
+"volunteerDiscovery.accessCode.placeholder" = "XXX-XXXX";
+"volunteerDiscovery.accessCode.join" = "Join";
+"volunteerDiscovery.accessCode.empty" = "Please enter an access code.";
+"volunteerDiscovery.accessCode.failed" = "Unable to join. Check the code and try again.";
+"volunteerDiscovery.userId.header" = "ALTERNATIVE";
+"volunteerDiscovery.userId.title" = "Share Your User ID";
+"volunteerDiscovery.userId.description" = "Give this ID to your department overseer and they can add you directly.";
+"volunteerDiscovery.userId.copy" = "Copy";
+"volunteerDiscovery.userId.copied" = "Copied!";
+"volunteerDiscovery.orBrowse" = "or browse events";
+"volunteerDiscovery.empty.title" = "No Events Available";
+"volunteerDiscovery.empty.subtitle" = "Check back later or ask your department overseer for an access code.";
+"volunteerDiscovery.joining" = "Joining...";
+"volunteerDiscovery.joinSuccess.title" = "Welcome!";
+"volunteerDiscovery.joinSuccess.message" = "You've been added to the department. Return to My Events to get started.";
+
+// Department Selection (Join Request)
+"discovery.selectDepartment" = "SELECT A DEPARTMENT";
+"discovery.submitRequest" = "Submit Request";
+"discovery.notePlaceholder" = "Add a note (optional)";
+"discovery.noDepartments" = "No departments available yet.";
+"discovery.cancel" = "Cancel";
+
+// Department Settings
+"deptSettings.title" = "Department Settings";
+"deptSettings.loadFailed" = "Unable to load department info.";
+"deptSettings.eventInfo" = "EVENT INFO";
+"deptSettings.volunteerCount" = "%d volunteers";
+"deptSettings.accessCode" = "ACCESS CODE";
+"deptSettings.accessCode.subtitle" = "Share this code with volunteers to let them join your department.";
+"deptSettings.accessCode.copy" = "Copy Code";
+"deptSettings.accessCode.copied" = "Copied!";
+"deptSettings.accessCode.share" = "Share";
+"deptSettings.accessCode.shareMessage" = "Join %@ department using this access code: %@";
+"deptSettings.accessCode.none" = "No access code generated.";
+"deptSettings.roster" = "DEPARTMENT ROSTER";
+"deptSettings.roster.overseer" = "Department Overseer";
+"deptSettings.roster.assistant" = "Assistant Overseer";
+"deptSettings.roster.addAssistant" = "Add Assistant Overseer";
+"deptSettings.roster.removeConfirm" = "Remove this assistant overseer?";
+"deptSettings.roster.removeAction" = "Remove";
+"deptSettings.role.assigned" = "Assistant overseer assigned successfully.";
+"deptSettings.role.removed" = "Role removed.";
+"deptSettings.privacy" = "VISIBILITY";
+"deptSettings.privacy.toggle" = "Public Department";
+"deptSettings.privacy.description" = "When public, volunteers can discover and request to join this department.";
+"deptSettings.status" = "EVENT STATUS";
+"deptSettings.status.completed" = "Event completed";
+"deptSettings.status.upcoming" = "Starts in %d days";
+"deptSettings.status.active" = "Event is active";
+"deptSettings.picker.title" = "Assign Assistant Overseer";
+"deptSettings.picker.instructions.title" = "Enter Volunteer ID";
+"deptSettings.picker.instructions.body" = "Ask the volunteer for their 6-character User ID (visible in their Settings screen) and enter it below.";
+"deptSettings.picker.idLabel" = "VOLUNTEER ID";
+"deptSettings.picker.idPlaceholder" = "e.g. AB12CD";
+"deptSettings.picker.assign" = "Assign Role";
+
+// Archived Events
+"archivedEvents.empty.title" = "No Archived Events";
+"archivedEvents.empty.subtitle" = "Events archive 30 days after they end.";
+
+// MARK: - Add Volunteer Sheet (Sprint 6.12 Addendum)
+"addVolunteer.title" = "Add Volunteer";
+"addVolunteer.or" = "or";
+"addVolunteer.accessCode.header" = "SHARE ACCESS CODE";
+"addVolunteer.accessCode.title" = "Share Your Department Code";
+"addVolunteer.accessCode.description" = "Volunteers enter this code in the app to join your department instantly — no approval needed.";
+"addVolunteer.accessCode.shareMessage" = "Join our department using this access code: %@";
+"addVolunteer.accessCode.none" = "No access code available. Purchase your department first.";
+"addVolunteer.userId.header" = "ADD MANUALLY";
+"addVolunteer.userId.title" = "Add by User ID";
+"addVolunteer.userId.description" = "Enter a volunteer's User ID to add them directly to your department.";
+"addVolunteer.userId.placeholder" = "e.g. A7X9K2";
+"addVolunteer.userId.add" = "Add";
+"addVolunteer.userId.hint" = "Volunteers can find their User ID in Settings.";
+"addVolunteer.credentials.title" = "Credentials";
+"addVolunteer.credentials.subtitle" = "Share these login credentials with the volunteer:";
+"addVolunteer.credentials.volunteerId" = "Volunteer ID";
+"addVolunteer.credentials.token" = "Token";
+"addVolunteer.credentials.copy" = "Copy Credentials";
+"addVolunteer.credentials.copied" = "Copied to clipboard";
+"common.copied" = "Copied!";
+
+// Volunteer List empty states
+"volunteers.empty.title" = "No Volunteers Yet";
+"volunteers.empty.subtitle" = "Tap + to share your access code or add a volunteer by User ID.";
+"volunteers.allEmpty.title" = "No Event Volunteers";
+"volunteers.allEmpty.subtitle" = "No volunteers have joined this event yet.";
+
+// MARK: - Overseer Dashboard
+"overseer.dashboard.title" = "Dashboard";
+"overseer.dashboard.selectEvent" = "Select Event";
+"overseer.dashboard.noEvent.title" = "No Event Selected";
+"overseer.dashboard.noEvent.subtitle" = "Tap above to select an event to manage";
+"overseer.dashboard.stat.volunteers" = "Volunteers";
+"overseer.dashboard.stat.assignments" = "Assignments";
+"overseer.dashboard.stat.pending" = "Pending";
+"overseer.dashboard.stat.coverage" = "Coverage";
+"overseer.dashboard.assignmentsOverview" = "Assignments Overview";
+"overseer.dashboard.assignmentsHint" = "View the Assignments tab for coverage details";
+"overseer.dashboard.attendance" = "ATTENDANCE";
+"overseer.dashboard.submitCount" = "Submit Count";
+"overseer.dashboard.viewSummary" = "View Summary";
+
+// MARK: - Registration
+"auth.orSignUpWith" = "or sign up with";
+"auth.termsAgreement" = "By creating an account, you agree to our Terms of Service";
+"auth.oauth.completeRegistration" = "Complete Registration";
+"auth.oauth.subtitle" = "Just a few more details to get started";
+"auth.privacyNote" = "Your information is used for event coordination only";
+
+// MARK: - Overseer Mode Toggle (Settings)
+"profile.overseerMode.subtitle" = "Purchase and manage departments";
+"settings.overseerMode.error" = "Failed to update. Please try again.";
+
+// MARK: - Congregation Search
+"registration.congregation.searchHint" = "Enter search text to find results.";
+"registration.congregation.noResults" = "No congregations found.";
+
+// MARK: - Sprint 6.14 — Audio/Video Departments
+
+// Dashboard
+"av.dashboard.title" = "AV Dashboard";
+"av.dashboard.equipment" = "Equipment";
+"av.dashboard.total" = "Total";
+"av.dashboard.checkedOut" = "Checked Out";
+"av.dashboard.needsRepair" = "Needs Repair";
+"av.dashboard.noEquipment" = "No equipment added yet";
+"av.dashboard.damageReports" = "Damage Reports";
+"av.dashboard.unresolvedCount" = "%d unresolved";
+"av.dashboard.noDamage" = "No damage reports";
+"av.dashboard.safety" = "Safety";
+"av.dashboard.hazardCount" = "%d hazard assessments";
+"av.dashboard.briefingCount" = "%d safety briefings";
+"av.dashboard.hazards" = "Hazards";
+"av.dashboard.briefings" = "Briefings";
+"av.dashboard.walkThroughs" = "Walk-Throughs";
+"av.dashboard.walkThroughsDesc" = "CO-160 checklists";
+"av.dashboard.volunteers" = "Volunteers";
+"av.dashboard.volunteersDesc" = "Manage department volunteers";
+"av.dashboard.settings" = "Settings";
+"av.dashboard.settingsDesc" = "Department settings & access code";
+
+// Equipment
+"av.equipment.title" = "Equipment";
+"av.equipment.search" = "Search equipment...";
+"av.equipment.addOne" = "Add Equipment";
+"av.equipment.addBulk" = "Bulk Add";
+"av.equipment.filter.all" = "All";
+"av.equipment.empty" = "No equipment yet";
+"av.equipment.emptyHint" = "Tap + to add equipment items to your inventory";
+"av.equipment.checkedOut" = "Checked Out";
+"av.equipment.detail" = "Equipment Detail";
+"av.equipment.notFound" = "Equipment not found";
+"av.equipment.info" = "Info";
+"av.equipment.category" = "Category";
+"av.equipment.condition" = "Condition";
+"av.equipment.model" = "Model";
+"av.equipment.serial" = "Serial Number";
+"av.equipment.location" = "Location";
+"av.equipment.area" = "Area";
+"av.equipment.notes" = "Notes";
+"av.equipment.name" = "Name";
+"av.equipment.actions" = "Actions";
+"av.equipment.return" = "Return Equipment";
+"av.equipment.checkout" = "Check Out Equipment";
+"av.equipment.reportDamage" = "Report Damage";
+"av.equipment.checkoutHistory" = "Checkout History";
+"av.equipment.active" = "Active";
+"av.equipment.damageHistory" = "Damage History";
+"av.equipment.create" = "Add Equipment";
+"av.equipment.save" = "Save";
+
+// Equipment Categories
+"av.equipment.category.cameraPtz" = "PTZ Camera";
+"av.equipment.category.cameraManned" = "Manned Camera";
+"av.equipment.category.tripod" = "Tripod";
+"av.equipment.category.audioMixer" = "Audio Mixer";
+"av.equipment.category.videoSwitcher" = "Video Switcher";
+"av.equipment.category.mediaPlayer" = "Media Player";
+"av.equipment.category.ledPanel" = "LED Panel";
+"av.equipment.category.loudspeaker" = "Loudspeaker";
+"av.equipment.category.microphone" = "Microphone";
+"av.equipment.category.stageMonitor" = "Stage Monitor";
+"av.equipment.category.intercom" = "Intercom";
+"av.equipment.category.cable" = "Cable";
+"av.equipment.category.stageLighting" = "Stage Lighting";
+"av.equipment.category.recordingDevice" = "Recording Device";
+"av.equipment.category.assistiveListening" = "Assistive Listening";
+"av.equipment.category.accessory" = "Accessory";
+
+// Equipment Conditions
+"av.equipment.condition.good" = "Good";
+"av.equipment.condition.needsRepair" = "Needs Repair";
+"av.equipment.condition.outOfService" = "Out of Service";
+
+// Bulk Create
+"av.equipment.bulk.title" = "Bulk Add Equipment";
+"av.equipment.bulk.count" = "Count";
+"av.equipment.bulk.prefix" = "Name Prefix";
+"av.equipment.bulk.prefixPlaceholder" = "e.g. Loudspeaker";
+"av.equipment.bulk.prefixHint" = "Items will be named \"Prefix 1\", \"Prefix 2\", etc.";
+"av.equipment.bulk.preview" = "Preview";
+"av.equipment.bulk.create" = "Create All";
+"av.equipment.bulk.creating" = "Creating...";
+
+// Checkout
+"av.checkout.title" = "Check Out Equipment";
+"av.checkout.equipment" = "Equipment";
+"av.checkout.volunteer" = "Volunteer";
+"av.checkout.volunteerId" = "Volunteer ID";
+"av.checkout.session" = "Session";
+"av.checkout.sessionOptional" = "Session (optional)";
+"av.checkout.notes" = "Notes";
+"av.checkout.confirm" = "Check Out";
+
+// Damage Reports
+"av.damage.title" = "Damage Reports";
+"av.damage.showResolved" = "Show Resolved";
+"av.damage.empty" = "No damage reports";
+"av.damage.resolved" = "Resolved";
+"av.damage.tapToResolve" = "Tap to resolve";
+"av.damage.resolve" = "Resolve Damage";
+"av.damage.reportInfo" = "Report Info";
+"av.damage.resolutionNotes" = "Resolution Notes";
+"av.damage.markResolved" = "Mark Resolved";
+"av.damage.equipment" = "Equipment";
+"av.damage.selectEquipment" = "Select Equipment";
+"av.damage.selectPlaceholder" = "Choose equipment...";
+"av.damage.description" = "Description";
+"av.damage.severity" = "Severity";
+"av.damage.report" = "Report Damage";
+"av.damage.submit" = "Submit Report";
+
+// Damage Severity
+"av.damage.severity.minor" = "Minor";
+"av.damage.severity.moderate" = "Moderate";
+"av.damage.severity.severe" = "Severe";
+
+// Safety & Hazards
+"av.safety.title" = "Safety & Hazards";
+"av.safety.briefings" = "Safety Briefings";
+"av.safety.briefingsCount" = "%d briefings conducted";
+"av.hazard.title" = "Hazard Assessments";
+"av.hazard.empty" = "No hazard assessments yet";
+"av.hazard.create" = "New Hazard Assessment";
+"av.hazard.create.title" = "Title";
+"av.hazard.type" = "Hazard Type";
+"av.hazard.description" = "Description";
+"av.hazard.controls" = "Control Measures";
+"av.hazard.ppeRequired" = "PPE Required";
+"av.hazard.save" = "Save";
+
+// Hazard Types
+"av.hazard.type.workingAtHeight" = "Working at Height";
+"av.hazard.type.electricalExposure" = "Electrical Exposure";
+"av.hazard.type.elevatedPlatform" = "Elevated Platform";
+"av.hazard.type.powerTools" = "Power Tools";
+"av.hazard.type.movingEquipment" = "Moving Equipment";
+"av.hazard.type.nearStairs" = "Near Stairs";
+"av.hazard.type.unevenSurface" = "Uneven Surface";
+"av.hazard.type.heavyLifting" = "Heavy Lifting";
+"av.hazard.type.pinchCrushCut" = "Pinch/Crush/Cut";
+"av.hazard.type.extremeConditions" = "Extreme Conditions";
+
+// PPE Types
+"av.ppe.hardHat" = "Hard Hat";
+"av.ppe.safetyGlasses" = "Safety Glasses";
+"av.ppe.highVisVest" = "High-Vis Vest";
+"av.ppe.gloves" = "Gloves";
+"av.ppe.workShoes" = "Work Shoes";
+"av.ppe.fallProtection" = "Fall Protection";
+"av.ppe.hearingProtection" = "Hearing Protection";
+
+// Safety Briefings
+"av.briefing.title" = "Safety Briefings";
+"av.briefing.empty" = "No safety briefings yet";
+"av.briefing.create" = "New Safety Briefing";
+"av.briefing.topic" = "Topic";
+"av.briefing.topicPlaceholder" = "e.g. Pre-Installation Safety Talk";
+"av.briefing.notes" = "Notes";
+"av.briefing.attendees" = "Attendees";
+"av.briefing.attendeesHint" = "Enter one volunteer ID per line";
+"av.briefing.save" = "Save";
+
+// Walk-Throughs
+"av.walkthrough.title" = "Walk-Through Checklists";
+"av.walkthrough.done" = "Done";
+"av.walkthrough.appendixE.title" = "Appendix E";
+"av.walkthrough.appendixE.subtitle" = "Reminders During Walk-Throughs";
+"av.walkthrough.appendixF.title" = "Appendix F";
+"av.walkthrough.appendixF.subtitle" = "Reminders Before Going on Stage";
+"av.walkthrough.appendixG.title" = "Appendix G";
+"av.walkthrough.appendixG.subtitle" = "AV Overseer Checklist";
+
+// Appendix E Items
+"av.walkthrough.e.cellPhonesAirplaneMode" = "Cell phones in airplane mode or off";
+"av.walkthrough.e.dontPullLectern" = "Don't pull or lean on the lectern";
+"av.walkthrough.e.micDistance" = "Maintain proper microphone distance (4-6 inches)";
+"av.walkthrough.e.projectVoice" = "Project voice — speak with confidence";
+"av.walkthrough.e.speakingSoftly" = "If speaking softly, move closer to the mic";
+"av.walkthrough.e.speakingLoudly" = "If speaking loudly, move back from the mic";
+"av.walkthrough.e.popping" = "Avoid popping sounds (P/B) — angle mic slightly";
+"av.walkthrough.e.feedback" = "If feedback occurs, move away from speakers";
+"av.walkthrough.e.coughSneeze" = "Turn away from mic when coughing or sneezing";
+"av.walkthrough.e.interviews" = "During interviews, share the microphone properly";
+"av.walkthrough.e.stageEntryExit" = "Enter and exit the stage quietly";
+
+// Appendix F Items
+"av.walkthrough.f.cellPhonesAirplaneMode" = "Cell phones in airplane mode or off";
+"av.walkthrough.f.dontPullLectern" = "Don't pull or lean on the lectern";
+"av.walkthrough.f.projectVoice" = "Project voice — speak with confidence";
+"av.walkthrough.f.stageExitSide" = "Exit stage on the designated side";
+
+// Appendix G Phases
+"av.walkthrough.g.phase1.title" = "Phase 1: Pre-Planning";
+"av.walkthrough.g.phase1.jwHubLogin" = "Log in to JW Hub and review AV resources";
+"av.walkthrough.g.phase1.reviewCO160" = "Review CO-160 guidelines thoroughly";
+"av.walkthrough.g.phase1.checkWithOverseer" = "Check with Convention Overseer for requirements";
+"av.walkthrough.g.phase1.reviewPreviousNotes" = "Review notes from previous events";
+"av.walkthrough.g.phase2.title" = "Phase 2: Preparation";
+"av.walkthrough.g.phase2.downloadMedia" = "Download required media files";
+"av.walkthrough.g.phase2.reviewOutlines" = "Review program outlines for AV needs";
+"av.walkthrough.g.phase2.recruitVolunteers" = "Recruit and assign crew members";
+"av.walkthrough.g.phase2.planInstallation" = "Plan installation schedule";
+"av.walkthrough.g.phase2.verifyEquipment" = "Verify all equipment is available and working";
+"av.walkthrough.g.phase3.title" = "Phase 3: Pre-Installation";
+"av.walkthrough.g.phase3.reviewPlan" = "Review installation plan with crew";
+"av.walkthrough.g.phase3.remindPPE" = "Remind crew about required PPE";
+"av.walkthrough.g.phase3.verifyItems" = "Verify all items match inventory list";
+"av.walkthrough.g.phase3.confirmCrewAssignments" = "Confirm crew assignments and responsibilities";
+"av.walkthrough.g.phase4.title" = "Phase 4: Installation & Testing";
+"av.walkthrough.g.phase4.safetyTalk" = "Conduct safety talk before installation";
+"av.walkthrough.g.phase4.equipmentTest" = "Test all equipment after installation";
+"av.walkthrough.g.phase4.cameraPositions" = "Verify camera positions and angles";
+"av.walkthrough.g.phase4.audioLevels" = "Set and verify audio levels";
+"av.walkthrough.g.phase4.videoSwitching" = "Test video switching and transitions";
+"av.walkthrough.g.phase5.title" = "Phase 5: During the Event";
+"av.walkthrough.g.phase5.walkThroughs" = "Conduct walk-throughs with speakers";
+"av.walkthrough.g.phase5.monitorQuality" = "Monitor audio/video quality continuously";
+"av.walkthrough.g.phase5.addressIssues" = "Address any issues immediately";
+"av.walkthrough.g.phase5.coordinateStage" = "Coordinate with stage management";
+"av.walkthrough.g.phase6.title" = "Phase 6: Disassembly";
+"av.walkthrough.g.phase6.disassemblyBriefing" = "Conduct disassembly safety briefing";
+"av.walkthrough.g.phase6.inventoryCheck" = "Complete equipment inventory check";
+"av.walkthrough.g.phase6.damageReport" = "Submit any damage reports";
+"av.walkthrough.g.phase6.handoffNotes" = "Prepare handoff notes for next event";
+
+// Appendix A — Configuring JW Library & Media Playlists
+"av.walkthrough.appendixA.title" = "Appendix A";
+"av.walkthrough.appendixA.subtitle" = "Configuring JW Library & Media Playlists";
+"av.walkthrough.a.jwLibrary.title" = "JW Library Settings";
+"av.walkthrough.a.jwLibrary.openApp" = "Open JW Library";
+"av.walkthrough.a.jwLibrary.settings" = "Navigate to Settings page";
+"av.walkthrough.a.jwLibrary.secondDisplay" = "Verify 'Play video on second display' is On";
+"av.walkthrough.a.jwLibrary.yeartextOff" = "Set 'Yeartext language' to Off";
+"av.walkthrough.a.mediaPlaylist.title" = "Media Playlist Setup";
+"av.walkthrough.a.mediaPlaylist.downloadJWPUB" = "Download media playlist JWPUB from JW Hub 'Event Media'";
+"av.walkthrough.a.mediaPlaylist.importJWPUB" = "Double-click JWPUB file to import into JW Library";
+"av.walkthrough.a.mediaPlaylist.downloadWatchtower" = "Download and import The Watchtower for the event week";
+"av.walkthrough.a.importVideos.title" = "Importing Videos";
+"av.walkthrough.a.importVideos.selectFiles" = "Select media files to import (extract ZIP files first)";
+"av.walkthrough.a.importVideos.dragDrop" = "Drag and drop files onto the JW Library window";
+"av.walkthrough.a.importVideos.verifyImport" = "Verify correct files were imported via dialog box";
+"av.walkthrough.a.importVideos.testPlayback" = "Test each video — play until audio and moving footage confirm";
+"av.walkthrough.a.importVideos.verifyLanguage" = "Verify each video is in the correct language";
+"av.walkthrough.a.playlists.title" = "Custom Playlists";
+"av.walkthrough.a.playlists.createPlaylist" = "Create playlist for prerecorded talks or custom media";
+"av.walkthrough.a.playlists.addMedia" = "Drag media files from File Explorer into the playlist";
+"av.walkthrough.a.playlists.setEndActions" = "Set end action for each item (Continue, Stop, Freeze, or Repeat)";
+"av.walkthrough.a.playlists.verifyItems" = "Verify each playlist item works before the event";
+
+// Appendix B — Configuring Audio & Video Systems
+"av.walkthrough.appendixB.title" = "Appendix B";
+"av.walkthrough.appendixB.subtitle" = "Configuring Audio & Video Systems";
+"av.walkthrough.b.clickTrack" = "Use click track to set and confirm audio delays";
+"av.walkthrough.b.pinkNoise" = "Use pink noise to balance audio and check loudspeaker zones";
+"av.walkthrough.b.sineWave" = "Use 1 kHz sine wave to equalize the audio system";
+"av.walkthrough.b.calibrationImage" = "Display calibration image on LED video walls";
+"av.walkthrough.b.whiteLevel" = "White Level: Verify 10 gray squares visible on white background";
+"av.walkthrough.b.blackLevel" = "Black Level: Verify 10 gray squares visible on black background";
+"av.walkthrough.b.grayScale" = "Gray Scale: Verify each bar from 0-100 is distinctly visible";
+
+// Appendix D — Using JW Stream
+"av.walkthrough.appendixD.title" = "Appendix D";
+"av.walkthrough.appendixD.subtitle" = "Using JW Stream to View & Download Talks";
+"av.walkthrough.d.login.title" = "Login";
+"av.walkthrough.d.login.accessLink" = "Use link provided by Local Broadcasting Department";
+"av.walkthrough.d.login.credentials" = "Log in with jwpub.org credentials";
+"av.walkthrough.d.livestream.title" = "Livestreamed Talks";
+"av.walkthrough.d.livestream.accessStream" = "Access livestream via Local Broadcasting link";
+"av.walkthrough.d.livestream.fullscreen" = "Make video player full-screen on switcher input; monitor via multiview";
+"av.walkthrough.d.livestream.wideShot" = "After chairman announces tie-in, show wide shot of local stage";
+"av.walkthrough.d.livestream.informCoordinator" = "Inform stream coordinator that receiving site is ready";
+"av.walkthrough.d.livestream.dissolveToStream" = "When prompted, dissolve to stream; raise stream gain, lower local mics";
+"av.walkthrough.d.livestream.dissolveBack" = "After talk, dissolve to black, then to local chairman; restore gain levels";
+"av.walkthrough.d.delayStream.title" = "Delay-Streamed Talks";
+"av.walkthrough.d.delayStream.accessStream" = "Access delayed stream via Local Broadcasting link";
+"av.walkthrough.d.delayStream.pauseAndScrub" = "Pause stream; scrub to ten-second black screen cue point";
+"av.walkthrough.d.delayStream.fullscreen" = "Make video player full-screen on switcher input";
+"av.walkthrough.d.delayStream.adjustGain" = "Raise stream gain; lower all local microphones";
+"av.walkthrough.d.delayStream.playAndDissolve" = "Press Play; when transport bar disappears, dissolve to stream";
+"av.walkthrough.d.delayStream.dissolveBack" = "After talk, dissolve to black, then to local chairman; restore gain levels";
+"av.walkthrough.d.downloaded.title" = "Downloaded Recordings";
+"av.walkthrough.d.downloaded.downloadFile" = "Download prerecorded talk file from JW Stream";
+"av.walkthrough.d.downloaded.addToPlaylist" = "Add media file to a playlist in JW Library";
+"av.walkthrough.d.downloaded.followShotGuidelines" = "Follow shot and transition guidelines before and after playback";
+
+// Volunteer Views
+"av.volunteer.quickActions" = "Quick Actions";
+"av.volunteer.reportDamage" = "Report Equipment Damage";
+"av.volunteer.walkThrough" = "Walk-Through Checklist";
+"av.volunteer.myEquipment" = "My Equipment";
+"av.volunteer.noCheckouts" = "No equipment currently checked out";
+"av.volunteer.myBriefings" = "My Briefings";
+"av.volunteer.noBriefings" = "No briefings attended yet";
+"av.volunteer.resources" = "Resources";
+"av.volunteer.crewInfo" = "AV Crew Guidelines";
+
+// Crew Info
+"av.crew.title" = "AV Crew Guidelines";
+"av.crew.done" = "Done";
+"av.crew.responsibilities.title" = "General Responsibilities";
+"av.crew.responsibilities.punctual" = "Be punctual for all assignments and briefings";
+"av.crew.responsibilities.dignified" = "Maintain a dignified appearance at all times";
+"av.crew.responsibilities.follow" = "Follow the direction of your crew overseer";
+"av.crew.responsibilities.report" = "Report any issues to your overseer immediately";
+"av.crew.responsibilities.equipment" = "Handle all equipment with care";
+"av.crew.safety.title" = "Safety Guidelines";
+"av.crew.safety.ppe" = "Wear required PPE during installation and disassembly";
+"av.crew.safety.lifting" = "Use proper lifting techniques for heavy equipment";
+"av.crew.safety.electrical" = "Never work on electrical connections when powered on";
+"av.crew.safety.ladders" = "Follow ladder safety — maintain 3 points of contact";
+"av.crew.safety.report" = "Report all safety hazards and injuries immediately";
+"av.crew.equipment.title" = "Equipment Handling";
+"av.crew.equipment.careful" = "Handle all equipment carefully — avoid drops and impacts";
+"av.crew.equipment.checkout" = "Always check out equipment before using it";
+"av.crew.equipment.damage" = "Report any damage immediately — no matter how minor";
+"av.crew.equipment.storage" = "Return equipment to proper storage after use";
+
+// Department Names
+"department.audio" = "Audio";
+"department.video" = "Video";
+"department.stage" = "Stage";
+
+// MARK: - Sprint 6.15 — Audio / Video / Stage Department Split
+
+// Audio Crew
+"audio.dashboard.title" = "Audio";
+"audio.crew.title" = "Audio Crew Guidelines";
+"audio.volunteer.crewInfo" = "Audio Crew Guidelines";
+"audio.crew.roles.mixerOp.title" = "Mixer Operator";
+"audio.crew.roles.mixerOp.item1" = "Operates the main mixing console during the entire program";
+"audio.crew.roles.mixerOp.item2" = "Sets and adjusts audio levels for microphones and playback";
+"audio.crew.roles.mixerOp.item3" = "Coordinates with stage crew to ensure proper mic placement";
+"audio.crew.roles.mixerOp.item4" = "Monitors audio quality and responds to feedback or distortion immediately";
+"audio.crew.roles.mixerOpAsst.title" = "Mixer Operator Assistant";
+"audio.crew.roles.mixerOpAsst.item1" = "Assists the Mixer Operator with setup, testing, and adjustments";
+"audio.crew.roles.mixerOpAsst.item2" = "Manages microphone distribution and collection between program parts";
+"audio.crew.roles.mixerOpAsst.item3" = "Supports troubleshooting of audio issues during the program";
+"audio.crew.roles.assistiveListening.title" = "Assistive Listening Device Operator";
+"audio.crew.roles.assistiveListening.item1" = "Distributes and collects assistive listening devices for attendees";
+"audio.crew.roles.assistiveListening.item2" = "Monitors device battery levels and replaces as needed during the program";
+"audio.crew.roles.assistiveListening.item3" = "Assists attendees with proper use and troubleshooting of devices";
+"audio.crew.roles.loudspeaker.title" = "Loudspeaker Operator";
+"audio.crew.roles.loudspeaker.item1" = "Positions and aims loudspeakers for optimal audience coverage";
+"audio.crew.roles.loudspeaker.item2" = "Monitors speaker levels and adjusts for outdoor or overflow areas";
+"audio.crew.roles.loudspeaker.item3" = "Reports any speaker malfunctions or sound quality issues immediately";
+
+// Video Dashboard
+"video.dashboard.title" = "Video";
+"video.crew.title" = "Video Crew Guidelines";
+"video.volunteer.crewInfo" = "Video Crew Guidelines";
+"video.volunteer.shotGuidelines" = "Shot Guidelines";
+
+// Video Crew Roles (CO-160 Ch. 4)
+"video.crew.roles.technicalDirector.title" = "Technical Director";
+"video.crew.roles.technicalDirector.item1" = "Directs all camera operators and calls shots during the program";
+"video.crew.roles.technicalDirector.item2" = "Coordinates with the switcher operator to ensure smooth transitions";
+"video.crew.roles.technicalDirector.item3" = "Monitors program flow and communicates with the stage crew";
+"video.crew.roles.switcherOp.title" = "Switcher Operator";
+"video.crew.roles.switcherOp.item1" = "Operates the video switcher to select camera sources on cue";
+"video.crew.roles.switcherOp.item2" = "Queues media playback for video and song segments";
+"video.crew.roles.switcherOp.item3" = "Maintains smooth, distraction-free transitions between sources";
+"video.crew.roles.mediaOp.title" = "Media Operator";
+"video.crew.roles.mediaOp.item1" = "Manages media playback for songs, videos, and program segments";
+"video.crew.roles.mediaOp.item2" = "Ensures all media files are pre-loaded and verified before the program";
+"video.crew.roles.mediaOp.item3" = "Coordinates timing of media with the Technical Director";
+"video.crew.roles.cameraOp.title" = "Camera Operator";
+"video.crew.roles.cameraOp.item1" = "Operates PTZ or manned camera as assigned";
+"video.crew.roles.cameraOp.item2" = "Follows shot guidelines and framing standards from CO-160 Ch. 4";
+"video.crew.roles.cameraOp.item3" = "Responds to director cues promptly and professionally";
+"video.crew.roles.cameraOp.item4" = "Maintains steady movement — avoids unnecessary zooms and panning";
+"video.crew.roles.recordingMonitor.title" = "Recording Monitor";
+"video.crew.roles.recordingMonitor.item1" = "Monitors recording quality and storage during the program";
+"video.crew.roles.recordingMonitor.item2" = "Alerts the Technical Director to any recording issues immediately";
+"video.crew.roles.commProtocol.title" = "Communication Protocol";
+"video.crew.roles.commProtocol.item1" = "Use headsets for all crew communication — keep chatter brief and professional";
+"video.crew.roles.commProtocol.item2" = "Follow the Technical Director's commands without delay or question during live program";
+"video.crew.roles.commProtocol.item3" = "Announce camera readiness before each shot transition";
+"video.crew.roles.commProtocol.item4" = "Be aware of tally lights — a lit tally means your camera is live";
+
+// Video Shot Guidelines
+"video.shot.mediumCloseUp" = "Medium Close-Up";
+"video.shot.stageWide" = "Stage Wide";
+"video.shot.transitionShot" = "Transition Shot";
+"video.shot.interviewMidShot" = "Interview Mid-Shot";
+"video.shot.generalGuidelines" = "General Guidelines";
+"video.shot.guideline.followDirector" = "Always follow the Technical Director's cues — do not switch shots independently";
+"video.shot.guideline.avoidZoom" = "Avoid unnecessary zooms; use deliberate, smooth movements only";
+"video.shot.guideline.steadyMovement" = "Keep the camera steady — use tripod locks when stationary";
+"video.shot.guideline.checkMonitor" = "Check the monitor frequently to ensure proper framing and exposure";
+
+// Stage Dashboard
+"stage.dashboard.title" = "Stage";
+"stage.dashboard.walkThroughs" = "Walk-Throughs";
+"stage.dashboard.walkThroughsCount" = "%d completed";
+"stage.dashboard.stageConfig" = "Stage Configuration";
+"stage.dashboard.stageConfigSub" = "Entry/exit sides, furniture, floor marks";
+"stage.dashboard.makeup" = "Makeup Coordination";
+"stage.dashboard.makeupSub" = "Supplies and sister assignments";
+
+// Stage Volunteer
+"stage.volunteer.quickActions" = "Quick Actions";
+"stage.volunteer.participantChecklist" = "Participant Reminder Checklist";
+"stage.volunteer.crewInfo" = "Stage Crew Guidelines";
+"stage.volunteer.yourRole" = "Your Role";
+"stage.volunteer.roleTitle" = "Stage Crew Volunteer";
+"stage.volunteer.roleDesc" = "Support the program by preparing the stage, coordinating with participants, and ensuring smooth transitions between parts.";
+"stage.volunteer.keyReminders" = "Key Reminders";
+"stage.volunteer.reminder1" = "Arrive at least 30 minutes before the session starts";
+"stage.volunteer.reminder2" = "Guide participants to the correct entry/exit sides";
+"stage.volunteer.reminder3" = "Remind participants to remove badges and large pins";
+"stage.volunteer.reminder4" = "Watch for cues from the chairman for stage changes";
+
+// Stage Crew Info
+"stage.crew.title" = "Stage Crew Guidelines";
+"stage.crew.roles.micAdjuster.item1" = "Adjusts microphone height and angle for each participant before they speak";
+"stage.crew.roles.micAdjuster.item2" = "Coordinates with the audio crew on microphone type and placement";
+"stage.crew.roles.micAdjuster.item3" = "Tests mic levels with participants during walk-throughs";
+"stage.crew.roles.participantReminder.item1" = "Reviews Appendix F reminders with each participant immediately before stage";
+"stage.crew.roles.participantReminder.item2" = "Confirms participant knows the entry/exit sides and floor markings";
+"stage.crew.roles.participantReminder.item3" = "Ensures badges, lanyards, and large pins are removed";
+"stage.crew.roles.stageConfig.item1" = "Sets up and repositions stage furniture per the program schedule";
+"stage.crew.roles.stageConfig.item2" = "Places floor markings for entry/exit and mic positions";
+"stage.crew.roles.stageConfig.item3" = "Coordinates furniture changes with the Installation department";
+"stage.crew.roles.makeupAssistant.item1" = "Applies makeup to participants only when video is in use — sisters only";
+"stage.crew.roles.makeupAssistant.item2" = "Uses clean, disposable applicators for each participant";
+"stage.crew.roles.makeupAssistant.item3" = "Applies conservatively for a natural on-camera appearance";
+"stage.crew.roles.appearanceCheck.item1" = "Conducts a final appearance check near the stage entrance";
+"stage.crew.roles.appearanceCheck.item2" = "Verifies clothing, grooming, and accessories are appropriate";
+
+// Stage Pre-Show (Appendix F)
+"stage.preShow.participantName" = "Participant Name (Optional)";
+"stage.preShow.participantNamePlaceholder" = "e.g. John Smith";
+"stage.preShow.done" = "Done — Participant Ready";
+
+// Stage Configuration
+"stage.config.title" = "Stage Configuration";
+"stage.config.sides" = "Entry & Exit Sides";
+"stage.config.bothSidesEntry" = "Participants use both sides";
+"stage.config.entryLabel" = "Entry Side";
+"stage.config.exitLabel" = "Exit Side";
+"stage.config.leftSide" = "Left";
+"stage.config.rightSide" = "Right";
+"stage.config.confirmations" = "Confirmations";
+"stage.config.floorMarks" = "Floor marks placed and confirmed";
+"stage.config.confidenceMonitor" = "Confidence monitor visible from stage";
+"stage.config.furnitureNotes" = "Furniture & Layout Notes";
+"stage.config.furnitureHint" = "Record furniture positions per CO-13/S-343 for each program part";
+"stage.config.additionalNotes" = "Additional Notes";
+
+// Makeup Coordination
+"stage.makeup.title" = "Makeup Coordination";
+"stage.makeup.videoToggle" = "Video Usage";
+"stage.makeup.videoInUse" = "Video is in use at this event";
+"stage.makeup.videoOffHint" = "Makeup coordination is only needed when video is in use.";
+"stage.makeup.supplies" = "Supplies";
+"stage.makeup.disposableAvailable" = "Disposable supplies available";
+"stage.makeup.suppliesHint" = "Per CO-160 Ch. 3:7 — use disposable applicators and hygiene supplies only";
+"stage.makeup.guidelines" = "Guidelines (CO-160 Ch. 3:6-8)";
+"stage.makeup.guideline1" = "Makeup is applied by sisters only, with the subject's consent";
+"stage.makeup.guideline2" = "Use only clean, disposable applicators — never share between participants";
+"stage.makeup.guideline3" = "Apply conservatively — natural appearance only";
+"stage.makeup.notes" = "Notes";
+
+// MARK: - Shift Reminders
+"reminder.title" = "Pre-Shift Reminder";
+"reminder.header" = "Mandatory Reminders";
+"reminder.subtitle" = "Please read all reminders before starting your shift: %@";
+"reminder.scrollHint" = "Scroll to the bottom to enable the confirmation button";
+"reminder.listTitle" = "CO-23 Attendant Reminders";
+"reminder.confirm" = "I've Read and Understood";
+"reminder.item1.title" = "Be at Your Post on Time";
+"reminder.item1.detail" = "Arrive at your assigned position no later than 15 minutes before doors open. Remain at your post until relieved or replaced. Wear your attendant badge at all times.";
+"reminder.item2.title" = "Verify Exits and Evacuation Routes";
+"reminder.item2.detail" = "Before the session, check that all exit doors in your area are unlocked and unobstructed from the inside. Know the appropriate evacuation route for your assigned section.";
+"reminder.item3.title" = "Know Key Department Locations";
+"reminder.item3.detail" = "Be familiar with how to reach First Aid, Lost & Found, the Attendant Overseer, and the Chairman's Office so you can direct attendees or report incidents quickly.";
+"reminder.item4.title" = "Carry a Flashlight";
+"reminder.item4.detail" = "Have a flashlight on your person in case of a power failure.";
+"reminder.item5.title" = "Scan for Safety Hazards";
+"reminder.item5.detail" = "Watch for building defects, objects in aisles, wet floors, faulty chairs, uneven surfaces, loose handrails, and railing gaps. Report anything you cannot correct to the attendant overseer.";
+"reminder.item6.title" = "Emergency Reporting Protocol";
+"reminder.item6.detail" = "When reporting any emergency, provide: (a) type and scope, (b) location, (c) your name, phone number, and location, and (d) any other helpful details.";
+"reminder.item7.title" = "Violent Individual Response: Avoid, Deny, Defend";
+"reminder.item7.detail" = "Avoid (move away), Deny (barricade/hide), Defend (protect yourself and others as last resort). In an active threat, anyone may call police immediately — do not wait for authorization.";
+"reminder.item8.title" = "Handle Disruptions with Kindness";
+"reminder.item8.detail" = "Approach concerns with at least two attendants. Attempt to calm agitated individuals and speak with them outside the auditorium. Escalate to the overseer if someone refuses to cooperate. Do not use force except in defense.";
+"reminder.item9.title" = "Assist the Elderly, Disabled, and Families";
+"reminder.item9.detail" = "Proactively help them find seating, navigate stairs, and use escalators/elevators safely. Treat all with dignity and respect.";
+"reminder.item10.title" = "Know Your Attendance Count Timing";
+"reminder.item10.detail" = "Be ready to count those in your assigned section at the designated times without causing unnecessary distraction. Count all adults and young children who are listening.";
+
+// MARK: - Reminder Compliance (Overseer)
+"reminder.compliance.title" = "Reminder Compliance";
+"reminder.compliance.selectShift" = "Select Shift";
+"reminder.compliance.status" = "Confirmation Status";
+"reminder.compliance.pending" = "Pending";
+"reminder.compliance.noAssignments" = "No volunteers assigned to this shift";
+"attendant.dashboard.reminders" = "Reminders";
+"attendant.dashboard.remindersDesc" = "View shift reminder compliance";
+
+// MARK: - Lanyard Tracking
+"lanyard.title" = "Lanyard Status";
+"lanyard.status.notPickedUp" = "Not Picked Up";
+"lanyard.status.pickedUp" = "Picked Up";
+"lanyard.status.returned" = "Returned";
+"lanyard.status.today" = "Today";
+"lanyard.actions" = "Actions";
+"lanyard.pickUp" = "Pick Up";
+"lanyard.return" = "Return";
+"lanyard.allDone" = "Lanyard returned for today";
+"lanyard.banner.pickUp" = "Pick up your lanyard before your shift";
+"lanyard.banner.return" = "Remember to return your lanyard after your shift";
+"lanyard.grid.title" = "Lanyard Tracking";
+"lanyard.grid.search" = "Search volunteers";
+"lanyard.grid.summary" = "Today's Summary";
+"lanyard.grid.notPickedUp" = "Not Picked Up";
+"lanyard.grid.pickedUp" = "Picked Up";
+"lanyard.grid.returned" = "Returned";
+"lanyard.grid.volunteers" = "Volunteers";
+"lanyard.grid.noVolunteers" = "No volunteers found";
+"lanyard.urgent.title" = "Lanyard Needed!";
+"lanyard.urgent.message" = "Your shift starts soon — pick up your lanyard now";
+"lanyard.urgent.alertMessage" = "Your first shift starts in less than 15 minutes. Please pick up your lanyard immediately.";
+"lanyard.urgent.goPickup" = "Pick Up";
+"lanyard.urgent.dismiss" = "OK";
+"attendant.dashboard.lanyard" = "Lanyards";
+"attendant.dashboard.lanyardDesc" = "Track lanyard pickup and return";
+
+// MARK: - Captain Assignment Acceptance
+"captain.role" = "Captain";
+"captain.assignment.pending" = "Pending Captain Roles";
+"captain.assignment.accept" = "Accept";
+"captain.assignment.decline" = "Decline";
+"captain.assignment.accepted" = "Accepted";
+"captain.assignment.declined" = "Declined";
+"captain.assignment.autoDeclined" = "Auto-Declined";
+"captain.assignment.forceAssigned" = "Force Assigned";
+"captain.assignment.forceAssign" = "Force Assign";
+"captain.assignment.forceAssignDesc" = "Skip acceptance — captain is immediately active";
+"captain.assignment.setDeadline" = "Set Response Deadline";
+"captain.assignment.deadline" = "Deadline";
+"captain.assignment.options" = "ASSIGNMENT OPTIONS";
+"captain.assignment.assign" = "Assign Captain";
+"area.assignOptions" = "Assignment Options";
+
+// MARK: - Sprint 7.1: Placeholder Users
+"addVolunteer.nonApp.header" = "CREATE NON-APP PROFILE";
+"addVolunteer.nonApp.title" = "Create Non-App User";
+"addVolunteer.nonApp.description" = "For volunteers who can't download the app yet. They can claim this profile later.";
+"addVolunteer.nonApp.create" = "Create Non-App Profile";
+"volunteer.badge.nonApp" = "Non-App";
+"volunteerDetail.link.header" = "NON-APP USER";
+"volunteerDetail.link.title" = "Link to Real User";
+"volunteerDetail.link.description" = "When this volunteer creates an account, link their profile to transfer all assignments and check-in history.";
+"volunteerDetail.link.button" = "Link Account";
+"volunteerDetail.link.sheet.title" = "Link to Real User";
+"volunteerDetail.link.sheet.description" = "Enter the real user's 6-character User ID to merge this placeholder profile into their account.";
+"volunteerDetail.link.sheet.hint" = "The volunteer can find their User ID in their account Settings.";
+"volunteerDetail.link.confirm" = "Link";
+
+// MARK: - Event Tab
+"eventTab.back" = "Back";

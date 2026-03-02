@@ -1,0 +1,20 @@
+query WalkThroughCompletions($eventId: ID!, $sessionId: ID) {
+  walkThroughCompletions(eventId: $eventId, sessionId: $sessionId) {
+    id
+    session {
+      id
+      name
+    }
+    eventVolunteer {
+      id
+      user {
+        firstName
+        lastName
+      }
+    }
+    completedAt
+    itemCount
+    notes
+    checklistType
+  }
+}

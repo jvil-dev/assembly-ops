@@ -1,0 +1,10 @@
+# Development documentation (internal/draft docs)
+development_docs/
+
+# OS files
+.DS_Store
+
+# Editor artifacts
+*.swp
+*.swo
+*~

@@ -1,0 +1,7 @@
+query EventRoles($eventId: ID!) {
+  roles(eventId: $eventId) {
+    id
+    name
+    sortOrder
+  }
+}

@@ -1,0 +1,24 @@
+mutation ReportAVDamage($input: ReportAVDamageInput!) {
+  reportAVDamage(input: $input) {
+    id
+    equipment {
+      id
+      name
+      category
+    }
+    description
+    severity
+    reportedBy {
+      id
+      user {
+        firstName
+        lastName
+      }
+    }
+    session {
+      id
+      name
+    }
+    createdAt
+  }
+}

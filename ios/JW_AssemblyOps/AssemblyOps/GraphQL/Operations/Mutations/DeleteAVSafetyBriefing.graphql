@@ -1,0 +1,3 @@
+mutation DeleteAVSafetyBriefing($id: ID!) {
+  deleteAVSafetyBriefing(id: $id)
+}

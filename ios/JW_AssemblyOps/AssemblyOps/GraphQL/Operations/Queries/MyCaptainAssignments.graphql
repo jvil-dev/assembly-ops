@@ -1,0 +1,40 @@
+query MyCaptainAssignments($eventId: ID!) {
+  myCaptainAssignments(eventId: $eventId) {
+    id
+    status
+    respondedAt
+    declineReason
+    acceptedDeadline
+    forceAssigned
+    area {
+      id
+      name
+      description
+      category
+      department {
+        id
+        name
+        departmentType
+        event {
+          id
+        }
+      }
+    }
+    session {
+      id
+      name
+      date
+      startTime
+      endTime
+    }
+    eventVolunteer {
+      id
+      user {
+        id
+        firstName
+        lastName
+      }
+    }
+    createdAt
+  }
+}

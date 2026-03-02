@@ -1,0 +1,10 @@
+query CaptainVolunteers($eventId: ID!, $departmentId: ID!) {
+  captainVolunteers(eventId: $eventId, departmentId: $departmentId) {
+    id
+    user {
+      id
+      firstName
+      lastName
+    }
+  }
+}

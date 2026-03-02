@@ -1,0 +1,44 @@
+query VolunteerProfiles($congregationId: ID) {
+  volunteerProfiles(congregationId: $congregationId) {
+    id
+    firstName
+    lastName
+    email
+    phone
+    appointmentStatus
+    congregation {
+      id
+      name
+    }
+  }
+}
+
+query VolunteerProfilesByCircuit($circuitId: ID!) {
+  volunteerProfilesByCircuit(circuitId: $circuitId) {
+    id
+    firstName
+    lastName
+    email
+    phone
+    appointmentStatus
+    congregation {
+      id
+      name
+    }
+  }
+}
+
+query SearchVolunteerProfiles($query: String!, $circuitId: ID) {
+  searchVolunteerProfiles(query: $query, circuitId: $circuitId) {
+    id
+    firstName
+    lastName
+    email
+    phone
+    appointmentStatus
+    congregation {
+      id
+      name
+    }
+  }
+}

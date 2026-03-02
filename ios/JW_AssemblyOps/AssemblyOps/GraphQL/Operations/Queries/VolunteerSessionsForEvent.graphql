@@ -1,0 +1,9 @@
+query VolunteerSessionsForEvent($eventId: ID!) {
+    volunteerSessionsForEvent(eventId: $eventId) {
+        id
+        name
+        date
+        startTime
+        endTime
+    }
+}

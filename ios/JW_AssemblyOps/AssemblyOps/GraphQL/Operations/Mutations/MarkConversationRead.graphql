@@ -1,0 +1,7 @@
+mutation MarkConversationRead($id: ID!) {
+  markConversationRead(id: $id) {
+    id
+    unreadCount
+    updatedAt
+  }
+}

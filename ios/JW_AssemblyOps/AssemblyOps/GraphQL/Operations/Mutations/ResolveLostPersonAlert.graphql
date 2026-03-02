@@ -1,0 +1,8 @@
+mutation ResolveLostPersonAlert($id: ID!, $resolutionNotes: String!) {
+  resolveLostPersonAlert(id: $id, resolutionNotes: $resolutionNotes) {
+    id
+    resolved
+    resolvedAt
+    resolutionNotes
+  }
+}

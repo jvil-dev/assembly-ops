@@ -1,0 +1,14 @@
+query MyAVSafetyBriefings($eventId: ID!) {
+  myAVSafetyBriefings(eventId: $eventId) {
+    id
+    topic
+    notes
+    conductedBy {
+      id
+      firstName
+      lastName
+    }
+    conductedAt
+    attendeeCount
+  }
+}

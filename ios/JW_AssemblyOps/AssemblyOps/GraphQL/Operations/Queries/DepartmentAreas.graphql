@@ -1,0 +1,36 @@
+query DepartmentAreas($departmentId: ID!) {
+    departmentAreas(departmentId: $departmentId) {
+        id
+        name
+        description
+        category
+        sortOrder
+        postCount
+        posts {
+            id
+            name
+            category
+            sortOrder
+        }
+        captains {
+            id
+            status
+            respondedAt
+            declineReason
+            acceptedDeadline
+            forceAssigned
+            session {
+                id
+                name
+                date
+            }
+            eventVolunteer {
+                id
+                user {
+                    firstName
+                    lastName
+                }
+            }
+        }
+    }
+}

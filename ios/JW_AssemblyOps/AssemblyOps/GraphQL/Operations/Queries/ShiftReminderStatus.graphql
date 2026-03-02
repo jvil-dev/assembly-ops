@@ -1,0 +1,15 @@
+query ShiftReminderStatus($shiftId: ID!) {
+  shiftReminderStatus(shiftId: $shiftId) {
+    shiftId
+    shiftName
+    totalAssigned
+    totalConfirmed
+    confirmations {
+      eventVolunteerId
+      firstName
+      lastName
+      confirmed
+      confirmedAt
+    }
+  }
+}

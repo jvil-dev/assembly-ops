@@ -1,0 +1,23 @@
+query MyConversations($eventId: ID!, $limit: Int, $offset: Int) {
+  myConversations(eventId: $eventId, limit: $limit, offset: $offset) {
+    id
+    subject
+    unreadCount
+    createdAt
+    updatedAt
+    lastMessage {
+      id
+      body
+      senderName
+      senderType
+      createdAt
+    }
+    participants {
+      id
+      participantType
+      participantId
+      displayName
+      lastReadAt
+    }
+  }
+}

@@ -1,0 +1,17 @@
+query MyMessages($filter: MessageFilterInput, $limit: Int, $offset: Int) {
+  myMessages(filter: $filter, limit: $limit, offset: $offset) {
+    id
+    subject
+    body
+    recipientType
+    senderType
+    senderName
+    senderId
+    isRead
+    readAt
+    createdAt
+    conversation {
+      id
+    }
+  }
+}

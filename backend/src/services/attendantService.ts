@@ -1,0 +1,325 @@
+/**
+ * Attendant Service
+ *
+ * Business logic for attendant department features: safety incidents,
+ * lost person alerts, and meetings.
+ *
+ * Methods:
+ *   - reportSafetyIncident(reportedById, input): Report a safety incident
+ *   - resolveSafetyIncident(id, adminId, resolutionNotes?): Mark incident as resolved
+ *   - getSafetyIncidents(eventId, resolved?): Get safety incidents for an event
+ *   - createLostPersonAlert(reportedById, input): Report a lost person
+ *   - resolveLostPersonAlert(id, adminId, resolutionNotes): Mark alert as resolved
+ *   - getLostPersonAlerts(eventId, resolved?): Get lost person alerts for an event
+ *   - createMeeting(createdById, input): Create an attendant meeting
+ *   - updateMeetingNotes(id, notes): Update meeting notes
+ *   - deleteMeeting(id): Remove a meeting
+ *   - getMeetings(eventId): Get all meetings for an event
+ *   - getMyMeetings(eventVolunteerId): Get meetings where volunteer is an attendee
+ *   - getIncidentEventId(id): Get event ID for access control
+ *   - getAlertEventId(id): Get event ID for access control
+ *   - getMeetingEventId(id): Get event ID for access control
+ *
+ * Called by: ../graphql/resolvers/attendant.ts
+ */
+import { encryptField } from '../utils/encryption.js';
+import {
+  PrismaClient,
+  SafetyIncident,
+  LostPersonAlert,
+  AttendantMeeting,
+} from '@prisma/client';
+import { NotFoundError, ValidationError } from '../utils/errors.js';
+import {
+  reportSafetyIncidentSchema,
+  createLostPersonAlertSchema,
+  createAttendantMeetingSchema,
+  ReportSafetyIncidentInput,
+  CreateLostPersonAlertInput,
+  CreateAttendantMeetingInput,
+} from '../graphql/validators/attendant.js';
+
+export class AttendantService {
+  constructor(private prisma: PrismaClient) {}
+
+  // MARK: - Safety Incidents
+
+  /**
+   * Report a safety incident
+   */
+  async reportSafetyIncident(
+    reportedById: string,
+    input: ReportSafetyIncidentInput
+  ): Promise<SafetyIncident> {
+    const result = reportSafetyIncidentSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+
+    return this.prisma.safetyIncident.create({
+      data: {
+        ...result.data,
+        reportedById,
+      },
+      include: { post: true, reportedBy: true },
+    });
+  }
+
+  /**
+   * Resolve a safety incident
+   */
+  async resolveSafetyIncident(
+    id: string,
+    adminId: string,
+    resolutionNotes?: string
+  ): Promise<SafetyIncident> {
+    const existing = await this.prisma.safetyIncident.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundError('Safety incident');
+    }
+
+    return this.prisma.safetyIncident.update({
+      where: { id },
+      data: {
+        resolved: true,
+        resolvedAt: new Date(),
+        resolvedById: adminId,
+        resolutionNotes,
+      },
+      include: { post: true, reportedBy: true, resolvedBy: true },
+    });
+  }
+
+  /**
+   * Get safety incidents for an event
+   */
+  async getSafetyIncidents(eventId: string, resolved?: boolean): Promise<SafetyIncident[]> {
+    return this.prisma.safetyIncident.findMany({
+      where: { eventId, ...(resolved !== undefined ? { resolved } : {}) },
+      include: { post: true, reportedBy: true, resolvedBy: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // MARK: - Lost Person Alerts
+
+  /**
+   * Create a lost person alert
+   */
+  async createLostPersonAlert(
+    reportedById: string,
+    input: CreateLostPersonAlertInput
+  ): Promise<LostPersonAlert> {
+    const result = createLostPersonAlertSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+
+    const validated = result.data;
+    return this.prisma.lostPersonAlert.create({
+      data: {
+        encryptedPersonName: encryptField(validated.personName),
+        encryptedContactName: encryptField(validated.contactName),
+        encryptedContactPhone: validated.contactPhone
+          ? encryptField(validated.contactPhone)
+          : undefined,
+        age: validated.age,
+        description: validated.description,
+        lastSeenLocation: validated.lastSeenLocation,
+        lastSeenTime: validated.lastSeenTime ? new Date(validated.lastSeenTime) : undefined,
+        sessionId: validated.sessionId,
+        eventId: validated.eventId,
+        reportedById,
+      },
+      include: { reportedBy: true },
+    });
+  }
+
+  /**
+   * Resolve a lost person alert
+   */
+  async resolveLostPersonAlert(
+    id: string,
+    adminId: string,
+    resolutionNotes: string
+  ): Promise<LostPersonAlert> {
+    const existing = await this.prisma.lostPersonAlert.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundError('Lost person alert');
+    }
+
+    return this.prisma.lostPersonAlert.update({
+      where: { id },
+      data: {
+        resolved: true,
+        resolvedAt: new Date(),
+        resolvedById: adminId,
+        resolutionNotes,
+      },
+      include: { reportedBy: true, resolvedBy: true },
+    });
+  }
+
+  /**
+   * Get lost person alerts for an event
+   */
+  async getLostPersonAlerts(eventId: string, resolved?: boolean): Promise<LostPersonAlert[]> {
+    return this.prisma.lostPersonAlert.findMany({
+      where: { eventId, ...(resolved !== undefined ? { resolved } : {}) },
+      include: { reportedBy: true, resolvedBy: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // MARK: - Attendant Meetings
+
+  /**
+   * Create an attendant meeting
+   */
+  async createMeeting(
+    createdById: string,
+    input: CreateAttendantMeetingInput
+  ): Promise<AttendantMeeting> {
+    const result = createAttendantMeetingSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+
+    const { eventId, sessionId, meetingDate, notes, attendeeIds } = result.data;
+
+    return this.prisma.attendantMeeting.create({
+      data: {
+        eventId,
+        sessionId,
+        meetingDate: new Date(meetingDate),
+        notes,
+        createdById,
+        attendees: {
+          create: attendeeIds.map((id) => ({ eventVolunteerId: id })),
+        },
+      },
+      include: {
+        session: true,
+        createdBy: true,
+        attendees: { include: { eventVolunteer: true } },
+      },
+    });
+  }
+
+  /**
+   * Update meeting notes
+   */
+  async updateMeetingNotes(id: string, notes: string): Promise<AttendantMeeting> {
+    const existing = await this.prisma.attendantMeeting.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundError('Attendant meeting');
+    }
+
+    return this.prisma.attendantMeeting.update({
+      where: { id },
+      data: { notes },
+      include: {
+        session: true,
+        createdBy: true,
+        attendees: { include: { eventVolunteer: true } },
+      },
+    });
+  }
+
+  /**
+   * Delete a meeting
+   */
+  async deleteMeeting(id: string): Promise<boolean> {
+    const existing = await this.prisma.attendantMeeting.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundError('Attendant meeting');
+    }
+
+    await this.prisma.attendantMeeting.delete({ where: { id } });
+    return true;
+  }
+
+  /**
+   * Get all meetings for an event
+   */
+  async getMeetings(eventId: string): Promise<AttendantMeeting[]> {
+    return this.prisma.attendantMeeting.findMany({
+      where: { eventId },
+      include: {
+        session: true,
+        createdBy: true,
+        attendees: { include: { eventVolunteer: true } },
+      },
+      orderBy: { meetingDate: 'desc' },
+    });
+  }
+
+  /**
+   * Get meetings where a volunteer is an attendee
+   */
+  async getMyMeetings(eventVolunteerId: string): Promise<AttendantMeeting[]> {
+    return this.prisma.attendantMeeting.findMany({
+      where: {
+        attendees: {
+          some: { eventVolunteerId },
+        },
+      },
+      include: {
+        session: true,
+        createdBy: true,
+        attendees: { include: { eventVolunteer: true } },
+      },
+      orderBy: { meetingDate: 'desc' },
+    });
+  }
+
+  // MARK: - Access Control Helpers
+
+  /**
+   * Get incident's event ID for access control
+   */
+  async getIncidentEventId(id: string): Promise<string> {
+    const incident = await this.prisma.safetyIncident.findUnique({
+      where: { id },
+      select: { eventId: true },
+    });
+
+    if (!incident) {
+      throw new NotFoundError('Safety incident');
+    }
+
+    return incident.eventId;
+  }
+
+  /**
+   * Get alert's event ID for access control
+   */
+  async getAlertEventId(id: string): Promise<string> {
+    const alert = await this.prisma.lostPersonAlert.findUnique({
+      where: { id },
+      select: { eventId: true },
+    });
+
+    if (!alert) {
+      throw new NotFoundError('Lost person alert');
+    }
+
+    return alert.eventId;
+  }
+
+  /**
+   * Get meeting's event ID for access control
+   */
+  async getMeetingEventId(id: string): Promise<string> {
+    const meeting = await this.prisma.attendantMeeting.findUnique({
+      where: { id },
+      select: { eventId: true },
+    });
+
+    if (!meeting) {
+      throw new NotFoundError('Attendant meeting');
+    }
+
+    return meeting.eventId;
+  }
+}

@@ -1,0 +1,14 @@
+query ConversationMessages($conversationId: ID!, $limit: Int, $offset: Int) {
+  conversationMessages(conversationId: $conversationId, limit: $limit, offset: $offset) {
+    id
+    subject
+    body
+    recipientType
+    senderType
+    senderName
+    senderId
+    isRead
+    readAt
+    createdAt
+  }
+}

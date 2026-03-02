@@ -1,0 +1,6 @@
+query CaptainPosts($departmentId: ID!) {
+  captainPosts(departmentId: $departmentId) {
+    id
+    name
+  }
+}

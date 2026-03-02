@@ -1,0 +1,9 @@
+query MyReminderConfirmations($eventId: ID!) {
+  myReminderConfirmations(eventId: $eventId) {
+    id
+    eventVolunteerId
+    shiftId
+    sessionId
+    confirmedAt
+  }
+}
