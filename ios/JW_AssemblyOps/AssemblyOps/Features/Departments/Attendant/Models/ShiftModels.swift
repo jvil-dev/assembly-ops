@@ -31,6 +31,7 @@ struct ShiftAssignment: Identifiable {
     let volunteerName: String
     let status: String
     let isCheckedIn: Bool
+    let canCount: Bool
 }
 
 // MARK: - Shift Item
@@ -74,7 +75,8 @@ extension ShiftItem {
                 eventVolunteerId: ev.id,
                 volunteerName: "\(ev.user.firstName) \(ev.user.lastName)",
                 status: assignment.status.rawValue,
-                isCheckedIn: assignment.checkIn != nil
+                isCheckedIn: assignment.checkIn != nil,
+                canCount: assignment.canCount
             )
         }
     }
@@ -101,7 +103,8 @@ extension ShiftItem {
                 eventVolunteerId: ev.id,
                 volunteerName: "\(ev.user.firstName) \(ev.user.lastName)",
                 status: assignment.status.rawValue,
-                isCheckedIn: assignment.checkIn != nil
+                isCheckedIn: assignment.checkIn != nil,
+                canCount: assignment.canCount
             )
         }
     }

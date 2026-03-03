@@ -36,6 +36,7 @@ struct CaptainVolunteerPickerSheet: View {
     @State private var searchText = ""
     @State private var selectedVolunteerId: String?
     @State private var isAssigning = false
+    @State private var canCount = false
     @State private var showError = false
 
     private var accentColor: Color {
@@ -117,6 +118,8 @@ struct CaptainVolunteerPickerSheet: View {
     private var volunteerList: some View {
         ScrollView {
             LazyVStack(spacing: AppTheme.Spacing.m) {
+                canCountCard
+
                 ForEach(filteredVolunteers) { volunteer in
                     let isSelected = selectedVolunteerId == volunteer.id
                     Button {
@@ -161,6 +164,27 @@ struct CaptainVolunteerPickerSheet: View {
         }
     }
 
+    // MARK: - Can Count Card
+
+    private var canCountCard: some View {
+        Toggle(isOn: $canCount) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("assignment.canCount.toggle".localized)
+                    .font(AppTheme.Typography.bodyMedium)
+                    .foregroundStyle(.primary)
+                Text("assignment.canCount.subtitle".localized)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            }
+        }
+        .tint(accentColor)
+        .onChange(of: canCount) {
+            HapticManager.shared.lightTap()
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
     // MARK: - Assign Volunteer
 
     private func assignVolunteer() async {
@@ -172,7 +196,8 @@ struct CaptainVolunteerPickerSheet: View {
             eventVolunteerId: volunteerId,
             postId: postId,
             sessionId: sessionId,
-            shiftId: shiftId
+            shiftId: shiftId,
+            canCount: canCount
         )
 
         isAssigning = false

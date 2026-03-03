@@ -141,7 +141,7 @@ final class CaptainSchedulingViewModel: ObservableObject {
 
     // MARK: - Captain Assignment Operations
 
-    func createAssignment(eventId: String, eventVolunteerId: String, postId: String, sessionId: String, shiftId: String?) async {
+    func createAssignment(eventId: String, eventVolunteerId: String, postId: String, sessionId: String, shiftId: String?, canCount: Bool = false) async {
         isLoading = true
         error = nil
 
@@ -151,7 +151,8 @@ final class CaptainSchedulingViewModel: ObservableObject {
                 eventVolunteerId: eventVolunteerId,
                 postId: postId,
                 sessionId: sessionId,
-                shiftId: shiftId.map { .some($0) } ?? .none
+                shiftId: shiftId.map { .some($0) } ?? .none,
+                canCount: .some(canCount)
             )
             let _ = try await NetworkClient.shared.apollo.perform(
                 mutation: AssemblyOpsAPI.CaptainCreateAssignmentMutation(input: input)

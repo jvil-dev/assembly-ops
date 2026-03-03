@@ -29,6 +29,7 @@ query Shifts($sessionId: ID!, $postId: ID) {
         }
       }
       status
+      canCount
       checkIn {
         id
       }

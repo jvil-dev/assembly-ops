@@ -3,6 +3,7 @@ mutation CaptainCreateAssignment($input: CaptainCreateAssignmentInput!) {
     id
     status
     isCaptain
+    canCount
     post {
       id
       name
