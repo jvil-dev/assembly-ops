@@ -62,6 +62,10 @@
 // MARK: - Assignment Picker
 "assignment.forceAssign.toggle" = "Force Assign";
 "assignment.forceAssign.subtitle" = "Skips acceptance — volunteer is assigned immediately";
+"assignment.canCount.toggle" = "Designated Counter";
+"assignment.canCount.subtitle" = "Only designated counters can submit attendance counts";
+"assignment.canCount.mark" = "Mark as Counter";
+"assignment.canCount.unmark" = "Unmark as Counter";
 "assignment.status.pending" = "Awaiting acceptance";
 
 // MARK: - Check-In Status
@@ -1453,6 +1457,7 @@
 "lanyard.pickUp" = "Pick Up";
 "lanyard.return" = "Return";
 "lanyard.allDone" = "Lanyard returned for today";
+"lanyard.reset" = "Reset";
 "lanyard.banner.pickUp" = "Pick up your lanyard before your shift";
 "lanyard.banner.return" = "Remember to return your lanyard after your shift";
 "lanyard.grid.title" = "Lanyard Tracking";
@@ -1502,6 +1507,23 @@
 "volunteerDetail.link.sheet.description" = "Enter the real user's 6-character User ID to merge this placeholder profile into their account.";
 "volunteerDetail.link.sheet.hint" = "The volunteer can find their User ID in their account Settings.";
 "volunteerDetail.link.confirm" = "Link";
+
+// MARK: - Schedule Tab Redesign
+"schedule.header" = "Schedule";
+"schedule.declined" = "Declined";
+"schedule.createSession" = "Create Custom Session";
+"schedule.createSessionHint" = "Add a new session to the schedule";
+"schedule.done" = "Done";
+"schedule.deleteSession" = "Delete Session";
+"schedule.deleteSessionConfirm" = "Delete Session?";
+"schedule.deleteSessionWarning" = "This will permanently delete \"%@\" and all its assignments.";
+
+// MARK: - Posts Multi-Delete
+"area.edit" = "Edit";
+"area.done" = "Done";
+"area.deleteSelected" = "Delete Selected (%d)";
+"area.deletePostsConfirm" = "Delete Posts?";
+"area.deletePostsWarning" = "This will permanently delete %d posts and all their assignments.";
 
 // MARK: - Event Tab
 "eventTab.back" = "Back";

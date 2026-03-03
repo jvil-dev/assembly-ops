@@ -62,6 +62,10 @@
 // MARK: - Asignación
 "assignment.forceAssign.toggle" = "Asignar Directamente";
 "assignment.forceAssign.subtitle" = "Omite la aceptación — el voluntario queda asignado de inmediato";
+"assignment.canCount.toggle" = "Contador Designado";
+"assignment.canCount.subtitle" = "Solo los contadores designados pueden enviar conteos de asistencia";
+"assignment.canCount.mark" = "Marcar como Contador";
+"assignment.canCount.unmark" = "Desmarcar como Contador";
 "assignment.status.pending" = "En espera de aceptación";
 
 // MARK: - Check-In Status
@@ -1454,6 +1458,7 @@
 "lanyard.pickUp" = "Recoger";
 "lanyard.return" = "Devolver";
 "lanyard.allDone" = "Gafete devuelto por hoy";
+"lanyard.reset" = "Restablecer";
 "lanyard.banner.pickUp" = "Recoja su gafete antes de su turno";
 "lanyard.banner.return" = "Recuerde devolver su gafete después de su turno";
 "lanyard.grid.title" = "Control de Gafetes";
@@ -1503,6 +1508,23 @@
 "volunteerDetail.link.sheet.description" = "Ingrese el ID de usuario de 6 caracteres del usuario real para fusionar este perfil.";
 "volunteerDetail.link.sheet.hint" = "El voluntario puede encontrar su ID de usuario en su Configuración.";
 "volunteerDetail.link.confirm" = "Vincular";
+
+// MARK: - Schedule Tab Redesign
+"schedule.header" = "Horario";
+"schedule.declined" = "Rechazados";
+"schedule.createSession" = "Crear sesión personalizada";
+"schedule.createSessionHint" = "Agregar una nueva sesión al horario";
+"schedule.done" = "Listo";
+"schedule.deleteSession" = "Eliminar sesión";
+"schedule.deleteSessionConfirm" = "¿Eliminar sesión?";
+"schedule.deleteSessionWarning" = "Esto eliminará permanentemente \"%@\" y todas sus asignaciones.";
+
+// MARK: - Posts Multi-Delete
+"area.edit" = "Editar";
+"area.done" = "Listo";
+"area.deleteSelected" = "Eliminar seleccionados (%d)";
+"area.deletePostsConfirm" = "¿Eliminar puestos?";
+"area.deletePostsWarning" = "Esto eliminará permanentemente %d puestos y todas sus asignaciones.";
 
 // MARK: - Event Tab
 "eventTab.back" = "Atrás";
