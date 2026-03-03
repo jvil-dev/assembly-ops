@@ -71,7 +71,6 @@ struct OverseerMessagesView: View {
             }
             .themedBackground(scheme: colorScheme)
             .navigationTitle("messages.title".localized)
-            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if selectedTab == .inbox {

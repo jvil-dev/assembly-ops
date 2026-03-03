@@ -69,6 +69,28 @@ enum DepartmentColor {
         color(for: departmentType).opacity(0.15)
     }
     
+    /// Get SF Symbol icon name for a department type
+    static func icon(for departmentType: String) -> String {
+        switch departmentType.uppercased() {
+        case "PARKING": return "car"
+        case "ATTENDANT": return "person.badge.shield.checkmark"
+        case "AUDIO": return "speaker.wave.3"
+        case "VIDEO": return "video"
+        case "STAGE": return "light.overhead.left"
+        case "CLEANING": return "sparkles"
+        case "COMMITTEE": return "person.3"
+        case "FIRST_AID", "FIRSTAID": return "cross"
+        case "BAPTISM": return "drop"
+        case "INFORMATION", "INFORMATION_VOLUNTEER_SERVICE": return "info.circle"
+        case "ACCOUNTS": return "dollarsign.circle"
+        case "INSTALLATION": return "hammer"
+        case "LOST_FOUND", "LOST_AND_FOUND", "LOST_FOUND_CHECKROOM": return "tray"
+        case "ROOMING": return "bed.double"
+        case "TRUCKING", "TRUCKING_EQUIPMENT": return "truck.box"
+        default: return "building.2"
+        }
+    }
+
     /// Get color name for accessibility
     static func colorName(for departmentType: String) -> String {
         switch departmentType.uppercased() {

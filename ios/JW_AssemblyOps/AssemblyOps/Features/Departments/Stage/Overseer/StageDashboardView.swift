@@ -92,8 +92,8 @@ struct StageDashboardView: View {
             .padding(.bottom, AppTheme.Spacing.xxl)
         }
         .themedBackground(scheme: colorScheme)
-        .navigationTitle("stage.dashboard.title".localized)
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .onChange(of: viewModel.error) { _, error in
             showError = error != nil
         }
