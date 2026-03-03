@@ -157,6 +157,18 @@ struct LanyardStatusView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, AppTheme.Spacing.l)
             }
+
+            if state == .pickedUp || state == .returned {
+                actionButton(
+                    title: "lanyard.reset".localized,
+                    icon: "arrow.counterclockwise",
+                    color: AppTheme.StatusColors.warning
+                ) {
+                    if let eventId = eventId {
+                        await viewModel.resetLanyard(eventId: eventId)
+                    }
+                }
+            }
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)

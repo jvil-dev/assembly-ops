@@ -186,46 +186,66 @@ struct LanyardGridView: View {
 
     @ViewBuilder
     private func overseerActionButton(for status: LanyardStatusItem) -> some View {
-        switch status.status {
-        case .notPickedUp:
-            Button {
-                guard let eventId = eventId else { return }
-                Task {
-                    await viewModel.overseerPickUp(eventVolunteerId: status.eventVolunteerId, eventId: eventId)
+        HStack(spacing: AppTheme.Spacing.s) {
+            switch status.status {
+            case .notPickedUp:
+                Button {
+                    guard let eventId = eventId else { return }
+                    Task {
+                        await viewModel.overseerPickUp(eventVolunteerId: status.eventVolunteerId, eventId: eventId)
+                    }
+                } label: {
+                    Text("lanyard.pickUp".localized)
+                        .font(AppTheme.Typography.caption)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, AppTheme.Spacing.m)
+                        .padding(.vertical, AppTheme.Spacing.xs)
+                        .background(AppTheme.StatusColors.accepted.opacity(0.12))
+                        .foregroundStyle(AppTheme.StatusColors.accepted)
+                        .clipShape(Capsule())
                 }
-            } label: {
-                Text("lanyard.pickUp".localized)
-                    .font(AppTheme.Typography.caption)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, AppTheme.Spacing.m)
-                    .padding(.vertical, AppTheme.Spacing.xs)
-                    .background(AppTheme.StatusColors.accepted.opacity(0.12))
-                    .foregroundStyle(AppTheme.StatusColors.accepted)
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
+                .buttonStyle(.plain)
 
-        case .pickedUp:
-            Button {
-                guard let eventId = eventId else { return }
-                Task {
-                    await viewModel.overseerReturn(eventVolunteerId: status.eventVolunteerId, eventId: eventId)
+            case .pickedUp:
+                Button {
+                    guard let eventId = eventId else { return }
+                    Task {
+                        await viewModel.overseerReturn(eventVolunteerId: status.eventVolunteerId, eventId: eventId)
+                    }
+                } label: {
+                    Text("lanyard.return".localized)
+                        .font(AppTheme.Typography.caption)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, AppTheme.Spacing.m)
+                        .padding(.vertical, AppTheme.Spacing.xs)
+                        .background(AppTheme.StatusColors.info.opacity(0.12))
+                        .foregroundStyle(AppTheme.StatusColors.info)
+                        .clipShape(Capsule())
                 }
-            } label: {
-                Text("lanyard.return".localized)
-                    .font(AppTheme.Typography.caption)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, AppTheme.Spacing.m)
-                    .padding(.vertical, AppTheme.Spacing.xs)
-                    .background(AppTheme.StatusColors.info.opacity(0.12))
+                .buttonStyle(.plain)
+
+            case .returned:
+                Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(AppTheme.StatusColors.info)
-                    .clipShape(Capsule())
             }
-            .buttonStyle(.plain)
 
-        case .returned:
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(AppTheme.StatusColors.info)
+            // Reset button for picked up or returned
+            if status.status == .pickedUp || status.status == .returned {
+                Button {
+                    guard let eventId = eventId else { return }
+                    Task {
+                        await viewModel.overseerReset(eventVolunteerId: status.eventVolunteerId, eventId: eventId)
+                    }
+                } label: {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.system(size: 12, weight: .medium))
+                        .padding(AppTheme.Spacing.xs)
+                        .background(AppTheme.StatusColors.warning.opacity(0.12))
+                        .foregroundStyle(AppTheme.StatusColors.warning)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 }

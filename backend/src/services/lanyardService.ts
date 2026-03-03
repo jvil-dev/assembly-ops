@@ -8,6 +8,7 @@
  * Methods:
  *   - pickUp(eventVolunteerId, eventId): Mark lanyard picked up today
  *   - returnLanyard(eventVolunteerId, eventId): Mark lanyard returned today
+ *   - resetLanyard(eventVolunteerId, eventId): Reset lanyard to not picked up
  *   - getMyStatus(eventVolunteerId, date?): Get volunteer's status
  *   - getStatuses(eventId, date?): All volunteers' statuses for a day
  *   - getSummary(eventId, date?): Aggregate counts
@@ -68,6 +69,33 @@ export class LanyardService {
         eventVolunteer: { include: { user: true } },
       },
     });
+  }
+
+  async resetLanyard(eventVolunteerId: string, eventId: string) {
+    const date = this.getDateOnly();
+    // Delete the checkout record to reset to "not picked up"
+    const existing = await this.prisma.lanyardCheckout.findUnique({
+      where: { eventVolunteerId_date: { eventVolunteerId, date } },
+    });
+    if (existing) {
+      await this.prisma.lanyardCheckout.delete({
+        where: { id: existing.id },
+      });
+    }
+    // Return a virtual "not picked up" record
+    const vol = await this.prisma.eventVolunteer.findUniqueOrThrow({
+      where: { id: eventVolunteerId },
+      include: { user: true },
+    });
+    return {
+      id: `pending-${vol.id}`,
+      eventVolunteerId: vol.id,
+      eventId,
+      date,
+      pickedUpAt: null,
+      returnedAt: null,
+      eventVolunteer: vol,
+    };
   }
 
   async getMyStatus(eventVolunteerId: string, dateStr?: string) {

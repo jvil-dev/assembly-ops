@@ -18,6 +18,8 @@
  *   - returnLanyard(eventId): Volunteer returns lanyard
  *   - overseerPickUpLanyard(eventVolunteerId): Overseer marks pickup
  *   - overseerReturnLanyard(eventVolunteerId): Overseer marks return
+ *   - resetLanyard(eventId): Volunteer resets own lanyard status
+ *   - overseerResetLanyard(eventVolunteerId): Overseer resets volunteer's status
  *
  * Used by: ./index.ts (schema composition)
  * Implemented by: ../resolvers/lanyard.ts
@@ -59,5 +61,7 @@ export const lanyardTypeDefs = `#graphql
     returnLanyard(eventId: ID!): LanyardCheckout!
     overseerPickUpLanyard(eventVolunteerId: ID!): LanyardCheckout!
     overseerReturnLanyard(eventVolunteerId: ID!): LanyardCheckout!
+    resetLanyard(eventId: ID!): LanyardCheckout!
+    overseerResetLanyard(eventVolunteerId: ID!): LanyardCheckout!
   }
 `;
