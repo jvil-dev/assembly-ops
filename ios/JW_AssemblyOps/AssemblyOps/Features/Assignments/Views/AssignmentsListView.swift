@@ -62,7 +62,7 @@ struct AssignmentsListView: View {
             }
         }
         .themedBackground(scheme: colorScheme)
-        .navigationTitle("schedule.title".localized)
+        .navigationTitle("tab.schedule".localized)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 filterButton
