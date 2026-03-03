@@ -107,7 +107,7 @@ describe('MessageService', () => {
   describe('sendMessage', () => {
     it('throws ValidationError when body is empty', async () => {
       await expect(
-        service.sendMessage(sender, { body: '' }, 'event-1')
+        service.sendMessage(sender, { subject: null, body: '' }, 'event-1')
       ).rejects.toThrow(ValidationError);
     });
 
@@ -115,7 +115,7 @@ describe('MessageService', () => {
       await expect(
         service.sendMessage(
           sender,
-          { body: 'Hello', recipientType: 'USER', recipientId: 'user-1' },
+          { subject: null, body: 'Hello', recipientType: 'USER', recipientId: 'user-1' },
           'event-1'
         )
       ).rejects.toThrow(ValidationError);
@@ -127,7 +127,7 @@ describe('MessageService', () => {
       await expect(
         service.sendMessage(
           sender,
-          { body: 'Hello', recipientType: 'USER', recipientId: 'user-2' },
+          { subject: null, body: 'Hello', recipientType: 'USER', recipientId: 'user-2' },
           'event-1'
         )
       ).rejects.toThrow(NotFoundError);
@@ -142,7 +142,7 @@ describe('MessageService', () => {
 
       const result = await service.sendMessage(
         sender,
-        { body: 'Hello', recipientType: 'USER', recipientId: 'user-2' },
+        { subject: null, body: 'Hello', recipientType: 'USER', recipientId: 'user-2' },
         'event-1'
       );
 
@@ -164,7 +164,7 @@ describe('MessageService', () => {
       await expect(
         service.sendMessage(
           sender,
-          { body: 'Hello', recipientType: 'VOLUNTEER', recipientId: 'ev-99' },
+          { subject: null, body: 'Hello', recipientType: 'VOLUNTEER', recipientId: 'ev-99' },
           'event-1'
         )
       ).rejects.toThrow(NotFoundError);
@@ -186,7 +186,7 @@ describe('MessageService', () => {
 
       const result = await service.sendMessage(
         sender,
-        { body: 'Hello', recipientType: 'VOLUNTEER', recipientId: 'ev-1' },
+        { subject: null, body: 'Hello', recipientType: 'VOLUNTEER', recipientId: 'ev-1' },
         'event-1'
       );
 
@@ -215,6 +215,7 @@ describe('MessageService', () => {
       await expect(
         service.sendDepartmentMessage(sender, {
           departmentId: 'dept-99',
+          subject: null,
           body: 'Dept broadcast',
         })
       ).rejects.toThrow(NotFoundError);
@@ -229,6 +230,7 @@ describe('MessageService', () => {
 
       const result = await service.sendDepartmentMessage(sender, {
         departmentId: 'dept-1',
+        subject: null,
         body: 'Dept broadcast',
       });
 
@@ -287,7 +289,7 @@ describe('MessageService', () => {
       vi.mocked(prisma.event.findUnique).mockResolvedValue(null);
 
       await expect(
-        service.sendBroadcast(sender, { eventId: 'event-99', body: 'Broadcast' })
+        service.sendBroadcast(sender, { eventId: 'event-99', subject: null, body: 'Broadcast' })
       ).rejects.toThrow(NotFoundError);
     });
 
@@ -299,6 +301,7 @@ describe('MessageService', () => {
 
       const result = await service.sendBroadcast(sender, {
         eventId: 'event-1',
+        subject: null,
         body: 'Broadcast',
       });
 
@@ -424,6 +427,7 @@ describe('MessageService', () => {
           eventId: 'event-1',
           recipientType: 'USER',
           recipientId: 'user-1', // same as sender.senderId
+          subject: null,
           body: 'Hello me',
         })
       ).rejects.toThrow(ValidationError);
@@ -455,6 +459,7 @@ describe('MessageService', () => {
         eventId: 'event-1',
         recipientType: 'USER',
         recipientId: 'user-2',
+        subject: null,
         body: 'Reopening thread',
       });
 

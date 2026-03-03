@@ -19,11 +19,12 @@
 //
 // Configuration:
 //   - DEBUG: http://localhost:4000/graphql (local dev server)
-//   - Release: https://api.assemblyops.io/graphql (production)
+//   - Release: https://api.assemblyops.org/graphql (production)
 //
 // Auth:
-//   - Reads access token from KeychainManager
-//   - Attaches "Authorization: Bearer <token>" header to all requests
+//   - AuthTokenInterceptor dynamically adds Bearer token to every request
+//   - Automatically refreshes expired access tokens before sending requests
+//   - Posts Notification.Name.authSessionExpired when refresh token is also expired
 //
 // Dependencies:
 //   - KeychainManager: Retrieves stored access token
@@ -40,39 +41,199 @@ final class NetworkClient {
 
     private(set) var apollo: ApolloClient
 
-    // Configure for your environment
     #if DEBUG
-    private let baseURL = URL(string: "http://localhost:4000/graphql")!
+    static let graphQLURL = URL(string: "http://localhost:4000/graphql")!
     #else
-    private let baseURL = URL(string: "https://api.assemblyops.org/graphql")!
+    static let graphQLURL = URL(string: "https://api.assemblyops.org/graphql")!
     #endif
 
     private init() {
-        apollo = NetworkClient.createClient(url: baseURL)
+        apollo = NetworkClient.createClient()
     }
 
-    /// Recreate client (useful after login/logout)
+    /// Recreate client (useful after login/logout to clear Apollo cache)
     func resetClient() {
-        apollo = NetworkClient.createClient(url: baseURL)
+        apollo = NetworkClient.createClient()
     }
 
-    private static func createClient(url: URL) -> ApolloClient {
+    private static func createClient() -> ApolloClient {
         let store = ApolloStore()
-        let provider = DefaultInterceptorProvider(store: store)
+        let provider = AuthInterceptorProvider(store: store)
         let transport = RequestChainNetworkTransport(
             interceptorProvider: provider,
-            endpointURL: url,
-            additionalHeaders: authHeaders()
+            endpointURL: graphQLURL
         )
         return ApolloClient(networkTransport: transport, store: store)
     }
+}
 
-    private static func authHeaders() -> [String: String] {
-        if let token = KeychainManager.shared.accessToken {
-            return ["Authorization": "Bearer \(token)"]
-        }
-        return [:]
+// MARK: - Auth Interceptor Provider
+
+/// Custom interceptor provider that injects AuthTokenInterceptor before network fetch.
+/// Uses composition (not subclassing) to avoid @MainActor isolation conflicts.
+private struct AuthInterceptorProvider: InterceptorProvider {
+    private let base: DefaultInterceptorProvider
+
+    init(store: ApolloStore) {
+        self.base = DefaultInterceptorProvider(store: store)
     }
+
+    func interceptors<Operation: GraphQLOperation>(
+        for operation: Operation
+    ) -> [any ApolloInterceptor] {
+        var interceptors = base.interceptors(for: operation)
+        // Insert auth interceptor before NetworkFetchInterceptor
+        if let networkIndex = interceptors.firstIndex(where: { $0 is NetworkFetchInterceptor }) {
+            interceptors.insert(AuthTokenInterceptor(), at: networkIndex)
+        } else {
+            interceptors.insert(AuthTokenInterceptor(), at: 0)
+        }
+        return interceptors
+    }
+
+    func additionalErrorInterceptor<Operation: GraphQLOperation>(
+        for operation: Operation
+    ) -> (any ApolloErrorInterceptor)? {
+        base.additionalErrorInterceptor(for: operation)
+    }
+}
+
+// MARK: - Auth Token Interceptor
+
+/// Adds a fresh Bearer token to every request, refreshing the access token if expired.
+private final class AuthTokenInterceptor: ApolloInterceptor {
+    let id = "AuthTokenInterceptor"
+
+    /// Serialises concurrent refresh attempts so only one refresh runs at a time.
+    private static let refreshLock = NSLock()
+    private static var isRefreshing = false
+    private static var pendingCompletions: [(Bool) -> Void] = []
+
+    func interceptAsync<Operation: GraphQLOperation>(
+        chain: any RequestChain,
+        request: HTTPRequest<Operation>,
+        response: HTTPResponse<Operation>?,
+        completion: @escaping (Result<GraphQLResult<Operation.Data>, any Error>) -> Void
+    ) {
+        // No tokens at all (not logged in) — proceed without auth header
+        guard KeychainManager.shared.accessToken != nil else {
+            chain.proceedAsync(request: request, response: response, interceptor: self, completion: completion)
+            return
+        }
+
+        // If token is still valid, attach it and proceed immediately
+        if !KeychainManager.shared.isTokenExpired,
+           let token = KeychainManager.shared.accessToken {
+            request.addHeader(name: "Authorization", value: "Bearer \(token)")
+            chain.proceedAsync(request: request, response: response, interceptor: self, completion: completion)
+            return
+        }
+
+        // Token exists but is expired — refresh before proceeding
+        Self.enqueueRefresh { success in
+            if success, let token = KeychainManager.shared.accessToken {
+                request.addHeader(name: "Authorization", value: "Bearer \(token)")
+                chain.proceedAsync(request: request, response: response, interceptor: self, completion: completion)
+            } else {
+                // Refresh failed — notify app to log out
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .authSessionExpired, object: nil)
+                }
+                chain.handleErrorAsync(
+                    AuthError.tokenRefreshFailed,
+                    request: request,
+                    response: response,
+                    completion: completion
+                )
+            }
+        }
+    }
+
+    // MARK: - Token Refresh (via URLSession, bypasses Apollo)
+
+    private static func enqueueRefresh(completion: @escaping (Bool) -> Void) {
+        refreshLock.lock()
+        pendingCompletions.append(completion)
+
+        guard !isRefreshing else {
+            refreshLock.unlock()
+            return
+        }
+        isRefreshing = true
+        refreshLock.unlock()
+
+        performTokenRefresh { success in
+            refreshLock.lock()
+            let completions = pendingCompletions
+            pendingCompletions = []
+            isRefreshing = false
+            refreshLock.unlock()
+
+            for cb in completions { cb(success) }
+        }
+    }
+
+    private static func performTokenRefresh(completion: @escaping (Bool) -> Void) {
+        guard let refreshToken = KeychainManager.shared.refreshToken else {
+            completion(false)
+            return
+        }
+
+        let body: [String: Any] = [
+            "query": "mutation RefreshToken($input: RefreshTokenInput!) { refreshToken(input: $input) { accessToken refreshToken expiresIn } }",
+            "variables": ["input": ["refreshToken": refreshToken]]
+        ]
+
+        var request = URLRequest(url: NetworkClient.graphQLURL)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 15
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        URLSession.shared.dataTask(with: request) { data, _, error in
+            guard error == nil,
+                  let data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let dataField = json["data"] as? [String: Any],
+                  let tokenPayload = dataField["refreshToken"] as? [String: Any],
+                  let newAccess = tokenPayload["accessToken"] as? String,
+                  let newRefresh = tokenPayload["refreshToken"] as? String,
+                  let expiresIn = tokenPayload["expiresIn"] as? Int
+            else {
+                #if DEBUG
+                print("[AuthInterceptor] Token refresh failed")
+                #endif
+                completion(false)
+                return
+            }
+
+            KeychainManager.shared.saveTokens(
+                accessToken: newAccess,
+                refreshToken: newRefresh,
+                expiresIn: expiresIn
+            )
+            #if DEBUG
+            print("[AuthInterceptor] Token refreshed successfully")
+            #endif
+            completion(true)
+        }.resume()
+    }
+}
+
+// MARK: - Auth Error
+
+private enum AuthError: LocalizedError {
+    case tokenRefreshFailed
+
+    var errorDescription: String? {
+        "Session expired. Please log in again."
+    }
+}
+
+// MARK: - Notification
+
+extension Notification.Name {
+    static let authSessionExpired = Notification.Name("authSessionExpired")
 }
 
 // MARK: - Apollo Async Extension

@@ -269,6 +269,7 @@ const attendanceResolvers = {
           eventVolunteerId: eventVolunteer.id,
           sessionId: { in: sessionIds },
           status: 'ACCEPTED',
+          canCount: true,
         },
         include: { post: true },
       });

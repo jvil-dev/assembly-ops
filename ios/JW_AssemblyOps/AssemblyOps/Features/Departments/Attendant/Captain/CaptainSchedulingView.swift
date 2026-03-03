@@ -84,6 +84,7 @@ struct CaptainSchedulingView: View {
                     eventId: eventId,
                     sessionId: session.id,
                     sessionName: session.name,
+                    departmentType: departmentType,
                     viewModel: viewModel
                 )
             }
@@ -226,6 +227,24 @@ struct CaptainSchedulingView: View {
 
     // MARK: - Captain Shift Row
 
+    private func toggleCanCount(_ assignment: ShiftAssignment) async {
+        let input = AssemblyOpsAPI.SetCanCountInput(
+            assignmentId: assignment.id,
+            canCount: !assignment.canCount
+        )
+        do {
+            let _ = try await NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.SetCanCountMutation(input: input)
+            )
+            HapticManager.shared.success()
+            if let session = viewModel.selectedSession {
+                await viewModel.loadShifts(sessionId: session.id)
+            }
+        } catch {
+            HapticManager.shared.error()
+        }
+    }
+
     private func captainShiftRow(_ shift: ShiftItem) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
             HStack(spacing: AppTheme.Spacing.m) {
@@ -277,6 +296,12 @@ struct CaptainSchedulingView: View {
                                 .font(AppTheme.Typography.subheadline)
                                 .foregroundStyle(.primary)
 
+                            if assignment.canCount {
+                                Image(systemName: "number.square.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(accentColor)
+                            }
+
                             Spacer()
 
                             Button {
@@ -293,6 +318,16 @@ struct CaptainSchedulingView: View {
                         .padding(.vertical, AppTheme.Spacing.xs)
                         .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
                         .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                        .contextMenu {
+                            Button {
+                                Task { await toggleCanCount(assignment) }
+                            } label: {
+                                Label(
+                                    assignment.canCount ? "assignment.canCount.unmark".localized : "assignment.canCount.mark".localized,
+                                    systemImage: assignment.canCount ? "number.square" : "number.square.fill"
+                                )
+                            }
+                        }
                     }
                 }
                 .padding(.leading, AppTheme.Spacing.xs)
@@ -329,6 +364,7 @@ struct CaptainCreateShiftSheet: View {
     let eventId: String
     let sessionId: String
     let sessionName: String
+    let departmentType: String
     @ObservedObject var viewModel: CaptainSchedulingViewModel
 
     @Environment(\.dismiss) private var dismiss
@@ -338,6 +374,10 @@ struct CaptainCreateShiftSheet: View {
     @State private var startTime = Date()
     @State private var endTime = Date()
     @State private var isSubmitting = false
+
+    private var accentColor: Color {
+        DepartmentColor.color(for: departmentType)
+    }
 
     private var isFormValid: Bool {
         selectedPostId != nil &&
@@ -383,7 +423,7 @@ struct CaptainCreateShiftSheet: View {
                                                 .padding(.vertical, AppTheme.Spacing.s)
                                                 .background(
                                                     selectedPostId == post.id
-                                                        ? DepartmentColor.color(for: "ATTENDANT")
+                                                        ? accentColor
                                                         : AppTheme.cardBackgroundSecondary(for: colorScheme)
                                                 )
                                                 .foregroundStyle(
@@ -438,7 +478,7 @@ struct CaptainCreateShiftSheet: View {
                         .frame(height: AppTheme.ButtonHeight.large)
                         .font(AppTheme.Typography.bodyMedium)
                         .foregroundStyle(.white)
-                        .background(isFormValid ? DepartmentColor.color(for: "ATTENDANT") : DepartmentColor.color(for: "ATTENDANT").opacity(0.4))
+                        .background(isFormValid ? accentColor : accentColor.opacity(0.4))
                         .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
                     }
                     .disabled(!isFormValid || isSubmitting)

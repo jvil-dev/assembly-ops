@@ -45,6 +45,7 @@ struct EventTabView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTab: EventTab = .home
     @State private var isReady = false
+    @State private var showSettings = false
 
     var isOverseer: Bool {
         membership.membershipType == .overseer ||
@@ -57,24 +58,7 @@ struct EventTabView: View {
 
     private var departmentTabIcon: String {
         guard let type = membership.departmentType else { return "building.2" }
-        switch type.uppercased() {
-        case "PARKING": return "car"
-        case "ATTENDANT": return "person.badge.shield.checkmark"
-        case "AUDIO": return "speaker.wave.3"
-        case "VIDEO": return "video"
-        case "STAGE": return "light.overhead.left"
-        case "CLEANING": return "sparkles"
-        case "COMMITTEE": return "person.3"
-        case "FIRST_AID", "FIRSTAID": return "cross"
-        case "BAPTISM": return "drop"
-        case "INFORMATION", "INFORMATION_VOLUNTEER_SERVICE": return "info.circle"
-        case "ACCOUNTS": return "dollarsign.circle"
-        case "INSTALLATION": return "hammer"
-        case "LOST_FOUND", "LOST_AND_FOUND", "LOST_FOUND_CHECKROOM": return "tray"
-        case "ROOMING": return "bed.double"
-        case "TRUCKING", "TRUCKING_EQUIPMENT": return "truck.box"
-        default: return "building.2"
-        }
+        return DepartmentColor.icon(for: type)
     }
 
     private var tabTintColor: Color {
@@ -204,10 +188,13 @@ struct EventTabView: View {
 
                 Spacer()
 
-                if let deptType = membership.departmentType {
-                    Circle()
-                        .fill(DepartmentColor.color(for: deptType))
-                        .frame(width: 8, height: 8)
+                Button {
+                    showSettings = true
+                    HapticManager.shared.lightTap()
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 }
             }
             .padding(.horizontal, AppTheme.Spacing.l)
@@ -217,6 +204,10 @@ struct EventTabView: View {
             Rectangle()
                 .fill(AppTheme.dividerColor(for: colorScheme))
                 .frame(height: 1)
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+                .environmentObject(appState)
         }
     }
 

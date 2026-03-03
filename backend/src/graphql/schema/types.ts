@@ -212,6 +212,7 @@ const types = `#graphql
     checkIn: CheckIn
     isCheckedIn: Boolean!
     isCaptain: Boolean!
+    canCount: Boolean!
     status: AssignmentStatus!
     respondedAt: DateTime
     declineReason: String

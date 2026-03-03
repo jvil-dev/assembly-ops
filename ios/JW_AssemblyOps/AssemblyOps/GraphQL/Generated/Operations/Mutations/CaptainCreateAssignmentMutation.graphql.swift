@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "CaptainCreateAssignment"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation CaptainCreateAssignment($input: CaptainCreateAssignmentInput!) { captainCreateAssignment(input: $input) { __typename id status isCaptain post { __typename id name } session { __typename id name } shift { __typename id name startTime endTime } eventVolunteer { __typename id user { __typename id firstName lastName } } createdBy { __typename id firstName lastName } } }"#
+        #"mutation CaptainCreateAssignment($input: CaptainCreateAssignmentInput!) { captainCreateAssignment(input: $input) { __typename id status isCaptain canCount post { __typename id name } session { __typename id name } shift { __typename id name startTime endTime } eventVolunteer { __typename id user { __typename id firstName lastName } } createdBy { __typename id firstName lastName } } }"#
       ))
 
     public var input: CaptainCreateAssignmentInput
@@ -46,6 +46,7 @@ extension AssemblyOpsAPI {
           .field("id", AssemblyOpsAPI.ID.self),
           .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
           .field("isCaptain", Bool.self),
+          .field("canCount", Bool.self),
           .field("post", Post.self),
           .field("session", Session.self),
           .field("shift", Shift?.self),
@@ -59,6 +60,7 @@ extension AssemblyOpsAPI {
         var id: AssemblyOpsAPI.ID { __data["id"] }
         var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
         var isCaptain: Bool { __data["isCaptain"] }
+        var canCount: Bool { __data["canCount"] }
         var post: Post { __data["post"] }
         var session: Session { __data["session"] }
         var shift: Shift? { __data["shift"] }

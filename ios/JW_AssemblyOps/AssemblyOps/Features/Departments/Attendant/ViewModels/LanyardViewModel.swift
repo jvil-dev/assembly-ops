@@ -101,6 +101,17 @@ class LanyardViewModel: ObservableObject {
         }
     }
 
+    func resetLanyard(eventId: String) async {
+        error = nil
+
+        do {
+            myStatus = try await AttendantService.shared.resetLanyard(eventId: eventId)
+            HapticManager.shared.success()
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
     // MARK: - Overseer Operations
 
     func loadAllStatuses(eventId: String) async {
@@ -133,6 +144,17 @@ class LanyardViewModel: ObservableObject {
 
         do {
             try await AttendantService.shared.overseerReturnLanyard(eventVolunteerId: eventVolunteerId)
+            await loadAllStatuses(eventId: eventId)
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    func overseerReset(eventVolunteerId: String, eventId: String) async {
+        error = nil
+
+        do {
+            try await AttendantService.shared.overseerResetLanyard(eventVolunteerId: eventVolunteerId)
             await loadAllStatuses(eventId: eventId)
         } catch {
             self.error = error.localizedDescription

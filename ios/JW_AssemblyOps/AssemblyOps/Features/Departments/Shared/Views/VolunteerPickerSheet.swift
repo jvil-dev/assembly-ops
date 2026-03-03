@@ -52,6 +52,7 @@ struct VolunteerPickerSheet: View {
     @State private var errorMessage: String?
     @State private var hasAppeared = false
     @State private var forceAssign = false
+    @State private var canCount = false
     @State private var showError = false
 
     var filteredVolunteers: [VolunteerListItem] {
@@ -150,6 +151,11 @@ struct VolunteerPickerSheet: View {
                 forceAssignCard
                     .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
+                if isAttendantDepartment {
+                    canCountCard
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.02)
+                }
+
                 ForEach(Array(filteredVolunteers.enumerated()), id: \.element.id) { index, volunteer in
                     let isSelected = selectedIds.contains(volunteer.id)
                     Button {
@@ -177,6 +183,10 @@ struct VolunteerPickerSheet: View {
         }
     }
 
+    private var isAttendantDepartment: Bool {
+        sessionState.selectedDepartment?.departmentType == "ATTENDANT"
+    }
+
     // MARK: - Force Assign Card
 
     private var forceAssignCard: some View {
@@ -192,6 +202,27 @@ struct VolunteerPickerSheet: View {
         }
         .tint(deptColor)
         .onChange(of: forceAssign) {
+            HapticManager.shared.lightTap()
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Can Count Card
+
+    private var canCountCard: some View {
+        Toggle(isOn: $canCount) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("assignment.canCount.toggle".localized)
+                    .font(AppTheme.Typography.bodyMedium)
+                    .foregroundStyle(.primary)
+                Text("assignment.canCount.subtitle".localized)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            }
+        }
+        .tint(deptColor)
+        .onChange(of: canCount) {
             HapticManager.shared.lightTap()
         }
         .cardPadding()
@@ -220,7 +251,8 @@ struct VolunteerPickerSheet: View {
                         volunteerId: volunteerId,
                         postId: postId,
                         sessionId: sessionId,
-                        shiftId: shiftIdParam
+                        shiftId: shiftIdParam,
+                        canCount: .some(canCount)
                     )
                     let result = try await NetworkClient.shared.apollo.perform(
                         mutation: AssemblyOpsAPI.ForceAssignmentMutation(input: input)
@@ -241,7 +273,8 @@ struct VolunteerPickerSheet: View {
                     volunteerId: volunteerId,
                     postId: postId,
                     sessionId: sessionId,
-                    shiftId: shiftIdParam
+                    shiftId: shiftIdParam,
+                    canCount: .some(canCount)
                 )
                 let result = try await NetworkClient.shared.apollo.perform(
                     mutation: AssemblyOpsAPI.CreateAssignmentMutation(input: input)
@@ -258,7 +291,8 @@ struct VolunteerPickerSheet: View {
                         volunteerId: volunteerId,
                         postId: postId,
                         sessionId: sessionId,
-                        shiftId: shiftIdParam
+                        shiftId: shiftIdParam,
+                        canCount: .some(canCount)
                     )
                 }
                 let result = try await NetworkClient.shared.apollo.perform(

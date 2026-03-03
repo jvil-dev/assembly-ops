@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "Shifts"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query Shifts($sessionId: ID!, $postId: ID) { shifts(sessionId: $sessionId, postId: $postId) { __typename id name startTime endTime session { __typename id name } post { __typename id name } createdAt createdBy { __typename id firstName lastName } assignments { __typename id eventVolunteer { __typename id user { __typename id firstName lastName } } status checkIn { __typename id } } } }"#
+        #"query Shifts($sessionId: ID!, $postId: ID) { shifts(sessionId: $sessionId, postId: $postId) { __typename id name startTime endTime session { __typename id name } post { __typename id name } createdAt createdBy { __typename id firstName lastName } assignments { __typename id eventVolunteer { __typename id user { __typename id firstName lastName } } status canCount checkIn { __typename id } } } }"#
       ))
 
     public var sessionId: ID
@@ -156,6 +156,7 @@ extension AssemblyOpsAPI {
             .field("id", AssemblyOpsAPI.ID.self),
             .field("eventVolunteer", EventVolunteer?.self),
             .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
+            .field("canCount", Bool.self),
             .field("checkIn", CheckIn?.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -165,6 +166,7 @@ extension AssemblyOpsAPI {
           var id: AssemblyOpsAPI.ID { __data["id"] }
           var eventVolunteer: EventVolunteer? { __data["eventVolunteer"] }
           var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
+          var canCount: Bool { __data["canCount"] }
           var checkIn: CheckIn? { __data["checkIn"] }
 
           /// Shift.Assignment.EventVolunteer

@@ -12,6 +12,7 @@
  *   - declineAssignmentSchema: Decline with optional reason
  *   - forceAssignmentSchema: Admin force-assign (bypasses acceptance)
  *   - setCaptainSchema: Designate assignment as captain
+ *   - setCanCountSchema: Designate assignment as counter
  *   - captainCheckInSchema: Captain checks in group member
  *   - pendingAssignmentsFilterSchema: Filter for pending/declined queries
  *
@@ -33,6 +34,7 @@ export const createAssignmentSchema = z.object({
   postId: z.string().min(1, 'Post ID is required'),
   sessionId: z.string().min(1, 'Session ID is required'),
   shiftId: z.string().min(1).nullish().transform((v: string | null | undefined) => v || null),
+  canCount: z.boolean().optional().default(false),
 });
 
 export const createAssignmentsSchema = z.object({
@@ -42,6 +44,7 @@ export const createAssignmentsSchema = z.object({
 export const updateAssignmentSchema = z.object({
   postId: z.string().min(1, 'Post ID is required').optional(),
   sessionId: z.string().min(1, 'Session ID is required').optional(),
+  canCount: z.boolean().optional(),
 });
 
 export const acceptAssignmentSchema = z.object({
@@ -63,11 +66,17 @@ export const forceAssignmentSchema = z.object({
   sessionId: z.string().min(1, 'Session ID is required'),
   shiftId: z.string().min(1).nullish().transform((v: string | null | undefined) => v || null),
   isCaptain: z.boolean().optional().default(false),
+  canCount: z.boolean().optional().default(false),
 });
 
 export const setCaptainSchema = z.object({
   assignmentId: z.string().min(1, 'Assignment ID is required'),
   isCaptain: z.boolean(),
+});
+
+export const setCanCountSchema = z.object({
+  assignmentId: z.string().min(1, 'Assignment ID is required'),
+  canCount: z.boolean(),
 });
 
 export const captainCheckInSchema = z.object({
@@ -92,5 +101,6 @@ export type AcceptAssignmentInput = z.infer<typeof acceptAssignmentSchema>;
 export type DeclineAssignmentInput = z.infer<typeof declineAssignmentSchema>;
 export type ForceAssignmentInput = z.infer<typeof forceAssignmentSchema>;
 export type SetCaptainInput = z.infer<typeof setCaptainSchema>;
+export type SetCanCountInput = z.infer<typeof setCanCountSchema>;
 export type CaptainCheckInInput = z.infer<typeof captainCheckInSchema>;
 export type PendingAssignmentsFilter = z.infer<typeof pendingAssignmentsFilterSchema>;

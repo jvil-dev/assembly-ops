@@ -13,6 +13,7 @@ export const captainCreateAssignmentSchema = z.object({
   postId: z.string().min(1),
   sessionId: z.string().min(1),
   shiftId: z.string().min(1).nullish().transform(v => v ?? undefined),
+  canCount: z.boolean().optional().default(false),
 });
 export type CaptainCreateAssignmentInput = z.infer<typeof captainCreateAssignmentSchema>;
 

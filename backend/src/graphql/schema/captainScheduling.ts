@@ -20,6 +20,7 @@ export const captainSchedulingTypeDefs = gql`
     postId: ID!
     sessionId: ID!
     shiftId: ID
+    canCount: Boolean
   }
 
   input CaptainSwapInput {

@@ -110,6 +110,7 @@ private struct CachedAssignment: Codable {
     // Assignment status (acceptance workflow)
     let status: String
     let isCaptain: Bool
+    let canCount: Bool
     let respondedAt: Date?
     let declineReason: String?
     let acceptDeadline: Date?
@@ -142,6 +143,7 @@ private struct CachedAssignment: Codable {
         self.shiftEndTime = assignment.shiftEndTime
         self.status = assignment.status.rawValue
         self.isCaptain = assignment.isCaptain
+        self.canCount = assignment.canCount
         self.respondedAt = assignment.respondedAt
         self.declineReason = assignment.declineReason
         self.acceptDeadline = assignment.acceptDeadline
@@ -174,6 +176,7 @@ private struct CachedAssignment: Codable {
             shiftEndTime: shiftEndTime,
             status: AssignmentStatus(rawValue: status) ?? .pending,
             isCaptain: isCaptain,
+            canCount: canCount,
             respondedAt: respondedAt,
             declineReason: declineReason,
             acceptDeadline: acceptDeadline,

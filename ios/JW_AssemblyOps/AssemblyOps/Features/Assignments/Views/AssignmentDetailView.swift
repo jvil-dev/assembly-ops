@@ -47,6 +47,10 @@ struct AssignmentDetailView: View {
         assignment.isAccepted && assignment.departmentType == "ATTENDANT"
     }
 
+    private var isAttendantCounter: Bool {
+        isAttendantAccepted && assignment.canCount
+    }
+
     private var isAttendantCaptain: Bool {
         assignment.isCaptain && assignment.isAccepted && assignment.departmentType == "ATTENDANT"
     }
@@ -78,8 +82,8 @@ struct AssignmentDetailView: View {
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
                 }
 
-                // Attendant sections (accepted attendant assignments only)
-                if isAttendantAccepted {
+                // Attendant sections (designated counters only)
+                if isAttendantCounter {
                     attendantSectionsCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
 
@@ -121,7 +125,7 @@ struct AssignmentDetailView: View {
             }
         }
         .task {
-            if isAttendantAccepted {
+            if isAttendantCounter {
                 await attendantVM.loadPostCountHistory(postId: assignment.postId)
                 if isSeatingPost {
                     await attendantVM.loadPostSessionStatuses(sessionId: assignment.sessionId)
@@ -190,21 +194,23 @@ struct AssignmentDetailView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.l) {
             Text("Details")
                 .font(AppTheme.Typography.headline)
-                .foregroundStyle(AppTheme.themeColor)
+                .foregroundStyle(assignment.departmentColor)
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
                 DetailRow(
                     icon: "calendar",
                     title: "Date",
                     value: assignment.date.formatted(date: .complete, time: .omitted),
-                    colorScheme: colorScheme
+                    colorScheme: colorScheme,
+                    accentColor: assignment.departmentColor
                 )
 
                 DetailRow(
                     icon: "clock",
                     title: "Time",
                     value: assignment.timeRangeFormatted,
-                    colorScheme: colorScheme
+                    colorScheme: colorScheme,
+                    accentColor: assignment.departmentColor
                 )
 
                 if let location = assignment.postLocation {
@@ -212,7 +218,8 @@ struct AssignmentDetailView: View {
                         icon: "mappin",
                         title: "Location",
                         value: location,
-                        colorScheme: colorScheme
+                        colorScheme: colorScheme,
+                        accentColor: assignment.departmentColor
                     )
                 }
 
@@ -220,7 +227,8 @@ struct AssignmentDetailView: View {
                     icon: "person.2",
                     title: "Session",
                     value: assignment.sessionName,
-                    colorScheme: colorScheme
+                    colorScheme: colorScheme,
+                    accentColor: assignment.departmentColor
                 )
 
                 if let shiftName = assignment.shiftName, assignment.hasShift {
@@ -228,7 +236,8 @@ struct AssignmentDetailView: View {
                         icon: "clock.arrow.2.circlepath",
                         title: "Shift",
                         value: shiftName,
-                        colorScheme: colorScheme
+                        colorScheme: colorScheme,
+                        accentColor: assignment.departmentColor
                     )
                 }
             }
@@ -361,7 +370,7 @@ struct AssignmentDetailView: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, AppTheme.Spacing.m)
-                .background(attendanceCount > 0 ? AppTheme.themeColor : AppTheme.textTertiary(for: colorScheme))
+                .background(attendanceCount > 0 ? assignment.departmentColor : AppTheme.textTertiary(for: colorScheme))
                 .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
             }
             .buttonStyle(.plain)
@@ -547,7 +556,7 @@ struct AssignmentDetailView: View {
                     .foregroundStyle(.yellow)
                 Text("Your Group")
                     .font(AppTheme.Typography.headline)
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(assignment.departmentColor)
             }
 
             if isAttendantCaptain {
@@ -587,13 +596,14 @@ private struct DetailRow: View {
     let title: String
     let value: String
     let colorScheme: ColorScheme
+    var accentColor: Color = AppTheme.themeColor
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.m) {
             // Icon
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(AppTheme.themeColor)
+                .foregroundStyle(accentColor)
                 .frame(width: 24, height: 24)
 
             // Title

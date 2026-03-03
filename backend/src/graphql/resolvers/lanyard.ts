@@ -13,6 +13,8 @@
  *   - returnLanyard(eventId): Volunteer returns
  *   - overseerPickUpLanyard(eventVolunteerId): Overseer marks pickup
  *   - overseerReturnLanyard(eventVolunteerId): Overseer marks return
+ *   - resetLanyard(eventId): Volunteer resets own status
+ *   - overseerResetLanyard(eventVolunteerId): Overseer resets volunteer's status
  *
  * Authorization:
  *   Volunteer: requireAuth + attendant department check
@@ -192,6 +194,45 @@ const lanyardResolvers = {
 
       const lanyardService = new LanyardService(context.prisma);
       const result = await lanyardService.returnLanyard(eventVolunteerId, vol.eventId);
+      return formatCheckout(result);
+    },
+
+    resetLanyard: async (
+      _parent: unknown,
+      { eventId }: { eventId: string },
+      context: Context
+    ) => {
+      requireAuth(context);
+      pickUpLanyardSchema.parse({ eventId });
+      const { eventVolunteerId } = await resolveAttendantVolunteer(context, eventId);
+
+      const lanyardService = new LanyardService(context.prisma);
+      const result = await lanyardService.resetLanyard(eventVolunteerId, eventId);
+      return formatCheckout(result);
+    },
+
+    overseerResetLanyard: async (
+      _parent: unknown,
+      { eventVolunteerId }: { eventVolunteerId: string },
+      context: Context
+    ) => {
+      requireAuth(context);
+      overseerLanyardSchema.parse({ eventVolunteerId });
+
+      const vol = await context.prisma.eventVolunteer.findUnique({
+        where: { id: eventVolunteerId },
+      });
+      if (!vol) throw new Error('Event volunteer not found');
+
+      if (tryRequireAdmin(context)) {
+        await requireEventAccess(context, vol.eventId);
+      } else {
+        const access = await tryRequireDeptAccessByEvent(context, vol.eventId);
+        if (!access) throw new AuthorizationError('Department access required');
+      }
+
+      const lanyardService = new LanyardService(context.prisma);
+      const result = await lanyardService.resetLanyard(eventVolunteerId, vol.eventId);
       return formatCheckout(result);
     },
   },

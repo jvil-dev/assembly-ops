@@ -570,7 +570,7 @@ describe('Event Operations', () => {
       expect(events.every((e) => e.isPublic === true)).toBe(true);
     });
 
-    it('myAllEvents should deduplicate when user is both EventAdmin and EventVolunteer for the same event', async () => {
+    it('myAllEvents should return both memberships when user is both EventAdmin and EventVolunteer for the same event', async () => {
       // Register a new overseer user
       const email = `dual-role-${Date.now()}@example.com`;
       const registerRes = await request(app)
@@ -625,7 +625,7 @@ describe('Event Operations', () => {
           variables: { input: { accessCode: departmentAccessCode } },
         });
 
-      // myAllEvents must return exactly one entry for this event (overseer wins)
+      // myAllEvents should return both memberships for the same event
       const response = await request(app)
         .post('/graphql')
         .set('Authorization', `Bearer ${dualToken}`)
@@ -647,8 +647,9 @@ describe('Event Operations', () => {
         response.body.data.myAllEvents;
       const forThisEvent = memberships.filter((m) => m.eventId === eventId);
 
-      expect(forThisEvent.length).toBe(1);
-      expect(forThisEvent[0].membershipType).toBe('OVERSEER');
+      expect(forThisEvent.length).toBe(2);
+      const types = forThisEvent.map((m) => m.membershipType).sort();
+      expect(types).toEqual(['OVERSEER', 'VOLUNTEER']);
     });
   });
 

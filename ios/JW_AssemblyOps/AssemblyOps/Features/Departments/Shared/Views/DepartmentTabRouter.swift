@@ -195,8 +195,8 @@ struct AttendantVolunteerDeptView: View {
             .padding(.bottom, AppTheme.Spacing.xxl)
         }
         .themedBackground(scheme: colorScheme)
-        .navigationTitle("Attendant")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showReportIncident) {
             ReportSafetyIncidentView()
         }

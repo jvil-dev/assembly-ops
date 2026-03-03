@@ -580,25 +580,7 @@ struct VolunteerDetailView: View {
 
     private var departmentIcon: String {
         guard let type = volunteer.departmentType else { return "person" }
-
-        switch type.uppercased() {
-        case "PARKING": return "car"
-        case "ATTENDANT": return "person.badge.shield.checkmark"
-        case "AUDIO": return "speaker.wave.3"
-        case "VIDEO": return "video"
-        case "STAGE": return "light.overhead.left"
-        case "CLEANING": return "sparkles"
-        case "COMMITTEE": return "person.3"
-        case "FIRST_AID", "FIRSTAID": return "cross"
-        case "BAPTISM": return "drop"
-        case "INFORMATION", "INFORMATION_VOLUNTEER_SERVICE": return "info.circle"
-        case "ACCOUNTS": return "dollarsign.circle"
-        case "INSTALLATION": return "hammer"
-        case "LOST_FOUND", "LOST_AND_FOUND", "LOST_FOUND_CHECKROOM": return "tray"
-        case "ROOMING": return "bed.double"
-        case "TRUCKING", "TRUCKING_EQUIPMENT": return "truck.box"
-        default: return "person"
-        }
+        return DepartmentColor.icon(for: type)
     }
 
     private func formatAppointment(_ status: String) -> String {

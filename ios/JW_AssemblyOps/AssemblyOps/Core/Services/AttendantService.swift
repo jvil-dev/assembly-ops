@@ -888,6 +888,58 @@ final class AttendantService {
         }
     }
 
+    /// Volunteer resets own lanyard status
+    func resetLanyard(eventId: String) async throws -> LanyardStatusItem {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.ResetLanyardMutation(eventId: eventId)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.resetLanyard {
+                        let item = LanyardStatusItem(
+                            id: data.id,
+                            eventVolunteerId: data.eventVolunteerId,
+                            date: data.date,
+                            pickedUpAt: data.pickedUpAt,
+                            returnedAt: data.returnedAt,
+                            volunteerName: data.volunteerName
+                        )
+                        continuation.resume(returning: item)
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(throwing: AttendantError.serverError("Failed to reset lanyard"))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    /// Overseer resets lanyard status for a volunteer
+    func overseerResetLanyard(eventVolunteerId: String) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.OverseerResetLanyardMutation(eventVolunteerId: eventVolunteerId)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if graphQLResult.data?.overseerResetLanyard != nil {
+                        continuation.resume()
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(throwing: AttendantError.serverError("Failed to reset lanyard"))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
     // MARK: - Volunteer Meetings
 
     /// Fetch meetings the current volunteer is assigned to

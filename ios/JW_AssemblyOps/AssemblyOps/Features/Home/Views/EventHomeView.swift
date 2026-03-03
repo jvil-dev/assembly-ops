@@ -37,7 +37,6 @@ struct EventHomeView: View {
     @ObservedObject private var messageBadgeManager = UnreadBadgeManager.shared
     @ObservedObject private var pendingBadgeManager = PendingBadgeManager.shared
     @State private var hasAppeared = false
-    @State private var showSettings = false
     @State private var isCheckingIn = false
     @State private var now = Date()
 
@@ -65,12 +64,6 @@ struct EventHomeView: View {
                     eventDetailsCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                    // Department tag
-                    if let deptName = membership.departmentName {
-                        departmentTagCard(name: deptName)
-                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
-                    }
-
                     if isOverseer {
                         // Overseer: Today's coverage schedule
                         todaysAssignmentsSection
@@ -96,17 +89,7 @@ struct EventHomeView: View {
                 .padding(.bottom, AppTheme.Spacing.xxl)
             }
             .themedBackground(scheme: colorScheme)
-            .navigationTitle(membership.eventName)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    settingsButton
-                }
-            }
-            .sheet(isPresented: $showSettings) {
-                SettingsView()
-                    .environmentObject(appState)
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .onAppear {
                 withAnimation(AppTheme.entranceAnimation) {
                     hasAppeared = true
@@ -130,37 +113,37 @@ struct EventHomeView: View {
         }
     }
 
-    // MARK: - Settings Button
-
-    private var settingsButton: some View {
-        Button {
-            showSettings = true
-            HapticManager.shared.lightTap()
-        } label: {
-            ZStack {
-                Circle()
-                    .fill(AppTheme.themeColor.opacity(colorScheme == .dark ? 0.25 : 0.12))
-                    .frame(width: 34, height: 34)
-                Image(systemName: "gearshape")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(AppTheme.themeColor)
-            }
-        }
-    }
-
     // MARK: - Event Details Card
+
+    private var roleBadgeText: String {
+        if isOverseer {
+            return membership.hierarchyRole == "ASSISTANT_OVERSEER" ? "Asst. Overseer" : "Overseer"
+        }
+        return "Volunteer"
+    }
 
     private var eventDetailsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            // Theme + Event Type badge
-            Text(membership.themeBadgeText)
-                .font(AppTheme.Typography.caption)
-                .foregroundStyle(departmentColor)
-                .padding(.horizontal, AppTheme.Spacing.m)
-                .padding(.vertical, 6)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(departmentColor.opacity(0.10))
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+            // Theme + Event Type badge with role pill
+            HStack {
+                Text(membership.themeBadgeText)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(departmentColor)
+
+                Spacer()
+
+                Text(roleBadgeText)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(departmentColor)
+                    .padding(.horizontal, AppTheme.Spacing.s)
+                    .padding(.vertical, 4)
+                    .background(departmentColor.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+            }
+            .padding(.horizontal, AppTheme.Spacing.m)
+            .padding(.vertical, 6)
+            .background(departmentColor.opacity(0.10))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
 
             // Info rows
             HStack(spacing: AppTheme.Spacing.l) {
@@ -187,42 +170,6 @@ struct EventHomeView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Department Tag Card
-
-    private func departmentTagCard(name: String) -> some View {
-        HStack(spacing: AppTheme.Spacing.m) {
-            ZStack {
-                Circle()
-                    .fill(departmentColor.opacity(0.15))
-                    .frame(width: 40, height: 40)
-                Image(systemName: departmentIcon)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(departmentColor)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Your Department")
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                Text(name)
-                    .font(AppTheme.Typography.headline)
-                    .foregroundStyle(.primary)
-            }
-
-            Spacer()
-
-            Text(isOverseer ? (membership.hierarchyRole == "ASSISTANT_OVERSEER" ? "Asst. Overseer" : "Overseer") : "Volunteer")
-                .font(AppTheme.Typography.caption)
-                .foregroundStyle(departmentColor)
-                .padding(.horizontal, AppTheme.Spacing.s)
-                .padding(.vertical, 4)
-                .background(departmentColor.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-        }
-        .cardPadding()
-        .themedCard(scheme: colorScheme)
     }
 
     // MARK: - Today's Assignments
@@ -792,24 +739,7 @@ struct EventHomeView: View {
 
     private var departmentIcon: String {
         guard let type = membership.departmentType else { return "building.2" }
-        switch type.uppercased() {
-        case "PARKING": return "car"
-        case "ATTENDANT": return "person.badge.shield.checkmark"
-        case "AUDIO": return "speaker.wave.3"
-        case "VIDEO": return "video"
-        case "STAGE": return "light.overhead.left"
-        case "CLEANING": return "sparkles"
-        case "COMMITTEE": return "person.3"
-        case "FIRST_AID", "FIRSTAID": return "cross"
-        case "BAPTISM": return "drop"
-        case "INFORMATION", "INFORMATION_VOLUNTEER_SERVICE": return "info.circle"
-        case "ACCOUNTS": return "dollarsign.circle"
-        case "INSTALLATION": return "hammer"
-        case "LOST_FOUND", "LOST_AND_FOUND", "LOST_FOUND_CHECKROOM": return "tray"
-        case "ROOMING": return "bed.double"
-        case "TRUCKING", "TRUCKING_EQUIPMENT": return "truck.box"
-        default: return "building.2"
-        }
+        return DepartmentColor.icon(for: type)
     }
 }
 
