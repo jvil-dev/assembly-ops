@@ -417,6 +417,16 @@ struct SlotDetailSheet: View {
                 ForEach(assignments) { assignment in
                     AssignmentRow(assignment: assignment, colorScheme: colorScheme, accentColor: deptColor)
                         .contextMenu {
+                            if isAttendantDept {
+                                Button {
+                                    Task { await toggleCanCount(assignment) }
+                                } label: {
+                                    Label(
+                                        assignment.canCount ? "assignment.canCount.unmark".localized : "assignment.canCount.mark".localized,
+                                        systemImage: assignment.canCount ? "number.square.fill" : "number.square"
+                                    )
+                                }
+                            }
                             Button(role: .destructive) {
                                 assignmentToRemove = assignment
                                 showRemoveConfirmation = true
@@ -498,6 +508,11 @@ struct SlotDetailSheet: View {
                             .font(AppTheme.Typography.body)
                             .foregroundStyle(.primary)
                         Spacer()
+                        if assignment.canCount {
+                            Image(systemName: "number.square.fill")
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(deptColor)
+                        }
                         if assignment.forceAssigned {
                             Text("slot.forceAssigned".localized)
                                 .font(AppTheme.Typography.caption)
@@ -505,6 +520,16 @@ struct SlotDetailSheet: View {
                         }
                     }
                     .contextMenu {
+                        if isAttendantDept {
+                            Button {
+                                Task { await toggleCanCount(assignment) }
+                            } label: {
+                                Label(
+                                    assignment.canCount ? "assignment.canCount.unmark".localized : "assignment.canCount.mark".localized,
+                                    systemImage: assignment.canCount ? "number.square.fill" : "number.square"
+                                )
+                            }
+                        }
                         Button(role: .destructive) {
                             assignmentToRemove = assignment
                             showRemoveConfirmation = true
@@ -587,7 +612,7 @@ struct SlotDetailSheet: View {
                         .padding(.horizontal, AppTheme.Spacing.m)
                         .padding(.vertical, AppTheme.Spacing.s)
                         .background(selectedMain == main
-                            ? DepartmentColor.color(for: "ATTENDANT")
+                            ? deptColor
                             : AppTheme.cardBackgroundSecondary(for: colorScheme))
                         .foregroundStyle(selectedMain == main ? .white : AppTheme.textSecondary(for: colorScheme))
                         .clipShape(Capsule())
@@ -612,16 +637,16 @@ struct SlotDetailSheet: View {
                                     .padding(.horizontal, AppTheme.Spacing.m)
                                     .padding(.vertical, AppTheme.Spacing.s)
                                     .background(selectedSub == sub
-                                        ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                                        ? deptColor.opacity(0.2)
                                         : AppTheme.cardBackgroundSecondary(for: colorScheme))
                                     .foregroundStyle(selectedSub == sub
-                                        ? DepartmentColor.color(for: "ATTENDANT")
+                                        ? deptColor
                                         : AppTheme.textSecondary(for: colorScheme))
                                     .clipShape(Capsule())
                                     .overlay(
                                         Capsule()
                                             .strokeBorder(selectedSub == sub
-                                                ? DepartmentColor.color(for: "ATTENDANT")
+                                                ? deptColor
                                                 : Color.clear, lineWidth: 1)
                                     )
                             }
@@ -643,16 +668,16 @@ struct SlotDetailSheet: View {
                             .padding(.horizontal, AppTheme.Spacing.m)
                             .padding(.vertical, AppTheme.Spacing.s)
                             .background(showCustomSub
-                                ? DepartmentColor.color(for: "ATTENDANT").opacity(0.2)
+                                ? deptColor.opacity(0.2)
                                 : AppTheme.cardBackgroundSecondary(for: colorScheme))
                             .foregroundStyle(showCustomSub
-                                ? DepartmentColor.color(for: "ATTENDANT")
+                                ? deptColor
                                 : AppTheme.textSecondary(for: colorScheme))
                             .clipShape(Capsule())
                             .overlay(
                                 Capsule()
                                     .strokeBorder(showCustomSub
-                                        ? DepartmentColor.color(for: "ATTENDANT")
+                                        ? deptColor
                                         : Color.clear, lineWidth: 1)
                             )
                         }
@@ -690,7 +715,7 @@ struct SlotDetailSheet: View {
                             .padding(.horizontal, AppTheme.Spacing.m)
                             .padding(.vertical, AppTheme.Spacing.s)
                             .background(editLocation == option
-                                ? DepartmentColor.color(for: "STAGE")
+                                ? deptColor
                                 : AppTheme.cardBackgroundSecondary(for: colorScheme))
                             .foregroundStyle(editLocation == option
                                 ? .white
@@ -732,6 +757,22 @@ struct SlotDetailSheet: View {
             HapticManager.shared.error()
         }
         assignmentToRemove = nil
+    }
+
+    private func toggleCanCount(_ assignment: CoverageAssignment) async {
+        let input = AssemblyOpsAPI.SetCanCountInput(
+            assignmentId: assignment.id,
+            canCount: !assignment.canCount
+        )
+        do {
+            let _ = try await NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.SetCanCountMutation(input: input)
+            )
+            HapticManager.shared.success()
+            await viewModel.loadCoverage()
+        } catch {
+            HapticManager.shared.error()
+        }
     }
 
     private func editableField(label: String, text: Binding<String>, placeholder: String = "") -> some View {

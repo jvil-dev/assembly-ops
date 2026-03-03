@@ -80,6 +80,7 @@ const assignmentTypeDefs = `#graphql
     checkIn: CoverageCheckIn
     status: AssignmentStatus!
     forceAssigned: Boolean!
+    canCount: Boolean!
     shiftId: ID
     shiftName: String
   }
@@ -110,11 +111,13 @@ const assignmentTypeDefs = `#graphql
     sessionId: ID!
     shiftId: ID
     isCaptain: Boolean
+    canCount: Boolean
   }
 
   input UpdateAssignmentInput {
     postId: ID
     isCaptain: Boolean
+    canCount: Boolean
   }
 
   input AcceptAssignmentInput {
@@ -132,11 +135,17 @@ const assignmentTypeDefs = `#graphql
     sessionId: ID!
     shiftId: ID
     isCaptain: Boolean
+    canCount: Boolean
   }
 
   input SetCaptainInput {
     assignmentId: ID!
     isCaptain: Boolean!
+  }
+
+  input SetCanCountInput {
+    assignmentId: ID!
+    canCount: Boolean!
   }
 
   input CaptainCheckInInput {
@@ -179,6 +188,7 @@ const assignmentTypeDefs = `#graphql
 
     forceAssignment(input: ForceAssignmentInput!): ScheduleAssignment!
     setCaptain(input: SetCaptainInput!): ScheduleAssignment!
+    setCanCount(input: SetCanCountInput!): ScheduleAssignment!
     setAcceptDeadline(assignmentId: ID!, deadline: DateTime!): ScheduleAssignment!
 
     captainCheckIn(input: CaptainCheckInInput!): ScheduleAssignment!

@@ -3,6 +3,7 @@ query MyAssignments($eventId: ID!) {
     id
     status
     isCaptain
+    canCount
     respondedAt
     declineReason
     acceptDeadline

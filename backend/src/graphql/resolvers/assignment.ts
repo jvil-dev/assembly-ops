@@ -43,6 +43,7 @@ import {
   DeclineAssignmentInput,
   ForceAssignmentInput,
   SetCaptainInput,
+  SetCanCountInput,
   CaptainCheckInInput,
   PendingAssignmentsFilter,
 } from '../validators/assignment.js';
@@ -487,6 +488,31 @@ const assignmentResolvers = {
       }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.setCaptain(input);
+    },
+
+    setCanCount: async (
+      _parent: unknown,
+      { input }: { input: SetCanCountInput },
+      context: Context
+    ) => {
+      requireAuth(context);
+      const isAdmin = tryRequireAdmin(context);
+      if (isAdmin) {
+        const assignmentService = new AssignmentService(context.prisma);
+        const eventId = await assignmentService.getAssignmentEventId(input.assignmentId);
+        await requireEventAccess(context, eventId);
+      } else {
+        const assignmentService = new AssignmentService(context.prisma);
+        const eventId = await assignmentService.getAssignmentEventId(input.assignmentId);
+        const deptAccess = await tryRequireDeptAccessByEvent(context, eventId);
+        if (!deptAccess) {
+          const assignment = await context.prisma.scheduleAssignment.findUnique({ where: { id: input.assignmentId }, select: { postId: true } });
+          if (!assignment) throw new GraphQLError('Assignment not found', { extensions: { code: 'NOT_FOUND' } });
+          await requireAreaOverseer(context, assignment.postId);
+        }
+      }
+      const assignmentService = new AssignmentService(context.prisma);
+      return assignmentService.setCanCount(input);
     },
 
     setAcceptDeadline: async (

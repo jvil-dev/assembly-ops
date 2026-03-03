@@ -78,6 +78,7 @@ struct CoverageAssignment: Identifiable, Equatable {
     let checkIn: CoverageCheckInInfo?
     let status: AssignmentStatus
     let forceAssigned: Bool
+    let canCount: Bool
     let shiftId: String?
     let shiftName: String?
 

@@ -136,6 +136,7 @@ final class CoverageMatrixViewModel: ObservableObject {
                         },
                         status: mapStatus(assignment.status),
                         forceAssigned: assignment.forceAssigned,
+                        canCount: assignment.canCount,
                         shiftId: assignment.shiftId,
                         shiftName: assignment.shiftName
                     )
