@@ -63,7 +63,7 @@ const congregationResolvers = {
       { query }: { query: string },
       context: Context
     ): Promise<Congregation[]> => {
-      requireAuth(context);
+      // No auth required — used during registration before user is logged in
       const trimmed = query.trim();
       if (trimmed.length < 3) return [];
       return context.prisma.congregation.findMany({
