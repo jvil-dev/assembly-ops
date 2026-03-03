@@ -52,6 +52,7 @@ import {
   DeclineAssignmentInput,
   ForceAssignmentInput,
   SetCaptainInput,
+  SetCanCountInput,
   CaptainCheckInInput,
   PendingAssignmentsFilter,
   createAssignmentSchema,
@@ -64,6 +65,7 @@ import {
   declineAssignmentSchema,
   forceAssignmentSchema,
   setCaptainSchema,
+  setCanCountSchema,
   captainCheckInSchema,
 } from '../graphql/validators/assignment.js';
 
@@ -103,6 +105,7 @@ export interface CoverageSlot {
     } | null;
     status: string;
     forceAssigned: boolean;
+    canCount: boolean;
     shiftId: string | null;
     shiftName: string | null;
   }>;
@@ -131,7 +134,7 @@ export class AssignmentService {
       throw new ValidationError(result.error.issues[0].message);
     }
 
-    const { volunteerId, postId, sessionId, shiftId } = result.data;
+    const { volunteerId, postId, sessionId, shiftId, canCount } = result.data;
 
     const [volunteer, post, session] = await Promise.all([
       this.prisma.eventVolunteer.findUnique({
@@ -208,6 +211,7 @@ export class AssignmentService {
         postId,
         sessionId,
         shiftId: shiftId || undefined,
+        canCount: canCount ?? false,
       },
       include: {
         eventVolunteer: { include: { user: true } },
@@ -320,6 +324,7 @@ export class AssignmentService {
       data: {
         postId: validated.postId,
         sessionId: validated.sessionId,
+        ...(validated.canCount !== undefined && { canCount: validated.canCount }),
       },
       include: {
         eventVolunteer: { include: { user: true } },
@@ -560,6 +565,7 @@ export class AssignmentService {
             checkIn: a.checkIn,
             status: a.status,
             forceAssigned: a.forceAssigned,
+            canCount: a.canCount,
             shiftId: a.shift?.id ?? null,
             shiftName: a.shift?.name ?? null,
           })),
@@ -699,7 +705,7 @@ export class AssignmentService {
       throw new ValidationError(result.error.issues[0].message);
     }
 
-    const { volunteerId, postId, sessionId, shiftId, isCaptain } = result.data;
+    const { volunteerId, postId, sessionId, shiftId, isCaptain, canCount } = result.data;
 
     // Verify eventVolunteer exists
     const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
@@ -760,6 +766,7 @@ export class AssignmentService {
           status: 'ACCEPTED',
           forceAssigned: true,
           isCaptain: isCaptain ?? existing.isCaptain,
+          canCount: canCount ?? existing.canCount,
           respondedAt: new Date(),
         },
         include: {
@@ -781,6 +788,7 @@ export class AssignmentService {
         status: 'ACCEPTED',
         forceAssigned: true,
         isCaptain: isCaptain ?? false,
+        canCount: canCount ?? false,
         respondedAt: new Date(),
         ...(createdByUserId ? { createdByUserId } : {}),
       },
@@ -820,6 +828,34 @@ export class AssignmentService {
     return this.prisma.scheduleAssignment.update({
       where: { id: assignment.id },
       data: { isCaptain: result.data.isCaptain },
+      include: {
+        eventVolunteer: { include: { user: true } },
+        post: { include: { department: true } },
+        session: true,
+      },
+    });
+  }
+
+  /**
+   * Set canCount status on an assignment (overseer or captain action)
+   */
+  async setCanCount(input: SetCanCountInput): Promise<ScheduleAssignment> {
+    const result = setCanCountSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+
+    const assignment = await this.prisma.scheduleAssignment.findUnique({
+      where: { id: result.data.assignmentId },
+    });
+
+    if (!assignment) {
+      throw new NotFoundError('Assignment');
+    }
+
+    return this.prisma.scheduleAssignment.update({
+      where: { id: assignment.id },
+      data: { canCount: result.data.canCount },
       include: {
         eventVolunteer: { include: { user: true } },
         post: { include: { department: true } },
@@ -880,7 +916,7 @@ export class AssignmentService {
       data: {
         assignmentId: targetAssignment.id,
         notes: result.data.notes
-          ? `Checked in by captain.${result.data.notes}`
+          ? `Checked in by captain. ${result.data.notes}`
           : 'Checked in by captain',
         status: 'CHECKED_IN',
       },

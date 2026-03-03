@@ -35,6 +35,7 @@ query DepartmentCoverage($departmentId: ID!) {
       }
       status
       forceAssigned
+      canCount
       shiftId
       shiftName
     }

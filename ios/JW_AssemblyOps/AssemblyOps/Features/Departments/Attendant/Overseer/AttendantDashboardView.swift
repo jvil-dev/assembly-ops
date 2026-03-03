@@ -88,7 +88,8 @@ struct AttendantDashboardView: View {
                     .padding(.bottom, AppTheme.Spacing.xxl)
                 }
                 .themedBackground(scheme: colorScheme)
-                .navigationTitle("attendant.dashboard.title".localized)
+                .navigationTitle("")
+                .navigationBarTitleDisplayMode(.inline)
                 .refreshable { await loadAllData() }
                 .onAppear {
                     withAnimation(AppTheme.entranceAnimation) {

@@ -593,6 +593,7 @@ model ScheduleAssignment {
   shiftId          String? // FK to Shift (null = whole-session assignment)
   status           AssignmentStatus @default(PENDING)
   isCaptain        Boolean          @default(false)
+  canCount         Boolean          @default(false)
   respondedAt      DateTime?
   declineReason    String?
   acceptedDeadline DateTime?

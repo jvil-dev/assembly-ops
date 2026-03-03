@@ -56,8 +56,8 @@ struct GenericDepartmentView: View {
             .padding(.bottom, AppTheme.Spacing.xxl)
         }
         .themedBackground(scheme: colorScheme)
-        .navigationTitle(membership.departmentName ?? "Department")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             withAnimation(AppTheme.entranceAnimation) {
                 hasAppeared = true

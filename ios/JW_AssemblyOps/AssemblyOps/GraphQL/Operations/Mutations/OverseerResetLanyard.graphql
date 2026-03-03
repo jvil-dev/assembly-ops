@@ -1,0 +1,11 @@
+mutation OverseerResetLanyard($eventVolunteerId: ID!) {
+  overseerResetLanyard(eventVolunteerId: $eventVolunteerId) {
+    id
+    eventVolunteerId
+    eventId
+    date
+    pickedUpAt
+    returnedAt
+    volunteerName
+  }
+}

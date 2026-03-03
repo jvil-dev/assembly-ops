@@ -145,6 +145,7 @@ const captainSchedulingResolvers = {
         sessionId: validated.sessionId,
         shiftId: validated.shiftId ?? null,
         isCaptain: false,
+        canCount: validated.canCount ?? false,
       }, context.user!.id);
     },
 

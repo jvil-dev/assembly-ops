@@ -101,6 +101,7 @@ struct Assignment: Identifiable, Equatable {
     // Assignment status
     var status: AssignmentStatus
     var isCaptain: Bool
+    var canCount: Bool
     var respondedAt: Date?
     var declineReason: String?
     var acceptDeadline: Date?
@@ -276,6 +277,7 @@ extension Assignment {
         // Assignment acceptance workflow fields
         self.status = AssignmentStatus(rawValue: graphQL.status.rawValue) ?? .pending
         self.isCaptain = graphQL.isCaptain
+        self.canCount = graphQL.canCount
         self.respondedAt = graphQL.respondedAt.flatMap { isoFormatter.date(from: $0) }
         self.declineReason = graphQL.declineReason
         self.acceptDeadline = graphQL.acceptDeadline.flatMap { isoFormatter.date(from: $0) }
@@ -319,6 +321,7 @@ extension Assignment {
             shiftEndTime: nil,
             status: .accepted,
             isCaptain: false,
+            canCount: false,
             respondedAt: nil,
             declineReason: nil,
             acceptDeadline: nil,
@@ -352,6 +355,7 @@ extension Assignment {
             shiftEndTime: nil,
             status: .pending,
             isCaptain: false,
+            canCount: false,
             respondedAt: nil,
             declineReason: nil,
             acceptDeadline: Calendar.current.date(byAdding: .day, value: 3, to: Date()),
@@ -385,6 +389,7 @@ extension Assignment {
             shiftEndTime: nil,
             status: .accepted,
             isCaptain: true,
+            canCount: false,
             respondedAt: Date(),
             declineReason: nil,
             acceptDeadline: nil,
@@ -418,6 +423,7 @@ extension Assignment {
             shiftEndTime: nil,
             status: .accepted,
             isCaptain: false,
+            canCount: false,
             respondedAt: Date(),
             declineReason: nil,
             acceptDeadline: nil,
@@ -451,6 +457,7 @@ extension Assignment {
             shiftEndTime: nil,
             status: .accepted,
             isCaptain: false,
+            canCount: false,
             respondedAt: Date(),
             declineReason: nil,
             acceptDeadline: nil,
@@ -484,6 +491,7 @@ extension Assignment {
             shiftEndTime: nil,
             status: .accepted,
             isCaptain: false,
+            canCount: false,
             respondedAt: Date(),
             declineReason: nil,
             acceptDeadline: nil,
@@ -517,6 +525,7 @@ extension Assignment {
             shiftEndTime: nil,
             status: .accepted,
             isCaptain: false,
+            canCount: false,
             respondedAt: nil,
             declineReason: nil,
             acceptDeadline: nil,
@@ -537,6 +546,7 @@ extension Assignment {
       static func == (lhs: Assignment, rhs: Assignment) -> Bool {
           lhs.id == rhs.id &&
           lhs.status == rhs.status &&
+          lhs.canCount == rhs.canCount &&
           lhs.checkInStatus == rhs.checkInStatus &&
           lhs.checkInTime == rhs.checkInTime &&
           lhs.checkOutTime == rhs.checkOutTime

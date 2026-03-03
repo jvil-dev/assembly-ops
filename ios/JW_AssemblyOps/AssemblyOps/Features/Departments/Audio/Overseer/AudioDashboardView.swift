@@ -61,8 +61,8 @@ struct AudioDashboardView: View {
                     .padding(.bottom, AppTheme.Spacing.xxl)
                 }
                 .themedBackground(scheme: colorScheme)
-                .navigationTitle("audio.dashboard.title".localized)
-                .navigationBarTitleDisplayMode(.large)
+                .navigationTitle("")
+                .navigationBarTitleDisplayMode(.inline)
                 .refreshable {
                     await loadData()
                 }

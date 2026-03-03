@@ -129,6 +129,10 @@ export class AttendanceService {
       throw new AuthorizationError('You do not have an accepted assignment on this post');
     }
 
+    if (!assignment.canCount) {
+      throw new AuthorizationError('You are not designated as a counter for this assignment');
+    }
+
     // Get post name to use as the section label
     const post = await this.prisma.post.findUnique({
       where: { id: postId },

@@ -59,7 +59,7 @@ struct SessionDetailView: View {
     /// Unique posts that have slots in this session
     private var sessionPosts: [CoveragePost] {
         let postIds = Set(sessionSlots.map { $0.postId })
-        return viewModel.posts.filter { postIds.contains($0.id) }
+        return viewModel.posts.filter { postIds.contains($0.id) }.sorted { $0.sortOrder < $1.sortOrder }
     }
 
     /// Whether any posts have categories assigned
@@ -119,7 +119,7 @@ struct SessionDetailView: View {
             guard let postsForKey = grouped[key] else {
                 return (category: categoryName, posts: [])
             }
-            return (category: categoryName, posts: postsForKey)
+            return (category: categoryName, posts: postsForKey.sorted { $0.sortOrder < $1.sortOrder })
         }
 
         return result

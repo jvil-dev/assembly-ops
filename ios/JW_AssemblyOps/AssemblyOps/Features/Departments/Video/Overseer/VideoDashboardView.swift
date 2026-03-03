@@ -54,8 +54,8 @@ struct VideoDashboardView: View {
                     .padding(.bottom, AppTheme.Spacing.xxl)
                 }
                 .themedBackground(scheme: colorScheme)
-                .navigationTitle("video.dashboard.title".localized)
-                .navigationBarTitleDisplayMode(.large)
+                .navigationTitle("")
+                .navigationBarTitleDisplayMode(.inline)
                 .refreshable {
                     await loadData()
                 }

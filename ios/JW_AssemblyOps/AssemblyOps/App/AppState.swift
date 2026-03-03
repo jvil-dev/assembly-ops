@@ -18,8 +18,7 @@
 //   - currentEventId: Active event context for volunteer tab views
 //
 // Methods:
-//   - checkAuthState(): Verify stored tokens on app launch
-//   - refreshTokenIfNeeded(): Exchange expired access token for new one
+//   - checkAuthState(): Verify stored tokens on app launch (token refresh handled by interceptor)
 //   - didLogin(user:...): Store tokens after unified user login
 //   - didUpdateOverseerMode(isOverseer:): Update user's overseer flag
 //   - logout(): Clear all tokens and reset state
@@ -56,6 +55,15 @@ final class AppState: ObservableObject {
 
     private init() {
         checkAuthState()
+        NotificationCenter.default.addObserver(
+            forName: .authSessionExpired,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.logout()
+            }
+        }
     }
 
     // MARK: - Auth State
@@ -69,20 +77,15 @@ final class AppState: ObservableObject {
             return
         }
 
-        if KeychainManager.shared.isTokenExpired {
-            refreshTokenIfNeeded()
-        } else {
-            fetchUserProfile()
-        }
+        // The AuthTokenInterceptor handles token refresh transparently,
+        // so we just fetch the profile directly — if the token is expired,
+        // the interceptor will refresh it before the request goes out.
+        fetchUserProfile()
     }
 
     // MARK: - Profile Fetch
 
     private func fetchUserProfile() {
-        fetchMeProfile()
-    }
-
-    private func fetchMeProfile() {
         NetworkClient.shared.apollo.fetch(
             query: AssemblyOpsAPI.MeQuery(),
             cachePolicy: .fetchIgnoringCacheData
@@ -94,47 +97,15 @@ final class AppState: ObservableObject {
                         self?.currentUser = UserInfo(from: me)
                     }
                 case .failure(let error):
+                    #if DEBUG
                     print("Profile fetch failed: \(error)")
+                    #endif
                 }
+                // Set isLoggedIn on both success and failure — tokens are valid
+                // (the interceptor already refreshed if needed). Profile can be
+                // re-fetched later; don't kick the user to login on a transient error.
                 self?.isLoggedIn = true
                 self?.isLoading = false
-            }
-        }
-    }
-
-    // MARK: - Token Refresh
-
-    func refreshTokenIfNeeded() {
-        guard let refreshToken = KeychainManager.shared.refreshToken else {
-            logout()
-            return
-        }
-
-        NetworkClient.shared.apollo.perform(
-            mutation: AssemblyOpsAPI.RefreshTokenMutation(
-                input: .init(refreshToken: refreshToken)
-            )
-        ) { [weak self] result in
-            Task { @MainActor in
-                switch result {
-                case .success(let graphQLResult):
-                    if let data = graphQLResult.data?.refreshToken {
-                        KeychainManager.shared.saveTokens(
-                            accessToken: data.accessToken,
-                            refreshToken: data.refreshToken,
-                            expiresIn: data.expiresIn
-                        )
-                        NetworkClient.shared.resetClient()
-                        self?.fetchUserProfile()
-                    } else {
-                        self?.logout()
-                        self?.isLoading = false
-                    }
-                case .failure(let error):
-                    print("Token refresh failed: \(error)")
-                    self?.logout()
-                    self?.isLoading = false
-                }
             }
         }
     }

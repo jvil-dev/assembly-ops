@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MyAssignments"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query MyAssignments($eventId: ID!) { myAssignments(eventId: $eventId) { __typename id status isCaptain respondedAt declineReason acceptDeadline forceAssigned post { __typename id name location category area { __typename id name } department { __typename id name departmentType event { __typename id } } } session { __typename id name date startTime endTime } shift { __typename id name startTime endTime } checkIn { __typename id status checkInTime checkOutTime } } }"#
+        #"query MyAssignments($eventId: ID!) { myAssignments(eventId: $eventId) { __typename id status isCaptain canCount respondedAt declineReason acceptDeadline forceAssigned post { __typename id name location category area { __typename id name } department { __typename id name departmentType event { __typename id } } } session { __typename id name date startTime endTime } shift { __typename id name startTime endTime } checkIn { __typename id status checkInTime checkOutTime } } }"#
       ))
 
     public var eventId: ID
@@ -46,6 +46,7 @@ extension AssemblyOpsAPI {
           .field("id", AssemblyOpsAPI.ID.self),
           .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
           .field("isCaptain", Bool.self),
+          .field("canCount", Bool.self),
           .field("respondedAt", AssemblyOpsAPI.DateTime?.self),
           .field("declineReason", String?.self),
           .field("acceptDeadline", AssemblyOpsAPI.DateTime?.self),
@@ -62,6 +63,7 @@ extension AssemblyOpsAPI {
         var id: AssemblyOpsAPI.ID { __data["id"] }
         var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
         var isCaptain: Bool { __data["isCaptain"] }
+        var canCount: Bool { __data["canCount"] }
         var respondedAt: AssemblyOpsAPI.DateTime? { __data["respondedAt"] }
         var declineReason: String? { __data["declineReason"] }
         var acceptDeadline: AssemblyOpsAPI.DateTime? { __data["acceptDeadline"] }

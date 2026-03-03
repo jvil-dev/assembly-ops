@@ -16,14 +16,16 @@ extension AssemblyOpsAPI {
       eventVolunteerId: ID,
       postId: ID,
       sessionId: ID,
-      shiftId: GraphQLNullable<ID> = nil
+      shiftId: GraphQLNullable<ID> = nil,
+      canCount: GraphQLNullable<Bool> = nil
     ) {
       __data = InputDict([
         "eventId": eventId,
         "eventVolunteerId": eventVolunteerId,
         "postId": postId,
         "sessionId": sessionId,
-        "shiftId": shiftId
+        "shiftId": shiftId,
+        "canCount": canCount
       ])
     }
 
@@ -50,6 +52,11 @@ extension AssemblyOpsAPI {
     var shiftId: GraphQLNullable<ID> {
       get { __data["shiftId"] }
       set { __data["shiftId"] = newValue }
+    }
+
+    var canCount: GraphQLNullable<Bool> {
+      get { __data["canCount"] }
+      set { __data["canCount"] = newValue }
     }
   }
 

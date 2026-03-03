@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "DepartmentCoverage"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query DepartmentCoverage($departmentId: ID!) { departmentCoverage(departmentId: $departmentId) { __typename post { __typename id name category location sortOrder areaId areaName } session { __typename id name date startTime endTime } shifts { __typename id name startTime endTime } assignments { __typename id volunteer { __typename id firstName lastName } checkIn { __typename id checkInTime } status forceAssigned shiftId shiftName } filled } }"#
+        #"query DepartmentCoverage($departmentId: ID!) { departmentCoverage(departmentId: $departmentId) { __typename post { __typename id name category location sortOrder areaId areaName } session { __typename id name date startTime endTime } shifts { __typename id name startTime endTime } assignments { __typename id volunteer { __typename id firstName lastName } checkIn { __typename id checkInTime } status forceAssigned canCount shiftId shiftName } filled } }"#
       ))
 
     public var departmentId: ID
@@ -157,6 +157,7 @@ extension AssemblyOpsAPI {
             .field("checkIn", CheckIn?.self),
             .field("status", GraphQLEnum<AssemblyOpsAPI.AssignmentStatus>.self),
             .field("forceAssigned", Bool.self),
+            .field("canCount", Bool.self),
             .field("shiftId", AssemblyOpsAPI.ID?.self),
             .field("shiftName", String?.self),
           ] }
@@ -169,6 +170,7 @@ extension AssemblyOpsAPI {
           var checkIn: CheckIn? { __data["checkIn"] }
           var status: GraphQLEnum<AssemblyOpsAPI.AssignmentStatus> { __data["status"] }
           var forceAssigned: Bool { __data["forceAssigned"] }
+          var canCount: Bool { __data["canCount"] }
           var shiftId: AssemblyOpsAPI.ID? { __data["shiftId"] }
           var shiftName: String? { __data["shiftName"] }
 
