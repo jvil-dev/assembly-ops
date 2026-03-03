@@ -35,6 +35,9 @@ import { logger } from './utils/logger.js';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Trust first proxy (AWS ALB) for accurate client IP in rate limiting
+app.set('trust proxy', 1);
+
 app.use(
   helmet({
     contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
