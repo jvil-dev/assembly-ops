@@ -38,6 +38,9 @@ struct AreaDetailSheet: View {
     @State private var isDeleting = false
     @State private var postToDelete: CoveragePost?
     @State private var showDeletePostConfirmation = false
+    @State private var isSelectingPosts = false
+    @State private var selectedPostIds: Set<String> = []
+    @State private var showBulkDeleteConfirmation = false
 
     private var currentCaptain: AreaCaptainItem? {
         area.captains.first { $0.sessionId == session.id }
@@ -101,6 +104,14 @@ struct AreaDetailSheet: View {
                 if let post = postToDelete {
                     Text(String(format: "area.deletePostWarning".localized, post.name))
                 }
+            }
+            .alert("area.deletePostsConfirm".localized, isPresented: $showBulkDeleteConfirmation) {
+                Button("common.cancel".localized, role: .cancel) {}
+                Button("common.delete".localized, role: .destructive) {
+                    Task { await deleteSelectedPosts() }
+                }
+            } message: {
+                Text(String(format: "area.deletePostsWarning".localized, selectedPostIds.count))
             }
             .alert("common.error".localized, isPresented: $showError) {
                 Button("common.ok".localized) { areaViewModel.error = nil }
@@ -295,6 +306,22 @@ struct AreaDetailSheet: View {
                 Text("\(areaPosts.count)")
                     .font(AppTheme.Typography.captionBold)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+                if !areaPosts.isEmpty {
+                    Button {
+                        withAnimation(AppTheme.quickAnimation) {
+                            isSelectingPosts.toggle()
+                            if !isSelectingPosts {
+                                selectedPostIds.removeAll()
+                            }
+                        }
+                        HapticManager.shared.lightTap()
+                    } label: {
+                        Text(isSelectingPosts ? "area.done".localized : "area.edit".localized)
+                            .font(AppTheme.Typography.bodyMedium)
+                            .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                    }
+                }
             }
 
             if areaPosts.isEmpty {
@@ -311,19 +338,40 @@ struct AreaDetailSheet: View {
                 }
                 .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
                 .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+
+                // Bulk delete button (visible in select mode when items selected)
+                if isSelectingPosts && !selectedPostIds.isEmpty {
+                    Button {
+                        showBulkDeleteConfirmation = true
+                        HapticManager.shared.lightTap()
+                    } label: {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text(String(format: "area.deleteSelected".localized, selectedPostIds.count))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: AppTheme.ButtonHeight.medium)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(.white)
+                        .background(AppTheme.StatusColors.declined)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
+                    }
+                }
             }
 
             // Create Post button
-            Button {
-                showCreatePost = true
-                HapticManager.shared.lightTap()
-            } label: {
-                HStack {
-                    Image(systemName: "plus.circle")
-                        .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
-                    Text("area.createPost".localized)
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+            if !isSelectingPosts {
+                Button {
+                    showCreatePost = true
+                    HapticManager.shared.lightTap()
+                } label: {
+                    HStack {
+                        Image(systemName: "plus.circle")
+                            .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                        Text("area.createPost".localized)
+                            .font(AppTheme.Typography.body)
+                            .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                    }
                 }
             }
         }
@@ -334,27 +382,52 @@ struct AreaDetailSheet: View {
     private func postRow(post: CoveragePost, isLast: Bool) -> some View {
         VStack(spacing: 0) {
             HStack {
+                if isSelectingPosts {
+                    Image(systemName: selectedPostIds.contains(post.id) ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 22))
+                        .foregroundStyle(
+                            selectedPostIds.contains(post.id)
+                                ? DepartmentColor.color(for: "ATTENDANT")
+                                : AppTheme.textTertiary(for: colorScheme)
+                        )
+                }
+
                 Text(post.name)
                     .font(AppTheme.Typography.body)
 
                 Spacer()
 
-                Button {
-                    postToDelete = post
-                    showDeletePostConfirmation = true
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.system(size: 14))
-                        .foregroundStyle(AppTheme.StatusColors.declined.opacity(0.7))
+                if !isSelectingPosts {
+                    Button {
+                        postToDelete = post
+                        showDeletePostConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 14))
+                            .foregroundStyle(AppTheme.StatusColors.declined.opacity(0.7))
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, AppTheme.Spacing.m)
             .padding(.vertical, AppTheme.Spacing.m)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if isSelectingPosts {
+                    withAnimation(AppTheme.quickAnimation) {
+                        if selectedPostIds.contains(post.id) {
+                            selectedPostIds.remove(post.id)
+                        } else {
+                            selectedPostIds.insert(post.id)
+                        }
+                    }
+                    HapticManager.shared.lightTap()
+                }
+            }
 
             if !isLast {
                 Divider()
-                    .padding(.leading, AppTheme.Spacing.m)
+                    .padding(.leading, isSelectingPosts ? 50 : AppTheme.Spacing.m)
             }
         }
     }
@@ -435,6 +508,23 @@ struct AreaDetailSheet: View {
             HapticManager.shared.error()
         }
         postToDelete = nil
+    }
+
+    private func deleteSelectedPosts() async {
+        for postId in selectedPostIds {
+            do {
+                let _ = try await NetworkClient.shared.apollo.perform(
+                    mutation: AssemblyOpsAPI.DeletePostMutation(id: postId)
+                )
+            } catch {
+                areaViewModel.error = error.localizedDescription
+            }
+        }
+        HapticManager.shared.success()
+        selectedPostIds.removeAll()
+        isSelectingPosts = false
+        await coverageViewModel.loadCoverage()
+        await areaViewModel.loadAreas(departmentId: departmentId)
     }
 
     private func captainInitials(_ name: String) -> String {
