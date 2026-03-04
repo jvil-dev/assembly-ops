@@ -324,10 +324,9 @@ struct AttendantVolunteerDeptView: View {
         guard lanyardNotPickedUp else { return }
 
         // Find the earliest session start time for today
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
+        let today = DateUtils.sessionStartOfDay(for: Date())
         let todaySessions = sessions.filter { session in
-            calendar.isDate(session.date, inSameDayAs: today)
+            DateUtils.utcCalendar.isDate(session.date, inSameDayAs: today)
         }
 
         guard let earliestSession = todaySessions.min(by: { $0.startTime < $1.startTime }) else { return }

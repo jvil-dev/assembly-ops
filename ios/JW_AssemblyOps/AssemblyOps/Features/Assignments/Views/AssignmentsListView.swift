@@ -99,7 +99,7 @@ struct AssignmentsListView: View {
     private var filteredGroupedAssignments: [(date: Date, assignments: [Assignment])] {
         if showTodayOnly {
             return viewModel.groupedAssignments.filter { group in
-                Calendar.current.isDateInToday(group.date)
+                DateUtils.isSessionDateToday(group.date)
             }
         }
         return viewModel.groupedAssignments
@@ -237,7 +237,7 @@ struct AssignmentsListView: View {
 
     private func dateHeader(for date: Date) -> some View {
         HStack {
-            if Calendar.current.isDateInToday(date) {
+            if DateUtils.isSessionDateToday(date) {
                 HStack(spacing: 6) {
                     Circle()
                         .fill(AppTheme.StatusColors.pending)
@@ -246,18 +246,18 @@ struct AssignmentsListView: View {
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)
                 }
-                Text("• \(date.formatted(date: .abbreviated, time: .omitted))")
+                Text("• \(DateUtils.formatSessionDateAbbreviated(date))")
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-            } else if Calendar.current.isDateInTomorrow(date) {
+            } else if DateUtils.isSessionDateTomorrow(date) {
                 Text("Tomorrow")
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)
-                Text("• \(date.formatted(date: .abbreviated, time: .omitted))")
+                Text("• \(DateUtils.formatSessionDateAbbreviated(date))")
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             } else {
-                Text(date.formatted(date: .complete, time: .omitted))
+                Text(DateUtils.formatSessionDateFull(date))
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)
             }
