@@ -45,6 +45,7 @@ import walkThroughResolvers from './walkThrough.js';
 import postSessionStatusResolvers from './postSessionStatus.js';
 import facilityLocationResolvers from './facilityLocation.js';
 import adminResolvers from './admin.js';
+import awsResolvers from './aws.js';
 import audioVideoResolvers from './audioVideo.js';
 import shiftResolvers from './shift.js';
 import captainSchedulingResolvers from './captainScheduling.js';
@@ -102,6 +103,7 @@ const resolvers = {
     ...postSessionStatusResolvers.Query,
     ...facilityLocationResolvers.Query,
     ...adminResolvers.Query,
+    ...awsResolvers.Query,
     ...audioVideoResolvers.Query,
     ...shiftResolvers.Query,
     ...captainSchedulingResolvers.Query,

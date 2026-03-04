@@ -136,7 +136,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({ where: { email: validated.email } });
 
-    if (!user || !user.passwordHash) {
+    if (!user || !user.passwordHash || user.isPlaceholder) {
       throw new AuthenticationError('Invalid email or password');
     }
 
@@ -186,6 +186,10 @@ export class AuthService {
 
     // Check if email matches an existing account → auto-link
     const existingUser = await this.prisma.user.findUnique({ where: { email: userInfo.email } });
+
+    if (existingUser && existingUser.isPlaceholder) {
+      throw new AuthenticationError('Invalid email or password');
+    }
 
     if (existingUser) {
       await this.prisma.oAuthConnection.create({
