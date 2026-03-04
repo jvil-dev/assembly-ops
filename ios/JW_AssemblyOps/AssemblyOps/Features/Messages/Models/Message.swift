@@ -112,17 +112,7 @@ struct Message: Identifiable {
     }
 
     var formattedDate: String {
-        let formatter = DateFormatter()
-        if Calendar.current.isDateInToday(createdAt) {
-            formatter.timeStyle = .short
-            formatter.dateStyle = .none
-        } else if Calendar.current.isDateInYesterday(createdAt) {
-            return "Yesterday"
-        } else {
-            formatter.dateStyle = .short
-            formatter.timeStyle = .none
-        }
-        return formatter.string(from: createdAt)
+        DateUtils.formattedMessageDate(createdAt)
     }
 }
 

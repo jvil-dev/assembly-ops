@@ -64,12 +64,12 @@ app.use(express.json());
 
 // Rate limiting on auth-related GraphQL operations
 const AUTH_OPERATIONS = new Set([
-  'LoginAdmin',
-  'RegisterAdmin',
-  'LoginVolunteer',
-  'RefreshToken',
-  'LoginWithGoogle',
-  'LoginWithApple',
+  'loginUser',
+  'registerUser',
+  'refreshToken',
+  'loginWithGoogle',
+  'loginWithApple',
+  'completeOAuthRegistration',
 ]);
 
 const authRateLimiter = rateLimit({

@@ -39,6 +39,24 @@ enum DateUtils {
         return formatter.localizedString(for: date, relativeTo: Date())
     }
 
+    /// Format a Date as a smart message timestamp:
+    /// - Today → "2:45 PM" (device locale short time)
+    /// - Yesterday → "Yesterday"
+    /// - Older → "3/1/26" (device locale short date)
+    static func formattedMessageDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        if Calendar.current.isDateInToday(date) {
+            formatter.timeStyle = .short
+            formatter.dateStyle = .none
+        } else if Calendar.current.isDateInYesterday(date) {
+            return "Yesterday"
+        } else {
+            formatter.dateStyle = .short
+            formatter.timeStyle = .none
+        }
+        return formatter.string(from: date)
+    }
+
     // MARK: - UTC Calendar & Formatters (for event dates stored as UTC midnight)
 
     /// Calendar fixed to UTC — use for date-status comparisons on events whose

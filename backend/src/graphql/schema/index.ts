@@ -40,6 +40,7 @@ import { walkThroughTypeDefs } from './walkThrough.js';
 import { postSessionStatusTypeDefs } from './postSessionStatus.js';
 import { facilityLocationTypeDefs } from './facilityLocation.js';
 import adminTypeDefs from './admin.js';
+import awsTypeDefs from './aws.js';
 import { audioVideoTypeDefs } from './audioVideo.js';
 import { shiftTypeDefs } from './shift.js';
 import { captainSchedulingTypeDefs } from './captainScheduling.js';
@@ -87,6 +88,7 @@ const typeDefs = [
   postSessionStatusTypeDefs,
   facilityLocationTypeDefs,
   adminTypeDefs,
+  awsTypeDefs,
   audioVideoTypeDefs,
   shiftTypeDefs,
   captainSchedulingTypeDefs,
