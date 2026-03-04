@@ -93,17 +93,7 @@ struct ConversationRowView: View {
     }
 
     private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        if Calendar.current.isDateInToday(date) {
-            formatter.timeStyle = .short
-            formatter.dateStyle = .none
-        } else if Calendar.current.isDateInYesterday(date) {
-            return "Yesterday"
-        } else {
-            formatter.dateStyle = .short
-            formatter.timeStyle = .none
-        }
-        return formatter.string(from: date)
+        DateUtils.formattedMessageDate(date)
     }
 }
 
