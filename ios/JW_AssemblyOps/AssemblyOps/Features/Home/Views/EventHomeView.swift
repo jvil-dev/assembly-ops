@@ -733,7 +733,7 @@ struct EventHomeView: View {
 
     private func sessionTimeString(_ session: CoverageSession) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
+        formatter.timeStyle = .short
         return formatter.string(from: session.startTime)
     }
 

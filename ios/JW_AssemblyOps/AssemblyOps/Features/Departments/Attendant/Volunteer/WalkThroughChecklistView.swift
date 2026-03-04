@@ -55,7 +55,7 @@ struct WalkThroughChecklistView: View {
 
     private var formattedCompletionTime: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
+        formatter.timeStyle = .short
         return formatter.string(from: completionTime)
     }
 

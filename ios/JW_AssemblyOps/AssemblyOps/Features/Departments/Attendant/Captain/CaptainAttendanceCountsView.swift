@@ -116,7 +116,7 @@ struct CaptainAttendanceCountsView: View {
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(deptColor)
 
-                Text(timeAgo(from: item.submittedAt))
+                Text(DateUtils.timeAgo(from: item.submittedAt))
                     .font(AppTheme.Typography.captionSmall)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
@@ -134,15 +134,4 @@ struct CaptainAttendanceCountsView: View {
         )
     }
 
-    // MARK: - Helpers
-
-    private func timeAgo(from date: Date) -> String {
-        let interval = Date().timeIntervalSince(date)
-        if interval < 60 { return "just now" }
-        if interval < 3600 { return "\(Int(interval / 60))m ago" }
-        if interval < 86400 { return "\(Int(interval / 3600))h ago" }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return formatter.string(from: date)
-    }
 }

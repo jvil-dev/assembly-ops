@@ -312,8 +312,7 @@ struct CreateMeetingSheet: View {
                     guard let eventId = sessionState.selectedEvent?.id,
                           let sessionId = selectedSessionId else { return }
                     let noteText = notes.isEmpty ? nil : notes
-                    let formatter = ISO8601DateFormatter()
-                    let dateString = formatter.string(from: meetingDate)
+                    let dateString = DateUtils.isoFormatter.string(from: meetingDate)
                     await viewModel.createMeeting(
                         eventId: eventId, sessionId: sessionId,
                         meetingDate: dateString, notes: noteText,
