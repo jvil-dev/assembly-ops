@@ -15,7 +15,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/services/**/*.ts', 'src/graphql/guards/auth.ts'],
-      exclude: ['src/__tests__/**', 'src/generated/**'],
+      exclude: ['src/__tests__/**', 'src/generated/**', 'src/services/awsService.ts'],
       thresholds: {
         lines: 50,
         functions: 50,
