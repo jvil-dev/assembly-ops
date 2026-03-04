@@ -175,8 +175,7 @@ struct EventHomeView: View {
     // MARK: - Today's Assignments
 
     private var todaySessions: [CoverageSession] {
-        let calendar = Calendar.current
-        return coverageVM.sessions.filter { calendar.isDateInToday($0.date) }
+        return coverageVM.sessions.filter { DateUtils.isSessionDateToday($0.date) }
     }
 
     @ViewBuilder

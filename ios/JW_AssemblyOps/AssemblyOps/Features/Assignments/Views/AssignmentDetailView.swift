@@ -200,7 +200,7 @@ struct AssignmentDetailView: View {
                 DetailRow(
                     icon: "calendar",
                     title: "Date",
-                    value: assignment.date.formatted(date: .complete, time: .omitted),
+                    value: DateUtils.formatSessionDateFull(assignment.date),
                     colorScheme: colorScheme,
                     accentColor: assignment.departmentColor
                 )

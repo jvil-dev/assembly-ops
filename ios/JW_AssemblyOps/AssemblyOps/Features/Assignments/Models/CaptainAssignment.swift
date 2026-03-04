@@ -64,7 +64,7 @@ struct CaptainAssignment: Identifiable, Equatable, Hashable {
     }
 
     var isToday: Bool {
-        Calendar.current.isDateInToday(date)
+        DateUtils.isSessionDateToday(date)
     }
 
     var isUpcoming: Bool {

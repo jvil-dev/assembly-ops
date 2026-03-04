@@ -66,7 +66,7 @@ final class AssignmentsViewModel: ObservableObject {
     /// all other assignments use the session start time.
     var groupedAssignments: [(date: Date, assignments: [Assignment])] {
         let grouped = Dictionary(grouping: assignments) { assignment in
-            Calendar.current.startOfDay(for: assignment.date)
+            DateUtils.sessionStartOfDay(for: assignment.date)
         }
         return grouped
             .map { (date: $0.key, assignments: $0.value.sorted { $0.displayStartTime < $1.displayStartTime }) }

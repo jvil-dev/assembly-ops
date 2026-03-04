@@ -121,6 +121,53 @@ enum DateUtils {
         return formatEventFullDateRange(from: start, to: end)
     }
 
+    // MARK: - Session Date Formatters (UTC-aware)
+    //
+    // Session dates are stored as PostgreSQL DATE (no time) and arrive as
+    // UTC midnight (e.g. 2026-03-22T00:00:00.000Z).  Using the device
+    // calendar would shift them back one day for timezones west of UTC.
+
+    private static let sessionDateFullFormatter: DateFormatter = {
+        let fmt = DateFormatter()
+        fmt.dateStyle = .full       // "Sunday, March 22, 2026"
+        fmt.timeStyle = .none
+        fmt.timeZone = TimeZone(identifier: "UTC")
+        return fmt
+    }()
+
+    private static let sessionDateAbbreviatedFormatter: DateFormatter = {
+        let fmt = DateFormatter()
+        fmt.dateStyle = .medium     // "Mar 22, 2026"
+        fmt.timeStyle = .none
+        fmt.timeZone = TimeZone(identifier: "UTC")
+        return fmt
+    }()
+
+    /// Full session date: "Sunday, March 22, 2026"
+    static func formatSessionDateFull(_ date: Date) -> String {
+        sessionDateFullFormatter.string(from: date)
+    }
+
+    /// Abbreviated session date: "Mar 22, 2026"
+    static func formatSessionDateAbbreviated(_ date: Date) -> String {
+        sessionDateAbbreviatedFormatter.string(from: date)
+    }
+
+    /// Whether a UTC-midnight session date falls on today (UTC-aware).
+    static func isSessionDateToday(_ date: Date) -> Bool {
+        utcCalendar.isDateInToday(date)
+    }
+
+    /// Whether a UTC-midnight session date falls on tomorrow (UTC-aware).
+    static func isSessionDateTomorrow(_ date: Date) -> Bool {
+        utcCalendar.isDateInTomorrow(date)
+    }
+
+    /// Start-of-day in UTC for a session date.
+    static func sessionStartOfDay(for date: Date) -> Date {
+        utcCalendar.startOfDay(for: date)
+    }
+
     /// Format elapsed time between two dates (e.g., "14m", "1h 23m", "2d 4h")
     /// Used for lost person alerts to show urgency of open cases.
     static func elapsedString(from start: Date, to end: Date = Date()) -> String {

@@ -342,7 +342,7 @@ struct AssignmentsView: View {
 
     private func dateHeader(for date: Date) -> some View {
         HStack {
-            if Calendar.current.isDateInToday(date) {
+            if DateUtils.isSessionDateToday(date) {
                 HStack(spacing: 6) {
                     Circle()
                         .fill(AppTheme.StatusColors.pending)
@@ -351,18 +351,18 @@ struct AssignmentsView: View {
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)
                 }
-                Text("• \(date.formatted(date: .abbreviated, time: .omitted))")
+                Text("• \(DateUtils.formatSessionDateAbbreviated(date))")
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-            } else if Calendar.current.isDateInTomorrow(date) {
+            } else if DateUtils.isSessionDateTomorrow(date) {
                 Text("Tomorrow")
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)
-                Text("• \(date.formatted(date: .abbreviated, time: .omitted))")
+                Text("• \(DateUtils.formatSessionDateAbbreviated(date))")
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             } else {
-                Text(date.formatted(date: .complete, time: .omitted))
+                Text(DateUtils.formatSessionDateFull(date))
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)
             }
@@ -384,11 +384,11 @@ struct AssignmentsView: View {
     // MARK: - Reorder Logic
 
     private func moveSession(in date: Date, from source: IndexSet, to destination: Int) {
-        let dateKey = Calendar.current.startOfDay(for: date)
+        let dateKey = DateUtils.sessionStartOfDay(for: date)
 
         // Get the sorted sessions for this date group
         let groupSessions = sessions
-            .filter { Calendar.current.startOfDay(for: $0.date) == dateKey }
+            .filter { DateUtils.sessionStartOfDay(for: $0.date) == dateKey }
             .sorted { $0.startTime < $1.startTime }
 
         // Collect the original startTimes in order
@@ -413,12 +413,12 @@ struct AssignmentsView: View {
     }
 
     private func dateHeaderText(for date: Date) -> String {
-        if Calendar.current.isDateInToday(date) {
-            return "Today — \(date.formatted(date: .abbreviated, time: .omitted))"
-        } else if Calendar.current.isDateInTomorrow(date) {
-            return "Tomorrow — \(date.formatted(date: .abbreviated, time: .omitted))"
+        if DateUtils.isSessionDateToday(date) {
+            return "Today — \(DateUtils.formatSessionDateAbbreviated(date))"
+        } else if DateUtils.isSessionDateTomorrow(date) {
+            return "Tomorrow — \(DateUtils.formatSessionDateAbbreviated(date))"
         }
-        return date.formatted(date: .complete, time: .omitted)
+        return DateUtils.formatSessionDateFull(date)
     }
 
     // MARK: - Empty State
@@ -453,7 +453,7 @@ struct AssignmentsView: View {
 
     private var groupedSessions: [(date: Date, sessions: [EventSessionItem])] {
         let grouped = Dictionary(grouping: sessions) { session in
-            Calendar.current.startOfDay(for: session.date)
+            DateUtils.sessionStartOfDay(for: session.date)
         }
         return grouped
             .map { (date: $0.key, sessions: $0.value.sorted { $0.startTime < $1.startTime }) }
