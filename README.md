@@ -1,5 +1,14 @@
 # AssemblyOps
 
+![CI](https://github.com/jvil-dev/assembly-ops/actions/workflows/ci.yml/badge.svg)
+![Deploy](https://github.com/jvil-dev/assembly-ops/actions/workflows/deploy.yml/badge.svg)
+![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Web-blue)
+![Node](https://img.shields.io/badge/node-20%2B-339933?logo=node.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![GraphQL](https://img.shields.io/badge/GraphQL-E10098?logo=graphql&logoColor=white)
+![Swift](https://img.shields.io/badge/Swift%20%7C%20SwiftUI-F05138?logo=swift&logoColor=white)
+![License](https://img.shields.io/badge/license-Private-lightgrey)
+
 A volunteer scheduling and management platform for Jehovah's Witnesses assembly and convention committees. AssemblyOps provides a unified system for event coordination, volunteer management, and real-time attendance tracking — replacing the fragmented mix of spreadsheets, documents, and group chats that committees currently rely on.
 
 ## Key Features
@@ -17,42 +26,43 @@ A volunteer scheduling and management platform for Jehovah's Witnesses assembly 
 
 ## Tech Stack
 
-| Layer          | Technology                                         |
-| -------------- | -------------------------------------------------- |
-| iOS App        | Swift, SwiftUI, Apollo iOS (GraphQL client)        |
-| API            | Node.js, Express, Apollo Server 5, GraphQL         |
-| Database       | PostgreSQL 16 with Prisma ORM                      |
-| Auth           | JWT (access + refresh tokens), OAuth (Google/Apple)|
-| Validation     | Zod runtime schemas                                |
-| Infrastructure | AWS ECS Fargate, Supabase (managed Postgres)       |
-| CI/CD          | GitHub Actions                                     |
+| Layer          | Technology                                          |
+| -------------- | --------------------------------------------------- |
+| iOS App        | Swift, SwiftUI, Apollo iOS (GraphQL client)         |
+| Admin Portal   | Next.js 16, React 19, Apollo Client 4, Recharts     |
+| API            | Node.js, Express, Apollo Server 5, GraphQL          |
+| Database       | PostgreSQL 16 with Prisma ORM                       |
+| Auth           | JWT (access + refresh tokens), OAuth (Google/Apple) |
+| Validation     | Zod runtime schemas                                 |
+| Infrastructure | AWS ECS Fargate, Supabase (managed Postgres)        |
+| CI/CD          | GitHub Actions                                      |
 
 ## Architecture
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                        Clients                              │
-│              iOS App (SwiftUI + Apollo iOS)                 │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ▼
+│                          Clients                            │
+│  iOS App (SwiftUI + Apollo iOS)  ·  Admin Portal (Next.js)  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    AWS ALB (HTTPS)                          │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ▼
+│                      AWS ALB (HTTPS)                        │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                 ECS Fargate Service                         │
+│                    ECS Fargate Service                      │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │              Node.js + Apollo Server                  │  │
 │  │                                                       │  │
-│  │   Express → Apollo → Resolvers → Services → Prisma   │  │
+│  │   Express → Apollo → Resolvers → Services → Prisma    │  │
 │  └───────────────────────────────────────────────────────┘  │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ▼
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│              Supabase (Managed PostgreSQL)                  │
+│                Supabase (Managed PostgreSQL)                │
 │                   with PgBouncer pooling                    │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -108,13 +118,25 @@ After backend schema changes:
 
 > **Note:** The debug build points to a local network IP for the GraphQL endpoint. Update the URL in `Core/Network/NetworkClient.swift` to match your machine's local IP.
 
+### Admin Portal
+
+```bash
+cd admin
+npm install
+cp .env.local.example .env.local  # Set NEXT_PUBLIC_API_URL
+npm run dev                        # → http://localhost:3000
+```
+
+See [admin/README.md](./admin/README.md) for pages, project structure, and access control details.
+
 ## User Roles
 
-| Role                | Access Level                |
-| ------------------- | --------------------------- |
-| Event Overseer      | Full access to entire event |
-| Department Overseer | Department-scoped access    |
-| Volunteer           | Own assignments only        |
+| Role                | Access Level                 |
+| ------------------- | ---------------------------- |
+| App Admin           | Full platform administration |
+| Event Overseer      | Full access to entire event  |
+| Department Overseer | Department-scoped access     |
+| Volunteer           | Own assignments only         |
 
 ## Convention Departments
 
@@ -125,6 +147,7 @@ Accounts, Attendant, Audio/Video, Baptism, Cleaning, First Aid, Information & Vo
 ```text
 AssemblyOps/
 ├── ios/               # iOS app (SwiftUI + Apollo iOS)
+├── admin/             # Admin portal (Next.js + React)
 ├── backend/           # Node.js GraphQL API
 ├── docs/              # Architecture & development docs
 └── .github/           # CI/CD workflows
