@@ -29,6 +29,18 @@ const adminResolvers = {
       const adminService = new AdminService(context.prisma);
       return adminService.getEventStats();
     },
+
+    adminListUsers: async (_parent: unknown, { limit, offset, search }: { limit?: number; offset?: number; search?: string }, context: Context) => {
+      requireAppAdmin(context);
+      const adminService = new AdminService(context.prisma);
+      return adminService.adminListUsers(limit, offset, search);
+    },
+
+    adminListEvents: async (_parent: unknown, { limit, offset }: { limit?: number; offset?: number }, context: Context) => {
+      requireAppAdmin(context);
+      const adminService = new AdminService(context.prisma);
+      return adminService.adminListEvents(limit, offset);
+    },
   },
 
   Mutation: {

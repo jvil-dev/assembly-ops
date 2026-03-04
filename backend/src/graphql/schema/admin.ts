@@ -46,10 +46,48 @@ const adminTypeDefs = `#graphql
     sessionCount: Int!
   }
 
+  type AdminUser {
+    id: ID!
+    userId: String!
+    email: String!
+    firstName: String!
+    lastName: String!
+    isOverseer: Boolean!
+    isAppAdmin: Boolean!
+    createdAt: DateTime!
+    eventCount: Int!
+  }
+
+  type AdminUserList {
+    users: [AdminUser!]!
+    totalCount: Int!
+  }
+
+  type AdminEventDetail {
+    eventId: ID!
+    name: String!
+    eventType: EventType!
+    startDate: DateTime!
+    endDate: DateTime!
+    venue: String!
+    state: String
+    volunteerCount: Int!
+    departmentCount: Int!
+    sessionCount: Int!
+    overseerCount: Int!
+  }
+
+  type AdminEventList {
+    events: [AdminEventDetail!]!
+    totalCount: Int!
+  }
+
   extend type Query {
     appAnalytics: AppAnalytics!
     userGrowth(period: String!): [GrowthDataPoint!]!
     eventStats: [EventStat!]!
+    adminListUsers(limit: Int, offset: Int, search: String): AdminUserList!
+    adminListEvents(limit: Int, offset: Int): AdminEventList!
   }
 
   extend type Mutation {

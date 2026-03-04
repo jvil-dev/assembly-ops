@@ -336,6 +336,104 @@ export class AdminService {
     return result.map(r => ({ date: r.date, count: Number(r.count) }));
   }
 
+  async adminListUsers(limit = 25, offset = 0, search?: string) {
+    const where = search
+      ? {
+          OR: [
+            { email: { contains: search, mode: 'insensitive' as const } },
+            { firstName: { contains: search, mode: 'insensitive' as const } },
+            { lastName: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+
+    const [users, totalCount] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip: offset,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          userId: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          isOverseer: true,
+          isAppAdmin: true,
+          createdAt: true,
+          _count: {
+            select: {
+              eventAdmins: true,
+              eventVolunteers: true,
+            },
+          },
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      users: users.map(u => ({
+        id: u.id,
+        userId: u.userId,
+        email: u.email,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        isOverseer: u.isOverseer,
+        isAppAdmin: u.isAppAdmin,
+        createdAt: u.createdAt,
+        eventCount: u._count.eventAdmins + u._count.eventVolunteers,
+      })),
+      totalCount,
+    };
+  }
+
+  async adminListEvents(limit = 25, offset = 0) {
+    const [events, totalCount] = await Promise.all([
+      this.prisma.event.findMany({
+        skip: offset,
+        take: limit,
+        orderBy: { startDate: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          eventType: true,
+          startDate: true,
+          endDate: true,
+          venue: true,
+          state: true,
+          _count: {
+            select: {
+              eventVolunteers: true,
+              departments: true,
+              sessions: true,
+              admins: true,
+            },
+          },
+        },
+      }),
+      this.prisma.event.count(),
+    ]);
+
+    return {
+      events: events.map(e => ({
+        eventId: e.id,
+        name: e.name,
+        eventType: e.eventType,
+        startDate: e.startDate,
+        endDate: e.endDate,
+        venue: e.venue,
+        state: e.state,
+        volunteerCount: e._count.eventVolunteers,
+        departmentCount: e._count.departments,
+        sessionCount: e._count.sessions,
+        overseerCount: e._count.admins,
+      })),
+      totalCount,
+    };
+  }
+
   async getEventStats() {
     const events = await this.prisma.event.findMany({
       select: {
