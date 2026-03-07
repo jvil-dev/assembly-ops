@@ -159,13 +159,12 @@ final class AssignmentsViewModel: ObservableObject {
                 // Cache for offline use
                 cache.save(postAssignments)
             } catch {
-                // On network failure, fall back to cache
                 if let cached = cache.load() {
                     assignments = cached
                     isUsingCache = true
-                    errorMessage = "Showing cached data. Pull to refresh"
+                    errorMessage = NSLocalizedString("showing_cached_data", comment: "")
                 } else {
-                    errorMessage = "Unable to load assignments. Check your connection"
+                    errorMessage = error.localizedDescription
                 }
             }
         }
