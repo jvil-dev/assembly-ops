@@ -28,6 +28,7 @@
 import { AttendanceCount } from '@prisma/client';
 import { Context } from '../context.js';
 import { AttendanceService } from '../../services/attendanceService.js';
+import { NotificationService } from '../../services/notificationService.js';
 import { requireAuth, requireEventAccess, tryRequireAdmin, tryRequireDeptAccessByEvent, requireCaptain } from '../guards/auth.js';
 import { AuthorizationError } from '../../utils/errors.js';
 import {
@@ -316,22 +317,39 @@ const attendanceResolvers = {
         where: { userId_eventId: { userId: context.user!.id, eventId } },
       });
 
+      let count;
       if (eventAdmin) {
         // Admin path
-        return attendanceService.submitAttendanceCount(context.user!.id, input);
+        count = await attendanceService.submitAttendanceCount(context.user!.id, input);
+      } else {
+        // Volunteer path: must be attendant department member
+        const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
+          where: { userId_eventId: { userId: context.user!.id, eventId } },
+          include: { department: true },
+        });
+
+        if (!eventVolunteer || eventVolunteer.department?.departmentType !== 'ATTENDANT') {
+          throw new AuthorizationError('Only attendant volunteers can submit counts');
+        }
+
+        count = await attendanceService.submitVolunteerAttendanceCount(eventVolunteer.id, input);
       }
 
-      // Volunteer path: must be attendant department member
-      const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
-        where: { userId_eventId: { userId: context.user!.id, eventId } },
-        include: { department: true },
+      // Notify the Attendant department overseer (skip if submitter IS the overseer)
+      const attendantDept = await context.prisma.department.findFirst({
+        where: { eventId, departmentType: 'ATTENDANT' },
+        include: { overseer: { select: { userId: true } } },
       });
-
-      if (!eventVolunteer || eventVolunteer.department?.departmentType !== 'ATTENDANT') {
-        throw new AuthorizationError('Only attendant volunteers can submit counts');
+      if (attendantDept?.overseer?.userId && attendantDept.overseer.userId !== context.user!.id) {
+        const notificationService = new NotificationService(context.prisma);
+        notificationService.sendToUser(attendantDept.overseer.userId, eventId, {
+          title: 'Attendance Count Submitted',
+          body: `Count of ${input.count} submitted for ${count.section || 'a section'}`,
+          data: { type: 'ATTENDANCE_COUNT_SUBMITTED', eventId },
+        }).catch(() => {});
       }
 
-      return attendanceService.submitVolunteerAttendanceCount(eventVolunteer.id, input);
+      return count;
     },
 
     updateAttendanceCount: async (

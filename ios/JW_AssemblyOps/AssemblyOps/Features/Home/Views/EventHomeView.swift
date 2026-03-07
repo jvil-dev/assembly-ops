@@ -34,6 +34,7 @@ struct EventHomeView: View {
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var coverageVM = CoverageMatrixViewModel()
     @StateObject private var homeVM = HomeViewModel()
+    @StateObject private var notificationVM = NotificationHistoryViewModel()
     @ObservedObject private var messageBadgeManager = UnreadBadgeManager.shared
     @ObservedObject private var pendingBadgeManager = PendingBadgeManager.shared
     @State private var hasAppeared = false
@@ -63,6 +64,10 @@ struct EventHomeView: View {
                     // Event details banner
                     eventDetailsCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
+
+                    // Recent notifications card (all users)
+                    recentNotificationsCard
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
 
                     if isOverseer {
                         // Overseer: Today's coverage schedule
@@ -96,13 +101,17 @@ struct EventHomeView: View {
                 }
             }
             .refreshable {
+                async let refreshNotif: () = notificationVM.loadUnreadCount(eventId: membership.eventId)
                 if isOverseer {
-                    await coverageVM.loadCoverage()
+                    async let refreshCoverage: () = coverageVM.loadCoverage()
+                    _ = await (refreshNotif, refreshCoverage)
                 } else {
-                    await homeVM.refresh(eventId: membership.eventId)
+                    async let refreshHome: () = homeVM.refresh(eventId: membership.eventId)
+                    _ = await (refreshNotif, refreshHome)
                 }
             }
             .task {
+                await notificationVM.loadUnreadCount(eventId: membership.eventId)
                 if isOverseer {
                     coverageVM.departmentId = membership.departmentId
                     await coverageVM.loadCoverage()
@@ -722,6 +731,58 @@ struct EventHomeView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Recent Notifications Card
+
+    @ViewBuilder
+    private var recentNotificationsCard: some View {
+        NavigationLink(destination: NotificationHistoryView(eventId: membership.eventId, accentColor: departmentColor)) {
+            HStack(spacing: AppTheme.Spacing.m) {
+                ZStack {
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(departmentColor)
+
+                    if notificationVM.unreadCount > 0 {
+                        Text("\(notificationVM.unreadCount)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(AppTheme.StatusColors.declined)
+                            .clipShape(Capsule())
+                            .offset(x: 12, y: -10)
+                    }
+                }
+                .frame(width: 28)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(NSLocalizedString("notifications.title", comment: ""))
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(.primary)
+
+                    if notificationVM.unreadCount > 0 {
+                        Text(String(format: NSLocalizedString("notifications.unreadCount", comment: ""), notificationVM.unreadCount))
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(departmentColor)
+                    } else {
+                        Text(NSLocalizedString("notifications.allCaughtUp", comment: ""))
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            }
+            .cardPadding()
+            .themedCard(scheme: colorScheme)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Overseer Helpers

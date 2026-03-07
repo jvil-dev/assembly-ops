@@ -21,6 +21,7 @@ import SwiftUI
 
 @main
 struct AssemblyOpsApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var appState = AppState.shared
 
     var body: some Scene {

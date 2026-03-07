@@ -42,7 +42,7 @@ final class NetworkClient {
     private(set) var apollo: ApolloClient
 
     #if DEBUG
-    static let graphQLURL = URL(string: "http://localhost:4000/graphql")!
+    static let graphQLURL = URL(string: "http://192.168.1.5:4000/graphql")!
     #else
     static let graphQLURL = URL(string: "https://api.assemblyops.org/graphql")!
     #endif

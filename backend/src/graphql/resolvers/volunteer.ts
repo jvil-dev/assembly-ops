@@ -38,6 +38,7 @@
  */
 import { Context } from '../context.js';
 import { VolunteerService, CreatedVolunteer } from '../../services/volunteerService.js';
+import { NotificationService } from '../../services/notificationService.js';
 import { requireAdmin, requireOverseer, requireUser, requireEventAccess } from '../guards/auth.js';
 import {
   CreateVolunteerInput,
@@ -309,7 +310,24 @@ const volunteerResolvers = {
     ) => {
       requireUser(context);
       const volunteerService = new VolunteerService(context.prisma);
-      return volunteerService.requestToJoinEvent(eventId, context.user!.id, departmentType, note);
+      const request = await volunteerService.requestToJoinEvent(eventId, context.user!.id, departmentType, note);
+
+      // Notify all event overseers
+      const eventAdmins = await context.prisma.eventAdmin.findMany({
+        where: { eventId },
+        select: { userId: true },
+      });
+      if (eventAdmins.length > 0) {
+        const overseerUserIds = eventAdmins.map((a) => a.userId);
+        const notificationService = new NotificationService(context.prisma);
+        notificationService.sendToUsers(overseerUserIds, eventId, {
+          title: 'New Join Request',
+          body: `${request.user.firstName} ${request.user.lastName} wants to join ${request.event.name}`,
+          data: { type: 'JOIN_REQUEST_SUBMITTED', eventId, requestId: request.id },
+        }).catch(() => {});
+      }
+
+      return request;
     },
 
     cancelJoinRequest: async (
@@ -330,7 +348,23 @@ const volunteerResolvers = {
     ) => {
       requireOverseer(context);
       const volunteerService = new VolunteerService(context.prisma);
-      return volunteerService.approveJoinRequest(requestId, context.user!.id);
+      const approved = await volunteerService.approveJoinRequest(requestId, context.user!.id);
+
+      // Notify the requesting volunteer
+      const approvedRequest = await context.prisma.eventJoinRequest.findUnique({
+        where: { id: requestId },
+        include: { event: { select: { name: true } } },
+      });
+      if (approvedRequest) {
+        const notificationService = new NotificationService(context.prisma);
+        notificationService.sendToUser(approvedRequest.userId, approvedRequest.eventId, {
+          title: 'Join Request Approved',
+          body: `You've been accepted to ${approvedRequest.event.name}`,
+          data: { type: 'JOIN_REQUEST_APPROVED', eventId: approvedRequest.eventId, requestId },
+        }).catch(() => {});
+      }
+
+      return approved;
     },
 
     denyJoinRequest: async (
@@ -340,7 +374,17 @@ const volunteerResolvers = {
     ) => {
       requireOverseer(context);
       const volunteerService = new VolunteerService(context.prisma);
-      return volunteerService.denyJoinRequest(requestId, context.user!.id, reason);
+      const denied = await volunteerService.denyJoinRequest(requestId, context.user!.id, reason);
+
+      // Notify the requesting volunteer
+      const notificationService = new NotificationService(context.prisma);
+      notificationService.sendToUser(denied.userId, denied.eventId, {
+        title: 'Join Request Denied',
+        body: `Your request to join ${denied.event.name} was not approved`,
+        data: { type: 'JOIN_REQUEST_DENIED', eventId: denied.eventId, requestId },
+      }).catch(() => {});
+
+      return denied;
     },
 
     linkPlaceholderUser: async (

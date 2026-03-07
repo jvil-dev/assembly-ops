@@ -46,6 +46,7 @@ import { shiftTypeDefs } from './shift.js';
 import { captainSchedulingTypeDefs } from './captainScheduling.js';
 import { reminderTypeDefs } from './reminder.js';
 import { lanyardTypeDefs } from './lanyard.js';
+import notificationTypeDefs from './notification.js';
 
 const baseTypeDefs = `#graphql
   scalar DateTime
@@ -94,6 +95,7 @@ const typeDefs = [
   captainSchedulingTypeDefs,
   reminderTypeDefs,
   lanyardTypeDefs,
+  notificationTypeDefs,
 ];
 
 export default typeDefs;

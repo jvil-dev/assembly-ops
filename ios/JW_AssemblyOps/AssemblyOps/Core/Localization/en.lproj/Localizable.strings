@@ -1532,3 +1532,12 @@
 
 // MARK: - Event Tab
 "eventTab.back" = "Back";
+
+// MARK: - Notifications
+"notifications.title" = "Notifications";
+"notifications.unreadCount" = "%d unread";
+"notifications.allCaughtUp" = "All caught up";
+"notifications.markAllRead" = "Mark All Read";
+"notifications.loading" = "Loading notifications...";
+"notifications.empty" = "No Notifications";
+"notifications.empty.subtitle" = "You'll see assignment updates, join requests, and other alerts here.";
