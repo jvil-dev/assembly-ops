@@ -1001,7 +1001,7 @@ struct HomeView: View {
                 let idx0 = AttendantMainCategory.sortIndex(for: $0.category ?? "")
                 let idx1 = AttendantMainCategory.sortIndex(for: $1.category ?? "")
                 if idx0 != idx1 { return idx0 < idx1 }
-                return $0.name < $1.name
+                return $0.name.localizedStandardCompare($1.name) == .orderedAscending
             }
         }
     }

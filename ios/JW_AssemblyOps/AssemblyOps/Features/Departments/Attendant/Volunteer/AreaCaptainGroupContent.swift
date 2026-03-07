@@ -81,7 +81,7 @@ struct AreaCaptainGroupContent: View {
     @ViewBuilder
     private func membersGroupedByPost(_ members: [AreaGroupMemberItem]) -> some View {
         let grouped = Dictionary(grouping: members) { $0.postName }
-        let sortedKeys = grouped.keys.sorted()
+        let sortedKeys = grouped.keys.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
 
         ForEach(sortedKeys, id: \.self) { postName in
             if let postMembers = grouped[postName] {

@@ -216,7 +216,7 @@ const attendanceResolvers = {
           session: true,
           submittedBy: true,
         },
-        orderBy: [{ session: { date: 'asc' } }, { session: { startTime: 'asc' } }, { post: { name: 'asc' } }],
+        orderBy: [{ session: { date: 'asc' } }, { session: { startTime: 'asc' } }, { post: { sortOrder: 'asc' } }, { post: { name: 'asc' } }],
       });
 
       return counts.map((c) => ({
