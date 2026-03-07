@@ -1526,5 +1526,10 @@
 "area.deletePostsConfirm" = "¿Eliminar puestos?";
 "area.deletePostsWarning" = "Esto eliminará permanentemente %d puestos y todas sus asignaciones.";
 
+// MARK: - Rate Limiting
+"rate_limit_error" = "Estás haciendo solicitudes demasiado rápido. Espera un momento e intenta de nuevo.";
+"showing_cached_data" = "Mostrando datos en caché. Desliza para actualizar.";
+"unable_to_load_assignments" = "No se pudieron cargar las asignaciones. Verifica tu conexión.";
+
 // MARK: - Event Tab
 "eventTab.back" = "Atrás";

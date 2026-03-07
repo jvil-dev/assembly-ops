@@ -88,6 +88,10 @@ private struct AuthInterceptorProvider: InterceptorProvider {
         } else {
             interceptors.insert(AuthTokenInterceptor(), at: 0)
         }
+        // Insert rate limit interceptor after NetworkFetchInterceptor to inspect HTTP responses
+        if let networkIndex = interceptors.firstIndex(where: { $0 is NetworkFetchInterceptor }) {
+            interceptors.insert(RateLimitInterceptor(), at: networkIndex + 1)
+        }
         return interceptors
     }
 
