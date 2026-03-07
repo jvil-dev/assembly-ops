@@ -38,6 +38,7 @@ extension EnvironmentValues {
 struct EventsHomeView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel = EventsHomeViewModel()
+    @ObservedObject private var pushManager = PushNotificationManager.shared
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
     @State private var showSettings = false
@@ -84,6 +85,12 @@ struct EventsHomeView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
                     .environmentObject(appState)
+            }
+            .onChange(of: pushManager.pendingDeepLink) { _, deepLink in
+                guard deepLink != nil else { return }
+                // Refresh events to show latest state after notification action
+                viewModel.refresh()
+                pushManager.pendingDeepLink = nil
             }
         }
         .id(navigationStackId)

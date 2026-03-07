@@ -45,12 +45,51 @@ model User {
   completedHazardAssessments     AVHazardAssessment[]
   createdShifts                  Shift[]                @relation("ShiftCreator")
   createdAssignments             ScheduleAssignment[]   @relation("AssignmentCreator")
+  deviceTokens                   DeviceToken[]
+  notifications                  Notification[]
   congregationRef        Congregation?        @relation(fields: [congregationId], references: [id])
 
   @@index([email])
   @@index([userId])
   @@index([congregationId])
   @@index([isPlaceholder])
+}
+
+// ─────────────────────────────────────────────
+// DEVICE TOKEN (FCM push notification tokens)
+// ─────────────────────────────────────────────
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String   @default("ios")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATION (persisted push notification history)
+// ─────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  type      String   // ASSIGNMENT_CREATED, JOIN_REQUEST_SUBMITTED, etc.
+  title     String
+  body      String
+  data      Json?    // { assignmentId, requestId, etc. }
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([userId, eventId])
+  @@index([createdAt])
 }
 
 // ─────────────────────────────────────────────
@@ -272,6 +311,7 @@ model Event {
   avHazardAssessments    AVHazardAssessment[]
   avSafetyBriefings      AVSafetyBriefing[]
   lanyardCheckouts       LanyardCheckout[]
+  notifications          Notification[]
 
   @@unique([eventType, venue, startDate, language])
   @@index([joinCode])

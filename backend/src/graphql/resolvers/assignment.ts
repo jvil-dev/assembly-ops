@@ -35,6 +35,7 @@ import { ScheduleAssignment } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { Context } from '../context.js';
 import { AssignmentService } from '../../services/assignmentService.js';
+import { NotificationService } from '../../services/notificationService.js';
 import { requireAuth, requireEventAccess, resolveUserEventVolunteer, tryRequireAdmin, requireAreaOverseer, tryRequireDeptAccessByEvent, requireDeptAccess } from '../guards/auth.js';
 import {
   CreateAssignmentInput,
@@ -302,7 +303,24 @@ const assignmentResolvers = {
       }
 
       const assignmentService = new AssignmentService(context.prisma);
-      return assignmentService.createAssignment(input);
+      const assignment = await assignmentService.createAssignment(input);
+
+      // Notify the assigned volunteer
+      const vol = await context.prisma.eventVolunteer.findUnique({
+        where: { id: input.volunteerId },
+        include: { user: { select: { id: true } }, event: { select: { id: true } } },
+      });
+      if (vol) {
+        const post = await context.prisma.post.findUnique({ where: { id: input.postId }, select: { name: true } });
+        const notificationService = new NotificationService(context.prisma);
+        notificationService.sendToUser(vol.user.id, vol.event.id, {
+          title: 'New Assignment',
+          body: `You've been assigned to ${post?.name || 'a post'}`,
+          data: { type: 'ASSIGNMENT_CREATED', eventId: vol.event.id, assignmentId: assignment.id },
+        }).catch(() => {});
+      }
+
+      return assignment;
     },
 
     updateAssignment: async (
@@ -328,7 +346,23 @@ const assignmentResolvers = {
         }
       }
       const assignmentService = new AssignmentService(context.prisma);
-      return assignmentService.updateAssignment(id, input);
+      const updated = await assignmentService.updateAssignment(id, input);
+
+      // Notify the volunteer about the change
+      const updatedVol = await context.prisma.eventVolunteer.findUnique({
+        where: { id: updated.eventVolunteerId },
+        include: { user: { select: { id: true } }, event: { select: { id: true } } },
+      });
+      if (updatedVol) {
+        const notificationService = new NotificationService(context.prisma);
+        notificationService.sendToUser(updatedVol.user.id, updatedVol.event.id, {
+          title: 'Assignment Updated',
+          body: 'One of your assignments has been updated',
+          data: { type: 'ASSIGNMENT_UPDATED', eventId: updatedVol.event.id, assignmentId: updated.id },
+        }).catch(() => {});
+      }
+
+      return updated;
     },
 
     deleteAssignment: async (_parent: unknown, { id }: { id: string }, context: Context) => {
@@ -348,8 +382,29 @@ const assignmentResolvers = {
           await requireAreaOverseer(context, assignment.postId);
         }
       }
+      // Fetch assignment info before deletion for notification
+      const toDelete = await context.prisma.scheduleAssignment.findUnique({
+        where: { id },
+        include: {
+          eventVolunteer: { include: { user: { select: { id: true } }, event: { select: { id: true } } } },
+          post: { select: { name: true } },
+        },
+      });
+
       const assignmentService = new AssignmentService(context.prisma);
-      return assignmentService.deleteAssignment(id);
+      const result = await assignmentService.deleteAssignment(id);
+
+      // Notify the volunteer about cancellation
+      if (toDelete?.eventVolunteer) {
+        const notificationService = new NotificationService(context.prisma);
+        notificationService.sendToUser(toDelete.eventVolunteer.user.id, toDelete.eventVolunteer.event.id, {
+          title: 'Assignment Cancelled',
+          body: `Your assignment at ${toDelete.post?.name || 'a post'} has been cancelled`,
+          data: { type: 'ASSIGNMENT_CANCELLED', eventId: toDelete.eventVolunteer.event.id },
+        }).catch(() => {});
+      }
+
+      return result;
     },
 
     bulkCreateAssignments: async (
@@ -398,7 +453,26 @@ const assignmentResolvers = {
       }
 
       const assignmentService = new AssignmentService(context.prisma);
-      return assignmentService.createAssignments({ assignments: inputs });
+      const assignments = await assignmentService.createAssignments({ assignments: inputs });
+
+      // Notify each assigned volunteer
+      if (assignments.length > 0) {
+        const volunteerIds = [...new Set(inputs.map((i) => i.volunteerId))];
+        const volunteers = await context.prisma.eventVolunteer.findMany({
+          where: { id: { in: volunteerIds } },
+          include: { user: { select: { id: true } }, event: { select: { id: true } } },
+        });
+        const notificationService = new NotificationService(context.prisma);
+        for (const vol of volunteers) {
+          notificationService.sendToUser(vol.user.id, vol.event.id, {
+            title: 'New Assignment',
+            body: 'You have new assignments',
+            data: { type: 'ASSIGNMENT_CREATED', eventId: vol.event.id },
+          }).catch(() => {});
+        }
+      }
+
+      return assignments;
     },
 
     // Volunteer actions
@@ -415,7 +489,25 @@ const assignmentResolvers = {
       if (!assignment) throw new Error('Assignment not found');
       const ev = await resolveUserEventVolunteer(context.user!.id, assignment.session.eventId, context.prisma);
       const assignmentService = new AssignmentService(context.prisma);
-      return assignmentService.acceptAssignment(ev.id, input);
+      const accepted = await assignmentService.acceptAssignment(ev.id, input);
+
+      // Notify the overseer who created the assignment
+      if (accepted.createdByUserId) {
+        const vol = await context.prisma.eventVolunteer.findUnique({
+          where: { id: accepted.eventVolunteerId },
+          include: { user: { select: { firstName: true, lastName: true } } },
+        });
+        const post = await context.prisma.post.findUnique({ where: { id: accepted.postId }, select: { name: true } });
+        const volunteerName = vol ? `${vol.user.firstName} ${vol.user.lastName}` : 'A volunteer';
+        const notificationService = new NotificationService(context.prisma);
+        notificationService.sendToUser(accepted.createdByUserId, assignment.session.eventId, {
+          title: 'Assignment Accepted',
+          body: `${volunteerName} accepted assignment at ${post?.name || 'a post'}`,
+          data: { type: 'ASSIGNMENT_ACCEPTED', eventId: assignment.session.eventId, assignmentId: accepted.id },
+        }).catch(() => {});
+      }
+
+      return accepted;
     },
 
     declineAssignment: async (
@@ -431,7 +523,25 @@ const assignmentResolvers = {
       if (!assignment) throw new Error('Assignment not found');
       const ev = await resolveUserEventVolunteer(context.user!.id, assignment.session.eventId, context.prisma);
       const assignmentService = new AssignmentService(context.prisma);
-      return assignmentService.declineAssignment(ev.id, input);
+      const declined = await assignmentService.declineAssignment(ev.id, input);
+
+      // Notify the overseer who created the assignment
+      if (declined.createdByUserId) {
+        const vol = await context.prisma.eventVolunteer.findUnique({
+          where: { id: declined.eventVolunteerId },
+          include: { user: { select: { firstName: true, lastName: true } } },
+        });
+        const post = await context.prisma.post.findUnique({ where: { id: declined.postId }, select: { name: true } });
+        const volunteerName = vol ? `${vol.user.firstName} ${vol.user.lastName}` : 'A volunteer';
+        const notificationService = new NotificationService(context.prisma);
+        notificationService.sendToUser(declined.createdByUserId, assignment.session.eventId, {
+          title: 'Assignment Declined',
+          body: `${volunteerName} declined assignment at ${post?.name || 'a post'}`,
+          data: { type: 'ASSIGNMENT_DECLINED', eventId: assignment.session.eventId, assignmentId: declined.id },
+        }).catch(() => {});
+      }
+
+      return declined;
     },
 
     // Overseer actions
@@ -462,7 +572,24 @@ const assignmentResolvers = {
       }
 
       const assignmentService = new AssignmentService(context.prisma);
-      return assignmentService.forceAssignment(input);
+      const forced = await assignmentService.forceAssignment(input);
+
+      // Notify the assigned volunteer
+      const forcedVol = await context.prisma.eventVolunteer.findUnique({
+        where: { id: input.volunteerId },
+        include: { user: { select: { id: true } }, event: { select: { id: true } } },
+      });
+      if (forcedVol) {
+        const post = await context.prisma.post.findUnique({ where: { id: input.postId }, select: { name: true } });
+        const notificationService = new NotificationService(context.prisma);
+        notificationService.sendToUser(forcedVol.user.id, forcedVol.event.id, {
+          title: 'New Assignment',
+          body: `You've been assigned to ${post?.name || 'a post'}`,
+          data: { type: 'ASSIGNMENT_CREATED', eventId: forcedVol.event.id, assignmentId: forced.id },
+        }).catch(() => {});
+      }
+
+      return forced;
     },
 
     setCaptain: async (

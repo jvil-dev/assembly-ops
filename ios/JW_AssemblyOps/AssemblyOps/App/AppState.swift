@@ -106,6 +106,7 @@ final class AppState: ObservableObject {
                 // re-fetched later; don't kick the user to login on a transient error.
                 self?.isLoggedIn = true
                 self?.isLoading = false
+                PushNotificationManager.shared.requestPermissionIfNeeded()
             }
         }
     }
@@ -123,6 +124,7 @@ final class AppState: ObservableObject {
         currentUser = user
         NetworkClient.shared.resetClient()
         isLoggedIn = true
+        PushNotificationManager.shared.requestPermissionIfNeeded()
     }
 
     /// Called when overseer mode is toggled in profile settings
@@ -140,6 +142,7 @@ final class AppState: ObservableObject {
     // MARK: - Logout
 
     func logout() {
+        PushNotificationManager.shared.unregisterCurrentToken()
         KeychainManager.shared.clearAll()
         AssignmentCache.shared.clear()
         currentUser = nil

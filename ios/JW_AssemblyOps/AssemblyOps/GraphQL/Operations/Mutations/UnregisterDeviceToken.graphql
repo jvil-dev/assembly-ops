@@ -1,0 +1,3 @@
+mutation UnregisterDeviceToken($token: String!) {
+  unregisterDeviceToken(token: $token)
+}
