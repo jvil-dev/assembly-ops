@@ -1,0 +1,3 @@
+mutation MarkNotificationRead($notificationId: ID!) {
+  markNotificationRead(notificationId: $notificationId)
+}

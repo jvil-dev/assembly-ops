@@ -78,3 +78,6 @@ temp/
   xcuserdata/
   *.xcscmblueprint
   EOF
+
+# Firebase
+GoogleService-Info.plist

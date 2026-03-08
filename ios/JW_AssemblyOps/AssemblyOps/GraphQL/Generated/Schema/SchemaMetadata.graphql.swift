@@ -76,6 +76,7 @@ extension AssemblyOpsAPI {
       case "Message": return AssemblyOpsAPI.Objects.Message
       case "Mutation": return AssemblyOpsAPI.Objects.Mutation
       case "MyAttendanceStatus": return AssemblyOpsAPI.Objects.MyAttendanceStatus
+      case "Notification": return AssemblyOpsAPI.Objects.Notification
       case "OAuthAuthPayload": return AssemblyOpsAPI.Objects.OAuthAuthPayload
       case "Post": return AssemblyOpsAPI.Objects.Post
       case "PostSessionStatus": return AssemblyOpsAPI.Objects.PostSessionStatus

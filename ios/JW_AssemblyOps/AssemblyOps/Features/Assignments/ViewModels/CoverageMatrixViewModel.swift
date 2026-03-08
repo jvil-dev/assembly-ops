@@ -160,7 +160,7 @@ final class CoverageMatrixViewModel: ObservableObject {
                 let cat1 = $1.category ?? ""
                 if cat0 != cat1 { return cat0 < cat1 }
                 if $0.sortOrder != $1.sortOrder { return $0.sortOrder < $1.sortOrder }
-                return $0.name < $1.name
+                return $0.name.localizedStandardCompare($1.name) == .orderedAscending
             }
 
             // Sort sessions by date/time

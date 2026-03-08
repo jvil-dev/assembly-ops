@@ -23,6 +23,13 @@ struct AttendanceCountBreakdownView: View {
     @State private var groupByCategory: Bool = false
     @State private var error: String?
 
+    private var accentColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
+    }
+
     private var selectedSummary: SessionAttendanceSummaryItem? {
         summaries.first(where: { $0.sessionId == selectedSessionId })
     }
@@ -64,7 +71,7 @@ struct AttendanceCountBreakdownView: View {
                                         Text("\(group.subtotal)")
                                             .font(AppTheme.Typography.headline)
                                             .fontWeight(.bold)
-                                            .foregroundStyle(AppTheme.themeColor)
+                                            .foregroundStyle(accentColor)
                                     }
                                     .padding(.horizontal, AppTheme.Spacing.screenEdge)
                                     .entranceAnimation(hasAppeared: hasAppeared, delay: Double(groupIndex) * 0.05 + 0.1)
@@ -109,7 +116,7 @@ struct AttendanceCountBreakdownView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "calendar")
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
                 Text("attendant.attendance.session".localized.uppercased())
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -130,7 +137,7 @@ struct AttendanceCountBreakdownView: View {
                                 .padding(.vertical, AppTheme.Spacing.s)
                                 .background(
                                     selectedSessionId == summary.sessionId
-                                        ? AppTheme.themeColor
+                                        ? accentColor
                                         : AppTheme.cardBackgroundSecondary(for: colorScheme)
                                 )
                                 .foregroundStyle(selectedSessionId == summary.sessionId ? .white : .primary)
@@ -151,7 +158,7 @@ struct AttendanceCountBreakdownView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "number")
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
                 Text("attendant.attendance.total".localized.uppercased())
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -182,7 +189,7 @@ struct AttendanceCountBreakdownView: View {
                 Spacer()
                 Text("\(count.count)")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
             }
 
             HStack(spacing: AppTheme.Spacing.l) {

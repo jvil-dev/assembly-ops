@@ -116,7 +116,7 @@ struct Assignment: Identifiable, Equatable {
     // MARK: - Computed Properties
 
     var isToday: Bool {
-        Calendar.current.isDateInToday(date)
+        DateUtils.isSessionDateToday(date)
     }
 
     var isUpcoming: Bool {

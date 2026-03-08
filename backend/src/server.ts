@@ -25,9 +25,9 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import prisma from './config/database.js';
 import { createApolloServer } from './graphql/index.js';
+import { createRateLimiter, shutdownRateLimiter } from './middleware/rateLimiter.js';
 import { validateJwtSecrets } from './utils/jwt.js';
 import { validateEncryptionKey } from './utils/encryption.js';
 import { logger } from './utils/logger.js';
@@ -62,40 +62,33 @@ app.use(
 );
 app.use(express.json());
 
-// Rate limiting on auth-related GraphQL operations
-const AUTH_OPERATIONS = new Set([
-  'loginUser',
-  'registerUser',
-  'refreshToken',
-  'loginWithGoogle',
-  'loginWithApple',
-  'completeOAuthRegistration',
-]);
+// Rate limiting: sliding window counter with per-user keying
+app.use(
+  '/graphql',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20,
+    keyPrefix: 'auth',
+    operations: [
+      'loginUser',
+      'registerUser',
+      'refreshToken',
+      'loginWithGoogle',
+      'loginWithApple',
+      'completeOAuthRegistration',
+    ],
+    message: 'Too many authentication attempts, please try again later',
+  })
+);
 
-const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => {
-    const operationName = req.body?.operationName;
-    return !operationName || !AUTH_OPERATIONS.has(operationName);
-  },
-  message: { errors: [{ message: 'Too many authentication attempts, please try again later' }] },
-});
-
-app.use('/graphql', authRateLimiter);
-
-// General rate limiter: 100 requests per minute per IP
-const generalRateLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { errors: [{ message: 'Too many requests, please try again later' }] },
-});
-
-app.use('/graphql', generalRateLimiter);
+app.use(
+  '/graphql',
+  createRateLimiter({
+    windowMs: 60 * 1000, // 1 minute
+    max: 300,
+    keyPrefix: 'general',
+  })
+);
 
 app.get('/health', async (_req, res) => {
   try {
@@ -119,6 +112,7 @@ app.get('/health', async (_req, res) => {
 
 const shutdown = async () => {
   logger.info('Shutting down gracefully...');
+  shutdownRateLimiter();
   await prisma.$disconnect();
   process.exit(0);
 };

@@ -51,6 +51,7 @@ import shiftResolvers from './shift.js';
 import captainSchedulingResolvers from './captainScheduling.js';
 import reminderResolvers from './reminder.js';
 import lanyardResolvers from './lanyard.js';
+import notificationResolvers from './notification.js';
 
 const baseResolvers = {
   DateTime: DateTimeResolver,
@@ -109,6 +110,7 @@ const resolvers = {
     ...captainSchedulingResolvers.Query,
     ...reminderResolvers.Query,
     ...lanyardResolvers.Query,
+    ...notificationResolvers.Query,
   },
 
   Mutation: {
@@ -136,6 +138,7 @@ const resolvers = {
     ...captainSchedulingResolvers.Mutation,
     ...reminderResolvers.Mutation,
     ...lanyardResolvers.Mutation,
+    ...notificationResolvers.Mutation,
   },
 
   User: authResolvers.User,

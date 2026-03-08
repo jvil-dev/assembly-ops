@@ -132,7 +132,7 @@ final class CaptainSchedulingViewModel: ObservableObject {
             if let data = result.data?.captainPosts {
                 posts = data.map { post in
                     CaptainPostItem(id: post.id, name: post.name)
-                }.sorted { $0.name < $1.name }
+                }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
             }
         } catch {
             self.error = error.localizedDescription

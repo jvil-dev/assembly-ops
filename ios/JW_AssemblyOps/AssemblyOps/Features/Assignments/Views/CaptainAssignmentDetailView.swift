@@ -126,7 +126,7 @@ struct CaptainAssignmentDetailView: View {
                 .foregroundStyle(AppTheme.themeColor)
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                detailRow(icon: "calendar", title: "Date", value: assignment.date.formatted(date: .complete, time: .omitted))
+                detailRow(icon: "calendar", title: "Date", value: DateUtils.formatSessionDateFull(assignment.date))
 
                 detailRow(icon: "clock", title: "Time", value: assignment.timeRangeFormatted)
 

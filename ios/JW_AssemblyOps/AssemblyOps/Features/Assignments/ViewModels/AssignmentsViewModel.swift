@@ -66,7 +66,7 @@ final class AssignmentsViewModel: ObservableObject {
     /// all other assignments use the session start time.
     var groupedAssignments: [(date: Date, assignments: [Assignment])] {
         let grouped = Dictionary(grouping: assignments) { assignment in
-            Calendar.current.startOfDay(for: assignment.date)
+            DateUtils.sessionStartOfDay(for: assignment.date)
         }
         return grouped
             .map { (date: $0.key, assignments: $0.value.sorted { $0.displayStartTime < $1.displayStartTime }) }
@@ -159,13 +159,12 @@ final class AssignmentsViewModel: ObservableObject {
                 // Cache for offline use
                 cache.save(postAssignments)
             } catch {
-                // On network failure, fall back to cache
                 if let cached = cache.load() {
                     assignments = cached
                     isUsingCache = true
-                    errorMessage = "Showing cached data. Pull to refresh"
+                    errorMessage = NSLocalizedString("showing_cached_data", comment: "")
                 } else {
-                    errorMessage = "Unable to load assignments. Check your connection"
+                    errorMessage = error.localizedDescription
                 }
             }
         }
