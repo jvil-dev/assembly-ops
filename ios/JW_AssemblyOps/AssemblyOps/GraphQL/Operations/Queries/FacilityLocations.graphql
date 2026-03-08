@@ -1,9 +1,0 @@
-query FacilityLocations($eventId: ID!) {
-  facilityLocations(eventId: $eventId) {
-    id
-    name
-    location
-    description
-    sortOrder
-  }
-}

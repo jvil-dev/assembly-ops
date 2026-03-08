@@ -38,7 +38,7 @@ import { attendantTypeDefs } from './attendant.js';
 import { areaTypeDefs } from './area.js';
 import { walkThroughTypeDefs } from './walkThrough.js';
 import { postSessionStatusTypeDefs } from './postSessionStatus.js';
-import { facilityLocationTypeDefs } from './facilityLocation.js';
+import { floorPlanTypeDefs } from './floorPlan.js';
 import adminTypeDefs from './admin.js';
 import awsTypeDefs from './aws.js';
 import { audioVideoTypeDefs } from './audioVideo.js';
@@ -87,7 +87,7 @@ const typeDefs = [
   areaTypeDefs,
   walkThroughTypeDefs,
   postSessionStatusTypeDefs,
-  facilityLocationTypeDefs,
+  floorPlanTypeDefs,
   adminTypeDefs,
   awsTypeDefs,
   audioVideoTypeDefs,

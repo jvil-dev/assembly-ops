@@ -360,34 +360,6 @@ extension PostSessionStatusItem {
     }
 }
 
-// MARK: - Facility Location
-
-struct FacilityLocationItem: Identifiable {
-    let id: String
-    let name: String
-    let location: String
-    let description: String?
-    let sortOrder: Int
-}
-
-extension FacilityLocationItem {
-    init(from data: AssemblyOpsAPI.FacilityLocationsQuery.Data.FacilityLocation) {
-        self.id = data.id
-        self.name = data.name
-        self.location = data.location
-        self.description = data.description
-        self.sortOrder = data.sortOrder
-    }
-
-    init(fromCreate data: AssemblyOpsAPI.CreateFacilityLocationMutation.Data.CreateFacilityLocation) {
-        self.id = data.id
-        self.name = data.name
-        self.location = data.location
-        self.description = data.description
-        self.sortOrder = data.sortOrder
-    }
-}
-
 // MARK: - Concern Item (unified feed for volunteer view)
 
 enum ConcernItem: Identifiable {

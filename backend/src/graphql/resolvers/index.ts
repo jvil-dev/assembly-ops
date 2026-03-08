@@ -43,7 +43,7 @@ import attendantResolvers from './attendant.js';
 import areaResolvers from './area.js';
 import walkThroughResolvers from './walkThrough.js';
 import postSessionStatusResolvers from './postSessionStatus.js';
-import facilityLocationResolvers from './facilityLocation.js';
+import floorPlanResolvers from './floorPlan.js';
 import adminResolvers from './admin.js';
 import awsResolvers from './aws.js';
 import audioVideoResolvers from './audioVideo.js';
@@ -102,7 +102,7 @@ const resolvers = {
     ...areaResolvers.Query,
     ...walkThroughResolvers.Query,
     ...postSessionStatusResolvers.Query,
-    ...facilityLocationResolvers.Query,
+    ...floorPlanResolvers.Query,
     ...adminResolvers.Query,
     ...awsResolvers.Query,
     ...audioVideoResolvers.Query,
@@ -131,7 +131,7 @@ const resolvers = {
     ...areaResolvers.Mutation,
     ...walkThroughResolvers.Mutation,
     ...postSessionStatusResolvers.Mutation,
-    ...facilityLocationResolvers.Mutation,
+    ...floorPlanResolvers.Mutation,
     ...adminResolvers.Mutation,
     ...audioVideoResolvers.Mutation,
     ...shiftResolvers.Mutation,

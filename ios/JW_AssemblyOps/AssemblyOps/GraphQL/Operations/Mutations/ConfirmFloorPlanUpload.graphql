@@ -1,0 +1,3 @@
+mutation ConfirmFloorPlanUpload($eventId: ID!) {
+  confirmFloorPlanUpload(eventId: $eventId)
+}

@@ -25,18 +25,20 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct AttendantDashboardView: View {
     @StateObject private var incidentVM = SafetyIncidentViewModel()
     @StateObject private var alertVM = LostPersonViewModel()
     @StateObject private var meetingVM = AttendantMeetingViewModel()
+    @StateObject private var floorPlanVM = FloorPlanViewModel()
     @ObservedObject private var sessionState = EventSessionState.shared
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
     @State private var isInitialLoading = true
     @State private var walkThroughCompletions: [WalkThroughCompletionItem] = []
-    @State private var facilityLocations: [FacilityLocationItem] = []
-    @State private var showCreateFacility = false
+    @State private var selectedPhotoItem: PhotosPickerItem? = nil
+    @State private var showFloorPlanError = false
 
     private var accentColor: Color {
         if let deptType = sessionState.selectedDepartment?.departmentType {
@@ -68,7 +70,7 @@ struct AttendantDashboardView: View {
                         walkThroughStatusCard
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
 
-                        facilityGuideCard
+                        floorPlanCard
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
 
                         reminderComplianceCard
@@ -271,73 +273,95 @@ struct AttendantDashboardView: View {
         .themedCard(scheme: colorScheme)
     }
 
-    // MARK: - Facility Guide Card
+    // MARK: - Floor Plan Card
 
-    private var facilityGuideCard: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+    private var floorPlanCard: some View {
+        let eventId = sessionState.selectedEvent?.id ?? ""
+        return VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack(spacing: AppTheme.Spacing.s) {
-                Image(systemName: "building.2")
+                Image(systemName: "map")
                     .foregroundStyle(accentColor)
-                Text("attendant.facility.title".localized.uppercased())
+                Text("floorplan.title".localized.uppercased())
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                Spacer()
-                Button {
-                    showCreateFacility = true
-                    HapticManager.shared.lightTap()
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(accentColor)
-                }
             }
 
-            if facilityLocations.isEmpty {
-                Text("attendant.facility.empty".localized)
-                    .font(AppTheme.Typography.body)
-                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-            } else {
-                ForEach(facilityLocations) { facility in
-                    HStack(spacing: AppTheme.Spacing.s) {
-                        Image(systemName: "mappin.circle.fill")
-                            .foregroundStyle(accentColor)
-                            .frame(width: 20)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(facility.name)
-                                .font(AppTheme.Typography.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundStyle(.primary)
-                            Text(facility.location)
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                            if let desc = facility.description {
-                                Text(desc)
-                                    .font(AppTheme.Typography.caption)
-                                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                            }
+            if floorPlanVM.isUploading {
+                HStack {
+                    Spacer()
+                    ProgressView("floorplan.uploading".localized)
+                    Spacer()
+                }
+            } else if floorPlanVM.hasFloorPlan, let imageUrl = floorPlanVM.imageUrl {
+                NavigationLink(destination: FloorPlanView(eventId: eventId, isReadOnly: false)) {
+                    AsyncImage(url: imageUrl) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        case .empty:
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        case .failure:
+                            Image(systemName: "photo.slash")
+                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                                .frame(maxWidth: .infinity)
+                        @unknown default:
+                            EmptyView()
                         }
-                        Spacer()
-                        Button {
-                            Task {
-                                try? await AttendantService.shared.deleteFacilityLocation(id: facility.id)
-                                facilityLocations.removeAll { $0.id == facility.id }
-                            }
-                        } label: {
-                            Image(systemName: "trash")
-                                .font(.caption)
-                                .foregroundStyle(AppTheme.StatusColors.declined)
-                        }
-                        .buttonStyle(.plain)
                     }
-                    .padding(.vertical, AppTheme.Spacing.xs)
+                    .frame(maxWidth: .infinity, minHeight: 220, maxHeight: 220)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    HapticManager.shared.lightTap()
+                    Task { await floorPlanVM.delete(eventId: eventId) }
+                } label: {
+                    Label("floorplan.remove".localized, systemImage: "trash")
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.StatusColors.declined)
+                }
+                .buttonStyle(.plain)
+            } else {
+                VStack(spacing: AppTheme.Spacing.m) {
+                    Image(systemName: "map")
+                        .font(.system(size: 36))
+                        .foregroundStyle(accentColor.opacity(0.4))
+
+                    Text("floorplan.empty.title".localized)
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                        Label("floorplan.upload".localized, systemImage: "arrow.up.circle")
+                            .font(AppTheme.Typography.subheadline)
+                            .foregroundStyle(accentColor)
+                    }
+                }
+                .frame(maxWidth: .infinity, minHeight: 180)
+                .onChange(of: selectedPhotoItem) { _, newItem in
+                    guard let newItem else { return }
+                    Task {
+                        if let data = try? await newItem.loadTransferable(type: Data.self) {
+                            await floorPlanVM.upload(eventId: eventId, imageData: data)
+                        }
+                        selectedPhotoItem = nil
+                    }
                 }
             }
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
-        .sheet(isPresented: $showCreateFacility) {
-            CreateFacilityLocationSheet { newFacility in
-                facilityLocations.append(newFacility)
-            }
+        .onChange(of: floorPlanVM.error) { error in
+            showFloorPlanError = error != nil
+        }
+        .alert("common.error".localized, isPresented: $showFloorPlanError) {
+            Button("common.ok".localized, role: .cancel) { floorPlanVM.error = nil }
+        } message: {
+            Text(floorPlanVM.error ?? "")
         }
     }
 
@@ -491,13 +515,12 @@ struct AttendantDashboardView: View {
         async let i: () = incidentVM.loadIncidents(eventId: eventId)
         async let a: () = alertVM.loadAlerts(eventId: eventId)
         async let m: () = meetingVM.loadMeetings(eventId: eventId)
-        _ = await (i, a, m)
+        async let f: () = floorPlanVM.loadFloorPlan(eventId: eventId)
+        _ = await (i, a, m, f)
 
-        // Load walk-through completions and facility locations
+        // Load walk-through completions
         async let w = AttendantService.shared.fetchWalkThroughCompletions(eventId: eventId, sessionId: nil)
-        async let f = AttendantService.shared.fetchFacilityLocations(eventId: eventId)
         walkThroughCompletions = (try? await w) ?? []
-        facilityLocations = (try? await f) ?? []
 
         isInitialLoading = false
     }
