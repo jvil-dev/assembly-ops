@@ -1542,3 +1542,11 @@
 "notifications.loading" = "Cargando notificaciones...";
 "notifications.empty" = "Sin Notificaciones";
 "notifications.empty.subtitle" = "Aquí verás actualizaciones de asignaciones, solicitudes y otras alertas.";
+
+// MARK: - Floor Plan (Sprint 6.11 Part B)
+"floorplan.title" = "Plano del Edificio";
+"floorplan.empty.title" = "Sin Plano";
+"floorplan.empty.desc" = "El supervisor aún no ha subido un plano del edificio.";
+"floorplan.upload" = "Subir Plano";
+"floorplan.remove" = "Eliminar";
+"floorplan.uploading" = "Subiendo...";

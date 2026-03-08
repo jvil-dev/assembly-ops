@@ -1541,3 +1541,11 @@
 "notifications.loading" = "Loading notifications...";
 "notifications.empty" = "No Notifications";
 "notifications.empty.subtitle" = "You'll see assignment updates, join requests, and other alerts here.";
+
+// MARK: - Floor Plan (Sprint 6.11 Part B)
+"floorplan.title" = "Floor Plan";
+"floorplan.empty.title" = "No Floor Plan";
+"floorplan.empty.desc" = "The overseer hasn't uploaded a floor plan yet.";
+"floorplan.upload" = "Upload Floor Plan";
+"floorplan.remove" = "Remove";
+"floorplan.uploading" = "Uploading...";
