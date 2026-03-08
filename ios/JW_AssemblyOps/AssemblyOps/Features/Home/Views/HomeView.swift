@@ -117,11 +117,6 @@ struct HomeView: View {
                                 .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
                         }
 
-                        // Facility locations
-                        if !attendantVM.facilityLocations.isEmpty {
-                            facilityLocationsCard
-                                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.30)
-                        }
                     }
                 }
                 .screenPadding()
@@ -172,7 +167,6 @@ struct HomeView: View {
                     await loadAttendantPosts()
                     if let eventId = appState.currentEventId {
                         await attendantVM.loadConcerns(eventId: eventId)
-                        await attendantVM.loadFacilityLocations(eventId: eventId)
                         if let sid = currentSessionId {
                             await attendantVM.loadPostSessionStatuses(sessionId: sid)
                         }
@@ -189,7 +183,6 @@ struct HomeView: View {
                     await loadAttendantPosts()
                     if let eventId = eventId ?? appState.currentEventId {
                         await attendantVM.loadConcerns(eventId: eventId)
-                        await attendantVM.loadFacilityLocations(eventId: eventId)
                         if let sid = currentSessionId {
                             await attendantVM.loadPostSessionStatuses(sessionId: sid)
                         }
@@ -927,45 +920,6 @@ struct HomeView: View {
                         .padding(.vertical, 4)
                         .background(status.status.color.opacity(0.12))
                         .clipShape(Capsule())
-                }
-                .padding(.vertical, AppTheme.Spacing.xs)
-            }
-        }
-        .cardPadding()
-        .themedCard(scheme: colorScheme)
-    }
-
-    // MARK: - Facility Guide Card (Read-Only)
-
-    private var facilityLocationsCard: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack(spacing: AppTheme.Spacing.s) {
-                Image(systemName: "building.2")
-                    .foregroundStyle(AppTheme.themeColor)
-                Text("attendant.facility.title".localized.uppercased())
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-            }
-
-            ForEach(attendantVM.facilityLocations) { facility in
-                HStack(spacing: AppTheme.Spacing.s) {
-                    Image(systemName: "mappin.circle.fill")
-                        .foregroundStyle(AppTheme.themeColor)
-                        .frame(width: 20)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(facility.name)
-                            .font(AppTheme.Typography.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.primary)
-                        Text(facility.location)
-                            .font(AppTheme.Typography.caption)
-                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                        if let desc = facility.description {
-                            Text(desc)
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                        }
-                    }
                 }
                 .padding(.vertical, AppTheme.Spacing.xs)
             }

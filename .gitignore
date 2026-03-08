@@ -74,10 +74,10 @@ temp/
 .worktrees/
 
 # Xcode
-  *.xcuserstate
-  xcuserdata/
-  *.xcscmblueprint
-  EOF
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+Package.resolved
 
 # Firebase
 GoogleService-Info.plist
