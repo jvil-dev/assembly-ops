@@ -48,7 +48,7 @@ final class CaptainAttendanceViewModel: ObservableObject {
     var countsByPost: [(postName: String, areaName: String?, items: [CaptainAttendanceCountItem])] {
         let grouped = Dictionary(grouping: counts) { $0.postId }
         return grouped.values
-            .sorted { ($0.first?.postName ?? "") < ($1.first?.postName ?? "") }
+            .sorted { ($0.first?.postName ?? "").localizedStandardCompare($1.first?.postName ?? "") == .orderedAscending }
             .map { items in
                 (postName: items.first?.postName ?? "",
                  areaName: items.first?.areaName,
