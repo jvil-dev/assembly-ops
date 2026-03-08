@@ -289,6 +289,7 @@ model Event {
   joinCode           String    @unique @default(cuid())
   isPublic           Boolean   @default(true) // Controls visibility in discoverEvents
   acceptDeadlineDays Int       @default(5)
+  floorPlanKey       String?   // S3 object key, null if no floor plan
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   // --- Relations ---
@@ -304,7 +305,6 @@ model Event {
   lostPersonAlerts       LostPersonAlert[]
   attendantMeetings      AttendantMeeting[]
   walkThroughCompletions WalkThroughCompletion[]
-  facilityLocations      FacilityLocation[]
   conversations          Conversation[]
   joinRequests           EventJoinRequest[]
   avEquipment            AVEquipmentItem[]
@@ -792,18 +792,6 @@ model PostSessionStatus {
 
   @@unique([postId, sessionId])
   @@index([sessionId])
-}
-
-model FacilityLocation {
-  id          String  @id @default(cuid())
-  eventId     String
-  name        String
-  location    String
-  description String?
-  sortOrder   Int     @default(0)
-  event       Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-
-  @@index([eventId])
 }
 
 // ─────────────────────────────────────────────
