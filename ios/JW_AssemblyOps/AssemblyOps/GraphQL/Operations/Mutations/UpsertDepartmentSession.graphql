@@ -1,0 +1,10 @@
+mutation UpsertDepartmentSession($departmentId: ID!, $sessionId: ID!, $input: UpsertDepartmentSessionInput!) {
+  upsertDepartmentSession(departmentId: $departmentId, sessionId: $sessionId, input: $input) {
+    id
+    departmentId
+    sessionId
+    startTime
+    endTime
+    notes
+  }
+}

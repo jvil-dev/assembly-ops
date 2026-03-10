@@ -32,6 +32,25 @@ enum DateUtils {
         return isoFormatter.date(from: dateString)
     }
 
+    // MARK: - UTC Time Field Display
+    // For time-only fields (session.startTime, shift.startTime, etc.)
+    // These are stored as UTC epoch dates — must display in UTC to avoid timezone shift.
+
+    static let utcTimeFormatter: DateFormatter = {
+        let fmt = DateFormatter()
+        fmt.timeStyle = .short
+        fmt.dateStyle = .none
+        fmt.timeZone = TimeZone(identifier: "UTC")
+        return fmt
+    }()
+
+    /// Format an ISO8601 time-field string for display, interpreting it as UTC.
+    /// Use for session.startTime, session.endTime, shift.startTime, shift.endTime.
+    static func formatTimeField(_ isoString: String) -> String? {
+        guard let date = parseISO8601(isoString) else { return nil }
+        return utcTimeFormatter.string(from: date)
+    }
+
     /// Format a date as a relative time string (e.g., "2h ago", "3d ago")
     static func timeAgo(from date: Date) -> String {
         let formatter = RelativeDateTimeFormatter()

@@ -19,7 +19,7 @@
  */
 export function timeStringToDate(timeStr: string): Date {
   const [hours, minutes] = timeStr.split(':').map(Number);
-  const date = new Date(1980, 0, 1, hours, minutes, 0, 0);
+  const date = new Date(Date.UTC(1980, 0, 1, hours, minutes, 0, 0));
   return date;
 }
 
@@ -28,7 +28,7 @@ export function timeStringToDate(timeStr: string): Date {
  */
 
 export function dateToTimeString(date: Date): string {
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const hours = date.getUTCHours().toString().padStart(2, '0');
+  const minutes = date.getUTCMinutes().toString().padStart(2, '0');
   return `${hours}:${minutes}`;
 }

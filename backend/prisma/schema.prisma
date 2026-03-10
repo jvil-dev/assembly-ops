@@ -236,7 +236,8 @@ model Department {
   posts           Post[]
   areas           Area[]
   eventVolunteers EventVolunteer[]
-  hierarchyRoles  DepartmentHierarchy[]
+  hierarchyRoles     DepartmentHierarchy[]
+  departmentSessions DepartmentSession[]
 
   @@unique([eventId, departmentType])
   @@index([eventId])
@@ -709,9 +710,29 @@ model Session {
   avEquipmentCheckouts   AVEquipmentCheckout[]
   avDamageReports        AVDamageReport[]
   avHazardAssessments    AVHazardAssessment[]
+  departmentSessions     DepartmentSession[]
 
   @@index([date])
   @@index([eventId])
+}
+
+// ─────────────────────────────────────────────
+// DEPARTMENT SESSION (per-department time override for a session)
+// ─────────────────────────────────────────────
+
+model DepartmentSession {
+  id           String     @id @default(cuid())
+  departmentId String
+  sessionId    String
+  startTime    DateTime?  @db.Time(6)
+  endTime      DateTime?  @db.Time(6)
+  notes        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  session      Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([departmentId, sessionId])
 }
 
 // ─────────────────────────────────────────────
@@ -724,6 +745,8 @@ model Area {
   description  String?
   category     String?
   sortOrder    Int           @default(0)
+  startTime    DateTime?     @db.Time(6)
+  endTime      DateTime?     @db.Time(6)
   departmentId String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt

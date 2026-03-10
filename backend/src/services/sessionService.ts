@@ -20,7 +20,7 @@
  *
  * Used by: Session resolvers
  */
-import { PrismaClient, Session } from '@prisma/client';
+import { PrismaClient, Session, DepartmentSession } from '@prisma/client';
 import { NotFoundError, ValidationError } from '../utils/errors.js';
 import { timeStringToDate } from '../utils/time.js';
 import {
@@ -153,15 +153,54 @@ export class SessionService {
     });
   }
 
-  async getEventSessions(eventId: string) {
+  async getEventSessions(eventId: string, departmentId?: string) {
     return this.prisma.session.findMany({
       where: { eventId },
       include: {
         _count: {
-          select: { assignments: true },
+          select: {
+            assignments: departmentId
+              ? { where: { post: { departmentId } } }
+              : true,
+          },
         },
       },
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+    });
+  }
+
+  async upsertDepartmentSession(
+    departmentId: string,
+    sessionId: string,
+    input: { startTime?: string; endTime?: string; notes?: string }
+  ): Promise<DepartmentSession> {
+    return this.prisma.departmentSession.upsert({
+      where: { departmentId_sessionId: { departmentId, sessionId } },
+      create: {
+        departmentId,
+        sessionId,
+        startTime: input.startTime ? timeStringToDate(input.startTime) : null,
+        endTime: input.endTime ? timeStringToDate(input.endTime) : null,
+        notes: input.notes ?? null,
+      },
+      update: {
+        startTime: input.startTime !== undefined
+          ? (input.startTime ? timeStringToDate(input.startTime) : null)
+          : undefined,
+        endTime: input.endTime !== undefined
+          ? (input.endTime ? timeStringToDate(input.endTime) : null)
+          : undefined,
+        notes: input.notes !== undefined ? (input.notes || null) : undefined,
+      },
+    });
+  }
+
+  async getDepartmentSession(
+    departmentId: string,
+    sessionId: string
+  ): Promise<DepartmentSession | null> {
+    return this.prisma.departmentSession.findUnique({
+      where: { departmentId_sessionId: { departmentId, sessionId } },
     });
   }
 
