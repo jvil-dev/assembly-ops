@@ -176,11 +176,14 @@ describe('Assignment Operations', () => {
           query: `
             mutation CreateAssignment($input: CreateAssignmentInput!) {
               createAssignment(input: $input) {
-                id
-                volunteer { firstName lastName }
-                post { name }
-                session { name }
-                isCheckedIn
+                assignment {
+                  id
+                  volunteer { firstName lastName }
+                  post { name }
+                  session { name }
+                  isCheckedIn
+                }
+                warning
               }
             }
           `,
@@ -191,11 +194,11 @@ describe('Assignment Operations', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.createAssignment.volunteer.firstName).toBe('John');
-      expect(response.body.data.createAssignment.post.name).toBe('East Lobby');
-      expect(response.body.data.createAssignment.isCheckedIn).toBe(false);
+      expect(response.body.data.createAssignment.assignment.volunteer.firstName).toBe('John');
+      expect(response.body.data.createAssignment.assignment.post.name).toBe('East Lobby');
+      expect(response.body.data.createAssignment.assignment.isCheckedIn).toBe(false);
 
-      assignmentId = response.body.data.createAssignment.id;
+      assignmentId = response.body.data.createAssignment.assignment.id;
     });
 
     it('should reject duplicate assignment for same session', async () => {
@@ -228,7 +231,7 @@ describe('Assignment Operations', () => {
         .send({
           query: `
             mutation CreateAssignment($input: CreateAssignmentInput!) {
-              createAssignment(input: $input) { id }
+              createAssignment(input: $input) { assignment { id } }
             }
           `,
           variables: {

@@ -122,10 +122,13 @@ describe('Assignment Acceptance Operations', () => {
           query: `
             mutation CreateAssignment($input: CreateAssignmentInput!) {
               createAssignment(input: $input) {
-                id
-                status
-                isCaptain
-                forceAssigned
+                assignment {
+                  id
+                  status
+                  isCaptain
+                  forceAssigned
+                }
+                warning
               }
             }
           `,
@@ -136,10 +139,10 @@ describe('Assignment Acceptance Operations', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.createAssignment.status).toBe('PENDING');
-      expect(response.body.data.createAssignment.forceAssigned).toBe(false);
+      expect(response.body.data.createAssignment.assignment.status).toBe('PENDING');
+      expect(response.body.data.createAssignment.assignment.forceAssigned).toBe(false);
 
-      assignmentId = response.body.data.createAssignment.id;
+      assignmentId = response.body.data.createAssignment.assignment.id;
     });
   });
 
@@ -199,12 +202,12 @@ describe('Assignment Acceptance Operations', () => {
         .post('/graphql')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          query: `mutation($input: CreateAssignmentInput!) { createAssignment(input: $input) { id } }`,
+          query: `mutation($input: CreateAssignmentInput!) { createAssignment(input: $input) { assignment { id } } }`,
           variables: {
             input: { volunteerId, postId, sessionId: newSessionId },
           },
         });
-      const newAssignmentId = createRes.body.data.createAssignment.id;
+      const newAssignmentId = createRes.body.data.createAssignment.assignment.id;
 
       // Decline
       const response = await request(app)
@@ -371,13 +374,13 @@ describe('Assignment Acceptance Operations', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           query: `mutation($input: CreateAssignmentInput!) {
-            createAssignment(input: $input) { id status }
+            createAssignment(input: $input) { assignment { id status } }
           }`,
           variables: {
             input: { volunteerId, postId, sessionId: pendingSessionId },
           },
         });
-      pendingAssignmentId = assignRes.body.data.createAssignment.id;
+      pendingAssignmentId = assignRes.body.data.createAssignment.assignment.id;
     });
 
     it('should reject volunteer check-in for PENDING assignment', async () => {
