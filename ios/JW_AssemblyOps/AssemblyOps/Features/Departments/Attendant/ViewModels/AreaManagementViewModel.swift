@@ -53,7 +53,7 @@ final class AreaManagementViewModel: ObservableObject {
     }
 
     /// Create a new area
-    func createArea(departmentId: String, name: String, description: String?, category: String?, sortOrder: Int?) async {
+    func createArea(departmentId: String, name: String, description: String?, category: String?, sortOrder: Int?, startTime: String? = nil, endTime: String? = nil) async {
         isLoading = true
         error = nil
 
@@ -63,7 +63,9 @@ final class AreaManagementViewModel: ObservableObject {
                 name: name,
                 description: description,
                 category: category,
-                sortOrder: sortOrder
+                sortOrder: sortOrder,
+                startTime: startTime,
+                endTime: endTime
             )
             areas.append(newArea)
             areas.sort { $0.sortOrder < $1.sortOrder }
@@ -75,7 +77,7 @@ final class AreaManagementViewModel: ObservableObject {
     }
 
     /// Update an existing area
-    func updateArea(id: String, name: String, description: String?, sortOrder: Int?) async {
+    func updateArea(id: String, name: String, description: String?, sortOrder: Int?, startTime: String? = nil, endTime: String? = nil) async {
         error = nil
 
         do {
@@ -83,7 +85,9 @@ final class AreaManagementViewModel: ObservableObject {
                 id: id,
                 name: name,
                 description: description,
-                sortOrder: sortOrder
+                sortOrder: sortOrder,
+                startTime: startTime,
+                endTime: endTime
             )
             if let index = areas.firstIndex(where: { $0.id == id }) {
                 // Preserve existing posts and captains since mutation returns without them

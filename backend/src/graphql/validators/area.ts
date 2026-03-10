@@ -20,6 +20,12 @@
  */
 import { z } from 'zod';
 
+const timeStringSchema = z
+  .string()
+  .regex(/^\d{2}:\d{2}$/, 'Time must be in HH:mm format')
+  .nullish()
+  .transform((v) => v || null);
+
 export const createAreaSchema = z.object({
   name: z
     .string()
@@ -37,6 +43,8 @@ export const createAreaSchema = z.object({
     .nullish()
     .transform((v) => v?.trim() || null),
   sortOrder: z.number().int().min(0).default(0),
+  startTime: timeStringSchema,
+  endTime: timeStringSchema,
 });
 
 export type CreateAreaInput = z.infer<typeof createAreaSchema>;
@@ -59,6 +67,8 @@ export const updateAreaSchema = z.object({
     .nullish()
     .transform((v) => v?.trim() || null),
   sortOrder: z.number().int().min(0).optional(),
+  startTime: timeStringSchema,
+  endTime: timeStringSchema,
 });
 
 export type UpdateAreaInput = z.infer<typeof updateAreaSchema>;

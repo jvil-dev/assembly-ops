@@ -22,6 +22,7 @@ enum AttendantMainCategory: String, CaseIterable, Identifiable {
     case interior = "Interior"
     case exterior = "Exterior"
     case seating  = "Seating"
+    case baptism  = "Baptism"
 
     var id: String { rawValue }
 
@@ -30,6 +31,7 @@ enum AttendantMainCategory: String, CaseIterable, Identifiable {
         case .interior: return "I"
         case .exterior: return "E"
         case .seating:  return "S"
+        case .baptism:  return "B"
         }
     }
 
@@ -77,6 +79,7 @@ enum AttendantMainCategory: String, CaseIterable, Identifiable {
         if storageString.hasPrefix("Interior") { return .interior }
         if storageString.hasPrefix("Exterior") { return .exterior }
         if storageString.hasPrefix("Seating")  { return .seating }
+        if storageString.hasPrefix("Baptism")  { return .baptism }
         return nil
     }
 }

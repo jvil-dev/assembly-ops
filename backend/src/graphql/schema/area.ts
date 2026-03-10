@@ -40,6 +40,8 @@ export const areaTypeDefs = `#graphql
     description: String
     category: String
     sortOrder: Int!
+    startTime: String
+    endTime: String
     department: Department!
     posts: [Post!]!
     captains: [AreaCaptainAssignment!]!
@@ -82,6 +84,8 @@ export const areaTypeDefs = `#graphql
     description: String
     category: String
     sortOrder: Int
+    startTime: String
+    endTime: String
   }
 
   input UpdateAreaInput {
@@ -89,6 +93,8 @@ export const areaTypeDefs = `#graphql
     description: String
     category: String
     sortOrder: Int
+    startTime: String
+    endTime: String
   }
 
   input SetAreaCaptainInput {
