@@ -66,6 +66,7 @@ const authTypeDefs = `#graphql
     logoutAllSessions: LogoutPayload!
     updateUserProfile(input: UpdateUserProfileInput!): User!
     setOverseerMode(isOverseer: Boolean!): User!
+    deleteAccount(password: String): Boolean!
   }
 `;
 
