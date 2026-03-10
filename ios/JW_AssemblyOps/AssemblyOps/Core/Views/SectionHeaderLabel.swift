@@ -22,11 +22,12 @@ struct SectionHeaderLabel: View {
 
     let icon: String
     let title: String
+    var accentColor: Color? = nil
 
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .foregroundStyle(AppTheme.themeColor)
+                .foregroundStyle(accentColor ?? AppTheme.themeColor)
             Text(title.uppercased())
                 .font(AppTheme.Typography.caption)
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
