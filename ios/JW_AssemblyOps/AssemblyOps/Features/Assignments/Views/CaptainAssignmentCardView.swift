@@ -35,7 +35,9 @@ struct CaptainAssignmentCardView: View {
                     detailRow(icon: "mappin.circle.fill", text: description)
                 }
 
-                detailRow(icon: "clock.fill", text: assignment.timeRangeFormatted)
+                if !assignment.timeRangeFormatted.isEmpty {
+                    detailRow(icon: "clock.fill", text: assignment.timeRangeFormatted)
+                }
 
                 if let deadlineText = assignment.deadlineText {
                     deadlineRow(text: deadlineText)
