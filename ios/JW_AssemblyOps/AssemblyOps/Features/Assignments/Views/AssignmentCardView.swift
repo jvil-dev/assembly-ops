@@ -48,12 +48,12 @@ struct AssignmentCardView: View {
                     detailRow(icon: "mappin.circle.fill", text: location)
                 }
 
-                // Time (shows shift time for Attendant assignments with shifts)
-                detailRow(icon: "clock.fill", text: assignment.timeRangeFormatted)
-
-                // Shift name label (Attendant assignments with a specific shift)
-                if let shiftName = assignment.shiftName, assignment.hasShift {
-                    detailRow(icon: "clock.arrow.2.circlepath", text: shiftName)
+                // Time: show when a shift or dept-configured session time is set
+                if !assignment.timeRangeFormatted.isEmpty {
+                    detailRow(icon: "clock.fill", text: assignment.timeRangeFormatted)
+                    if let shiftName = assignment.shiftName {
+                        detailRow(icon: "clock.arrow.2.circlepath", text: shiftName)
+                    }
                 }
 
                 // Deadline warning for pending
