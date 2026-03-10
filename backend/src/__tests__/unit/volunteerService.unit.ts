@@ -867,7 +867,7 @@ describe('VolunteerService', () => {
       expect(prisma.scheduleAssignment.updateMany).toHaveBeenCalledOnce();
     });
 
-    it('returns mergedCount=0 and success=true when placeholder has no event volunteers', async () => {
+    it('returns mergedCount=0 and success=true when placeholder has no event volunteers (no EVs)', async () => {
       const placeholder = makePlaceholderUser({ eventVolunteers: [] });
       const realUser = makeUser({
         id: 'real-id',
@@ -898,6 +898,151 @@ describe('VolunteerService', () => {
         mergedCount: 0,
         message: expect.stringContaining('0'),
       });
+    });
+  });
+
+  // =========================================================================
+  // updateVolunteer — department removal cleanup
+  // =========================================================================
+
+  describe('updateVolunteer', () => {
+    it('throws NotFoundError when volunteer does not exist', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(null as any);
+
+      await expect(
+        service.updateVolunteer('nonexistent-ev', { departmentId: null })
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it('updates volunteer without cleanup when departmentId is not being set to null', async () => {
+      const ev = makeEventVolunteer({ departmentId: 'dept-id-1' });
+      const updatedEv = { ...ev, departmentId: 'dept-id-2' };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(ev as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.eventVolunteer.update).mockResolvedValue(updatedEv as any);
+
+      await service.updateVolunteer('ev-id-1', { departmentId: 'dept-id-2' });
+
+      // No cleanup should happen — department.findUnique not called
+      expect(prisma.department.findUnique).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(prisma.eventVolunteer.update).toHaveBeenCalledOnce();
+    });
+
+    it('does not clean up when volunteer has no current department', async () => {
+      const ev = makeEventVolunteer({ departmentId: null });
+      const updatedEv = { ...ev };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(ev as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.eventVolunteer.update).mockResolvedValue(updatedEv as any);
+
+      await service.updateVolunteer('ev-id-1', { departmentId: null });
+
+      expect(prisma.department.findUnique).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('cleans up assignments, area captains, and hierarchy when removing from department', async () => {
+      const ev = makeEventVolunteer({ id: 'ev-id-1', departmentId: 'dept-id-1' });
+      const department = {
+        id: 'dept-id-1',
+        posts: [{ id: 'post-1' }, { id: 'post-2' }],
+        areas: [{ id: 'area-1' }],
+      };
+      const updatedEv = { ...ev, departmentId: null };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(ev as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.department.findUnique).mockResolvedValue(department as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.scheduleAssignment.deleteMany).mockResolvedValue({ count: 3 } as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.areaCaptain.deleteMany).mockResolvedValue({ count: 1 } as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.departmentHierarchy.deleteMany).mockResolvedValue({ count: 1 } as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.eventVolunteer.update).mockResolvedValue(updatedEv as any);
+
+      await service.updateVolunteer('ev-id-1', { departmentId: null });
+
+      // Department lookup must happen
+      expect(prisma.department.findUnique).toHaveBeenCalledWith({
+        where: { id: 'dept-id-1' },
+        select: {
+          posts: { select: { id: true } },
+          areas: { select: { id: true } },
+        },
+      });
+
+      // Transaction must be used
+      expect(prisma.$transaction).toHaveBeenCalledOnce();
+
+      // Assignments for department posts deleted
+      expect(prisma.scheduleAssignment.deleteMany).toHaveBeenCalledWith({
+        where: { eventVolunteerId: 'ev-id-1', postId: { in: ['post-1', 'post-2'] } },
+      });
+
+      // Area captain records deleted
+      expect(prisma.areaCaptain.deleteMany).toHaveBeenCalledWith({
+        where: { eventVolunteerId: 'ev-id-1', areaId: { in: ['area-1'] } },
+      });
+
+      // Hierarchy roles deleted
+      expect(prisma.departmentHierarchy.deleteMany).toHaveBeenCalledWith({
+        where: { eventVolunteerId: 'ev-id-1', departmentId: 'dept-id-1' },
+      });
+    });
+
+    it('skips assignment/captain cleanup when department has no posts or areas', async () => {
+      const ev = makeEventVolunteer({ id: 'ev-id-1', departmentId: 'dept-id-1' });
+      const department = {
+        id: 'dept-id-1',
+        posts: [],
+        areas: [],
+      };
+      const updatedEv = { ...ev, departmentId: null };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(ev as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.department.findUnique).mockResolvedValue(department as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.departmentHierarchy.deleteMany).mockResolvedValue({ count: 0 } as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.eventVolunteer.update).mockResolvedValue(updatedEv as any);
+
+      await service.updateVolunteer('ev-id-1', { departmentId: null });
+
+      // Assignment and captain cleanup skipped (no posts/areas)
+      expect(prisma.scheduleAssignment.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.areaCaptain.deleteMany).not.toHaveBeenCalled();
+
+      // Hierarchy cleanup still happens
+      expect(prisma.departmentHierarchy.deleteMany).toHaveBeenCalledOnce();
+    });
+
+    it('gracefully handles department not found during cleanup', async () => {
+      const ev = makeEventVolunteer({ id: 'ev-id-1', departmentId: 'dept-id-1' });
+      const updatedEv = { ...ev, departmentId: null };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(ev as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.department.findUnique).mockResolvedValue(null as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.eventVolunteer.update).mockResolvedValue(updatedEv as any);
+
+      // Should not throw — gracefully skips cleanup
+      await service.updateVolunteer('ev-id-1', { departmentId: null });
+
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(prisma.eventVolunteer.update).toHaveBeenCalledOnce();
     });
   });
 });
