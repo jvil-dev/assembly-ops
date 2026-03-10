@@ -9,7 +9,7 @@
 //
 // Detail screen showing complete volunteer information.
 // Sections: Profile header, Department card, Contact card,
-// Credentials card, Remove/Delete buttons (editable only).
+// Credentials card, Remove from Department button (editable only).
 //
 
 import SwiftUI
@@ -23,7 +23,6 @@ struct VolunteerDetailView: View {
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel: VolunteerDetailViewModel
     @State private var showRemoveConfirmation = false
-    @State private var showDeleteConfirmation = false
     @State private var showEditSheet = false
     @State private var showLinkSheet = false
     @State private var hasAppeared = false
@@ -52,18 +51,13 @@ struct VolunteerDetailView: View {
             isPresented: $showRemoveConfirmation,
             titleVisibility: .visible
         ) { removeDialogButtons } message: { removeDialogMessage }
-        .confirmationDialog(
-            "Delete Volunteer",
-            isPresented: $showDeleteConfirmation,
-            titleVisibility: .visible
-        ) { deleteDialogButtons } message: { deleteDialogMessage }
         .onChange(of: viewModel.updateCount) { _, _ in
             if let updated = viewModel.updatedVolunteer {
                 volunteer = updated
             }
         }
-        .onChange(of: viewModel.didDelete) { _, didDelete in
-            if didDelete { dismiss() }
+        .onChange(of: viewModel.didRemove) { _, didRemove in
+            if didRemove { dismiss() }
         }
         .alert("common.error".localized, isPresented: .init(
             get: { viewModel.errorMessage != nil },
@@ -106,20 +100,6 @@ struct VolunteerDetailView: View {
     private var removeDialogMessage: some View {
         Text("Are you sure you want to remove \(volunteer.fullName) from your department?")
     }
-
-    private var deleteDialogButtons: some View {
-        Group {
-            Button("Delete Permanently", role: .destructive) {
-                Task { await viewModel.deleteVolunteer() }
-            }
-            Button("common.cancel".localized, role: .cancel) {}
-        }
-    }
-
-    private var deleteDialogMessage: some View {
-        Text("Are you sure you want to permanently delete \(volunteer.fullName)? This will remove all their assignments and check-in records. This action cannot be undone.")
-    }
-
 
     private var errorAlertMessage: some View {
         Group {
@@ -167,11 +147,8 @@ struct VolunteerDetailView: View {
             }
 
             if isEditable {
-                VStack(spacing: AppTheme.Spacing.m) {
-                    removeButton
-                    deleteButton
-                }
-                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
+                removeButton
+                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
             }
         }
         .screenPadding()
@@ -503,37 +480,6 @@ struct VolunteerDetailView: View {
         .disabled(viewModel.isLoading)
     }
 
-    // MARK: - Delete Button
-
-    private var deleteButton: some View {
-        Button {
-            showDeleteConfirmation = true
-        } label: {
-            HStack(spacing: AppTheme.Spacing.s) {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .tint(AppTheme.StatusColors.declined)
-                } else {
-                    Image(systemName: "trash")
-                    Text("Delete Volunteer")
-                }
-            }
-            .font(AppTheme.Typography.headline)
-            .frame(maxWidth: .infinity)
-            .frame(height: AppTheme.ButtonHeight.medium)
-            .foregroundStyle(AppTheme.StatusColors.declined)
-            .background(
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
-                    .fill(AppTheme.StatusColors.declinedBackground)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
-                    .strokeBorder(AppTheme.StatusColors.declined.opacity(0.3), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-        .disabled(viewModel.isLoading)
-    }
 
     // MARK: - Copied Toast
 

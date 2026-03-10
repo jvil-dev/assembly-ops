@@ -38,8 +38,8 @@ struct VolunteerListView: View {
     @State private var showAddVolunteer = false
     @State private var selectedTab: VolunteerTab = .myDepartment
     @State private var hasAppeared = false
-    @State private var volunteerToDelete: VolunteerListItem?
-    @State private var showDeleteConfirmation = false
+    @State private var volunteerToRemove: VolunteerListItem?
+    @State private var showRemoveConfirmation = false
 
     enum VolunteerTab: String, CaseIterable {
         case myDepartment = "My Department"
@@ -171,11 +171,11 @@ struct VolunteerListView: View {
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     if isEditable {
                         Button(role: .destructive) {
-                            volunteerToDelete = volunteer
-                            showDeleteConfirmation = true
+                            volunteerToRemove = volunteer
+                            showRemoveConfirmation = true
                             HapticManager.shared.lightTap()
                         } label: {
-                            Label("Delete", systemImage: "trash")
+                            Label("Remove", systemImage: "person.badge.minus")
                         }
                         .tint(AppTheme.StatusColors.declined)
                     }
@@ -185,14 +185,14 @@ struct VolunteerListView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .confirmationDialog(
-            "Delete Volunteer",
-            isPresented: $showDeleteConfirmation,
+            "volunteer.removeDepartment.title".localized,
+            isPresented: $showRemoveConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Delete", role: .destructive) {
-                if let volunteer = volunteerToDelete {
+            Button("volunteer.removeDepartment.action".localized, role: .destructive) {
+                if let volunteer = volunteerToRemove {
                     Task {
-                        let success = await viewModel.deleteVolunteer(id: volunteer.id)
+                        let success = await viewModel.removeVolunteerFromDepartment(id: volunteer.id)
                         if success {
                             HapticManager.shared.success()
                         } else {
@@ -202,11 +202,11 @@ struct VolunteerListView: View {
                 }
             }
             Button("common.cancel".localized, role: .cancel) {
-                volunteerToDelete = nil
+                volunteerToRemove = nil
             }
         } message: {
-            if let volunteer = volunteerToDelete {
-                Text("Are you sure you want to permanently delete \(volunteer.fullName)? This will also remove all their assignments and check-in records.")
+            if let volunteer = volunteerToRemove {
+                Text(String(format: "volunteer.removeDepartment.confirm".localized, volunteer.fullName))
             }
         }
     }

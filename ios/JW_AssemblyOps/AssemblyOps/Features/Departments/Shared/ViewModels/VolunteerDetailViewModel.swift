@@ -7,7 +7,7 @@
 
 // MARK: - Volunteer Detail View Model
 //
-// Manages volunteer detail actions including removal, updates, and deletion.
+// Manages volunteer detail actions including removal, updates, and linking.
 //
 // Used by: VolunteerDetailView, EditVolunteerSheet
 
@@ -22,7 +22,7 @@ class VolunteerDetailViewModel: ObservableObject {
     @Published var didUpdate = false
     @Published var updatedVolunteer: VolunteerListItem?
     @Published var updateCount = 0
-    @Published var didDelete = false
+    @Published var didRemove = false
 
     private let volunteerId: String
     var onRemoved: (() -> Void)?
@@ -89,29 +89,6 @@ class VolunteerDetailViewModel: ObservableObject {
         }
     }
 
-    func deleteVolunteer() async {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            let result = try await NetworkClient.shared.apollo.perform(
-                mutation: AssemblyOpsAPI.DeleteVolunteerMutation(id: volunteerId)
-            )
-
-            if let errors = result.errors, !errors.isEmpty {
-                errorMessage = errors.first?.message ?? "Failed to delete volunteer"
-                HapticManager.shared.error()
-                return
-            }
-
-            didDelete = true
-            HapticManager.shared.success()
-        } catch {
-            errorMessage = error.localizedDescription
-            HapticManager.shared.error()
-        }
-    }
-
     func linkPlaceholderUser(placeholderUserId: String, realUserId: String) async {
         isLoading = true
         defer { isLoading = false }
@@ -138,7 +115,7 @@ class VolunteerDetailViewModel: ObservableObject {
             }
 
             if let data = result.data?.linkPlaceholderUser, data.success {
-                didDelete = true
+                didRemove = true
                 HapticManager.shared.success()
             }
         } catch {
