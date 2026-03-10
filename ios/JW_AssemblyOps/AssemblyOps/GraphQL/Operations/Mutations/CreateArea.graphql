@@ -5,6 +5,8 @@ mutation CreateArea($departmentId: ID!, $input: CreateAreaInput!) {
         description
         category
         sortOrder
+        startTime
+        endTime
         postCount
     }
 }

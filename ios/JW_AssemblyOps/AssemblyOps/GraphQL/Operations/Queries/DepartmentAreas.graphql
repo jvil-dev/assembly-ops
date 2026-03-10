@@ -5,6 +5,8 @@ query DepartmentAreas($departmentId: ID!) {
         description
         category
         sortOrder
+        startTime
+        endTime
         postCount
         posts {
             id

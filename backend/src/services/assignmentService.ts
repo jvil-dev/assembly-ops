@@ -126,15 +126,38 @@ export class AssignmentService {
   }
 
   /**
+   * Get the effective time range for an assignment.
+   * Priority: shift time > area time > null (whole-session)
+   */
+  private getEffectiveTimeRange(
+    shiftData: { startTime: Date; endTime: Date } | null,
+    areaData: { startTime: Date | null; endTime: Date | null } | null
+  ): { startTime: Date; endTime: Date } | null {
+    if (shiftData) return { startTime: shiftData.startTime, endTime: shiftData.endTime };
+    if (areaData?.startTime && areaData?.endTime) return { startTime: areaData.startTime, endTime: areaData.endTime };
+    return null;
+  }
+
+  /**
+   * Check if two time ranges overlap.
+   */
+  private timesOverlap(
+    a: { startTime: Date; endTime: Date },
+    b: { startTime: Date; endTime: Date }
+  ): boolean {
+    return a.startTime < b.endTime && a.endTime > b.startTime;
+  }
+
+  /**
    * Create a single assignment
    */
-  async createAssignment(input: CreateAssignmentInput): Promise<ScheduleAssignment> {
+  async createAssignment(input: CreateAssignmentInput): Promise<{ assignment: ScheduleAssignment; warning: string | null }> {
     const result = createAssignmentSchema.safeParse(input);
     if (!result.success) {
       throw new ValidationError(result.error.issues[0].message);
     }
 
-    const { volunteerId, postId, sessionId, shiftId, canCount } = result.data;
+    const { volunteerId, postId, sessionId, shiftId, canCount, force } = result.data;
 
     const [volunteer, post, session] = await Promise.all([
       this.prisma.eventVolunteer.findUnique({
@@ -143,11 +166,14 @@ export class AssignmentService {
       }),
       this.prisma.post.findUnique({
         where: { id: postId },
-        include: { department: { select: { eventId: true } } },
+        include: {
+          department: { select: { eventId: true } },
+          area: { select: { startTime: true, endTime: true } },
+        },
       }),
       this.prisma.session.findUnique({
         where: { id: sessionId },
-        select: { id: true, eventId: true },
+        select: { id: true, eventId: true, startTime: true, endTime: true },
       }),
     ]);
 
@@ -161,7 +187,8 @@ export class AssignmentService {
       throw new ValidationError('Volunteer, post, and session must belong to the same event');
     }
 
-    // If shiftId provided, validate it belongs to the session
+    // Determine effective time range for the new assignment
+    let newShiftData: { startTime: Date; endTime: Date } | null = null;
     if (shiftId) {
       const shift = await this.prisma.shift.findUnique({
         where: { id: shiftId },
@@ -171,41 +198,70 @@ export class AssignmentService {
       if (shift.sessionId !== sessionId) {
         throw new ValidationError('Shift does not belong to the specified session');
       }
-
-      // Check for overlapping shift assignments for this volunteer in this session
-      const volunteerShiftAssignments = await this.prisma.scheduleAssignment.findMany({
-        where: {
-          eventVolunteerId: volunteerId,
-          sessionId,
-          shiftId: { not: null },
-        },
-        include: { shift: true },
-      });
-      for (const existing of volunteerShiftAssignments) {
-        if (existing.shift && shift.startTime < existing.shift.endTime && shift.endTime > existing.shift.startTime) {
-          throw new ConflictError(
-            `${volunteer.user.firstName} ${volunteer.user.lastName} has an overlapping shift assignment in this session`
-          );
-        }
-      }
-    } else {
-      // No shift — check for existing whole-session assignment (legacy behavior)
-      const existingNullShift = await this.prisma.scheduleAssignment.findFirst({
-        where: {
-          eventVolunteerId: volunteerId,
-          sessionId,
-          shiftId: null,
-        },
-      });
-
-      if (existingNullShift) {
-        throw new ConflictError(
-          `${volunteer.user.firstName} ${volunteer.user.lastName} is already assigned to another post for this session`
-        );
-      }
+      newShiftData = { startTime: shift.startTime, endTime: shift.endTime };
     }
 
-    return this.prisma.scheduleAssignment.create({
+    const newTimeRange = this.getEffectiveTimeRange(newShiftData, post.area);
+    let warning: string | null = null;
+    const volunteerName = `${volunteer.user.firstName} ${volunteer.user.lastName}`;
+
+    // Fetch all existing assignments for this volunteer in this session
+    const existingAssignments = await this.prisma.scheduleAssignment.findMany({
+      where: {
+        eventVolunteerId: volunteerId,
+        sessionId,
+      },
+      include: {
+        shift: true,
+        post: {
+          include: {
+            area: { select: { startTime: true, endTime: true } },
+          },
+        },
+      },
+    });
+
+    for (const existing of existingAssignments) {
+      const existingTimeRange = this.getEffectiveTimeRange(
+        existing.shift ? { startTime: existing.shift.startTime, endTime: existing.shift.endTime } : null,
+        existing.post.area
+      );
+
+      // Case 1: Both whole-session → hard conflict (unchanged behavior)
+      if (!newTimeRange && !existingTimeRange) {
+        throw new ConflictError(
+          `${volunteerName} is already assigned to another post for this session`
+        );
+      }
+
+      // Case 2: Both timed → standard overlap check → hard conflict
+      if (newTimeRange && existingTimeRange) {
+        if (this.timesOverlap(newTimeRange, existingTimeRange)) {
+          throw new ConflictError(
+            `${volunteerName} has an overlapping assignment in this session`
+          );
+        }
+        continue;
+      }
+
+      // Case 3: One timed, one whole-session → soft conflict with warning
+      // The timed range always overlaps a whole-session by definition,
+      // so we issue a warning (not a hard block) suggesting the overseer
+      // create a shift for the whole-session assignment.
+      if (!force) {
+        const wholeSessionPostName = newTimeRange ? existing.post.name : post.name;
+        throw new ConflictError(
+          `${volunteerName} has a whole-session assignment at "${wholeSessionPostName}". ` +
+          `Consider creating a shift for that assignment to avoid overlap. ` +
+          `Use force to proceed anyway.`
+        );
+      }
+      // force=true: set warning and continue
+      const wholeSessionPostName = newTimeRange ? existing.post.name : post.name;
+      warning = `${volunteerName} also has a whole-session assignment at "${wholeSessionPostName}". Consider creating a shift for that assignment to avoid overlap.`;
+    }
+
+    const assignment = await this.prisma.scheduleAssignment.create({
       data: {
         eventVolunteerId: volunteerId,
         postId,
@@ -221,6 +277,8 @@ export class AssignmentService {
         checkIn: true,
       },
     });
+
+    return { assignment, warning };
   }
 
   /**
@@ -237,7 +295,7 @@ export class AssignmentService {
 
     for (const assignmentInput of assignments) {
       try {
-        const assignment = await this.createAssignment(assignmentInput);
+        const { assignment } = await this.createAssignment(assignmentInput);
         createdAssignments.push(assignment);
       } catch (error) {
         // If any assignment fails, continue but log the error

@@ -4,7 +4,7 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI {
-  struct CreateSessionInput: InputObject {
+  struct UpsertDepartmentSessionInput: InputObject {
     private(set) var __data: InputDict
 
     init(_ data: InputDict) {
@@ -12,27 +12,15 @@ extension AssemblyOpsAPI {
     }
 
     init(
-      name: String,
-      date: DateTime,
       startTime: GraphQLNullable<String> = nil,
-      endTime: GraphQLNullable<String> = nil
+      endTime: GraphQLNullable<String> = nil,
+      notes: GraphQLNullable<String> = nil
     ) {
       __data = InputDict([
-        "name": name,
-        "date": date,
         "startTime": startTime,
-        "endTime": endTime
+        "endTime": endTime,
+        "notes": notes
       ])
-    }
-
-    var name: String {
-      get { __data["name"] }
-      set { __data["name"] = newValue }
-    }
-
-    var date: DateTime {
-      get { __data["date"] }
-      set { __data["date"] = newValue }
     }
 
     var startTime: GraphQLNullable<String> {
@@ -43,6 +31,11 @@ extension AssemblyOpsAPI {
     var endTime: GraphQLNullable<String> {
       get { __data["endTime"] }
       set { __data["endTime"] = newValue }
+    }
+
+    var notes: GraphQLNullable<String> {
+      get { __data["notes"] }
+      set { __data["notes"] = newValue }
     }
   }
 

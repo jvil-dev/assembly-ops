@@ -100,22 +100,13 @@ struct SlotDetailSheet: View {
                     slotInfoCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                    if isAttendantDept {
-                        // Shifts & Assignments card (attendant only)
-                        shiftsAndAssignmentsCard
-                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+                    // Shifts & Assignments card (all departments)
+                    shiftsAndAssignmentsCard
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
 
-                        // Create Shift button
-                        createShiftButton
-                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
-                    } else {
-                        // Flat volunteer list for non-attendant departments
-                        volunteersCard
-                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
-
-                        addVolunteerButton
-                            .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
-                    }
+                    // Create Shift button (all departments)
+                    createShiftButton
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
                 }
                 .screenPadding()
                 .padding(.top, AppTheme.Spacing.l)
@@ -468,91 +459,6 @@ struct SlotDetailSheet: View {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "plus.circle.fill")
                 Text("shift.create".localized)
-            }
-            .font(AppTheme.Typography.headline)
-            .frame(maxWidth: .infinity)
-            .frame(height: AppTheme.ButtonHeight.medium)
-            .foregroundStyle(.white)
-            .background(deptColor)
-            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Volunteers Card (non-attendant departments)
-
-    private var volunteersCard: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack {
-                SectionHeaderLabel(icon: "person.3", title: "slot.volunteers".localized)
-                Spacer()
-                if !slot.assignments.isEmpty {
-                    Text("\(slot.filled) assigned")
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                }
-            }
-
-            if slot.assignments.isEmpty {
-                Text("slot.shifts.noAssignments".localized)
-                    .font(AppTheme.Typography.body)
-                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, AppTheme.Spacing.l)
-            } else {
-                ForEach(slot.assignments, id: \.id) { assignment in
-                    HStack(spacing: AppTheme.Spacing.s) {
-                        Image(systemName: assignment.checkIn != nil ? "checkmark.circle.fill" : "circle")
-                            .foregroundStyle(assignment.checkIn != nil ? AppTheme.StatusColors.accepted : AppTheme.textTertiary(for: colorScheme))
-                        Text("\(assignment.volunteer.firstName) \(assignment.volunteer.lastName)")
-                            .font(AppTheme.Typography.body)
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        if assignment.canCount {
-                            Image(systemName: "number.square.fill")
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(deptColor)
-                        }
-                        if assignment.forceAssigned {
-                            Text("slot.forceAssigned".localized)
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                        }
-                    }
-                    .contextMenu {
-                        if isAttendantDept {
-                            Button {
-                                Task { await toggleCanCount(assignment) }
-                            } label: {
-                                Label(
-                                    assignment.canCount ? "assignment.canCount.unmark".localized : "assignment.canCount.mark".localized,
-                                    systemImage: assignment.canCount ? "number.square.fill" : "number.square"
-                                )
-                            }
-                        }
-                        Button(role: .destructive) {
-                            assignmentToRemove = assignment
-                            showRemoveConfirmation = true
-                        } label: {
-                            Label("common.remove".localized, systemImage: "trash")
-                        }
-                    }
-                }
-            }
-        }
-        .cardPadding()
-        .themedCard(scheme: colorScheme)
-    }
-
-    private var addVolunteerButton: some View {
-        Button {
-            assigningForShiftId = nil
-            showVolunteerPicker = true
-            HapticManager.shared.lightTap()
-        } label: {
-            HStack(spacing: AppTheme.Spacing.s) {
-                Image(systemName: "plus.circle.fill")
-                Text("slot.addVolunteer".localized)
             }
             .font(AppTheme.Typography.headline)
             .frame(maxWidth: .infinity)

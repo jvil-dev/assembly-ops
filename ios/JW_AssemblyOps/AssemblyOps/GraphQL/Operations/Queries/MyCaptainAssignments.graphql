@@ -26,6 +26,10 @@ query MyCaptainAssignments($eventId: ID!) {
       date
       startTime
       endTime
+      departmentSession {
+        startTime
+        endTime
+      }
     }
     eventVolunteer {
       id

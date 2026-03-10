@@ -20,6 +20,7 @@ import {
   resolveUserEventVolunteer,
 } from '../guards/auth.js';
 import { AreaService } from '../../services/areaService.js';
+import { dateToTimeString } from '../../utils/time.js';
 import type {
   CreateAreaInput,
   UpdateAreaInput,
@@ -280,6 +281,12 @@ const areaResolvers = {
   Area: {
     postCount: (area: { _count?: { posts: number }; posts?: unknown[] }) => {
       return area._count?.posts ?? (area.posts as unknown[])?.length ?? 0;
+    },
+    startTime: (area: { startTime?: Date | null }) => {
+      return area.startTime ? dateToTimeString(area.startTime) : null;
+    },
+    endTime: (area: { endTime?: Date | null }) => {
+      return area.endTime ? dateToTimeString(area.endTime) : null;
     },
   },
 

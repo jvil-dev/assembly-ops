@@ -8,16 +8,24 @@ extension AssemblyOpsAPI {
     static let operationName: String = "EventSessions"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query EventSessions($eventId: ID!) { sessions(eventId: $eventId) { __typename id name date startTime endTime assignmentCount } }"#
+        #"query EventSessions($eventId: ID!, $departmentId: ID) { sessions(eventId: $eventId, departmentId: $departmentId) { __typename id name date startTime endTime assignmentCount } }"#
       ))
 
     public var eventId: ID
+    public var departmentId: GraphQLNullable<ID>
 
-    public init(eventId: ID) {
+    public init(
+      eventId: ID,
+      departmentId: GraphQLNullable<ID>
+    ) {
       self.eventId = eventId
+      self.departmentId = departmentId
     }
 
-    public var __variables: Variables? { ["eventId": eventId] }
+    public var __variables: Variables? { [
+      "eventId": eventId,
+      "departmentId": departmentId
+    ] }
 
     struct Data: AssemblyOpsAPI.SelectionSet {
       let __data: DataDict
@@ -25,7 +33,10 @@ extension AssemblyOpsAPI {
 
       static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Query }
       static var __selections: [ApolloAPI.Selection] { [
-        .field("sessions", [Session].self, arguments: ["eventId": .variable("eventId")]),
+        .field("sessions", [Session].self, arguments: [
+          "eventId": .variable("eventId"),
+          "departmentId": .variable("departmentId")
+        ]),
       ] }
       static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
         EventSessionsQuery.Data.self

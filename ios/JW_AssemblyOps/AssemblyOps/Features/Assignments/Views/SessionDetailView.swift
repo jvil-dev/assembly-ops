@@ -43,6 +43,7 @@ struct SessionDetailView: View {
     @State private var postToDelete: CoveragePost?
     @State private var showDeleteConfirmation = false
     @State private var isDeleting = false
+    @State private var expandedAreas: Set<String> = []
 
     /// Identity token that changes when either data source updates,
     /// forcing the attendant List to re-create rather than incrementally diff.
@@ -270,14 +271,14 @@ struct SessionDetailView: View {
 
     /// Flattened row model for stable List diffing within each I/E/S section.
     private enum AttendantSectionRow: Identifiable {
-        case areaHeader(area: AreaItem, captainName: String?, isFirst: Bool)
+        case areaHeader(area: AreaItem, captainName: String?, isFirst: Bool, isExpanded: Bool, postCount: Int)
         case areaEmpty(area: AreaItem, animationIndex: Int)
         case post(post: CoveragePost, animationIndex: Int)
         case createArea(category: AttendantMainCategory, animationIndex: Int)
 
         var id: String {
             switch self {
-            case .areaHeader(let area, _, _): return "header-\(area.id)"
+            case .areaHeader(let area, _, _, _, _): return "header-\(area.id)"
             case .areaEmpty(let area, _): return "empty-\(area.id)"
             case .post(let post, _): return "post-\(post.id)"
             case .createArea(let category, _): return "create-\(category.rawValue)"
@@ -291,14 +292,17 @@ struct SessionDetailView: View {
         var rows: [AttendantSectionRow] = []
 
         for (areaIndex, group) in categoryAreas.enumerated() {
-            rows.append(.areaHeader(area: group.area, captainName: group.captainName, isFirst: areaIndex == 0))
+            let isExpanded = expandedAreas.contains(group.area.id)
+            rows.append(.areaHeader(area: group.area, captainName: group.captainName, isFirst: areaIndex == 0, isExpanded: isExpanded, postCount: group.posts.count))
 
-            if group.posts.isEmpty {
-                rows.append(.areaEmpty(area: group.area, animationIndex: catIndex * 20 + areaIndex * 5))
-            } else {
-                for (postIndex, post) in group.posts.enumerated() {
-                    let animationIndex = catIndex * 20 + areaIndex * 5 + postIndex + 1
-                    rows.append(.post(post: post, animationIndex: animationIndex))
+            if isExpanded {
+                if group.posts.isEmpty {
+                    rows.append(.areaEmpty(area: group.area, animationIndex: catIndex * 20 + areaIndex * 5))
+                } else {
+                    for (postIndex, post) in group.posts.enumerated() {
+                        let animationIndex = catIndex * 20 + areaIndex * 5 + postIndex + 1
+                        rows.append(.post(post: post, animationIndex: animationIndex))
+                    }
                 }
             }
         }
@@ -349,8 +353,8 @@ struct SessionDetailView: View {
     @ViewBuilder
     private func attendantSectionRow(_ row: AttendantSectionRow) -> some View {
         switch row {
-        case .areaHeader(let area, let captainName, let isFirst):
-            areaHeader(area: area, captainName: captainName)
+        case .areaHeader(let area, let captainName, let isFirst, let isExpanded, let postCount):
+            areaHeader(area: area, captainName: captainName, isExpanded: isExpanded, postCount: postCount)
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(
@@ -370,34 +374,74 @@ struct SessionDetailView: View {
 
     // MARK: - Area Section Header
 
-    private func areaHeader(area: AreaItem, captainName: String?) -> some View {
-        Button {
-            selectedAreaForDetail = area
-            HapticManager.shared.lightTap()
-        } label: {
-            HStack(spacing: AppTheme.Spacing.s) {
-                Image(systemName: "rectangle.3.group")
-                    .font(.system(size: 12))
-                    .foregroundStyle(deptColor)
-
-                Text(area.name)
-                    .font(AppTheme.Typography.captionBold)
-                    .foregroundStyle(.primary)
-
-                if let captainName = captainName {
-                    Text("★ \(captainName)")
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(deptColor)
+    private func areaHeader(area: AreaItem, captainName: String?, isExpanded: Bool, postCount: Int) -> some View {
+        HStack(spacing: AppTheme.Spacing.s) {
+            // Expand/collapse toggle
+            Button {
+                withAnimation(AppTheme.quickAnimation) {
+                    if expandedAreas.contains(area.id) {
+                        expandedAreas.remove(area.id)
+                    } else {
+                        expandedAreas.insert(area.id)
+                    }
                 }
+                HapticManager.shared.lightTap()
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(deptColor)
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
+            }
+            .buttonStyle(.plain)
 
-                Spacer()
+            Image(systemName: "rectangle.3.group")
+                .font(.system(size: 12))
+                .foregroundStyle(deptColor)
 
+            Text(area.name)
+                .font(AppTheme.Typography.captionBold)
+                .foregroundStyle(.primary)
+
+            if postCount > 0 && !isExpanded {
+                Text("\(postCount)")
+                    .font(AppTheme.Typography.captionSmall)
+                    .foregroundStyle(deptColor)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(deptColor.opacity(0.12))
+                    .clipShape(Capsule())
+            }
+
+            if let captainName = captainName {
+                Text("★ \(captainName)")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(deptColor)
+            }
+
+            Spacer()
+
+            // Navigate to area detail
+            Button {
+                selectedAreaForDetail = area
+                HapticManager.shared.lightTap()
+            } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(AppTheme.quickAnimation) {
+                if expandedAreas.contains(area.id) {
+                    expandedAreas.remove(area.id)
+                } else {
+                    expandedAreas.insert(area.id)
+                }
+            }
+            HapticManager.shared.lightTap()
+        }
         .textCase(nil)
         .listRowInsets(EdgeInsets(
             top: AppTheme.Spacing.m,

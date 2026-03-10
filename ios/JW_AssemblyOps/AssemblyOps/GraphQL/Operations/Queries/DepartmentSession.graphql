@@ -1,0 +1,13 @@
+query DepartmentSession($sessionId: ID!, $departmentId: ID!) {
+  session(id: $sessionId) {
+    id
+    departmentSession(departmentId: $departmentId) {
+      id
+      departmentId
+      sessionId
+      startTime
+      endTime
+      notes
+    }
+  }
+}

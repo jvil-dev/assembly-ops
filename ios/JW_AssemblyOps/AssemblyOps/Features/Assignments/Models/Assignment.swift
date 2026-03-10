@@ -92,11 +92,15 @@ struct Assignment: Identifiable, Equatable {
     let startTime: Date
     let endTime: Date
 
-    // Shift times (for Attendant assignments with post-specific shifts)
+    // Shift times (for assignments with post-specific shifts)
     let shiftId: String?
     let shiftName: String?
     let shiftStartTime: Date?
     let shiftEndTime: Date?
+
+    // Department session times (overseer-configured per-department times for whole-session assignments)
+    let deptSessionStartTime: Date?
+    let deptSessionEndTime: Date?
 
     // Assignment status
     var status: AssignmentStatus
@@ -208,26 +212,30 @@ struct Assignment: Identifiable, Equatable {
         DepartmentColor.backgroundColor(for: departmentType)
     }
 
-    /// Whether this is an Attendant assignment that has a specific shift time
+    /// Whether this assignment has a specific shift time
     var hasShift: Bool {
-        departmentType.uppercased() == "ATTENDANT" && shiftStartTime != nil && shiftEndTime != nil
+        shiftStartTime != nil && shiftEndTime != nil
     }
 
-    /// The effective start time for display and sorting: shift time if available, otherwise session time
-    var displayStartTime: Date {
-        hasShift ? shiftStartTime! : startTime
+    /// The effective start time for display: shift > dept session > nil (no fallback to session default)
+    var displayStartTime: Date? {
+        if hasShift { return shiftStartTime }
+        return deptSessionStartTime
     }
 
-    /// The effective end time for display: shift time if available, otherwise session time
-    var displayEndTime: Date {
-        hasShift ? shiftEndTime! : endTime
+    /// The effective end time for display: shift > dept session > nil (no fallback to session default)
+    var displayEndTime: Date? {
+        if hasShift { return shiftEndTime }
+        return deptSessionEndTime
     }
 
-    /// Formatted time range for display (uses shift times for Attendant assignments with shifts)
+    /// Formatted time range for display (shift > dept session; nil if neither is set)
     var timeRangeFormatted: String {
+        guard let start = displayStartTime, let end = displayEndTime else { return "" }
         let formatter = DateFormatter()
         formatter.timeStyle = .short
-        return "\(formatter.string(from: displayStartTime)) - \(formatter.string(from: displayEndTime))"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
     }
 }
 
@@ -272,6 +280,15 @@ extension Assignment {
             self.shiftName = nil
             self.shiftStartTime = nil
             self.shiftEndTime = nil
+        }
+
+        // Parse optional department session times (overseer-configured per-dept times)
+        if let deptSession = graphQL.session.departmentSession {
+            self.deptSessionStartTime = deptSession.startTime.flatMap { isoFormatter.date(from: $0) }
+            self.deptSessionEndTime = deptSession.endTime.flatMap { isoFormatter.date(from: $0) }
+        } else {
+            self.deptSessionStartTime = nil
+            self.deptSessionEndTime = nil
         }
 
         // Assignment acceptance workflow fields
@@ -319,6 +336,8 @@ extension Assignment {
             shiftName: nil,
             shiftStartTime: nil,
             shiftEndTime: nil,
+            deptSessionStartTime: nil,
+            deptSessionEndTime: nil,
             status: .accepted,
             isCaptain: false,
             canCount: false,
@@ -353,6 +372,8 @@ extension Assignment {
             shiftName: nil,
             shiftStartTime: nil,
             shiftEndTime: nil,
+            deptSessionStartTime: nil,
+            deptSessionEndTime: nil,
             status: .pending,
             isCaptain: false,
             canCount: false,
@@ -387,6 +408,8 @@ extension Assignment {
             shiftName: nil,
             shiftStartTime: nil,
             shiftEndTime: nil,
+            deptSessionStartTime: nil,
+            deptSessionEndTime: nil,
             status: .accepted,
             isCaptain: true,
             canCount: false,
@@ -421,6 +444,8 @@ extension Assignment {
             shiftName: nil,
             shiftStartTime: nil,
             shiftEndTime: nil,
+            deptSessionStartTime: nil,
+            deptSessionEndTime: nil,
             status: .accepted,
             isCaptain: false,
             canCount: false,
@@ -455,6 +480,8 @@ extension Assignment {
             shiftName: nil,
             shiftStartTime: nil,
             shiftEndTime: nil,
+            deptSessionStartTime: nil,
+            deptSessionEndTime: nil,
             status: .accepted,
             isCaptain: false,
             canCount: false,
@@ -489,6 +516,8 @@ extension Assignment {
             shiftName: nil,
             shiftStartTime: nil,
             shiftEndTime: nil,
+            deptSessionStartTime: nil,
+            deptSessionEndTime: nil,
             status: .accepted,
             isCaptain: false,
             canCount: false,
@@ -523,6 +552,8 @@ extension Assignment {
             shiftName: nil,
             shiftStartTime: nil,
             shiftEndTime: nil,
+            deptSessionStartTime: nil,
+            deptSessionEndTime: nil,
             status: .accepted,
             isCaptain: false,
             canCount: false,

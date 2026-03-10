@@ -105,6 +105,11 @@ const assignmentTypeDefs = `#graphql
   # INPUTS
   # ============================================
 
+  type CreateAssignmentResult {
+    assignment: ScheduleAssignment!
+    warning: String
+  }
+
   input CreateAssignmentInput {
     volunteerId: ID!
     postId: ID!
@@ -112,6 +117,7 @@ const assignmentTypeDefs = `#graphql
     shiftId: ID
     isCaptain: Boolean
     canCount: Boolean
+    force: Boolean
   }
 
   input UpdateAssignmentInput {
@@ -178,7 +184,7 @@ const assignmentTypeDefs = `#graphql
   }
 
   extend type Mutation {
-    createAssignment(input: CreateAssignmentInput!): ScheduleAssignment!
+    createAssignment(input: CreateAssignmentInput!): CreateAssignmentResult!
     updateAssignment(id: ID!, input: UpdateAssignmentInput!): ScheduleAssignment!
     deleteAssignment(id: ID!): Boolean!
     bulkCreateAssignments(inputs: [CreateAssignmentInput!]!): [ScheduleAssignment!]!

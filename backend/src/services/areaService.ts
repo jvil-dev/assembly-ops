@@ -53,6 +53,7 @@ import {
   ConflictError,
   AuthorizationError,
 } from '../utils/errors.js';
+import { timeStringToDate } from '../utils/time.js';
 
 export class AreaService {
   constructor(private prisma: PrismaClient) {}
@@ -89,10 +90,13 @@ export class AreaService {
       );
     }
 
+    const { startTime, endTime, ...rest } = result.data;
     return this.prisma.area.create({
       data: {
-        ...result.data,
+        ...rest,
         departmentId,
+        startTime: startTime ? timeStringToDate(startTime) : null,
+        endTime: endTime ? timeStringToDate(endTime) : null,
       },
       include: {
         department: true,
@@ -140,9 +144,14 @@ export class AreaService {
       }
     }
 
+    const { startTime, endTime, ...rest } = result.data;
     return this.prisma.area.update({
       where: { id: areaId },
-      data: result.data,
+      data: {
+        ...rest,
+        ...(startTime !== undefined && { startTime: startTime ? timeStringToDate(startTime) : null }),
+        ...(endTime !== undefined && { endTime: endTime ? timeStringToDate(endTime) : null }),
+      },
       include: {
         department: true,
         posts: { orderBy: { sortOrder: 'asc' } },

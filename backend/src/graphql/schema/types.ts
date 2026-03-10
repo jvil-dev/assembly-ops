@@ -199,6 +199,7 @@ const types = `#graphql
     assignments: [ScheduleAssignment!]!
     shifts: [Shift!]!
     assignmentCount: Int!
+    departmentSession(departmentId: ID): DepartmentSession
     createdAt: DateTime!
   }
 

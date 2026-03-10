@@ -303,7 +303,7 @@ const assignmentResolvers = {
       }
 
       const assignmentService = new AssignmentService(context.prisma);
-      const assignment = await assignmentService.createAssignment(input);
+      const { assignment, warning } = await assignmentService.createAssignment(input);
 
       // Notify the assigned volunteer
       const vol = await context.prisma.eventVolunteer.findUnique({
@@ -320,7 +320,7 @@ const assignmentResolvers = {
         }).catch(() => {});
       }
 
-      return assignment;
+      return { assignment, warning };
     },
 
     updateAssignment: async (

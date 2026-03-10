@@ -78,6 +78,7 @@ temp/
 xcuserdata/
 *.xcscmblueprint
 Package.resolved
+AssemblyOps.xcscheme
 
 # Firebase
 GoogleService-Info.plist

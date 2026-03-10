@@ -107,6 +107,10 @@ private struct CachedAssignment: Codable {
     let shiftStartTime: Date?
     let shiftEndTime: Date?
 
+    // Department session times (overseer-configured per-dept times)
+    let deptSessionStartTime: Date?
+    let deptSessionEndTime: Date?
+
     // Assignment status (acceptance workflow)
     let status: String
     let isCaptain: Bool
@@ -141,6 +145,8 @@ private struct CachedAssignment: Codable {
         self.shiftName = assignment.shiftName
         self.shiftStartTime = assignment.shiftStartTime
         self.shiftEndTime = assignment.shiftEndTime
+        self.deptSessionStartTime = assignment.deptSessionStartTime
+        self.deptSessionEndTime = assignment.deptSessionEndTime
         self.status = assignment.status.rawValue
         self.isCaptain = assignment.isCaptain
         self.canCount = assignment.canCount
@@ -174,6 +180,8 @@ private struct CachedAssignment: Codable {
             shiftName: shiftName,
             shiftStartTime: shiftStartTime,
             shiftEndTime: shiftEndTime,
+            deptSessionStartTime: deptSessionStartTime,
+            deptSessionEndTime: deptSessionEndTime,
             status: AssignmentStatus(rawValue: status) ?? .pending,
             isCaptain: isCaptain,
             canCount: canCount,

@@ -54,6 +54,8 @@ struct VolunteerPickerSheet: View {
     @State private var forceAssign = false
     @State private var canCount = false
     @State private var showError = false
+    @State private var showWarning = false
+    @State private var warningMessage = ""
 
     var filteredVolunteers: [VolunteerListItem] {
         if searchText.isEmpty {
@@ -103,6 +105,11 @@ struct VolunteerPickerSheet: View {
                 Button("common.ok".localized) { errorMessage = nil }
             } message: {
                 Text(errorMessage ?? "")
+            }
+            .alert("Assignment Overlap", isPresented: $showWarning) {
+                Button("Got It", role: .cancel) { dismiss() }
+            } message: {
+                Text(warningMessage)
             }
             .onAppear {
                 withAnimation(AppTheme.entranceAnimation) {
@@ -274,13 +281,19 @@ struct VolunteerPickerSheet: View {
                     postId: postId,
                     sessionId: sessionId,
                     shiftId: shiftIdParam,
-                    canCount: .some(canCount)
+                    canCount: .some(canCount),
+                    force: .some(true)
                 )
                 let result = try await NetworkClient.shared.apollo.perform(
                     mutation: AssemblyOpsAPI.CreateAssignmentMutation(input: input)
                 )
-                if result.data?.createAssignment != nil {
-                    success = true
+                if let data = result.data?.createAssignment {
+                    if data.assignment != nil {
+                        success = true
+                        if let warning = data.warning {
+                            warningMessage = warning
+                        }
+                    }
                 } else if let errors = result.errors, !errors.isEmpty {
                     errorMessage = errors.first?.message ?? "Failed to create assignment"
                 }
@@ -308,7 +321,11 @@ struct VolunteerPickerSheet: View {
             if success {
                 HapticManager.shared.success()
                 onComplete(true)
-                dismiss()
+                if !warningMessage.isEmpty {
+                    showWarning = true
+                } else {
+                    dismiss()
+                }
             }
         } catch {
             errorMessage = "Network error: \(error.localizedDescription)"

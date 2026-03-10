@@ -13,8 +13,8 @@
  * Fields:
  *   - name: Required, max 100 chars (e.g., "Friday Morning Session")
  *   - date: Required, coerced to Date object (accepts string or Date)
- *   - startTime: Required, 24-hour format "HH:MM" (e.g., "09:00")
- *   - endTime: Required, 24-hour format "HH:MM" (e.g., "12:00")
+ *   - startTime: Optional, 24-hour format "HH:MM" (e.g., "09:00"), defaults to "00:00"
+ *   - endTime: Optional, 24-hour format "HH:MM" (e.g., "12:00"), defaults to "23:59"
  *
  * Time Format:
  *   Uses regex /^([01]\d|2[0-3]):([0-5]\d)$/ to validate 24-hour time.
@@ -35,8 +35,16 @@ export const createSessionSchema = z.object({
     .max(100, 'Session name too long')
     .transform((v: string) => v.trim()),
   date: z.coerce.date(),
-  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:MM)'),
-  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:MM)'),
+  startTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:MM)')
+    .optional()
+    .default('00:00'),
+  endTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:MM)')
+    .optional()
+    .default('23:59'),
 });
 
 export const createSessionsSchema = z.object({

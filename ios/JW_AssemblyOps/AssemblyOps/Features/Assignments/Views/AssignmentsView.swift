@@ -39,6 +39,7 @@ struct AssignmentsView: View {
     @State private var isReorderMode = false
     @State private var sessionToDelete: EventSessionItem?
     @State private var showDeleteConfirmation = false
+    @State private var sessionForSettings: EventSessionItem?
 
     var body: some View {
         NavigationStack {
@@ -54,6 +55,11 @@ struct AssignmentsView: View {
             .themedBackground(scheme: colorScheme)
             .sheet(isPresented: $showCreateSession) {
                 CreateSessionSheet()
+            }
+            .sheet(item: $sessionForSettings) { session in
+                if let dept = sessionState.selectedDepartment {
+                    SessionSettingsSheet(session: session, departmentId: dept.id, departmentType: dept.departmentType)
+                }
             }
             .onChange(of: showCreateSession) { _, isPresented in
                 if !isPresented {
@@ -329,9 +335,21 @@ struct AssignmentsView: View {
             Spacer()
 
             if !isReorderMode {
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                HStack(spacing: AppTheme.Spacing.m) {
+                    Button {
+                        sessionForSettings = session
+                        HapticManager.shared.lightTap()
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 14))
+                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    }
+                    .buttonStyle(.plain)
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                }
             }
         }
         .cardPadding()
@@ -466,9 +484,14 @@ struct AssignmentsView: View {
         isLoading = true
         error = nil
 
+        let departmentId = sessionState.selectedDepartment?.id
+
         do {
             let result = try await NetworkClient.shared.apollo.fetch(
-                query: AssemblyOpsAPI.EventSessionsQuery(eventId: eventId),
+                query: AssemblyOpsAPI.EventSessionsQuery(
+                    eventId: eventId,
+                    departmentId: departmentId.map { .some($0) } ?? .none
+                ),
                 cachePolicy: .fetchIgnoringCacheData
             )
 

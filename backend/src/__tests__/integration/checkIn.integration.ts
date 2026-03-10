@@ -308,12 +308,12 @@ describe('Check-In Operations', () => {
       if (volunteerRes.body.errors) return;
 
       const assignmentRes = await authRequest(
-        `mutation($input: CreateAssignmentInput!) { createAssignment(input: $input) { id } }`,
+        `mutation($input: CreateAssignmentInput!) { createAssignment(input: $input) { assignment { id } } }`,
         { input: { volunteerId: volunteerRes.body.data.createVolunteer.id, postId, sessionId } },
         adminToken
       );
       if (!assignmentRes.body.errors) {
-        noShowAssignmentId = assignmentRes.body.data.createAssignment.id;
+        noShowAssignmentId = assignmentRes.body.data.createAssignment.assignment.id;
       }
     });
 
