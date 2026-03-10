@@ -24,8 +24,9 @@
  */
 import { Context } from '../context.js';
 import { AuthService } from '../../services/authService.js';
-import { AuthenticationError } from '../../utils/errors.js';
+import { AuthenticationError, ValidationError } from '../../utils/errors.js';
 import { requireUser } from '../guards/auth.js';
+import { verifyPassword } from '../../utils/password.js';
 import { User, EventAdmin } from '@prisma/client';
 import {
   RegisterUserInput,
@@ -164,6 +165,41 @@ const authResolvers = {
       requireUser(context);
       const authService = new AuthService(context.prisma);
       return authService.setOverseerMode(context.user!.id, isOverseer);
+    },
+
+    deleteAccount: async (
+      _parent: unknown,
+      { password }: { password?: string | null },
+      context: Context
+    ) => {
+      requireUser(context);
+
+      const user = await context.prisma.user.findUnique({
+        where: { id: context.user!.id },
+        select: { id: true, passwordHash: true },
+      });
+
+      if (!user) {
+        throw new AuthenticationError('User not found');
+      }
+
+      // If user has a password, require it for deletion
+      if (user.passwordHash) {
+        if (!password) {
+          throw new ValidationError('Password is required to delete your account');
+        }
+        const isValid = await verifyPassword(password, user.passwordHash);
+        if (!isValid) {
+          throw new ValidationError('Incorrect password');
+        }
+      }
+
+      // Delete user — Prisma cascades handle all child records
+      await context.prisma.user.delete({
+        where: { id: user.id },
+      });
+
+      return true;
     },
   },
 

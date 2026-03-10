@@ -108,7 +108,7 @@ model EventJoinRequest {
   resolvedById   String?
   event          Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resolvedBy     User?             @relation("ResolvedJoinRequests", fields: [resolvedById], references: [id])
+  resolvedBy     User?             @relation("ResolvedJoinRequests", fields: [resolvedById], references: [id], onDelete: SetNull)
 
   @@unique([eventId, userId])
   @@index([eventId])
@@ -129,10 +129,10 @@ model AttendanceCount {
   postId        String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  submittedById String
+  submittedById String?
   session       Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   post          Post?    @relation(fields: [postId], references: [id])
-  submittedBy   User     @relation(fields: [submittedById], references: [id])
+  submittedBy   User?    @relation(fields: [submittedById], references: [id], onDelete: SetNull)
 
   @@unique([sessionId, section])
   @@index([sessionId])
@@ -151,8 +151,8 @@ model AttendantMeeting {
   eventId     String
   meetingDate DateTime
   notes       String?
-  createdBy   User                @relation(fields: [createdById], references: [id])
-  createdById String
+  createdBy   User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
   attendees   MeetingAttendance[]
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
@@ -176,8 +176,8 @@ model CheckIn {
   notes            String?
   status           CheckInStatus      @default(CHECKED_IN)
   assignment       ScheduleAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  checkedInBy      User?              @relation(fields: [checkedInById], references: [id])
-  checkedInByVol   EventVolunteer?    @relation(fields: [checkedInByVolId], references: [id])
+  checkedInBy      User?              @relation(fields: [checkedInById], references: [id], onDelete: SetNull)
+  checkedInByVol   EventVolunteer?    @relation(fields: [checkedInByVolId], references: [id], onDelete: SetNull)
 
   @@index([assignmentId])
 }
@@ -352,12 +352,12 @@ model EventNote {
   body         String
   eventId      String
   departmentId String?
-  createdById  String
+  createdById  String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   event        Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  createdBy    User        @relation(fields: [createdById], references: [id])
+  createdBy    User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([departmentId])
   @@index([eventId])
@@ -415,13 +415,13 @@ model LostPersonAlert {
   lastSeenTime          DateTime?
   encryptedContactName  String // AES-256-GCM encrypted
   encryptedContactPhone String? // AES-256-GCM encrypted
-  reportedBy            EventVolunteer @relation(fields: [reportedById], references: [id])
+  reportedBy            EventVolunteer @relation(fields: [reportedById], references: [id], onDelete: Cascade)
   reportedById          String
   event                 Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId               String
   resolved              Boolean        @default(false)
   resolvedAt            DateTime?
-  resolvedBy            User?          @relation("ResolvedAlerts", fields: [resolvedById], references: [id])
+  resolvedBy            User?          @relation("ResolvedAlerts", fields: [resolvedById], references: [id], onDelete: SetNull)
   resolvedById          String?
   resolutionNotes       String?
   createdAt             DateTime       @default(now())
@@ -440,7 +440,7 @@ model MeetingAttendance {
   id               String           @id @default(cuid())
   meeting          AttendantMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   meetingId        String
-  eventVolunteer   EventVolunteer   @relation(fields: [eventVolunteerId], references: [id])
+  eventVolunteer   EventVolunteer   @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
   eventVolunteerId String
   createdAt        DateTime         @default(now())
   session          Session?         @relation(fields: [sessionId], references: [id])
@@ -471,7 +471,7 @@ model Message {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   event              Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  senderUser         User?              @relation("MessageSenderUser", fields: [senderUserId], references: [id])
+  senderUser         User?              @relation("MessageSenderUser", fields: [senderUserId], references: [id], onDelete: SetNull)
   senderVol          EventVolunteer?    @relation("MessageSenderVol", fields: [senderVolId], references: [id], onDelete: Cascade)
   conversation       Conversation?      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   eventVolunteer     EventVolunteer?    @relation("MessageLegacyRecipient", fields: [eventVolunteerId], references: [id], onDelete: Cascade)
@@ -605,13 +605,13 @@ model SafetyIncident {
   location        String?
   post            Post?              @relation(fields: [postId], references: [id])
   postId          String?
-  reportedBy      EventVolunteer     @relation(fields: [reportedById], references: [id])
+  reportedBy      EventVolunteer     @relation(fields: [reportedById], references: [id], onDelete: Cascade)
   reportedById    String
   event           Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId         String
   resolved        Boolean            @default(false)
   resolvedAt      DateTime?
-  resolvedBy      User?              @relation("ResolvedIncidents", fields: [resolvedById], references: [id])
+  resolvedBy      User?              @relation("ResolvedIncidents", fields: [resolvedById], references: [id], onDelete: SetNull)
   resolvedById    String?
   resolutionNotes String?
   createdAt       DateTime           @default(now())
@@ -647,7 +647,7 @@ model ScheduleAssignment {
   session          Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   shift            Shift?           @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   eventVolunteer   EventVolunteer   @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
-  createdBy        User?            @relation("AssignmentCreator", fields: [createdByUserId], references: [id])
+  createdBy        User?            @relation("AssignmentCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@unique([eventVolunteerId, sessionId, shiftId])
   @@index([postId])
@@ -673,7 +673,7 @@ model Shift {
   updatedAt       DateTime             @updatedAt
   session                Session              @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   post                   Post                 @relation(fields: [postId], references: [id], onDelete: Cascade)
-  createdBy              User?                @relation("ShiftCreator", fields: [createdByUserId], references: [id])
+  createdBy              User?                @relation("ShiftCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
   assignments            ScheduleAssignment[]
   reminderConfirmations  ReminderConfirmation[]
 
@@ -811,7 +811,7 @@ model PostSessionStatus {
   updatedAt   DateTime             @updatedAt
   post        Post                 @relation(fields: [postId], references: [id], onDelete: Cascade)
   session     Session              @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  updatedBy   EventVolunteer       @relation("PostSessionStatusUpdatedBy", fields: [updatedById], references: [id])
+  updatedBy   EventVolunteer       @relation("PostSessionStatusUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
 
   @@unique([postId, sessionId])
   @@index([sessionId])
@@ -1004,7 +1004,7 @@ model AVEquipmentCheckout {
   notes          String?
 
   equipment      AVEquipmentItem @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  checkedOutBy   EventVolunteer  @relation(fields: [checkedOutById], references: [id])
+  checkedOutBy   EventVolunteer  @relation(fields: [checkedOutById], references: [id], onDelete: Cascade)
   session        Session?        @relation(fields: [sessionId], references: [id])
 
   @@index([equipmentId])
@@ -1026,8 +1026,8 @@ model AVDamageReport {
   createdAt       DateTime            @default(now())
 
   equipment       AVEquipmentItem     @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  reportedBy      EventVolunteer      @relation(fields: [reportedById], references: [id])
-  resolvedBy      User?               @relation("ResolvedDamageReports", fields: [resolvedById], references: [id])
+  reportedBy      EventVolunteer      @relation(fields: [reportedById], references: [id], onDelete: Cascade)
+  resolvedBy      User?               @relation("ResolvedDamageReports", fields: [resolvedById], references: [id], onDelete: SetNull)
   session         Session?            @relation(fields: [sessionId], references: [id])
 
   @@index([equipmentId])
@@ -1042,12 +1042,12 @@ model AVHazardAssessment {
   description   String
   controls      String
   ppeRequired   String[]
-  completedById String
+  completedById String?
   sessionId     String?
   completedAt   DateTime     @default(now())
 
   event         Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  completedBy   User         @relation(fields: [completedById], references: [id])
+  completedBy   User?        @relation(fields: [completedById], references: [id], onDelete: SetNull)
   session       Session?     @relation(fields: [sessionId], references: [id])
 
   @@index([eventId])
@@ -1058,11 +1058,11 @@ model AVSafetyBriefing {
   eventId       String
   topic         String
   notes         String?
-  conductedById String
+  conductedById String?
   conductedAt   DateTime                   @default(now())
 
   event         Event                      @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  conductedBy   User                       @relation(fields: [conductedById], references: [id])
+  conductedBy   User?                      @relation(fields: [conductedById], references: [id], onDelete: SetNull)
   attendees     AVSafetyBriefingAttendee[]
 
   @@index([eventId])
@@ -1114,7 +1114,7 @@ model AVSafetyBriefingAttendee {
   createdAt        DateTime         @default(now())
 
   briefing         AVSafetyBriefing @relation(fields: [briefingId], references: [id], onDelete: Cascade)
-  eventVolunteer   EventVolunteer   @relation(fields: [eventVolunteerId], references: [id])
+  eventVolunteer   EventVolunteer   @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
 
   @@unique([briefingId, eventVolunteerId])
 }

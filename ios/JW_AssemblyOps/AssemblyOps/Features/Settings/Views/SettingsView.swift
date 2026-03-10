@@ -15,6 +15,7 @@
 //   - Language: NavigationLink to LanguageSettingsView
 //   - Archived Events: NavigationLink to ArchivedEventsView
 //   - Logout: Destructive button with confirmation alert
+//   - Delete Account: Permanent account deletion with password/confirmation sheet
 //
 // Navigation:
 //   - Presented as .sheet from EventsHomeView
@@ -37,6 +38,11 @@ struct SettingsView: View {
     @State private var copiedId = false
     @State private var isSavingOverseerMode = false
     @State private var showOverseerError = false
+    @State private var showDeleteAccountSheet = false
+    @State private var deletePassword = ""
+    @State private var deleteConfirmText = ""
+    @State private var isDeletingAccount = false
+    @State private var deleteAccountError: String?
 
     var body: some View {
         NavigationStack {
@@ -62,9 +68,13 @@ struct SettingsView: View {
                     logoutButton
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
 
+                    // Delete account button
+                    deleteAccountButton
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
+
                     // App version
                     appVersion
-                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.25)
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.3)
                 }
                 .screenPadding()
                 .padding(.top, AppTheme.Spacing.l)
@@ -101,6 +111,19 @@ struct SettingsView: View {
                 Button("common.ok".localized, role: .cancel) {}
             } message: {
                 Text("settings.overseerMode.error".localized)
+            }
+            .sheet(isPresented: $showDeleteAccountSheet) {
+                deleteAccountSheet
+            }
+            .alert("common.error".localized, isPresented: .init(
+                get: { deleteAccountError != nil },
+                set: { if !$0 { deleteAccountError = nil } }
+            )) {
+                Button("common.ok".localized, role: .cancel) {}
+            } message: {
+                if let error = deleteAccountError {
+                    Text(error)
+                }
             }
         }
     }
@@ -323,6 +346,152 @@ struct SettingsView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Delete Account Button
+
+    private var deleteAccountButton: some View {
+        Button {
+            showDeleteAccountSheet = true
+            HapticManager.shared.lightTap()
+        } label: {
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "trash")
+                Text("settings.deleteAccount".localized)
+            }
+            .font(AppTheme.Typography.caption)
+            .frame(maxWidth: .infinity)
+            .frame(height: AppTheme.ButtonHeight.small)
+            .foregroundStyle(AppTheme.StatusColors.declined.opacity(0.7))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Delete Account Sheet
+
+    private var deleteAccountSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: AppTheme.Spacing.xl) {
+                    // Warning icon
+                    ZStack {
+                        Circle()
+                            .fill(AppTheme.StatusColors.declinedBackground)
+                            .frame(width: 72, height: 72)
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(AppTheme.StatusColors.declined)
+                    }
+                    .padding(.top, AppTheme.Spacing.l)
+
+                    // Warning text
+                    Text("settings.deleteAccount.warning".localized)
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                        .multilineTextAlignment(.center)
+
+                    VStack(spacing: AppTheme.Spacing.m) {
+                        // Password field
+                        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                            Text("settings.deleteAccount.password".localized)
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                            SecureField("", text: $deletePassword)
+                                .textContentType(.password)
+                                .padding()
+                                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                        }
+
+                        // Type DELETE field
+                        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                            Text("settings.deleteAccount.typeDelete".localized)
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                            TextField("DELETE", text: $deleteConfirmText)
+                                .textInputAutocapitalization(.characters)
+                                .autocorrectionDisabled()
+                                .padding()
+                                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                        }
+                    }
+                    .cardPadding()
+                    .themedCard(scheme: colorScheme)
+
+                    // Delete button
+                    Button {
+                        deleteAccount()
+                    } label: {
+                        HStack(spacing: AppTheme.Spacing.s) {
+                            if isDeletingAccount {
+                                ProgressView()
+                                    .tint(.white)
+                            } else {
+                                Image(systemName: "trash")
+                                Text("settings.deleteAccount.button".localized)
+                            }
+                        }
+                        .font(AppTheme.Typography.headline)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: AppTheme.ButtonHeight.medium)
+                        .foregroundStyle(.white)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                                .fill(deleteConfirmText == "DELETE"
+                                      ? AppTheme.StatusColors.declined
+                                      : AppTheme.StatusColors.declined.opacity(0.3))
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(deleteConfirmText != "DELETE" || isDeletingAccount)
+                }
+                .screenPadding()
+                .padding(.bottom, AppTheme.Spacing.xxl)
+            }
+            .themedBackground(scheme: colorScheme)
+            .navigationTitle("settings.deleteAccount".localized)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("common.cancel".localized) {
+                        showDeleteAccountSheet = false
+                        deletePassword = ""
+                        deleteConfirmText = ""
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Delete Account Action
+
+    private func deleteAccount() {
+        isDeletingAccount = true
+        let passwordArg: GraphQLNullable<String> = deletePassword.isEmpty ? .none : .some(deletePassword)
+        NetworkClient.shared.apollo.perform(
+            mutation: AssemblyOpsAPI.DeleteAccountMutation(password: passwordArg)
+        ) { result in
+            Task { @MainActor in
+                self.isDeletingAccount = false
+                switch result {
+                case .success(let graphQLResult):
+                    if let errors = graphQLResult.errors, !errors.isEmpty {
+                        self.deleteAccountError = errors.first?.message ?? "settings.deleteAccount.error".localized
+                        HapticManager.shared.error()
+                        return
+                    }
+                    if graphQLResult.data?.deleteAccount == true {
+                        self.showDeleteAccountSheet = false
+                        self.appState.logout()
+                        self.dismiss()
+                    }
+                case .failure(let error):
+                    self.deleteAccountError = error.localizedDescription
+                    HapticManager.shared.error()
+                }
+            }
+        }
     }
 
     // MARK: - Overseer Mode Mutation

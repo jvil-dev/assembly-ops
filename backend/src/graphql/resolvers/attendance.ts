@@ -404,7 +404,7 @@ const attendanceResolvers = {
     ) => {
       if (parent.submittedBy) return parent.submittedBy;
       return context.prisma.user.findUnique({
-        where: { id: parent.submittedById },
+        where: { id: parent.submittedById ?? undefined },
       });
     },
   },

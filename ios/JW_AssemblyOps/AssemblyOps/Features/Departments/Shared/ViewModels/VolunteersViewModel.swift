@@ -307,25 +307,23 @@ final class VolunteersViewModel: ObservableObject {
         }
     }
 
-    /// Delete a volunteer permanently
-    func deleteVolunteer(id: String) async -> Bool {
+    /// Remove a volunteer from the current department
+    func removeVolunteerFromDepartment(id: String) async -> Bool {
         do {
             let result = try await NetworkClient.shared.apollo.perform(
-                mutation: AssemblyOpsAPI.DeleteVolunteerMutation(id: id)
+                mutation: AssemblyOpsAPI.RemoveVolunteerFromDepartmentMutation(id: id)
             )
 
             if let errors = result.errors, !errors.isEmpty {
-                self.error = errors.first?.message ?? "Failed to delete volunteer"
+                self.error = errors.first?.message ?? "Failed to remove volunteer"
                 return false
             }
 
-            // Remove from local arrays
+            // Remove from department list (volunteer still exists in event, just not in this dept)
             departmentVolunteers.removeAll { $0.id == id }
-            allVolunteers.removeAll { $0.id == id }
-            volunteers.removeAll { $0.id == id }
             return true
         } catch {
-            self.error = "Failed to delete volunteer: \(error.localizedDescription)"
+            self.error = "Failed to remove volunteer: \(error.localizedDescription)"
             return false
         }
     }

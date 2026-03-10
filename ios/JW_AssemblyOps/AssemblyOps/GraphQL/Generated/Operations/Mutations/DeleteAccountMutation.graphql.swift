@@ -4,20 +4,20 @@
 @_exported import ApolloAPI
 
 extension AssemblyOpsAPI {
-  class DeleteVolunteerMutation: GraphQLMutation {
-    static let operationName: String = "DeleteVolunteer"
+  class DeleteAccountMutation: GraphQLMutation {
+    static let operationName: String = "DeleteAccount"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation DeleteVolunteer($id: ID!) { deleteVolunteer(id: $id) }"#
+        #"mutation DeleteAccount($password: String) { deleteAccount(password: $password) }"#
       ))
 
-    public var id: ID
+    public var password: GraphQLNullable<String>
 
-    public init(id: ID) {
-      self.id = id
+    public init(password: GraphQLNullable<String>) {
+      self.password = password
     }
 
-    public var __variables: Variables? { ["id": id] }
+    public var __variables: Variables? { ["password": password] }
 
     struct Data: AssemblyOpsAPI.SelectionSet {
       let __data: DataDict
@@ -25,13 +25,13 @@ extension AssemblyOpsAPI {
 
       static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Mutation }
       static var __selections: [ApolloAPI.Selection] { [
-        .field("deleteVolunteer", Bool.self, arguments: ["id": .variable("id")]),
+        .field("deleteAccount", Bool.self, arguments: ["password": .variable("password")]),
       ] }
       static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-        DeleteVolunteerMutation.Data.self
+        DeleteAccountMutation.Data.self
       ] }
 
-      var deleteVolunteer: Bool { __data["deleteVolunteer"] }
+      var deleteAccount: Bool { __data["deleteAccount"] }
     }
   }
 
