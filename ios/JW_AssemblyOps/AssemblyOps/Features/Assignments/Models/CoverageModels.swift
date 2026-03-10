@@ -40,12 +40,7 @@ struct CoverageShift: Identifiable, Equatable {
     }
 
     private static func formatTimeField(_ timeString: String) -> String {
-        if let date = DateUtils.parseISO8601(timeString) {
-            let formatter = DateFormatter()
-            formatter.timeStyle = .short
-            return formatter.string(from: date)
-        }
-        return timeString
+        return DateUtils.formatTimeField(timeString) ?? timeString
     }
 }
 

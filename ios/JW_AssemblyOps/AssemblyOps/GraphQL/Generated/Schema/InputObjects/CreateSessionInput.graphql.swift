@@ -14,8 +14,8 @@ extension AssemblyOpsAPI {
     init(
       name: String,
       date: DateTime,
-      startTime: String,
-      endTime: String
+      startTime: GraphQLNullable<String> = nil,
+      endTime: GraphQLNullable<String> = nil
     ) {
       __data = InputDict([
         "name": name,
@@ -35,12 +35,12 @@ extension AssemblyOpsAPI {
       set { __data["date"] = newValue }
     }
 
-    var startTime: String {
+    var startTime: GraphQLNullable<String> {
       get { __data["startTime"] }
       set { __data["startTime"] = newValue }
     }
 
-    var endTime: String {
+    var endTime: GraphQLNullable<String> {
       get { __data["endTime"] }
       set { __data["endTime"] = newValue }
     }

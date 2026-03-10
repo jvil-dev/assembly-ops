@@ -4,20 +4,20 @@
 @_exported import ApolloAPI
 
 extension AssemblyOpsAPI {
-  class DeleteFacilityLocationMutation: GraphQLMutation {
-    static let operationName: String = "DeleteFacilityLocation"
+  class DeleteFloorPlanMutation: GraphQLMutation {
+    static let operationName: String = "DeleteFloorPlan"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation DeleteFacilityLocation($id: ID!) { deleteFacilityLocation(id: $id) }"#
+        #"mutation DeleteFloorPlan($eventId: ID!) { deleteFloorPlan(eventId: $eventId) }"#
       ))
 
-    public var id: ID
+    public var eventId: ID
 
-    public init(id: ID) {
-      self.id = id
+    public init(eventId: ID) {
+      self.eventId = eventId
     }
 
-    public var __variables: Variables? { ["id": id] }
+    public var __variables: Variables? { ["eventId": eventId] }
 
     struct Data: AssemblyOpsAPI.SelectionSet {
       let __data: DataDict
@@ -25,13 +25,13 @@ extension AssemblyOpsAPI {
 
       static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Mutation }
       static var __selections: [ApolloAPI.Selection] { [
-        .field("deleteFacilityLocation", Bool.self, arguments: ["id": .variable("id")]),
+        .field("deleteFloorPlan", Bool.self, arguments: ["eventId": .variable("eventId")]),
       ] }
       static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-        DeleteFacilityLocationMutation.Data.self
+        DeleteFloorPlanMutation.Data.self
       ] }
 
-      var deleteFacilityLocation: Bool { __data["deleteFacilityLocation"] }
+      var deleteFloorPlan: Bool { __data["deleteFloorPlan"] }
     }
   }
 

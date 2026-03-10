@@ -35,13 +35,9 @@ final class SessionsViewModel: ObservableObject {
     // Form fields
     @Published var name: String = ""
     @Published var selectedDate: Date = Date()
-    @Published var startTime: String = ""
-    @Published var endTime: String = ""
 
     var isFormValid: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !startTime.isEmpty &&
-        !endTime.isEmpty
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     func createSession(eventId: String) async {
@@ -56,9 +52,7 @@ final class SessionsViewModel: ObservableObject {
 
         let input = AssemblyOpsAPI.CreateSessionInput(
             name: name,
-            date: dateString,
-            startTime: startTime,
-            endTime: endTime
+            date: dateString
         )
 
         do {
@@ -97,8 +91,6 @@ final class SessionsViewModel: ObservableObject {
 
             // Reset form
             name = ""
-            startTime = ""
-            endTime = ""
             selectedDate = Date()
 
         } catch {
@@ -112,7 +104,5 @@ struct SessionItem: Identifiable {
     let id: String
     let name: String
     let date: Date
-    let startTime: String
-    let endTime: String
     let createdAt: Date
 }

@@ -31,6 +31,8 @@ struct CaptainAssignment: Identifiable, Equatable, Hashable {
     let date: Date
     let startTime: Date
     let endTime: Date
+    let deptSessionStartTime: Date?
+    let deptSessionEndTime: Date?
     var status: AssignmentStatus
     var respondedAt: Date?
     var declineReason: String?
@@ -71,10 +73,15 @@ struct CaptainAssignment: Identifiable, Equatable, Hashable {
         date > Date()
     }
 
+    var displayStartTime: Date? { deptSessionStartTime ?? startTime }
+    var displayEndTime: Date? { deptSessionEndTime ?? endTime }
+
     var timeRangeFormatted: String {
+        guard let start = displayStartTime, let end = displayEndTime else { return "" }
         let formatter = DateFormatter()
         formatter.timeStyle = .short
-        return "\(formatter.string(from: startTime)) - \(formatter.string(from: endTime))"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
     }
 
     // MARK: - Hashable
@@ -118,6 +125,14 @@ extension CaptainAssignment {
         self.startTime = startTime
         self.endTime = endTime
 
+        if let deptSession = graphQL.session.departmentSession {
+            self.deptSessionStartTime = deptSession.startTime.flatMap { isoFormatter.date(from: $0) }
+            self.deptSessionEndTime = deptSession.endTime.flatMap { isoFormatter.date(from: $0) }
+        } else {
+            self.deptSessionStartTime = nil
+            self.deptSessionEndTime = nil
+        }
+
         self.status = AssignmentStatus(rawValue: graphQL.status.rawValue) ?? .pending
         self.respondedAt = graphQL.respondedAt.flatMap { isoFormatter.date(from: $0) }
         self.declineReason = graphQL.declineReason
@@ -145,6 +160,8 @@ extension CaptainAssignment {
             date: Date(),
             startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date())!,
             endTime: Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: Date())!,
+            deptSessionStartTime: nil,
+            deptSessionEndTime: nil,
             status: .pending,
             respondedAt: nil,
             declineReason: nil,
@@ -169,6 +186,8 @@ extension CaptainAssignment {
             date: Date(),
             startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date())!,
             endTime: Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: Date())!,
+            deptSessionStartTime: nil,
+            deptSessionEndTime: nil,
             status: .accepted,
             respondedAt: Date(),
             declineReason: nil,
@@ -193,6 +212,8 @@ extension CaptainAssignment {
             date: Date(),
             startTime: Calendar.current.date(bySettingHour: 13, minute: 30, second: 0, of: Date())!,
             endTime: Calendar.current.date(bySettingHour: 16, minute: 30, second: 0, of: Date())!,
+            deptSessionStartTime: nil,
+            deptSessionEndTime: nil,
             status: .accepted,
             respondedAt: Date(),
             declineReason: nil,

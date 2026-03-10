@@ -1,9 +1,0 @@
-mutation UpdateFacilityLocation($id: ID!, $input: UpdateFacilityLocationInput!) {
-  updateFacilityLocation(id: $id, input: $input) {
-    id
-    name
-    location
-    description
-    sortOrder
-  }
-}

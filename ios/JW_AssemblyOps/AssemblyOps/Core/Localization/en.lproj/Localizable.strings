@@ -1541,3 +1541,23 @@
 "notifications.loading" = "Loading notifications...";
 "notifications.empty" = "No Notifications";
 "notifications.empty.subtitle" = "You'll see assignment updates, join requests, and other alerts here.";
+
+// MARK: - Floor Plan (Sprint 6.11 Part B)
+"floorplan.title" = "Floor Plan";
+"floorplan.empty.title" = "No Floor Plan";
+"floorplan.empty.desc" = "The overseer hasn't uploaded a floor plan yet.";
+"floorplan.upload" = "Upload Floor Plan";
+"floorplan.remove" = "Remove";
+"floorplan.uploading" = "Uploading...";
+
+// MARK: - Delete Account & Department Removal
+"settings.deleteAccount" = "Delete Account";
+"settings.deleteAccount.subtitle" = "Permanently delete your account and all data";
+"settings.deleteAccount.warning" = "This will permanently delete your account, all event memberships, assignments, and data. This action cannot be undone.";
+"settings.deleteAccount.password" = "Enter your password to confirm";
+"settings.deleteAccount.typeDelete" = "Type DELETE to confirm";
+"settings.deleteAccount.button" = "Delete My Account";
+"settings.deleteAccount.error" = "Failed to delete account";
+"volunteer.removeDepartment.title" = "Remove from Department";
+"volunteer.removeDepartment.action" = "Remove";
+"volunteer.removeDepartment.confirm" = "Remove %@ from your department? Their assignments and roles in this department will also be removed.";

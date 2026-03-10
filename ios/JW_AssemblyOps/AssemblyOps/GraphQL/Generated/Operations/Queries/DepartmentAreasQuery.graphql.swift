@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "DepartmentAreas"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query DepartmentAreas($departmentId: ID!) { departmentAreas(departmentId: $departmentId) { __typename id name description category sortOrder postCount posts { __typename id name category sortOrder } captains { __typename id status respondedAt declineReason acceptedDeadline forceAssigned session { __typename id name date } eventVolunteer { __typename id user { __typename firstName lastName } } } } }"#
+        #"query DepartmentAreas($departmentId: ID!) { departmentAreas(departmentId: $departmentId) { __typename id name description category sortOrder startTime endTime postCount posts { __typename id name category sortOrder } captains { __typename id status respondedAt declineReason acceptedDeadline forceAssigned session { __typename id name date } eventVolunteer { __typename id user { __typename firstName lastName } } } } }"#
       ))
 
     public var departmentId: ID
@@ -48,6 +48,8 @@ extension AssemblyOpsAPI {
           .field("description", String?.self),
           .field("category", String?.self),
           .field("sortOrder", Int.self),
+          .field("startTime", String?.self),
+          .field("endTime", String?.self),
           .field("postCount", Int.self),
           .field("posts", [Post].self),
           .field("captains", [Captain].self),
@@ -61,6 +63,8 @@ extension AssemblyOpsAPI {
         var description: String? { __data["description"] }
         var category: String? { __data["category"] }
         var sortOrder: Int { __data["sortOrder"] }
+        var startTime: String? { __data["startTime"] }
+        var endTime: String? { __data["endTime"] }
         var postCount: Int { __data["postCount"] }
         var posts: [Post] { __data["posts"] }
         var captains: [Captain] { __data["captains"] }

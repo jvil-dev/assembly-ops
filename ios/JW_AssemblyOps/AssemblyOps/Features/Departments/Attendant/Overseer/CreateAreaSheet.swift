@@ -30,9 +30,22 @@ struct CreateAreaSheet: View {
 
     @State private var name = ""
     @State private var description = ""
-    @State private var sortOrder = ""
     @State private var selectedCategory: AttendantMainCategory?
     @State private var isSubmitting = false
+    @State private var showError = false
+    @State private var useCustomTime = false
+    @State private var startTime: Date = utcDate(hour: 11, minute: 45)
+    @State private var endTime: Date = utcDate(hour: 12, minute: 30)
+
+    private static let utcTimeZone = TimeZone(identifier: "UTC")!
+
+    private static func utcDate(hour: Int, minute: Int = 0) -> Date {
+        var comps = DateComponents()
+        comps.timeZone = TimeZone(identifier: "UTC")
+        comps.year = 1970; comps.month = 1; comps.day = 1
+        comps.hour = hour; comps.minute = minute; comps.second = 0
+        return Calendar(identifier: .gregorian).date(from: comps) ?? Date()
+    }
 
     private var departmentColor: Color {
         DepartmentColor.color(for: "ATTENDANT")
@@ -49,6 +62,7 @@ struct CreateAreaSheet: View {
                 VStack(spacing: AppTheme.Spacing.xl) {
                     categoryCard
                     areaFieldsCard
+                    timeRangeCard
                     submitButton
                 }
                 .screenPadding()
@@ -63,6 +77,17 @@ struct CreateAreaSheet: View {
                     Button("common.cancel".localized) { dismiss() }
                 }
             }
+            .tint(departmentColor)
+            .alert("common.error".localized, isPresented: $showError) {
+                Button("common.ok".localized) { viewModel.error = nil }
+            } message: {
+                if let error = viewModel.error {
+                    Text(error)
+                }
+            }
+            .onChange(of: viewModel.error) { _, error in
+                if error != nil { showError = true }
+            }
             .onAppear {
                 if let preselected = preselectedCategory {
                     selectedCategory = preselected
@@ -75,7 +100,7 @@ struct CreateAreaSheet: View {
 
     private var categoryCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            SectionHeaderLabel(icon: "tag", title: "area.category".localized)
+            SectionHeaderLabel(icon: "tag", title: "area.category".localized, accentColor: departmentColor)
 
             HStack(spacing: AppTheme.Spacing.s) {
                 ForEach(AttendantMainCategory.allCases) { main in
@@ -111,23 +136,42 @@ struct CreateAreaSheet: View {
 
     private var areaFieldsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            SectionHeaderLabel(icon: "rectangle.3.group", title: "area.details".localized)
+            SectionHeaderLabel(icon: "rectangle.3.group", title: "area.details".localized, accentColor: departmentColor)
 
             VStack(spacing: AppTheme.Spacing.m) {
                 themedTextField("area.name".localized, text: $name, placeholder: "area.namePlaceholder".localized)
 
                 themedTextField("area.description".localized, text: $description, placeholder: "area.descriptionPlaceholder".localized)
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
 
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                    Text("area.sortOrder".localized)
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                    TextField("0", text: $sortOrder)
-                        .keyboardType(.numberPad)
-                        .padding(AppTheme.Spacing.m)
-                        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+    // MARK: - Time Range Card
+
+    private var timeRangeCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            SectionHeaderLabel(icon: "clock", title: "Area Time Range".localized, accentColor: departmentColor)
+
+            Picker("", selection: $useCustomTime) {
+                Text("Whole Session").tag(false)
+                Text("Custom").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .tint(departmentColor)
+
+            if useCustomTime {
+                VStack(spacing: AppTheme.Spacing.m) {
+                    DatePicker("Start Time", selection: $startTime, displayedComponents: .hourAndMinute)
+                        .environment(\.timeZone, Self.utcTimeZone)
+                        .tint(departmentColor)
+
+                    DatePicker("End Time", selection: $endTime, displayedComponents: .hourAndMinute)
+                        .environment(\.timeZone, Self.utcTimeZone)
+                        .tint(departmentColor)
                 }
+                .padding(.top, AppTheme.Spacing.xs)
             }
         }
         .cardPadding()
@@ -178,14 +222,19 @@ struct CreateAreaSheet: View {
         isSubmitting = true
         let trimmedName = name.trimmingCharacters(in: .whitespaces)
         let trimmedDesc = description.trimmingCharacters(in: .whitespaces)
-        let order = Int(sortOrder)
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        formatter.timeZone = Self.utcTimeZone
 
         await viewModel.createArea(
             departmentId: departmentId,
             name: trimmedName,
             description: trimmedDesc.isEmpty ? nil : trimmedDesc,
             category: selectedCategory?.rawValue,
-            sortOrder: order
+            sortOrder: nil,
+            startTime: useCustomTime ? formatter.string(from: startTime) : nil,
+            endTime: useCustomTime ? formatter.string(from: endTime) : nil
         )
 
         isSubmitting = false

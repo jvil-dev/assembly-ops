@@ -25,7 +25,7 @@
  */
 import { Context } from '../context.js';
 import { SessionService } from '../../services/sessionService.js';
-import { requireAuth, requireEventAccess, tryRequireAdmin, tryRequireDeptAccessByEvent } from '../guards/auth.js';
+import { requireAuth, requireEventAccess, tryRequireAdmin, tryRequireDeptAccessByEvent, requireDeptAccess } from '../guards/auth.js';
 import { AuthorizationError } from '../../utils/errors.js';
 import { Session } from '@prisma/client';
 import {
@@ -58,11 +58,11 @@ const sessionResolvers = {
       return sessionService.getSession(id);
     },
 
-    sessions: async (_parent: unknown, { eventId }: { eventId: string }, context: Context) => {
+    sessions: async (_parent: unknown, { eventId, departmentId }: { eventId: string; departmentId?: string }, context: Context) => {
       await requireSessionAccess(context, eventId);
 
       const sessionService = new SessionService(context.prisma);
-      return sessionService.getEventSessions(eventId);
+      return sessionService.getEventSessions(eventId, departmentId);
     },
   },
 
@@ -108,6 +108,17 @@ const sessionResolvers = {
 
       return sessionService.deleteSession(id);
     },
+
+    upsertDepartmentSession: async (
+      _parent: unknown,
+      args: { departmentId: string; sessionId: string; input: { startTime?: string; endTime?: string; notes?: string } },
+      context: Context
+    ) => {
+      await requireDeptAccess(context, args.departmentId);
+
+      const sessionService = new SessionService(context.prisma);
+      return sessionService.upsertDepartmentSession(args.departmentId, args.sessionId, args.input);
+    },
   },
 
   Session: {
@@ -127,6 +138,22 @@ const sessionResolvers = {
         where: { sessionId: session.id },
         orderBy: { startTime: 'asc' },
       });
+    },
+    departmentSession: async (session: Session, args: { departmentId?: string }, context: Context) => {
+      let deptId = args.departmentId;
+
+      // If no departmentId provided, auto-resolve from the authenticated user's event volunteer
+      if (!deptId && context.user) {
+        const ev = await context.prisma.eventVolunteer.findFirst({
+          where: { userId: context.user.id, eventId: session.eventId },
+          select: { departmentId: true },
+        });
+        deptId = ev?.departmentId ?? undefined;
+      }
+
+      if (!deptId) return null;
+      const sessionService = new SessionService(context.prisma);
+      return sessionService.getDepartmentSession(deptId, session.id);
     },
   },
 };

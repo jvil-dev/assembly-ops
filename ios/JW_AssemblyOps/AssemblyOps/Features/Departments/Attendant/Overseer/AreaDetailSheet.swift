@@ -163,7 +163,7 @@ struct AreaDetailSheet: View {
 
     private var areaInfoCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            SectionHeaderLabel(icon: "rectangle.3.group", title: "area.details".localized)
+            SectionHeaderLabel(icon: "rectangle.3.group", title: "area.details".localized, accentColor: DepartmentColor.color(for: "ATTENDANT"))
 
             if isEditing {
                 VStack(spacing: AppTheme.Spacing.m) {
@@ -202,7 +202,7 @@ struct AreaDetailSheet: View {
     private var captainCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack {
-                SectionHeaderLabel(icon: "star.fill", title: "area.captain".localized)
+                SectionHeaderLabel(icon: "star.fill", title: "area.captain".localized, accentColor: DepartmentColor.color(for: "ATTENDANT"))
                 Spacer()
                 Text(session.name)
                     .font(AppTheme.Typography.caption)
@@ -299,7 +299,7 @@ struct AreaDetailSheet: View {
     private var postsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack {
-                SectionHeaderLabel(icon: "mappin.circle", title: "area.posts".localized)
+                SectionHeaderLabel(icon: "mappin.circle", title: "area.posts".localized, accentColor: DepartmentColor.color(for: "ATTENDANT"))
 
                 Spacer()
 
@@ -540,7 +540,9 @@ struct AreaDetailSheet: View {
         area: AreaItem(
             id: "area-1", name: "Main Entrance",
             description: "Front doors and lobby area",
-            category: "EXTERIOR", sortOrder: 1, postCount: 3,
+            category: "EXTERIOR", sortOrder: 1,
+            startTime: nil, endTime: nil,
+            postCount: 3,
             posts: [], captains: []
         ),
         session: EventSessionItem(
@@ -689,7 +691,7 @@ struct VolunteerPickerForCaptain: View {
 
                 // Assignment options card
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                    SectionHeaderLabel(icon: "gearshape", title: "captain.assignment.options".localized)
+                    SectionHeaderLabel(icon: "gearshape", title: "captain.assignment.options".localized, accentColor: DepartmentColor.color(for: "ATTENDANT"))
 
                     // Force assign toggle
                     Toggle(isOn: $forceAssigned) {

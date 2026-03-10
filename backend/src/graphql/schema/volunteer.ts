@@ -80,7 +80,6 @@ const volunteerTypeDefs = `#graphql
     createVolunteer(eventId: ID!, input: CreateVolunteerInput!): CreatedVolunteer!
     createVolunteers(input: CreateVolunteersInput!): [CreatedVolunteer!]!
     updateVolunteer(id: ID!, input: UpdateVolunteerInput!): Volunteer!
-    deleteVolunteer(id: ID!): Boolean!
     updateMyProfile(input: UpdateMyProfileInput!): Volunteer!
     # Join requests
     requestToJoinEvent(eventId: ID!, departmentType: DepartmentType, note: String): EventJoinRequest!

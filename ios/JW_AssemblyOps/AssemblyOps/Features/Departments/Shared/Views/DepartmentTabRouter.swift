@@ -520,6 +520,12 @@ struct AttendantVolunteerDeptView: View {
                 actionRow(icon: "info.circle", title: "Attendant Guidelines", color: DepartmentColor.color(for: "ATTENDANT"))
             }
             .buttonStyle(.plain)
+
+            // Floor Plan
+            NavigationLink(destination: FloorPlanView(eventId: eventId, isReadOnly: true)) {
+                actionRow(icon: "map", title: "floorplan.title".localized, color: DepartmentColor.color(for: "ATTENDANT"))
+            }
+            .buttonStyle(.plain)
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)

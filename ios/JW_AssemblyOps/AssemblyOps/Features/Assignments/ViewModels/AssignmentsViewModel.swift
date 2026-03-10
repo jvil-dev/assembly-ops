@@ -69,7 +69,7 @@ final class AssignmentsViewModel: ObservableObject {
             DateUtils.sessionStartOfDay(for: assignment.date)
         }
         return grouped
-            .map { (date: $0.key, assignments: $0.value.sorted { $0.displayStartTime < $1.displayStartTime }) }
+            .map { (date: $0.key, assignments: $0.value.sorted { ($0.displayStartTime ?? .distantFuture) < ($1.displayStartTime ?? .distantFuture) }) }
             .sorted { $0.date < $1.date }
     }
     

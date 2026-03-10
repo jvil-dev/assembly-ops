@@ -71,12 +71,14 @@ final class AreaService {
     }
 
     /// Create a new area
-    func createArea(departmentId: String, name: String, description: String?, category: String?, sortOrder: Int?) async throws -> AreaItem {
+    func createArea(departmentId: String, name: String, description: String?, category: String?, sortOrder: Int?, startTime: String? = nil, endTime: String? = nil) async throws -> AreaItem {
         let input = AssemblyOpsAPI.CreateAreaInput(
             name: name,
             description: description.map { .some($0) } ?? .none,
             category: category.map { .some($0) } ?? .none,
-            sortOrder: sortOrder.map { .some($0) } ?? .none
+            sortOrder: sortOrder.map { .some($0) } ?? .none,
+            startTime: startTime.map { .some($0) } ?? .none,
+            endTime: endTime.map { .some($0) } ?? .none
         )
         return try await withCheckedThrowingContinuation { continuation in
             NetworkClient.shared.apollo.perform(
@@ -100,11 +102,13 @@ final class AreaService {
     }
 
     /// Update an existing area
-    func updateArea(id: String, name: String?, description: String?, sortOrder: Int?) async throws -> AreaItem {
+    func updateArea(id: String, name: String?, description: String?, sortOrder: Int?, startTime: String? = nil, endTime: String? = nil) async throws -> AreaItem {
         let input = AssemblyOpsAPI.UpdateAreaInput(
             name: name.map { .some($0) } ?? .none,
             description: description.map { .some($0) } ?? .none,
-            sortOrder: sortOrder.map { .some($0) } ?? .none
+            sortOrder: sortOrder.map { .some($0) } ?? .none,
+            startTime: startTime.map { .some($0) } ?? .none,
+            endTime: endTime.map { .some($0) } ?? .none
         )
         return try await withCheckedThrowingContinuation { continuation in
             NetworkClient.shared.apollo.perform(

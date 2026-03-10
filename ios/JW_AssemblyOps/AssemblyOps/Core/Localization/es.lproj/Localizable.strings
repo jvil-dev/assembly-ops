@@ -1542,3 +1542,23 @@
 "notifications.loading" = "Cargando notificaciones...";
 "notifications.empty" = "Sin Notificaciones";
 "notifications.empty.subtitle" = "Aquí verás actualizaciones de asignaciones, solicitudes y otras alertas.";
+
+// MARK: - Floor Plan (Sprint 6.11 Part B)
+"floorplan.title" = "Plano del Edificio";
+"floorplan.empty.title" = "Sin Plano";
+"floorplan.empty.desc" = "El supervisor aún no ha subido un plano del edificio.";
+"floorplan.upload" = "Subir Plano";
+"floorplan.remove" = "Eliminar";
+"floorplan.uploading" = "Subiendo...";
+
+// MARK: - Delete Account & Department Removal
+"settings.deleteAccount" = "Eliminar Cuenta";
+"settings.deleteAccount.subtitle" = "Eliminar permanentemente tu cuenta y todos los datos";
+"settings.deleteAccount.warning" = "Esto eliminará permanentemente tu cuenta, todas las membresías de eventos, asignaciones y datos. Esta acción no se puede deshacer.";
+"settings.deleteAccount.password" = "Ingresa tu contraseña para confirmar";
+"settings.deleteAccount.typeDelete" = "Escribe DELETE para confirmar";
+"settings.deleteAccount.button" = "Eliminar Mi Cuenta";
+"settings.deleteAccount.error" = "No se pudo eliminar la cuenta";
+"volunteer.removeDepartment.title" = "Remover del Departamento";
+"volunteer.removeDepartment.action" = "Remover";
+"volunteer.removeDepartment.confirm" = "¿Remover a %@ de tu departamento? Sus asignaciones y roles en este departamento también serán eliminados.";

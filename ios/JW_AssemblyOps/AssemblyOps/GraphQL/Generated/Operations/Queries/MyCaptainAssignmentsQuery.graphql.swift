@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MyCaptainAssignments"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query MyCaptainAssignments($eventId: ID!) { myCaptainAssignments(eventId: $eventId) { __typename id status respondedAt declineReason acceptedDeadline forceAssigned area { __typename id name description category department { __typename id name departmentType event { __typename id } } } session { __typename id name date startTime endTime } eventVolunteer { __typename id user { __typename id firstName lastName } } createdAt } }"#
+        #"query MyCaptainAssignments($eventId: ID!) { myCaptainAssignments(eventId: $eventId) { __typename id status respondedAt declineReason acceptedDeadline forceAssigned area { __typename id name description category department { __typename id name departmentType event { __typename id } } } session { __typename id name date startTime endTime departmentSession { __typename startTime endTime } } eventVolunteer { __typename id user { __typename id firstName lastName } } createdAt } }"#
       ))
 
     public var eventId: ID
@@ -155,6 +155,7 @@ extension AssemblyOpsAPI {
             .field("date", AssemblyOpsAPI.DateTime.self),
             .field("startTime", AssemblyOpsAPI.DateTime.self),
             .field("endTime", AssemblyOpsAPI.DateTime.self),
+            .field("departmentSession", DepartmentSession?.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
             MyCaptainAssignmentsQuery.Data.MyCaptainAssignment.Session.self
@@ -165,6 +166,28 @@ extension AssemblyOpsAPI {
           var date: AssemblyOpsAPI.DateTime { __data["date"] }
           var startTime: AssemblyOpsAPI.DateTime { __data["startTime"] }
           var endTime: AssemblyOpsAPI.DateTime { __data["endTime"] }
+          var departmentSession: DepartmentSession? { __data["departmentSession"] }
+
+          /// MyCaptainAssignment.Session.DepartmentSession
+          ///
+          /// Parent Type: `DepartmentSession`
+          struct DepartmentSession: AssemblyOpsAPI.SelectionSet {
+            let __data: DataDict
+            init(_dataDict: DataDict) { __data = _dataDict }
+
+            static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.DepartmentSession }
+            static var __selections: [ApolloAPI.Selection] { [
+              .field("__typename", String.self),
+              .field("startTime", AssemblyOpsAPI.DateTime?.self),
+              .field("endTime", AssemblyOpsAPI.DateTime?.self),
+            ] }
+            static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
+              MyCaptainAssignmentsQuery.Data.MyCaptainAssignment.Session.DepartmentSession.self
+            ] }
+
+            var startTime: AssemblyOpsAPI.DateTime? { __data["startTime"] }
+            var endTime: AssemblyOpsAPI.DateTime? { __data["endTime"] }
+          }
         }
 
         /// MyCaptainAssignment.EventVolunteer

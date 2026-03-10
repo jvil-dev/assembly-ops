@@ -10,8 +10,7 @@
  *   - createVolunteers(input, defaultDepartmentId?): Bulk create volunteers
  *   - getVolunteer(id): Get volunteer with all related data
  *   - getEventVolunteers(eventId, departmentId?): List volunteers for event/department
- *   - updateVolunteer(id, input): Update volunteer details
- *   - deleteVolunteer(id): Remove volunteer
+ *   - updateVolunteer(id, input): Update volunteer details (includes department removal cleanup)
  *
  * Called by: ../graphql/resolvers/volunteer.ts
  */
@@ -245,6 +244,11 @@ export class VolunteerService {
       });
     }
 
+    // If removing from department, clean up related records first
+    if (input.departmentId === null && eventVolunteer.departmentId) {
+      await this.removeFromDepartmentCleanup(volunteerId, eventVolunteer.departmentId);
+    }
+
     return this.prisma.eventVolunteer.update({
       where: { id: volunteerId },
       data: {
@@ -259,21 +263,44 @@ export class VolunteerService {
     });
   }
 
-  async deleteVolunteer(volunteerId: string) {
-    const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
-      where: { id: volunteerId },
+  /**
+   * Clean up department-specific records when a volunteer is removed from a department.
+   * Deletes assignments for posts in that department, area captain records, and hierarchy roles.
+   */
+  private async removeFromDepartmentCleanup(eventVolunteerId: string, departmentId: string) {
+    const department = await this.prisma.department.findUnique({
+      where: { id: departmentId },
+      select: {
+        posts: { select: { id: true } },
+        areas: { select: { id: true } },
+      },
     });
 
-    if (!eventVolunteer) {
-      throw new NotFoundError('Volunteer');
-    }
+    if (!department) return;
 
-    await this.prisma.eventVolunteer.delete({
-      where: { id: volunteerId },
+    const postIds = department.posts.map(p => p.id);
+    const areaIds = department.areas.map(a => a.id);
+
+    await this.prisma.$transaction(async (tx) => {
+      // Delete assignments for posts in this department
+      if (postIds.length > 0) {
+        await tx.scheduleAssignment.deleteMany({
+          where: { eventVolunteerId, postId: { in: postIds } },
+        });
+      }
+      // Delete area captain records for areas in this department
+      if (areaIds.length > 0) {
+        await tx.areaCaptain.deleteMany({
+          where: { eventVolunteerId, areaId: { in: areaIds } },
+        });
+      }
+      // Delete hierarchy roles for this department
+      await tx.departmentHierarchy.deleteMany({
+        where: { eventVolunteerId, departmentId },
+      });
     });
-
-    return true;
   }
+
 
   /**
    * Request to join an event as a volunteer.

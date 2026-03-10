@@ -14,8 +14,7 @@
  * Mutations:
  *   - createVolunteer: Add one EventVolunteer, returns login credentials
  *   - createVolunteers: Bulk add, returns all credentials
- *   - updateVolunteer: Update EventVolunteer details
- *   - deleteVolunteer: Remove an EventVolunteer
+ *   - updateVolunteer: Update EventVolunteer details (includes department removal cleanup)
  *   - regenerateVolunteerCredentials: Generate new login credentials
  *   - requestToJoinEvent: Volunteer requests to join an event
  *   - cancelJoinRequest: Cancel a pending join request
@@ -231,23 +230,6 @@ const volunteerResolvers = {
 
       const volunteerService = new VolunteerService(context.prisma);
       return volunteerService.updateVolunteer(id, input);
-    },
-
-    deleteVolunteer: async (_parent: unknown, { id }: { id: string }, context: Context) => {
-      requireAdmin(context);
-
-      // Get EventVolunteer to check event access
-      const eventVolunteer = await context.prisma.eventVolunteer.findUnique({
-        where: { id },
-        select: { eventId: true },
-      });
-
-      if (eventVolunteer) {
-        await requireEventAccess(context, eventVolunteer.eventId);
-      }
-
-      const volunteerService = new VolunteerService(context.prisma);
-      return volunteerService.deleteVolunteer(id);
     },
 
     updateMyProfile: async (

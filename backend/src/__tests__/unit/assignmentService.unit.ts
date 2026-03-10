@@ -28,7 +28,9 @@ const mockVolunteer = {
 
 const mockPost = {
   id: 'post-1',
+  name: 'Post 1',
   department: { eventId: 'event-1', departmentType: 'ATTENDANT' },
+  area: null,
 };
 
 const mockSession = {
@@ -90,7 +92,7 @@ describe('AssignmentService', () => {
   describe('createAssignment', () => {
     it('throws ValidationError when volunteerId is missing', async () => {
       await expect(
-        service.createAssignment({ volunteerId: '', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false })
+        service.createAssignment({ volunteerId: '', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
       ).rejects.toThrow(ValidationError);
     });
 
@@ -100,11 +102,11 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
       ).rejects.toThrow(NotFoundError);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
       ).rejects.toThrow('Volunteer not found');
     });
 
@@ -114,11 +116,11 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
       ).rejects.toThrow(NotFoundError);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
       ).rejects.toThrow('Post not found');
     });
 
@@ -128,11 +130,11 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.session.findUnique).mockResolvedValue(null);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
       ).rejects.toThrow(NotFoundError);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
       ).rejects.toThrow('Session not found');
     });
 
@@ -146,7 +148,7 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-2', sessionId: 'session-1', shiftId: null, canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-2', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
       ).rejects.toThrow(ValidationError);
     });
 
@@ -157,7 +159,7 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.session.findUnique).mockResolvedValue(crossEventSession as never);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-2', shiftId: null, canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-2', shiftId: null, canCount: false, force: false })
       ).rejects.toThrow(ValidationError);
     });
 
@@ -168,11 +170,11 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.shift.findUnique).mockResolvedValue(null);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-bad', canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-bad', canCount: false, force: false })
       ).rejects.toThrow(NotFoundError);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-bad', canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-bad', canCount: false, force: false })
       ).rejects.toThrow('Shift not found');
     });
 
@@ -184,11 +186,11 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.shift.findUnique).mockResolvedValue(wrongSessionShift as never);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-1', canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-1', canCount: false, force: false })
       ).rejects.toThrow(ValidationError);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-1', canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-1', canCount: false, force: false })
       ).rejects.toThrow('Shift does not belong to the specified session');
     });
 
@@ -208,6 +210,7 @@ describe('AssignmentService', () => {
           startTime: new Date('2026-03-01T08:00:00Z'),
           endTime: new Date('2026-03-01T12:00:00Z'),
         },
+        post: { ...mockPost },
       };
 
       vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(mockVolunteer as never);
@@ -217,7 +220,7 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.scheduleAssignment.findMany).mockResolvedValue([existingShiftAssignment] as never);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-new', canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-new', canCount: false, force: false })
       ).rejects.toThrow(ConflictError);
     });
 
@@ -237,6 +240,7 @@ describe('AssignmentService', () => {
           startTime: new Date('2026-03-01T08:00:00Z'),
           endTime: new Date('2026-03-01T12:00:00Z'),
         },
+        post: { ...mockPost },
       };
       const createdAssignment = makeAssignment({ shiftId: 'shift-new' });
 
@@ -253,26 +257,27 @@ describe('AssignmentService', () => {
         sessionId: 'session-1',
         shiftId: 'shift-new',
         canCount: false,
+        force: false,
       });
 
-      expect(result).toEqual(createdAssignment);
+      expect(result.assignment).toEqual(createdAssignment);
       expect(prisma.scheduleAssignment.create).toHaveBeenCalledOnce();
     });
 
     it('throws ConflictError when volunteer already has a null-shift assignment for the same session', async () => {
-      const existingNullShiftAssignment = makeAssignment({ shiftId: null });
+      const existingNullShiftAssignment = makeAssignment({ shiftId: null, post: { ...mockPost } });
 
       vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(mockVolunteer as never);
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost as never);
       vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
-      vi.mocked(prisma.scheduleAssignment.findFirst).mockResolvedValue(existingNullShiftAssignment as never);
+      vi.mocked(prisma.scheduleAssignment.findMany).mockResolvedValue([existingNullShiftAssignment] as never);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
       ).rejects.toThrow(ConflictError);
 
       await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false })
+        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
       ).rejects.toThrow('already assigned');
     });
 
@@ -282,7 +287,7 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(mockVolunteer as never);
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost as never);
       vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
-      vi.mocked(prisma.scheduleAssignment.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.scheduleAssignment.findMany).mockResolvedValue([] as never);
       vi.mocked(prisma.scheduleAssignment.create).mockResolvedValue(createdAssignment as never);
 
       const result = await service.createAssignment({
@@ -291,9 +296,10 @@ describe('AssignmentService', () => {
         sessionId: 'session-1',
         shiftId: null,
         canCount: false,
+        force: false,
       });
 
-      expect(result).toEqual(createdAssignment);
+      expect(result.assignment).toEqual(createdAssignment);
       expect(prisma.scheduleAssignment.create).toHaveBeenCalledOnce();
     });
   });

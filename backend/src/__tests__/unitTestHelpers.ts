@@ -56,7 +56,6 @@ export function createPrismaMock() {
     conversation: makeModel(),
     conversationParticipant: makeModel(),
     attendanceCount: makeModel(),
-    facilityLocation: makeModel(),
     postSessionStatus: makeModel(),
     walkThroughCompletion: makeModel(),
     reminderConfirmation: makeModel(),

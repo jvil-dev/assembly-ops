@@ -37,7 +37,6 @@ final class AttendantVolunteerViewModel: ObservableObject {
     @Published var postCountHistory: [PostAttendanceHistoryItem] = []
     @Published var myWalkThroughCompletions: [WalkThroughCompletionItem] = []
     @Published var postSessionStatuses: [PostSessionStatusItem] = []
-    @Published var facilityLocations: [FacilityLocationItem] = []
     @Published var isLoading = false
     @Published var isSaving = false
     @Published var error: String?
@@ -198,13 +197,4 @@ final class AttendantVolunteerViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Facility Locations
-
-    func loadFacilityLocations(eventId: String) async {
-        do {
-            facilityLocations = try await AttendantService.shared.fetchFacilityLocations(eventId: eventId)
-        } catch {
-            print("[AttendantVM] Failed to load facility locations: \(error)")
-        }
-    }
 }

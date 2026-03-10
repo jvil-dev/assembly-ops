@@ -5,6 +5,8 @@ mutation UpdateArea($id: ID!, $input: UpdateAreaInput!) {
         description
         category
         sortOrder
+        startTime
+        endTime
         postCount
     }
 }

@@ -43,7 +43,7 @@ final class ShiftManagementViewModel: ObservableObject {
 
         do {
             let result = try await NetworkClient.shared.apollo.fetch(
-                query: AssemblyOpsAPI.EventSessionsQuery(eventId: eventId),
+                query: AssemblyOpsAPI.EventSessionsQuery(eventId: eventId, departmentId: .none),
                 cachePolicy: .fetchIgnoringCacheData
             )
 

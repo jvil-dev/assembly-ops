@@ -4,8 +4,8 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI.Objects {
-  static let FacilityLocation = ApolloAPI.Object(
-    typename: "FacilityLocation",
+  static let CreateAssignmentResult = ApolloAPI.Object(
+    typename: "CreateAssignmentResult",
     implementedInterfaces: [],
     keyFields: nil
   )

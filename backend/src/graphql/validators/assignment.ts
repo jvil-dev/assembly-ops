@@ -35,6 +35,7 @@ export const createAssignmentSchema = z.object({
   sessionId: z.string().min(1, 'Session ID is required'),
   shiftId: z.string().min(1).nullish().transform((v: string | null | undefined) => v || null),
   canCount: z.boolean().optional().default(false),
+  force: z.boolean().optional().default(false),
 });
 
 export const createAssignmentsSchema = z.object({

@@ -33,6 +33,8 @@ struct AreaItem: Identifiable, Equatable {
     let description: String?
     let category: String?
     let sortOrder: Int
+    let startTime: String?
+    let endTime: String?
     let postCount: Int
     var posts: [AreaPostItem]
     var captains: [AreaCaptainItem]
@@ -45,6 +47,8 @@ extension AreaItem {
         self.description = data.description
         self.category = data.category
         self.sortOrder = data.sortOrder
+        self.startTime = data.startTime
+        self.endTime = data.endTime
         self.postCount = data.postCount
         self.posts = data.posts.map { AreaPostItem(from: $0) }
         self.captains = data.captains.map { AreaCaptainItem(from: $0) }
@@ -56,6 +60,8 @@ extension AreaItem {
         self.description = data.description
         self.category = data.category
         self.sortOrder = data.sortOrder
+        self.startTime = data.startTime
+        self.endTime = data.endTime
         self.postCount = data.postCount
         self.posts = []
         self.captains = []
@@ -67,6 +73,8 @@ extension AreaItem {
         self.description = data.description
         self.category = data.category
         self.sortOrder = data.sortOrder
+        self.startTime = data.startTime
+        self.endTime = data.endTime
         self.postCount = data.postCount
         self.posts = []
         self.captains = []

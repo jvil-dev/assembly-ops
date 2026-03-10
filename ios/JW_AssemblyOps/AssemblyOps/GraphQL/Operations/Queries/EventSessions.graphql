@@ -1,5 +1,5 @@
-query EventSessions($eventId: ID!) {
-  sessions(eventId: $eventId) {
+query EventSessions($eventId: ID!, $departmentId: ID) {
+  sessions(eventId: $eventId, departmentId: $departmentId) {
     id
     name
     date

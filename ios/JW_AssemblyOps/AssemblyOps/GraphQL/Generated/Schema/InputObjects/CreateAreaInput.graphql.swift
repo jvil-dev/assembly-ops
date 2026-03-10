@@ -15,13 +15,17 @@ extension AssemblyOpsAPI {
       name: String,
       description: GraphQLNullable<String> = nil,
       category: GraphQLNullable<String> = nil,
-      sortOrder: GraphQLNullable<Int> = nil
+      sortOrder: GraphQLNullable<Int> = nil,
+      startTime: GraphQLNullable<String> = nil,
+      endTime: GraphQLNullable<String> = nil
     ) {
       __data = InputDict([
         "name": name,
         "description": description,
         "category": category,
-        "sortOrder": sortOrder
+        "sortOrder": sortOrder,
+        "startTime": startTime,
+        "endTime": endTime
       ])
     }
 
@@ -43,6 +47,16 @@ extension AssemblyOpsAPI {
     var sortOrder: GraphQLNullable<Int> {
       get { __data["sortOrder"] }
       set { __data["sortOrder"] = newValue }
+    }
+
+    var startTime: GraphQLNullable<String> {
+      get { __data["startTime"] }
+      set { __data["startTime"] = newValue }
+    }
+
+    var endTime: GraphQLNullable<String> {
+      get { __data["endTime"] }
+      set { __data["endTime"] = newValue }
     }
   }
 
