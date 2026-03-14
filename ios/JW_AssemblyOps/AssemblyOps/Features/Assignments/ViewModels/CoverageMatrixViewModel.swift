@@ -60,7 +60,7 @@ final class CoverageMatrixViewModel: ObservableObject {
     }
 
     func loadCoverage() async {
-        guard let departmentId = departmentId else { return }
+        guard let departmentId = departmentId, !isLoading else { return }
 
         isLoading = true
         error = nil

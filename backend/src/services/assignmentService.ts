@@ -579,7 +579,10 @@ export class AssignmentService {
     for (const post of posts) {
       for (const session of sessions) {
         const slotAssignments = assignments.filter(
-          (a) => a.postId === post.id && a.sessionId === session.id
+          (a) =>
+            a.postId === post.id &&
+            a.sessionId === session.id &&
+            a.eventVolunteer?.user
         );
 
         const acceptedCount = slotAssignments.filter(

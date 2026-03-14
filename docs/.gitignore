@@ -1,5 +1,6 @@
 # Development documentation (internal/draft docs)
 development_docs/
+tasks/
 
 # OS files
 .DS_Store
