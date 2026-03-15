@@ -2,10 +2,10 @@
  * Overview Page
  *
  * Main dashboard showing platform health at a glance. Displays app
- * analytics (users, events), ECS service status, and current-month
- * AWS costs with auto-polling.
+ * analytics (users, events), Cloud Run service status, and current-month
+ * GCP costs with auto-polling.
  *
- * Queries: AppAnalytics (60s poll), EcsServiceStatus (30s poll), AwsCostBreakdown
+ * Queries: AppAnalytics (60s poll), CloudRunServiceStatus (30s poll), GcpCostBreakdown
  *
  * Dependencies: DashboardShell, StatCard, Skeleton, ErrorCard
  */
@@ -16,7 +16,7 @@ import { DashboardShell } from '../components/DashboardShell';
 import { StatCard } from '../components/StatCard';
 import { SkeletonStatCard } from '../components/Skeleton';
 import { ErrorCard } from '../components/ErrorCard';
-import { APP_ANALYTICS, ECS_SERVICE_STATUS, AWS_COST_BREAKDOWN } from '../lib/queries';
+import { APP_ANALYTICS, CLOUD_RUN_SERVICE_STATUS, GCP_COST_BREAKDOWN } from '../lib/queries';
 
 interface AppAnalytics {
   totalUsers: number;
@@ -27,15 +27,13 @@ interface AppAnalytics {
   totalCheckIns: number;
 }
 
-interface EcsStatus {
-  runningCount: number;
-  desiredCount: number;
-  pendingCount: number;
+interface CloudRunStatus {
   status: string;
-  lastDeploymentAt: string | null;
-  lastDeploymentStatus: string | null;
-  cpuReservation: number | null;
-  memoryReservation: number | null;
+  latestRevision: string | null;
+  cpuLimit: string | null;
+  memoryLimit: string | null;
+  minInstances: number;
+  maxInstances: number;
 }
 
 interface CostEntry { service: string; amount: number; unit: string; }
@@ -44,22 +42,22 @@ export default function OverviewPage() {
   const { data: analyticsData, loading: analyticsLoading, error: analyticsError, refetch: refetchAnalytics } = useQuery<{ appAnalytics: AppAnalytics }>(APP_ANALYTICS, {
     pollInterval: 60_000,
   });
-  const { data: ecsData, loading: ecsLoading, error: ecsError, refetch: refetchEcs } = useQuery<{ ecsServiceStatus: EcsStatus }>(ECS_SERVICE_STATUS, {
+  const { data: crData, loading: crLoading, error: crError, refetch: refetchCr } = useQuery<{ cloudRunServiceStatus: CloudRunStatus }>(CLOUD_RUN_SERVICE_STATUS, {
     pollInterval: 30_000,
   });
 
   const start = format(startOfMonth(new Date()), 'yyyy-MM-dd');
   const end = format(new Date(), 'yyyy-MM-dd');
-  const { data: costData, loading: costLoading, error: costError, refetch: refetchCost } = useQuery<{ awsCostBreakdown: CostEntry[] }>(AWS_COST_BREAKDOWN, {
+  const { data: costData, loading: costLoading, error: costError, refetch: refetchCost } = useQuery<{ gcpCostBreakdown: CostEntry[] }>(GCP_COST_BREAKDOWN, {
     variables: { startDate: start, endDate: end },
   });
 
   const analytics = analyticsData?.appAnalytics;
-  const ecs = ecsData?.ecsServiceStatus;
-  const totalCost = costData?.awsCostBreakdown.reduce((sum, e) => sum + e.amount, 0) ?? 0;
+  const cr = crData?.cloudRunServiceStatus;
+  const totalCost = costData?.gcpCostBreakdown.reduce((sum, e) => sum + e.amount, 0) ?? 0;
 
-  const ecsStatus = ecs
-    ? ecs.runningCount === ecs.desiredCount ? 'ok' : ecs.runningCount === 0 ? 'error' : 'warn'
+  const crStatus = cr
+    ? cr.status === 'Ready' ? 'ok' : 'warn'
     : undefined;
 
   const cardStyle: React.CSSProperties = {
@@ -103,16 +101,16 @@ export default function OverviewPage() {
               />
             </>
           )}
-          {ecsLoading && !ecsData ? (
+          {crLoading && !crData ? (
             <SkeletonStatCard />
-          ) : ecsError && !ecsData ? (
-            <ErrorCard message={ecsError.message} onRetry={() => refetchEcs()} />
+          ) : crError && !crData ? (
+            <ErrorCard message={crError.message} onRetry={() => refetchCr()} />
           ) : (
             <StatCard
-              label="ECS Tasks"
-              value={ecs ? `${ecs.runningCount} / ${ecs.desiredCount}` : 'N/A'}
-              subtext={ecs?.status ?? ''}
-              status={ecsStatus}
+              label="Cloud Run"
+              value={cr?.status ?? 'N/A'}
+              subtext={cr?.latestRevision ?? ''}
+              status={crStatus}
             />
           )}
           {costLoading && !costData ? (
@@ -123,7 +121,7 @@ export default function OverviewPage() {
             <StatCard
               label="Monthly Cost"
               value={totalCost > 0 ? `$${totalCost.toFixed(2)}` : '$0.00'}
-              subtext="Current month (AWS)"
+              subtext="Current month (GCP)"
             />
           )}
         </div>
@@ -147,25 +145,25 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          {ecs && (
+          {cr && (
             <div style={cardStyle}>
-              <p className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>ECS Service</p>
+              <p className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Cloud Run Service</p>
               <div className="space-y-2">
                 {([
-                  ['Running', ecs.runningCount],
-                  ['Desired', ecs.desiredCount],
-                  ['Pending', ecs.pendingCount],
-                ] as [string, number][]).map(([label, val]) => (
+                  ['Status', cr.status],
+                  ['CPU', cr.cpuLimit ?? 'N/A'],
+                  ['Memory', cr.memoryLimit ?? 'N/A'],
+                ] as [string, string][]).map(([label, val]) => (
                   <div key={label} className="flex justify-between text-sm">
                     <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
                     <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{val}</span>
                   </div>
                 ))}
-                {ecs.lastDeploymentAt && (
+                {cr.latestRevision && (
                   <div className="flex justify-between text-sm pt-2 mt-2" style={{ borderTop: '1px solid var(--divider)' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>Last deploy</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Revision</span>
                     <span className="font-medium text-xs" style={{ color: 'var(--text-primary)' }}>
-                      {new Date(ecs.lastDeploymentAt).toLocaleDateString()}
+                      {cr.latestRevision}
                     </span>
                   </div>
                 )}

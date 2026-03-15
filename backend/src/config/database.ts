@@ -26,12 +26,12 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 
-// Enable SSL only for Supabase/external connections
-const isExternalDb = process.env.DATABASE_URL?.includes('supabase');
+// Enable SSL for external connections (Cloud SQL, Supabase, etc.)
+const useSSL = process.env.DATABASE_SSL === 'true';
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
-  ...(isExternalDb && { ssl: { rejectUnauthorized: false } }),
+  ...(useSSL && { ssl: { rejectUnauthorized: false } }),
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,

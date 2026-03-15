@@ -45,7 +45,7 @@ import walkThroughResolvers from './walkThrough.js';
 import postSessionStatusResolvers from './postSessionStatus.js';
 import floorPlanResolvers from './floorPlan.js';
 import adminResolvers from './admin.js';
-import awsResolvers from './aws.js';
+import gcpResolvers from './gcp.js';
 import audioVideoResolvers from './audioVideo.js';
 import shiftResolvers from './shift.js';
 import captainSchedulingResolvers from './captainScheduling.js';
@@ -104,7 +104,7 @@ const resolvers = {
     ...postSessionStatusResolvers.Query,
     ...floorPlanResolvers.Query,
     ...adminResolvers.Query,
-    ...awsResolvers.Query,
+    ...gcpResolvers.Query,
     ...audioVideoResolvers.Query,
     ...shiftResolvers.Query,
     ...captainSchedulingResolvers.Query,

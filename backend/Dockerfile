@@ -20,7 +20,7 @@
 #
 # Health Check:
 #   - GET http://localhost:4000/health
-#   - Used by AWS ALB and Docker health checks
+#   - Used by Cloud Run and Docker health checks
 #
 # Security:
 #   - Runs as non-root user (expressjs:nodejs)

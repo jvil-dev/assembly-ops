@@ -1,21 +1,19 @@
 /**
- * GraphQL AWS Schema
+ * GraphQL GCP Schema
  *
- * Defines admin queries for AWS infrastructure monitoring.
+ * Defines admin queries for GCP infrastructure monitoring.
  * All operations require the `isAppAdmin` flag on the authenticated user.
  *
- * Implemented by: ../resolvers/aws.ts
+ * Implemented by: ../resolvers/gcp.ts
  */
-const awsTypeDefs = `#graphql
-  type EcsServiceStatus {
-    runningCount: Int!
-    desiredCount: Int!
-    pendingCount: Int!
+const gcpTypeDefs = `#graphql
+  type CloudRunServiceStatus {
     status: String!
-    lastDeploymentAt: String
-    lastDeploymentStatus: String
-    cpuReservation: Int
-    memoryReservation: Int
+    latestRevision: String
+    cpuLimit: String
+    memoryLimit: String
+    minInstances: Int!
+    maxInstances: Int!
   }
 
   type MetricDataPoint {
@@ -52,12 +50,12 @@ const awsTypeDefs = `#graphql
   }
 
   extend type Query {
-    ecsServiceStatus: EcsServiceStatus!
-    cloudwatchMetrics(period: String!, metricName: String!): [MetricDataPoint!]!
-    cloudwatchLogs(limit: Int, filterPattern: String): [LogEvent!]!
-    awsCostBreakdown(startDate: String!, endDate: String!): [CostEntry!]!
+    cloudRunServiceStatus: CloudRunServiceStatus!
+    gcpMetrics(period: String!, metricName: String!): [MetricDataPoint!]!
+    gcpLogs(limit: Int, filter: String): [LogEvent!]!
+    gcpCostBreakdown(startDate: String!, endDate: String!): [CostEntry!]!
     databaseStats: DatabaseStats!
   }
 `;
 
-export default awsTypeDefs;
+export default gcpTypeDefs;
