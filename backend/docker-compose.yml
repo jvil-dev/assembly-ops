@@ -3,7 +3,7 @@
 # =============================================================================
 #
 # Runs the API and PostgreSQL database locally for development.
-# NOT for production - use AWS ECS + Supabase instead.
+# NOT for production - use GCP Cloud Run + Cloud SQL instead.
 #
 # Services:
 #   - api: Node.js backend with hot reload (port 4000)
