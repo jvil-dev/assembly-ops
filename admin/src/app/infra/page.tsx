@@ -1,11 +1,11 @@
 /**
  * Infrastructure Page
  *
- * ECS service health, CPU/memory utilization charts, and database
+ * Cloud Run service health, CPU/memory utilization charts, and database
  * statistics. Period selector toggles between 1h, 24h, 7d, and 30d
- * for CloudWatch metrics. All data auto-polls.
+ * for metrics. All data auto-polls.
  *
- * Queries: EcsServiceStatus (30s poll), CloudwatchMetrics (60s poll), DatabaseStats (60s poll)
+ * Queries: CloudRunServiceStatus (30s poll), GcpMetrics (60s poll), DatabaseStats (60s poll)
  *
  * Dependencies: DashboardShell, StatCard, Chart, Skeleton, ErrorCard
  */
@@ -17,7 +17,7 @@ import { StatCard } from '../../components/StatCard';
 import { Chart } from '../../components/Chart';
 import { Skeleton, SkeletonChart } from '../../components/Skeleton';
 import { ErrorCard } from '../../components/ErrorCard';
-import { ECS_SERVICE_STATUS, CLOUDWATCH_METRICS, DATABASE_STATS } from '../../lib/queries';
+import { CLOUD_RUN_SERVICE_STATUS, GCP_METRICS, DATABASE_STATS } from '../../lib/queries';
 
 type MetricPeriod = '1h' | '24h' | '7d' | '30d';
 
@@ -28,14 +28,13 @@ const PERIODS: { value: MetricPeriod; label: string }[] = [
   { value: '30d', label: '30d' },
 ];
 
-interface EcsStatus {
-  runningCount: number;
-  desiredCount: number;
-  pendingCount: number;
+interface CloudRunStatus {
   status: string;
-  lastDeploymentAt: string | null;
-  cpuReservation: number | null;
-  memoryReservation: number | null;
+  latestRevision: string | null;
+  cpuLimit: string | null;
+  memoryLimit: string | null;
+  minInstances: number;
+  maxInstances: number;
 }
 
 interface MetricPoint { timestamp: string; value: number; }
@@ -53,14 +52,14 @@ function formatTime(ts: string) {
 export default function InfraPage() {
   const [period, setPeriod] = useState<MetricPeriod>('24h');
 
-  const { data: ecsData, loading: ecsLoading } = useQuery<{ ecsServiceStatus: EcsStatus }>(ECS_SERVICE_STATUS, {
+  const { data: crData, loading: crLoading } = useQuery<{ cloudRunServiceStatus: CloudRunStatus }>(CLOUD_RUN_SERVICE_STATUS, {
     pollInterval: 30_000,
   });
-  const { data: cpuData, loading: cpuLoading, error: cpuError, refetch: refetchCpu } = useQuery<{ cloudwatchMetrics: MetricPoint[] }>(CLOUDWATCH_METRICS, {
+  const { data: cpuData, loading: cpuLoading, error: cpuError, refetch: refetchCpu } = useQuery<{ gcpMetrics: MetricPoint[] }>(GCP_METRICS, {
     variables: { period, metricName: 'CPUUtilization' },
     pollInterval: 60_000,
   });
-  const { data: memData, loading: memLoading, error: memError, refetch: refetchMem } = useQuery<{ cloudwatchMetrics: MetricPoint[] }>(CLOUDWATCH_METRICS, {
+  const { data: memData, loading: memLoading, error: memError, refetch: refetchMem } = useQuery<{ gcpMetrics: MetricPoint[] }>(GCP_METRICS, {
     variables: { period, metricName: 'MemoryUtilization' },
     pollInterval: 60_000,
   });
@@ -68,21 +67,21 @@ export default function InfraPage() {
     pollInterval: 60_000,
   });
 
-  const ecs = ecsData?.ecsServiceStatus;
+  const cr = crData?.cloudRunServiceStatus;
   const db = dbData?.databaseStats;
 
-  const cpuChartData = (cpuData?.cloudwatchMetrics ?? []).map(p => ({
+  const cpuChartData = (cpuData?.gcpMetrics ?? []).map(p => ({
     time: formatTime(p.timestamp),
     value: Math.round(p.value * 10) / 10,
   }));
 
-  const memChartData = (memData?.cloudwatchMetrics ?? []).map(p => ({
+  const memChartData = (memData?.gcpMetrics ?? []).map(p => ({
     time: formatTime(p.timestamp),
     value: Math.round(p.value * 10) / 10,
   }));
 
-  const ecsStatus = ecs
-    ? ecs.runningCount === ecs.desiredCount ? 'ok' : ecs.runningCount === 0 ? 'error' : 'warn'
+  const crStatus = cr
+    ? cr.status === 'Ready' ? 'ok' : 'warn'
     : undefined;
 
   const cardStyle: React.CSSProperties = {
@@ -121,28 +120,28 @@ export default function InfraPage() {
     <DashboardShell>
       <div className="p-8">
         <h1 className="text-2xl font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Infrastructure</h1>
-        <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>ECS service health and database stats</p>
+        <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>Cloud Run service health and database stats</p>
 
-        {/* ECS Status Cards */}
+        {/* Cloud Run Status Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard
-            label="Running Tasks"
-            value={ecsLoading ? '—' : ecs?.runningCount ?? 0}
-            subtext={ecsLoading ? '' : `of ${ecs?.desiredCount ?? 0} desired`}
-            status={ecsStatus}
+            label="Service Status"
+            value={crLoading ? '—' : cr?.status ?? 'Unknown'}
+            subtext={crLoading ? '' : cr?.latestRevision ? `Rev: ${cr.latestRevision}` : ''}
+            status={crStatus}
           />
           <StatCard
-            label="Pending Tasks"
-            value={ecsLoading ? '—' : ecs?.pendingCount ?? 0}
+            label="Instances"
+            value={crLoading ? '—' : cr ? `${cr.minInstances} – ${cr.maxInstances}` : 'N/A'}
+            subtext="min – max"
           />
           <StatCard
-            label="CPU Reservation"
-            value={ecsLoading ? '—' : ecs?.cpuReservation != null ? `${ecs.cpuReservation} units` : 'N/A'}
+            label="CPU Limit"
+            value={crLoading ? '—' : cr?.cpuLimit ?? 'N/A'}
           />
           <StatCard
-            label="Memory Reservation"
-            value={ecsLoading ? '—' : ecs?.memoryReservation != null ? `${ecs.memoryReservation} MB` : 'N/A'}
-            subtext={ecs?.lastDeploymentAt ? `Deployed ${new Date(ecs.lastDeploymentAt).toLocaleDateString()}` : undefined}
+            label="Memory Limit"
+            value={crLoading ? '—' : cr?.memoryLimit ?? 'N/A'}
           />
         </div>
 

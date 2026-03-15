@@ -13,10 +13,10 @@
  *   - APP_ANALYTICS: Platform-wide user/event/assignment counts
  *   - USER_GROWTH: User registration over time by period
  *   - EVENT_STATS: Per-event volunteer/department/session counts
- *   - ECS_SERVICE_STATUS: Running/desired task counts, CPU/memory
- *   - CLOUDWATCH_METRICS: Time-series CPU/memory utilization
- *   - CLOUDWATCH_LOGS: Recent log events with optional filter
- *   - AWS_COST_BREAKDOWN: Per-service cost for a date range
+ *   - CLOUD_RUN_SERVICE_STATUS: Cloud Run service health and revision info
+ *   - GCP_METRICS: Time-series CPU/memory utilization
+ *   - GCP_LOGS: Recent log events with optional filter
+ *   - GCP_COST_BREAKDOWN: Per-service cost for a date range
  *   - DATABASE_STATS: DB size, connections, table row counts
  *   - ADMIN_LIST_USERS: Paginated user list with search
  *   - ADMIN_LIST_EVENTS: Paginated event list
@@ -72,33 +72,31 @@ export const EVENT_STATS = gql`
   }
 `;
 
-export const ECS_SERVICE_STATUS = gql`
-  query EcsServiceStatus {
-    ecsServiceStatus {
-      runningCount
-      desiredCount
-      pendingCount
+export const CLOUD_RUN_SERVICE_STATUS = gql`
+  query CloudRunServiceStatus {
+    cloudRunServiceStatus {
       status
-      lastDeploymentAt
-      lastDeploymentStatus
-      cpuReservation
-      memoryReservation
+      latestRevision
+      cpuLimit
+      memoryLimit
+      minInstances
+      maxInstances
     }
   }
 `;
 
-export const CLOUDWATCH_METRICS = gql`
-  query CloudwatchMetrics($period: String!, $metricName: String!) {
-    cloudwatchMetrics(period: $period, metricName: $metricName) {
+export const GCP_METRICS = gql`
+  query GcpMetrics($period: String!, $metricName: String!) {
+    gcpMetrics(period: $period, metricName: $metricName) {
       timestamp
       value
     }
   }
 `;
 
-export const CLOUDWATCH_LOGS = gql`
-  query CloudwatchLogs($limit: Int, $filterPattern: String) {
-    cloudwatchLogs(limit: $limit, filterPattern: $filterPattern) {
+export const GCP_LOGS = gql`
+  query GcpLogs($limit: Int, $filter: String) {
+    gcpLogs(limit: $limit, filter: $filter) {
       timestamp
       message
       logStreamName
@@ -106,9 +104,9 @@ export const CLOUDWATCH_LOGS = gql`
   }
 `;
 
-export const AWS_COST_BREAKDOWN = gql`
-  query AwsCostBreakdown($startDate: String!, $endDate: String!) {
-    awsCostBreakdown(startDate: $startDate, endDate: $endDate) {
+export const GCP_COST_BREAKDOWN = gql`
+  query GcpCostBreakdown($startDate: String!, $endDate: String!) {
+    gcpCostBreakdown(startDate: $startDate, endDate: $endDate) {
       service
       amount
       unit
