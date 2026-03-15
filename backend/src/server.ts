@@ -6,7 +6,7 @@
  *
  * Startup Flow:
  *   1. Configure Express middleware (helmet, cors, json)
- *   2. Set up /health endpoint for AWS ALB health checks
+ *   2. Set up /health endpoint for Cloud Run health checks
  *   3. Create Apollo Server and attach to /graphql endpoint
  *   4. Start HTTP server on PORT (default 4000)
  *
@@ -19,6 +19,7 @@
  *   - DATABASE_URL: PostgreSQL connection string
  *   - JWT_SECRET: Access token signing key
  *   - JWT_REFRESH_SECRET: Refresh token signing key
+ *   - GCS_BUCKET: Google Cloud Storage bucket for floor plan images
  *
  * Run with: npm run dev (development) or npm start (production)
  */
@@ -30,12 +31,13 @@ import { createApolloServer } from './graphql/index.js';
 import { createRateLimiter, shutdownRateLimiter } from './middleware/rateLimiter.js';
 import { validateJwtSecrets } from './utils/jwt.js';
 import { validateEncryptionKey } from './utils/encryption.js';
+import { validateGcsBucket } from './services/floorPlanService.js';
 import { logger } from './utils/logger.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Trust first proxy (AWS ALB) for accurate client IP in rate limiting
+// Trust first proxy (Cloud Run) for accurate client IP in rate limiting
 app.set('trust proxy', 1);
 
 app.use(
@@ -123,6 +125,7 @@ process.on('SIGINT', shutdown);
 async function start() {
   validateJwtSecrets();
   validateEncryptionKey();
+  await validateGcsBucket();
   const httpServer = await createApolloServer(app);
 
   httpServer.listen(PORT, () => {
