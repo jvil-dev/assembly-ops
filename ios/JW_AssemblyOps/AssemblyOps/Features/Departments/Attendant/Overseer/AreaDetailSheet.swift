@@ -31,6 +31,27 @@ struct AreaDetailSheet: View {
     @State private var isEditing = false
     @State private var editName = ""
     @State private var editDescription = ""
+    @State private var editUseCustomTime = false
+    @State private var editStartTime: Date = utcDate(hour: 11, minute: 45)
+    @State private var editEndTime: Date = utcDate(hour: 12, minute: 30)
+
+    private static let utcTimeZone = TimeZone(identifier: "UTC")!
+
+    private static func utcDate(hour: Int, minute: Int = 0) -> Date {
+        var comps = DateComponents()
+        comps.timeZone = TimeZone(identifier: "UTC")
+        comps.year = 1970; comps.month = 1; comps.day = 1
+        comps.hour = hour; comps.minute = minute; comps.second = 0
+        return Calendar(identifier: .gregorian).date(from: comps) ?? Date()
+    }
+
+    /// Parse "HH:mm" string into a UTC Date for DatePicker
+    private static func parseTime(_ timeString: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        formatter.timeZone = utcTimeZone
+        return formatter.date(from: timeString)
+    }
     @State private var showDeleteConfirmation = false
     @State private var showCaptainPicker = false
     @State private var showCreatePost = false
@@ -56,6 +77,11 @@ struct AreaDetailSheet: View {
             ScrollView {
                 VStack(spacing: AppTheme.Spacing.xl) {
                     areaInfoCard
+                    if isEditing {
+                        timeRangeCard
+                    } else if area.startTime != nil && area.endTime != nil {
+                        timeDisplayCard
+                    }
                     captainCard
                     postsCard
                     deleteButton
@@ -78,6 +104,17 @@ struct AreaDetailSheet: View {
                         } else {
                             editName = area.name
                             editDescription = area.description ?? ""
+                            if let st = area.startTime, let et = area.endTime,
+                               let startDate = Self.parseTime(st),
+                               let endDate = Self.parseTime(et) {
+                                editUseCustomTime = true
+                                editStartTime = startDate
+                                editEndTime = endDate
+                            } else {
+                                editUseCustomTime = false
+                                editStartTime = Self.utcDate(hour: 11, minute: 45)
+                                editEndTime = Self.utcDate(hour: 12, minute: 30)
+                            }
                             isEditing = true
                         }
                     }
@@ -151,7 +188,6 @@ struct AreaDetailSheet: View {
             .onChange(of: showCreatePost) { _, isPresented in
                 if !isPresented {
                     Task {
-                        await coverageViewModel.loadCoverage()
                         await areaViewModel.loadAreas(departmentId: departmentId)
                     }
                 }
@@ -191,6 +227,54 @@ struct AreaDetailSheet: View {
                         .font(AppTheme.Typography.body)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 }
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Time Display Card (read-only)
+
+    private var timeDisplayCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            SectionHeaderLabel(icon: "clock", title: "area.timeRange".localized, accentColor: DepartmentColor.color(for: "ATTENDANT"))
+
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "clock")
+                    .font(.system(size: 14))
+                    .foregroundStyle(DepartmentColor.color(for: "ATTENDANT"))
+                Text("\(area.startTime ?? "") – \(area.endTime ?? "")")
+                    .font(AppTheme.Typography.body)
+            }
+        }
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Time Range Card (editing)
+
+    private var timeRangeCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            SectionHeaderLabel(icon: "clock", title: "area.timeRange".localized, accentColor: DepartmentColor.color(for: "ATTENDANT"))
+
+            Picker("", selection: $editUseCustomTime) {
+                Text("area.wholeSession".localized).tag(false)
+                Text("area.customTime".localized).tag(true)
+            }
+            .pickerStyle(.segmented)
+            .tint(DepartmentColor.color(for: "ATTENDANT"))
+
+            if editUseCustomTime {
+                VStack(spacing: AppTheme.Spacing.m) {
+                    DatePicker("area.startTime".localized, selection: $editStartTime, displayedComponents: .hourAndMinute)
+                        .environment(\.timeZone, Self.utcTimeZone)
+                        .tint(DepartmentColor.color(for: "ATTENDANT"))
+
+                    DatePicker("area.endTime".localized, selection: $editEndTime, displayedComponents: .hourAndMinute)
+                        .environment(\.timeZone, Self.utcTimeZone)
+                        .tint(DepartmentColor.color(for: "ATTENDANT"))
+                }
+                .padding(.top, AppTheme.Spacing.xs)
             }
         }
         .cardPadding()
@@ -473,11 +557,17 @@ struct AreaDetailSheet: View {
         let trimmedDesc = editDescription.trimmingCharacters(in: .whitespaces)
         guard !trimmedName.isEmpty else { return }
 
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        formatter.timeZone = Self.utcTimeZone
+
         await areaViewModel.updateArea(
             id: area.id,
             name: trimmedName,
             description: trimmedDesc.isEmpty ? nil : trimmedDesc,
-            sortOrder: nil
+            sortOrder: nil,
+            startTime: editUseCustomTime ? formatter.string(from: editStartTime) : nil,
+            endTime: editUseCustomTime ? formatter.string(from: editEndTime) : nil
         )
         isEditing = false
         if areaViewModel.error == nil {

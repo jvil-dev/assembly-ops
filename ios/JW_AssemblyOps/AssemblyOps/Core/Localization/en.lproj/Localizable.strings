@@ -1524,6 +1524,11 @@
 "area.deleteSelected" = "Delete Selected (%d)";
 "area.deletePostsConfirm" = "Delete Posts?";
 "area.deletePostsWarning" = "This will permanently delete %d posts and all their assignments.";
+"area.timeRange" = "TIME RANGE";
+"area.wholeSession" = "Whole Session";
+"area.customTime" = "Custom";
+"area.startTime" = "Start Time";
+"area.endTime" = "End Time";
 
 // MARK: - Rate Limiting
 "rate_limit_error" = "You're making requests too quickly. Please wait a moment and try again.";

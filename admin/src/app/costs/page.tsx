@@ -1,11 +1,11 @@
 /**
  * Costs Page
  *
- * AWS cost breakdown by service for the current and previous 3 months.
+ * GCP cost breakdown by service for the current and previous 3 months.
  * Shows total spend, a top-services bar chart, and a detailed table
  * with per-service cost and percentage of total.
  *
- * Queries: AwsCostBreakdown (by date range)
+ * Queries: GcpCostBreakdown (by date range)
  *
  * Dependencies: DashboardShell, Chart, Skeleton, ErrorCard
  */
@@ -17,7 +17,7 @@ import { DashboardShell } from '../../components/DashboardShell';
 import { Chart } from '../../components/Chart';
 import { SkeletonChart, SkeletonTable } from '../../components/Skeleton';
 import { ErrorCard } from '../../components/ErrorCard';
-import { AWS_COST_BREAKDOWN } from '../../lib/queries';
+import { GCP_COST_BREAKDOWN } from '../../lib/queries';
 
 interface CostEntry {
   service: string;
@@ -40,11 +40,11 @@ export default function CostsPage() {
   const [monthIdx, setMonthIdx] = useState(0);
   const selected = MONTH_OPTIONS[monthIdx];
 
-  const { data, loading, error, refetch } = useQuery<{ awsCostBreakdown: CostEntry[] }>(AWS_COST_BREAKDOWN, {
+  const { data, loading, error, refetch } = useQuery<{ gcpCostBreakdown: CostEntry[] }>(GCP_COST_BREAKDOWN, {
     variables: { startDate: selected.start, endDate: selected.end },
   });
 
-  const entries: CostEntry[] = (data?.awsCostBreakdown ?? [])
+  const entries: CostEntry[] = (data?.gcpCostBreakdown ?? [])
     .filter(e => e.amount > 0)
     .sort((a, b) => b.amount - a.amount);
 
@@ -66,7 +66,7 @@ export default function CostsPage() {
     <DashboardShell>
       <div className="p-8">
         <h1 className="text-2xl font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Costs</h1>
-        <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>AWS cost breakdown by service</p>
+        <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>GCP cost breakdown by service</p>
 
         {/* Month selector */}
         <div className="flex gap-2 mb-6">

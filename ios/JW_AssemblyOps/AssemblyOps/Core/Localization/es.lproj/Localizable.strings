@@ -1525,6 +1525,11 @@
 "area.deleteSelected" = "Eliminar seleccionados (%d)";
 "area.deletePostsConfirm" = "¿Eliminar puestos?";
 "area.deletePostsWarning" = "Esto eliminará permanentemente %d puestos y todas sus asignaciones.";
+"area.timeRange" = "RANGO DE TIEMPO";
+"area.wholeSession" = "Toda la Sesión";
+"area.customTime" = "Personalizado";
+"area.startTime" = "Hora de Inicio";
+"area.endTime" = "Hora de Fin";
 
 // MARK: - Rate Limiting
 "rate_limit_error" = "Estás haciendo solicitudes demasiado rápido. Espera un momento e intenta de nuevo.";
