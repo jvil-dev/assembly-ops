@@ -8,16 +8,16 @@
 // MARK: - Floor Plan Service
 //
 // Manages floor plan upload and retrieval for an event.
-// Overseers upload via S3 presigned URL; all event members view via presigned GET URL.
+// Overseers upload via presigned URL; all event members view via presigned GET URL.
 //
 // Methods:
 //   - fetchViewUrl(eventId:): Returns presigned GET URL for viewing, or nil if none uploaded
-//   - uploadFloorPlan(eventId:imageData:): Full upload flow — presigned PUT URL → S3 PUT → confirm
+//   - uploadFloorPlan(eventId:imageData:): Full upload flow — presigned PUT URL → upload → confirm
 //   - deleteFloorPlan(eventId:): Deletes the floor plan for an event
 //
 // Dependencies:
 //   - NetworkClient: Apollo client for GraphQL
-//   - URLSession: Direct HTTP PUT to S3 presigned URL (no Apollo)
+//   - URLSession: Direct HTTP PUT to presigned URL (no Apollo)
 
 import Foundation
 import Apollo
@@ -34,7 +34,7 @@ enum FloorPlanError: LocalizedError {
         switch self {
         case .networkError(let message): return "Network error: \(message)"
         case .serverError(let message): return message
-        case .uploadFailed(let statusCode): return "S3 upload failed with status \(statusCode)"
+        case .uploadFailed(let statusCode): return "Upload failed with status \(statusCode)"
         case .missingUploadUrl: return "Did not receive a presigned upload URL from the server"
         }
     }
@@ -43,7 +43,7 @@ enum FloorPlanError: LocalizedError {
 // MARK: - FloorPlanService
 
 /// Manages floor plan upload and retrieval for an event.
-/// Overseers upload via S3 presigned URL; all event members view via presigned GET URL.
+/// Overseers upload via presigned URL; all event members view via presigned GET URL.
 /// Called by: FloorPlanViewModel
 final class FloorPlanService {
     static let shared = FloorPlanService()
@@ -51,7 +51,7 @@ final class FloorPlanService {
 
     // MARK: - Fetch View URL
 
-    /// Returns a presigned S3 GET URL for viewing the floor plan, or nil if none uploaded.
+    /// Returns a presigned GET URL for viewing the floor plan, or nil if none uploaded.
     func fetchViewUrl(eventId: String) async throws -> String? {
         return try await withCheckedThrowingContinuation { continuation in
             NetworkClient.shared.apollo.fetch(
@@ -77,7 +77,7 @@ final class FloorPlanService {
 
     /// Full upload flow:
     /// 1. Get presigned PUT URL from backend
-    /// 2. HTTP PUT image data to S3 URL
+    /// 2. HTTP PUT image data to presigned URL
     /// 3. Confirm upload to backend (writes key to DB)
     func uploadFloorPlan(eventId: String, imageData: Data) async throws {
         // Step 1: Get presigned PUT URL
@@ -100,11 +100,11 @@ final class FloorPlanService {
             }
         }
 
-        // Step 2: PUT imageData directly to the presigned S3 URL
-        guard let s3Url = URL(string: uploadUrl) else {
+        // Step 2: PUT imageData directly to the presigned URL
+        guard let uploadURL = URL(string: uploadUrl) else {
             throw FloorPlanError.missingUploadUrl
         }
-        var request = URLRequest(url: s3Url)
+        var request = URLRequest(url: uploadURL)
         request.httpMethod = "PUT"
         request.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
         let (_, response) = try await URLSession.shared.upload(for: request, from: imageData)
@@ -114,7 +114,7 @@ final class FloorPlanService {
             throw FloorPlanError.uploadFailed(statusCode)
         }
 
-        // Step 3: Confirm upload so backend writes the S3 key to DB
+        // Step 3: Confirm upload so backend writes the storage key to DB
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             NetworkClient.shared.apollo.perform(
                 mutation: AssemblyOpsAPI.ConfirmFloorPlanUploadMutation(eventId: eventId)

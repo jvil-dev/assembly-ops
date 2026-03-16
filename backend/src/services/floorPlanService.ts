@@ -15,15 +15,29 @@
 import { Storage } from '@google-cloud/storage';
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
 
 const storage = new Storage();
-const BUCKET = process.env.GCS_BUCKET!;
+const BUCKET = process.env.GCS_BUCKET?.trim() ?? '';
+
+/** Validate GCS_BUCKET is set and the bucket is accessible. Call at startup. */
+export async function validateGcsBucket(): Promise<void> {
+  if (!BUCKET) {
+    throw new Error('GCS_BUCKET environment variable is required');
+  }
+  const [exists] = await storage.bucket(BUCKET).exists();
+  if (!exists) {
+    throw new Error(`GCS bucket "${BUCKET}" does not exist or is not accessible`);
+  }
+  logger.info('GCS bucket verified', { bucket: BUCKET });
+}
 
 export class FloorPlanService {
   constructor(private prisma: PrismaClient) {}
 
   async getUploadUrl(eventId: string): Promise<string> {
     const key = `floor-plans/${eventId}.jpg`;
+    logger.debug('Generating GCS signed upload URL', { bucket: BUCKET, key });
     const [url] = await storage.bucket(BUCKET).file(key).getSignedUrl({
       version: 'v4',
       action: 'write',
