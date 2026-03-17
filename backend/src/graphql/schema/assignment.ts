@@ -165,6 +165,31 @@ const assignmentTypeDefs = `#graphql
     status: AssignmentStatus
   }
 
+  input CopySessionAssignmentsInput {
+    sourceSessionId: ID!
+    targetSessionId: ID!
+    departmentId: ID!
+    areaIds: [ID!]
+    postIds: [ID!]
+    copyIsCaptain: Boolean
+    copyCanCount: Boolean
+    copyAreaCaptains: Boolean
+    forceAssign: Boolean
+  }
+
+  type SkippedVolunteerInfo {
+    volunteerName: String!
+    postName: String!
+    reason: String!
+  }
+
+  type CopySessionAssignmentsResult {
+    copiedCount: Int!
+    skippedCount: Int!
+    skippedVolunteers: [SkippedVolunteerInfo!]!
+    copiedAreaCaptains: Int!
+  }
+
   # ============================================
   # QUERIES & MUTATIONS
   # ============================================
@@ -198,6 +223,8 @@ const assignmentTypeDefs = `#graphql
     setAcceptDeadline(assignmentId: ID!, deadline: DateTime!): ScheduleAssignment!
 
     captainCheckIn(input: CaptainCheckInInput!): ScheduleAssignment!
+
+    copySessionAssignments(input: CopySessionAssignmentsInput!): CopySessionAssignmentsResult!
   }
 `;
 

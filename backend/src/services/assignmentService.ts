@@ -55,18 +55,20 @@ import {
   SetCanCountInput,
   CaptainCheckInInput,
   PendingAssignmentsFilter,
+  CopySessionAssignmentsInput,
   createAssignmentSchema,
   createAssignmentsSchema,
   updateAssignmentSchema,
-  CreateAssignmentInput,
-  CreateAssignmentsInput,
-  UpdateAssignmentInput,
   acceptAssignmentSchema,
   declineAssignmentSchema,
   forceAssignmentSchema,
   setCaptainSchema,
   setCanCountSchema,
   captainCheckInSchema,
+  copySessionAssignmentsSchema,
+  CreateAssignmentInput,
+  CreateAssignmentsInput,
+  UpdateAssignmentInput,
 } from '../graphql/validators/assignment.js';
 
 export interface CoverageSlot {
@@ -1138,6 +1140,248 @@ export class AssignmentService {
     }
 
     return totalCount;
+  }
+
+  /**
+   * Copy assignments from one session to another for specific areas/posts.
+   * Skips volunteers who already have assignments in the target session.
+   */
+  async copySessionAssignments(
+    input: CopySessionAssignmentsInput,
+    createdByUserId: string
+  ): Promise<{
+    copiedCount: number;
+    skippedCount: number;
+    skippedVolunteers: Array<{ volunteerName: string; postName: string; reason: string }>;
+    copiedAreaCaptains: number;
+    copiedVolunteerUserIds: string[];
+  }> {
+    const result = copySessionAssignmentsSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+
+    const {
+      sourceSessionId,
+      targetSessionId,
+      departmentId,
+      areaIds,
+      postIds,
+      copyIsCaptain,
+      copyCanCount,
+      copyAreaCaptains,
+      forceAssign,
+    } = result.data;
+
+    // Verify entities exist and belong to same event
+    const [sourceSession, targetSession, department] = await Promise.all([
+      this.prisma.session.findUnique({ where: { id: sourceSessionId }, select: { id: true, eventId: true } }),
+      this.prisma.session.findUnique({ where: { id: targetSessionId }, select: { id: true, eventId: true } }),
+      this.prisma.department.findUnique({ where: { id: departmentId }, select: { id: true, eventId: true } }),
+    ]);
+
+    if (!sourceSession) throw new NotFoundError('Source session');
+    if (!targetSession) throw new NotFoundError('Target session');
+    if (!department) throw new NotFoundError('Department');
+
+    if (sourceSession.eventId !== targetSession.eventId) {
+      throw new ValidationError('Source and target sessions must belong to the same event');
+    }
+    if (department.eventId !== sourceSession.eventId) {
+      throw new ValidationError('Department must belong to the same event as sessions');
+    }
+
+    // Resolve which posts to copy
+    let resolvedPostIds: string[];
+
+    if (postIds) {
+      // Verify posts belong to this department
+      const posts = await this.prisma.post.findMany({
+        where: { id: { in: postIds }, departmentId },
+        select: { id: true },
+      });
+      resolvedPostIds = posts.map(p => p.id);
+    } else if (areaIds) {
+      const posts = await this.prisma.post.findMany({
+        where: { areaId: { in: areaIds }, departmentId },
+        select: { id: true },
+      });
+      resolvedPostIds = posts.map(p => p.id);
+    } else {
+      const posts = await this.prisma.post.findMany({
+        where: { departmentId },
+        select: { id: true },
+      });
+      resolvedPostIds = posts.map(p => p.id);
+    }
+
+    if (resolvedPostIds.length === 0) {
+      return { copiedCount: 0, skippedCount: 0, skippedVolunteers: [], copiedAreaCaptains: 0, copiedVolunteerUserIds: [] };
+    }
+
+    // Fetch source assignments (ACCEPTED + PENDING only)
+    const sourceAssignments = await this.prisma.scheduleAssignment.findMany({
+      where: {
+        sessionId: sourceSessionId,
+        postId: { in: resolvedPostIds },
+        status: { in: ['ACCEPTED', 'PENDING'] },
+      },
+      include: {
+        eventVolunteer: { include: { user: { select: { firstName: true, lastName: true } } } },
+        post: { select: { name: true } },
+      },
+    });
+
+    if (sourceAssignments.length === 0) {
+      return { copiedCount: 0, skippedCount: 0, skippedVolunteers: [], copiedAreaCaptains: 0, copiedVolunteerUserIds: [] };
+    }
+
+    // Check for conflicts: volunteers who already have assignments in the target session
+    // Only check within the same department's posts to avoid blocking cross-department assignments
+    const sourceVolunteerIds = [...new Set(sourceAssignments.map(a => a.eventVolunteerId))];
+    const existingTargetAssignments = await this.prisma.scheduleAssignment.findMany({
+      where: {
+        sessionId: targetSessionId,
+        eventVolunteerId: { in: sourceVolunteerIds },
+        post: { departmentId },
+      },
+      select: { eventVolunteerId: true },
+    });
+
+    const conflictVolunteerIds = new Set(existingTargetAssignments.map(a => a.eventVolunteerId));
+
+    const skippedVolunteers: Array<{ volunteerName: string; postName: string; reason: string }> = [];
+    const skippedVolunteerIds = new Set<string>();
+    const toCreate: Array<{
+      eventVolunteerId: string;
+      postId: string;
+      sessionId: string;
+      status: 'PENDING' | 'ACCEPTED';
+      forceAssigned: boolean;
+      isCaptain: boolean;
+      canCount: boolean;
+      createdByUserId: string;
+    }> = [];
+    const copiedVolunteerUserIds: string[] = [];
+
+    for (const assignment of sourceAssignments) {
+      const volunteerName = assignment.eventVolunteer?.user
+        ? `${assignment.eventVolunteer.user.firstName} ${assignment.eventVolunteer.user.lastName}`
+        : 'Unknown';
+      const postName = assignment.post?.name ?? 'Unknown';
+
+      if (!forceAssign && conflictVolunteerIds.has(assignment.eventVolunteerId)) {
+        // Deduplicate skip entries per volunteer
+        if (!skippedVolunteerIds.has(assignment.eventVolunteerId)) {
+          skippedVolunteerIds.add(assignment.eventVolunteerId);
+          skippedVolunteers.push({
+            volunteerName,
+            postName,
+            reason: 'Already assigned in target session',
+          });
+        }
+        continue;
+      }
+
+      toCreate.push({
+        eventVolunteerId: assignment.eventVolunteerId,
+        postId: assignment.postId,
+        sessionId: targetSessionId,
+        status: forceAssign ? 'ACCEPTED' : 'PENDING',
+        forceAssigned: forceAssign,
+        isCaptain: copyIsCaptain ? assignment.isCaptain : false,
+        canCount: copyCanCount ? assignment.canCount : false,
+        createdByUserId,
+      });
+    }
+
+    // Bulk create
+    let copiedCount = 0;
+    if (toCreate.length > 0) {
+      const created = await this.prisma.scheduleAssignment.createMany({
+        data: toCreate,
+        skipDuplicates: true,
+      });
+      copiedCount = created.count;
+
+      // Collect volunteer user IDs for notifications
+      const volunteerIds = [...new Set(toCreate.map(a => a.eventVolunteerId))];
+      const volunteers = await this.prisma.eventVolunteer.findMany({
+        where: { id: { in: volunteerIds } },
+        select: { user: { select: { id: true } } },
+      });
+      copiedVolunteerUserIds.push(...volunteers.map(v => v.user.id));
+    }
+
+    // Copy area captains if requested
+    let copiedAreaCaptains = 0;
+    if (copyAreaCaptains) {
+      // Resolve which areas are in scope
+      let resolvedAreaIds: string[];
+      if (areaIds) {
+        resolvedAreaIds = areaIds;
+      } else if (postIds) {
+        // Get areas from the selected posts
+        const postsWithAreas = await this.prisma.post.findMany({
+          where: { id: { in: postIds }, areaId: { not: null } },
+          select: { areaId: true },
+        });
+        resolvedAreaIds = [...new Set(postsWithAreas.map(p => p.areaId!))];
+      } else {
+        // All areas in department
+        const areas = await this.prisma.area.findMany({
+          where: { departmentId },
+          select: { id: true },
+        });
+        resolvedAreaIds = areas.map(a => a.id);
+      }
+
+      if (resolvedAreaIds.length > 0) {
+        // Fetch source area captains
+        const sourceCaptains = await this.prisma.areaCaptain.findMany({
+          where: {
+            areaId: { in: resolvedAreaIds },
+            sessionId: sourceSessionId,
+          },
+        });
+
+        // Check which already exist in target
+        const existingTargetCaptains = await this.prisma.areaCaptain.findMany({
+          where: {
+            areaId: { in: resolvedAreaIds },
+            sessionId: targetSessionId,
+          },
+          select: { areaId: true },
+        });
+        const existingCaptainAreaIds = new Set(existingTargetCaptains.map(c => c.areaId));
+
+        const captainsToCreate = sourceCaptains
+          .filter(c => !existingCaptainAreaIds.has(c.areaId))
+          .map(c => ({
+            areaId: c.areaId,
+            sessionId: targetSessionId,
+            eventVolunteerId: c.eventVolunteerId,
+            status: forceAssign ? 'ACCEPTED' as const : 'PENDING' as const,
+            forceAssigned: forceAssign,
+          }));
+
+        if (captainsToCreate.length > 0) {
+          const created = await this.prisma.areaCaptain.createMany({
+            data: captainsToCreate,
+            skipDuplicates: true,
+          });
+          copiedAreaCaptains = created.count;
+        }
+      }
+    }
+
+    return {
+      copiedCount,
+      skippedCount: skippedVolunteers.length,
+      skippedVolunteers,
+      copiedAreaCaptains,
+      copiedVolunteerUserIds,
+    };
   }
 
   /**
