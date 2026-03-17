@@ -47,6 +47,7 @@ import {
   SetCanCountInput,
   CaptainCheckInInput,
   PendingAssignmentsFilter,
+  CopySessionAssignmentsInput,
 } from '../validators/assignment.js';
 
 const assignmentResolvers = {
@@ -658,6 +659,49 @@ const assignmentResolvers = {
       }
 
       return assignmentService.setAcceptDeadline(assignmentId, deadline);
+    },
+
+    copySessionAssignments: async (
+      _parent: unknown,
+      { input }: { input: CopySessionAssignmentsInput },
+      context: Context
+    ) => {
+      requireAuth(context);
+      const isAdmin = tryRequireAdmin(context);
+      if (isAdmin) {
+        const dept = await context.prisma.department.findUnique({
+          where: { id: input.departmentId },
+          select: { eventId: true },
+        });
+        if (dept) {
+          await requireEventAccess(context, dept.eventId);
+        }
+      } else {
+        await requireDeptAccess(context, input.departmentId);
+      }
+
+      const assignmentService = new AssignmentService(context.prisma);
+      const result = await assignmentService.copySessionAssignments(input, context.user!.id);
+
+      // Notify copied volunteers in bulk using IDs returned from the service
+      if (result.copiedVolunteerUserIds.length > 0) {
+        const dept = await context.prisma.department.findUnique({
+          where: { id: input.departmentId },
+          select: { eventId: true },
+        });
+        if (dept) {
+          const notificationService = new NotificationService(context.prisma);
+          for (const userId of result.copiedVolunteerUserIds) {
+            notificationService.sendToUser(userId, dept.eventId, {
+              title: 'New Assignment',
+              body: 'You have new assignments',
+              data: { type: 'ASSIGNMENT_CREATED', eventId: dept.eventId },
+            }).catch(() => {});
+          }
+        }
+      }
+
+      return result;
     },
 
     // Captain actions

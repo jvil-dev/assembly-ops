@@ -329,4 +329,205 @@ describe('Assignment Operations', () => {
       expect(response.body.data.deleteAssignment).toBe(true);
     });
   });
+
+  describe('copySessionAssignments', () => {
+    let session2Id: string;
+    let post2Id: string;
+    let volunteer2Id: string;
+
+    beforeAll(async () => {
+      if (!eventId || !departmentId) return;
+
+      // Create a second session to copy to
+      const session2Res = await request(app)
+        .post('/graphql')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          query: `
+            mutation CreateSession($eventId: ID!, $input: CreateSessionInput!) {
+              createSession(eventId: $eventId, input: $input) { id }
+            }
+          `,
+          variables: {
+            eventId,
+            input: {
+              name: 'Saturday Afternoon',
+              date: '2026-03-07T00:00:00Z',
+              startTime: '13:00',
+              endTime: '17:00',
+            },
+          },
+        });
+      session2Id = session2Res.body.data?.createSession?.id;
+
+      // Create a second post
+      const post2Res = await request(app)
+        .post('/graphql')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          query: `
+            mutation CreatePost($departmentId: ID!, $input: CreatePostInput!) {
+              createPost(departmentId: $departmentId, input: $input) { id }
+            }
+          `,
+          variables: {
+            departmentId,
+            input: { name: 'North Gate' },
+          },
+        });
+      post2Id = post2Res.body.data?.createPost?.id;
+
+      // Create a second volunteer
+      const vol2Res = await request(app)
+        .post('/graphql')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          query: `
+            mutation CreateVolunteer($eventId: ID!, $input: CreateVolunteerInput!) {
+              createVolunteer(eventId: $eventId, input: $input) { id }
+            }
+          `,
+          variables: {
+            eventId,
+            input: {
+              firstName: 'Jane',
+              lastName: 'Doe',
+              congregation: `Copy Cong ${Date.now()}`,
+            },
+          },
+        });
+      volunteer2Id = vol2Res.body.data?.createVolunteer?.id;
+
+      // Create assignments in source session for both volunteers
+      for (const [volId, pId] of [[volunteerId, postId], [volunteer2Id, post2Id]]) {
+        if (!volId || !pId) continue;
+        await request(app)
+          .post('/graphql')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({
+            query: `
+              mutation CreateAssignment($input: CreateAssignmentInput!) {
+                createAssignment(input: $input) { assignment { id } }
+              }
+            `,
+            variables: {
+              input: { volunteerId: volId, postId: pId, sessionId },
+            },
+          });
+      }
+    });
+
+    it('should copy assignments to target session', async () => {
+      if (!session2Id || !departmentId || !sessionId) {
+        console.log('Skipping - missing required entities');
+        return;
+      }
+
+      const response = await request(app)
+        .post('/graphql')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          query: `
+            mutation CopyAssignments($input: CopySessionAssignmentsInput!) {
+              copySessionAssignments(input: $input) {
+                copiedCount
+                skippedCount
+                skippedVolunteers {
+                  volunteerName
+                  postName
+                  reason
+                }
+                copiedAreaCaptains
+              }
+            }
+          `,
+          variables: {
+            input: {
+              sourceSessionId: sessionId,
+              targetSessionId: session2Id,
+              departmentId,
+            },
+          },
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeUndefined();
+      const result = response.body.data.copySessionAssignments;
+      expect(result.copiedCount).toBeGreaterThanOrEqual(1);
+      expect(result.skippedCount).toBe(0);
+      expect(result.skippedVolunteers).toHaveLength(0);
+    });
+
+    it('should skip already-assigned volunteers on second copy', async () => {
+      if (!session2Id || !departmentId || !sessionId) {
+        console.log('Skipping - missing required entities');
+        return;
+      }
+
+      // Copy again — all volunteers already exist in target
+      const response = await request(app)
+        .post('/graphql')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          query: `
+            mutation CopyAssignments($input: CopySessionAssignmentsInput!) {
+              copySessionAssignments(input: $input) {
+                copiedCount
+                skippedCount
+                skippedVolunteers {
+                  volunteerName
+                  postName
+                  reason
+                }
+                copiedAreaCaptains
+              }
+            }
+          `,
+          variables: {
+            input: {
+              sourceSessionId: sessionId,
+              targetSessionId: session2Id,
+              departmentId,
+            },
+          },
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeUndefined();
+      const result = response.body.data.copySessionAssignments;
+      expect(result.copiedCount).toBe(0);
+      expect(result.skippedCount).toBeGreaterThanOrEqual(1);
+      expect(result.skippedVolunteers.length).toBeGreaterThanOrEqual(1);
+      expect(result.skippedVolunteers[0].reason).toContain('Already assigned');
+    });
+
+    it('should reject copying to the same session', async () => {
+      if (!departmentId || !sessionId) {
+        console.log('Skipping - missing required entities');
+        return;
+      }
+
+      const response = await request(app)
+        .post('/graphql')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          query: `
+            mutation CopyAssignments($input: CopySessionAssignmentsInput!) {
+              copySessionAssignments(input: $input) {
+                copiedCount
+              }
+            }
+          `,
+          variables: {
+            input: {
+              sourceSessionId: sessionId,
+              targetSessionId: sessionId,
+              departmentId,
+            },
+          },
+        });
+
+      expect(response.body.errors).toBeDefined();
+    });
+  });
 });

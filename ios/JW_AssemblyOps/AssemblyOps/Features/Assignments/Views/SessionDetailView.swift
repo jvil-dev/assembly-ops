@@ -44,6 +44,7 @@ struct SessionDetailView: View {
     @State private var showDeleteConfirmation = false
     @State private var isDeleting = false
     @State private var expandedAreas: Set<String> = []
+    @State private var showCopyAssignments = false
 
     /// Identity token that changes when either data source updates,
     /// forcing the attendant List to re-create rather than incrementally diff.
@@ -144,11 +145,13 @@ struct SessionDetailView: View {
                 showCreatePost: $showCreatePost,
                 showCreateArea: $showCreateArea,
                 selectedAreaForDetail: $selectedAreaForDetail,
+                showCopyAssignments: $showCopyAssignments,
                 preselectedCategory: $preselectedCategory,
                 viewModel: viewModel,
                 areaViewModel: areaViewModel,
                 sessionState: sessionState,
-                session: session
+                session: session,
+                deptColor: deptColor
             ))
             .modifier(SessionLifecycleModifier(
                 showCreatePost: $showCreatePost,
@@ -156,6 +159,7 @@ struct SessionDetailView: View {
                 selectedAreaForDetail: $selectedAreaForDetail,
                 selectedSlot: $selectedSlot,
                 showDeleteConfirmation: $showDeleteConfirmation,
+                showCopyAssignments: $showCopyAssignments,
                 postToDelete: $postToDelete,
                 hasAppeared: $hasAppeared,
                 preselectedCategory: $preselectedCategory,
@@ -189,6 +193,16 @@ struct SessionDetailView: View {
 
     private var toolbarMenu: some View {
         Menu {
+            if isAttendantDept && !sessionSlots.isEmpty {
+                Button {
+                    showCopyAssignments = true
+                } label: {
+                    Label("copy.title".localized, systemImage: "doc.on.doc")
+                }
+
+                Divider()
+            }
+
             if sessionState.selectedDepartment != nil && !isAttendantDept {
                 Button {
                     showCreatePost = true
@@ -791,11 +805,13 @@ private struct SessionSheetsModifier: ViewModifier {
     @Binding var showCreatePost: Bool
     @Binding var showCreateArea: Bool
     @Binding var selectedAreaForDetail: AreaItem?
+    @Binding var showCopyAssignments: Bool
     @Binding var preselectedCategory: AttendantMainCategory?
     let viewModel: CoverageMatrixViewModel
     let areaViewModel: AreaManagementViewModel
     let sessionState: EventSessionState
     let session: EventSessionItem
+    let deptColor: Color
 
     func body(content: Content) -> some View {
         content
@@ -829,6 +845,17 @@ private struct SessionSheetsModifier: ViewModifier {
                     )
                 }
             }
+            .sheet(isPresented: $showCopyAssignments) {
+                if let departmentId = sessionState.selectedDepartment?.id {
+                    CopyAssignmentsSheet(
+                        sourceSession: session,
+                        coverageVM: viewModel,
+                        areaVM: areaViewModel,
+                        departmentId: departmentId,
+                        deptColor: deptColor
+                    )
+                }
+            }
     }
 }
 
@@ -840,6 +867,7 @@ private struct SessionLifecycleModifier: ViewModifier {
     @Binding var selectedAreaForDetail: AreaItem?
     @Binding var selectedSlot: CoverageSlot?
     @Binding var showDeleteConfirmation: Bool
+    @Binding var showCopyAssignments: Bool
     @Binding var postToDelete: CoveragePost?
     @Binding var hasAppeared: Bool
     @Binding var preselectedCategory: AttendantMainCategory?
@@ -880,6 +908,11 @@ private struct SessionLifecycleModifier: ViewModifier {
             }
             .onChange(of: selectedSlot) { _, slot in
                 if slot == nil {
+                    Task { await viewModel.loadCoverage() }
+                }
+            }
+            .onChange(of: showCopyAssignments) { _, isPresented in
+                if !isPresented {
                     Task { await viewModel.loadCoverage() }
                 }
             }
