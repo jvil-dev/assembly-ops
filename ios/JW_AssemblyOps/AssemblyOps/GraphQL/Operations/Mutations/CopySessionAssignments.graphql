@@ -1,0 +1,12 @@
+mutation CopySessionAssignments($input: CopySessionAssignmentsInput!) {
+  copySessionAssignments(input: $input) {
+    copiedCount
+    skippedCount
+    skippedVolunteers {
+      volunteerName
+      postName
+      reason
+    }
+    copiedAreaCaptains
+  }
+}

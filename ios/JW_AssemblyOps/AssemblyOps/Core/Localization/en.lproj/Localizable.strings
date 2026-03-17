@@ -763,7 +763,7 @@
 "eventsHub.empty.title" = "No Events Yet";
 "eventsHub.empty.subtitle" = "Tap + to discover and join an upcoming assembly.";
 "eventsHub.browse" = "Browse Events";
-"eventsHub.role.eventOverseer" = "Event Overseer";
+"eventsHub.role.eventOverseer" = "Department Overseer";
 "eventsHub.role.deptOverseer" = "%@ Overseer";
 "eventsHub.role.asstOverseer" = "%@ Asst. Overseer";
 "eventsHub.role.volunteer" = "Volunteer";
@@ -1566,3 +1566,28 @@
 "volunteer.removeDepartment.title" = "Remove from Department";
 "volunteer.removeDepartment.action" = "Remove";
 "volunteer.removeDepartment.confirm" = "Remove %@ from your department? Their assignments and roles in this department will also be removed.";
+
+// MARK: - Copy Assignments
+"copy.title" = "Copy Assignments";
+"copy.selectTarget" = "Select Target Session";
+"copy.selectAreas" = "Select Areas";
+"copy.options" = "Options";
+"copy.sourceLabel" = "From: %@";
+"copy.targetHeader" = "Copy To";
+"copy.noSessions" = "No other sessions available";
+"copy.selectAll" = "Select All";
+"copy.areasHeader" = "Areas";
+"copy.assignments" = "assignments";
+"copy.noAreas" = "No areas found";
+"copy.summaryCount" = "%d assignments across %d areas";
+"copy.forceAssign" = "Force Assign";
+"copy.forceAssignWarning" = "Volunteers will not be asked to accept";
+"copy.countFlag" = "Copy Counter Flags";
+"copy.captainFlag" = "Copy Captain Flags";
+"copy.areaCaptains" = "Copy Area Captains";
+"copy.execute" = "Copy %d Assignments";
+"copy.done" = "Done";
+"copy.result.copied" = "%d Assignments Copied";
+"copy.result.skipped" = "%d skipped";
+"copy.result.areaCaptains" = "%d area captains copied";
+"copy.result.skippedDetails" = "Skipped Details";

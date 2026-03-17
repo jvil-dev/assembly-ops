@@ -764,7 +764,7 @@
 "eventsHub.empty.title" = "Sin Eventos Aún";
 "eventsHub.empty.subtitle" = "Toca + para descubrir y unirte a una asamblea.";
 "eventsHub.browse" = "Buscar Eventos";
-"eventsHub.role.eventOverseer" = "Superintendente de Evento";
+"eventsHub.role.eventOverseer" = "Superintendente de Departamento";
 "eventsHub.role.deptOverseer" = "Superintendente de %@";
 "eventsHub.role.asstOverseer" = "Asist. Superintendente de %@";
 "eventsHub.role.volunteer" = "Voluntario";
@@ -1567,3 +1567,28 @@
 "volunteer.removeDepartment.title" = "Remover del Departamento";
 "volunteer.removeDepartment.action" = "Remover";
 "volunteer.removeDepartment.confirm" = "¿Remover a %@ de tu departamento? Sus asignaciones y roles en este departamento también serán eliminados.";
+
+// MARK: - Copy Assignments
+"copy.title" = "Copiar Asignaciones";
+"copy.selectTarget" = "Seleccionar Sesión Destino";
+"copy.selectAreas" = "Seleccionar Áreas";
+"copy.options" = "Opciones";
+"copy.sourceLabel" = "De: %@";
+"copy.targetHeader" = "Copiar A";
+"copy.noSessions" = "No hay otras sesiones disponibles";
+"copy.selectAll" = "Seleccionar Todo";
+"copy.areasHeader" = "Áreas";
+"copy.assignments" = "asignaciones";
+"copy.noAreas" = "No se encontraron áreas";
+"copy.summaryCount" = "%d asignaciones en %d áreas";
+"copy.forceAssign" = "Asignar Forzosamente";
+"copy.forceAssignWarning" = "Los voluntarios no necesitarán aceptar";
+"copy.countFlag" = "Copiar Permisos de Conteo";
+"copy.captainFlag" = "Copiar Roles de Capitán";
+"copy.areaCaptains" = "Copiar Capitanes de Área";
+"copy.execute" = "Copiar %d Asignaciones";
+"copy.done" = "Listo";
+"copy.result.copied" = "%d Asignaciones Copiadas";
+"copy.result.skipped" = "%d omitidas";
+"copy.result.areaCaptains" = "%d capitanes de área copiados";
+"copy.result.skippedDetails" = "Detalles Omitidos";

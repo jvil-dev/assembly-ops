@@ -18,9 +18,6 @@ vi.mock('../../utils/password.js', () => ({
 import { verifyPassword } from '../../utils/password.js';
 import authResolvers from '../../graphql/resolvers/auth.js';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyRecord = Record<string, any>;
-
 const deleteAccount = authResolvers.Mutation.deleteAccount;
 
 describe('deleteAccount resolver', () => {

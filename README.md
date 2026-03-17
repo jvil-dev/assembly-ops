@@ -17,7 +17,7 @@ A volunteer scheduling and management platform for Jehovah's Witnesses assembly 
 - **Volunteer Scheduling** — Assign volunteers to posts across sessions with capacity management
 - **Assignment Workflows** — Acceptance/decline flow with configurable deadlines and captain roles
 - **Real-Time Attendance** — Check-in/check-out tracking with live attendance counts
-- **Role-Based Access** — Event Overseers, Department Overseers, and Volunteers each see what they need
+- **Role-Based Access** — Department Overseers, App Admins, and Volunteers each see what they need
 - **In-App Messaging** — Event-wide, department-specific, and post-specific communication
 - **Event Discovery** — Volunteers can browse public events and request to join
 - **Department-Specific Tools** — Safety incident reporting (Attendant), equipment management (Audio/Video), and more
@@ -34,7 +34,7 @@ A volunteer scheduling and management platform for Jehovah's Witnesses assembly 
 | Database       | PostgreSQL 16 with Prisma ORM                       |
 | Auth           | JWT (access + refresh tokens), OAuth (Google/Apple) |
 | Validation     | Zod runtime schemas                                 |
-| Infrastructure | AWS ECS Fargate, Supabase (managed Postgres)        |
+| Infrastructure | Google Cloud Run, Cloud SQL (managed Postgres)      |
 | CI/CD          | GitHub Actions                                      |
 
 ## Architecture
@@ -47,12 +47,12 @@ A volunteer scheduling and management platform for Jehovah's Witnesses assembly 
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                      AWS ALB (HTTPS)                        │
+│                  Google Cloud Load Balancer                  │
 └──────────────────────────────┬──────────────────────────────┘
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    ECS Fargate Service                      │
+│                    Cloud Run Service                        │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │              Node.js + Apollo Server                  │  │
 │  │                                                       │  │
@@ -62,8 +62,8 @@ A volunteer scheduling and management platform for Jehovah's Witnesses assembly 
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                Supabase (Managed PostgreSQL)                │
-│                   with PgBouncer pooling                    │
+│               Cloud SQL (Managed PostgreSQL)                │
+│                  with connection pooling                     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -131,12 +131,11 @@ See [admin/README.md](./admin/README.md) for pages, project structure, and acces
 
 ## User Roles
 
-| Role                | Access Level                 |
-| ------------------- | ---------------------------- |
-| App Admin           | Full platform administration |
-| Event Overseer      | Full access to entire event  |
-| Department Overseer | Department-scoped access     |
-| Volunteer           | Own assignments only         |
+| Role                | Access Level                                       |
+| ------------------- | -------------------------------------------------- |
+| App Admin           | Full platform administration                       |
+| Department Overseer | Manages a department within an event               |
+| Volunteer           | Views own assignments, accepts/declines, checks in |
 
 ## Convention Departments
 

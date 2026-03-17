@@ -105,3 +105,19 @@ export type SetCaptainInput = z.infer<typeof setCaptainSchema>;
 export type SetCanCountInput = z.infer<typeof setCanCountSchema>;
 export type CaptainCheckInInput = z.infer<typeof captainCheckInSchema>;
 export type PendingAssignmentsFilter = z.infer<typeof pendingAssignmentsFilterSchema>;
+
+export const copySessionAssignmentsSchema = z.object({
+  sourceSessionId: z.string().min(1, 'Source session ID is required'),
+  targetSessionId: z.string().min(1, 'Target session ID is required'),
+  departmentId: z.string().min(1, 'Department ID is required'),
+  areaIds: z.array(z.string().min(1)).nullish().transform((v: string[] | null | undefined) => v || null),
+  postIds: z.array(z.string().min(1)).nullish().transform((v: string[] | null | undefined) => v || null),
+  copyIsCaptain: z.boolean().optional().default(false),
+  copyCanCount: z.boolean().optional().default(true),
+  copyAreaCaptains: z.boolean().optional().default(false),
+  forceAssign: z.boolean().optional().default(false),
+}).refine(data => data.sourceSessionId !== data.targetSessionId, {
+  message: 'Source and target sessions must be different',
+});
+
+export type CopySessionAssignmentsInput = z.infer<typeof copySessionAssignmentsSchema>;

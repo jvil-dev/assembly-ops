@@ -28,14 +28,16 @@ All API requests (except health check) require authentication using JWT tokens.
 
 ```graphql
 mutation RegisterAdmin {
-  registerAdmin(input: {
-    email: "overseer@example.com"
-    password: "SecurePassword123"
-    firstName: "John"
-    lastName: "Doe"
-    congregation: "Central Congregation"
-    isOverseer: true
-  }) {
+  registerAdmin(
+    input: {
+      email: "overseer@example.com"
+      password: "SecurePassword123"
+      firstName: "John"
+      lastName: "Doe"
+      congregation: "Central Congregation"
+      isOverseer: true
+    }
+  ) {
     user {
       id
       email
@@ -53,10 +55,9 @@ mutation RegisterAdmin {
 
 ```graphql
 mutation Login {
-  loginUser(input: {
-    email: "overseer@example.com"
-    password: "SecurePassword123"
-  }) {
+  loginUser(
+    input: { email: "overseer@example.com", password: "SecurePassword123" }
+  ) {
     user {
       id
       email
@@ -74,9 +75,7 @@ mutation Login {
 
 ```graphql
 mutation RefreshToken {
-  refreshToken(input: {
-    refreshToken: "your_refresh_token_here"
-  }) {
+  refreshToken(input: { refreshToken: "your_refresh_token_here" }) {
     accessToken
     refreshToken
     expiresIn
@@ -88,11 +87,11 @@ mutation RefreshToken {
 
 The API uses role-based access control (RBAC):
 
-| Role | Permissions |
-|------|-------------|
-| **Event Overseer** | Full access to the event, manage departments, assign overseers |
+| Role                    | Permissions                                                      |
+| ----------------------- | ---------------------------------------------------------------- |
+| **App Admin**           | Full platform administration, manage all events and users        |
 | **Department Overseer** | Manage department posts, assign volunteers, view department data |
-| **Volunteer** | View own assignments, accept/decline assignments, check in/out |
+| **Volunteer**           | View own assignments, accept/decline assignments, check in/out   |
 
 ## Core Resources
 
@@ -119,9 +118,7 @@ query GetEventTemplates {
 
 ```graphql
 mutation ActivateEvent {
-  activateEvent(input: {
-    templateId: "event_template_id"
-  }) {
+  activateEvent(input: { templateId: "event_template_id" }) {
     id
     name
     joinCode
@@ -200,13 +197,23 @@ Posts are specific volunteer positions within a department (e.g., "East Lobby", 
 
 ```graphql
 mutation CreatePosts {
-  createPosts(input: {
-    departmentId: "dept_id"
-    posts: [
-      { name: "East Lobby", capacity: 2, description: "Monitor east entrance" }
-      { name: "West Lobby", capacity: 2, description: "Monitor west entrance" }
-    ]
-  }) {
+  createPosts(
+    input: {
+      departmentId: "dept_id"
+      posts: [
+        {
+          name: "East Lobby"
+          capacity: 2
+          description: "Monitor east entrance"
+        }
+        {
+          name: "West Lobby"
+          capacity: 2
+          description: "Monitor west entrance"
+        }
+      ]
+    }
+  ) {
     id
     name
     capacity
@@ -219,11 +226,9 @@ mutation CreatePosts {
 
 ```graphql
 mutation UpdatePost {
-  updatePost(input: {
-    id: "post_id"
-    name: "East Entrance (Updated)"
-    capacity: 3
-  }) {
+  updatePost(
+    input: { id: "post_id", name: "East Entrance (Updated)", capacity: 3 }
+  ) {
     id
     name
     capacity
@@ -239,23 +244,25 @@ Sessions are time blocks during the event (e.g., "Saturday Morning", "Sunday Aft
 
 ```graphql
 mutation CreateSessions {
-  createSessions(input: {
-    eventId: "event_id"
-    sessions: [
-      {
-        name: "Saturday Morning"
-        date: "2026-03-07T00:00:00Z"
-        startTime: "09:00"
-        endTime: "12:00"
-      }
-      {
-        name: "Saturday Afternoon"
-        date: "2026-03-07T00:00:00Z"
-        startTime: "13:30"
-        endTime: "16:30"
-      }
-    ]
-  }) {
+  createSessions(
+    input: {
+      eventId: "event_id"
+      sessions: [
+        {
+          name: "Saturday Morning"
+          date: "2026-03-07T00:00:00Z"
+          startTime: "09:00"
+          endTime: "12:00"
+        }
+        {
+          name: "Saturday Afternoon"
+          date: "2026-03-07T00:00:00Z"
+          startTime: "13:30"
+          endTime: "16:30"
+        }
+      ]
+    }
+  ) {
     id
     name
     date
@@ -273,15 +280,17 @@ Volunteers are users assigned to work at the event.
 
 ```graphql
 mutation CreateVolunteer {
-  createVolunteer(input: {
-    eventId: "event_id"
-    departmentId: "dept_id"
-    firstName: "Jane"
-    lastName: "Smith"
-    email: "jane.smith@example.com"
-    phone: "555-1234"
-    congregation: "Westside Congregation"
-  }) {
+  createVolunteer(
+    input: {
+      eventId: "event_id"
+      departmentId: "dept_id"
+      firstName: "Jane"
+      lastName: "Smith"
+      email: "jane.smith@example.com"
+      phone: "555-1234"
+      congregation: "Westside Congregation"
+    }
+  ) {
     id
     userId
     firstName
@@ -323,11 +332,13 @@ Assignments link volunteers to specific posts and sessions.
 
 ```graphql
 mutation CreateAssignment {
-  createAssignment(input: {
-    postId: "post_id"
-    sessionId: "session_id"
-    eventVolunteerId: "volunteer_id"
-  }) {
+  createAssignment(
+    input: {
+      postId: "post_id"
+      sessionId: "session_id"
+      eventVolunteerId: "volunteer_id"
+    }
+  ) {
     id
     status
     post {
@@ -376,9 +387,7 @@ Volunteers check in when they arrive at their assigned post.
 
 ```graphql
 mutation CheckIn {
-  checkIn(input: {
-    assignmentId: "assignment_id"
-  }) {
+  checkIn(input: { assignmentId: "assignment_id" }) {
     id
     status
     checkedInAt
@@ -390,9 +399,7 @@ mutation CheckIn {
 
 ```graphql
 mutation CheckOut {
-  checkOut(input: {
-    assignmentId: "assignment_id"
-  }) {
+  checkOut(input: { assignmentId: "assignment_id" }) {
     id
     status
     checkedOutAt
@@ -409,13 +416,13 @@ The API uses standard GraphQL error responses. All errors include:
 
 ### Common Error Codes
 
-| Code | Description |
-|------|-------------|
-| `UNAUTHENTICATED` | Missing or invalid authentication token |
-| `FORBIDDEN` | Insufficient permissions |
-| `NOT_FOUND` | Resource not found |
-| `VALIDATION_ERROR` | Invalid input data |
-| `CONFLICT` | Resource conflict (e.g., duplicate email) |
+| Code               | Description                               |
+| ------------------ | ----------------------------------------- |
+| `UNAUTHENTICATED`  | Missing or invalid authentication token   |
+| `FORBIDDEN`        | Insufficient permissions                  |
+| `NOT_FOUND`        | Resource not found                        |
+| `VALIDATION_ERROR` | Invalid input data                        |
+| `CONFLICT`         | Resource conflict (e.g., duplicate email) |
 
 ### Example Error Response
 
@@ -467,6 +474,7 @@ GET /health
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "status": "healthy",
@@ -478,6 +486,7 @@ GET /health
 ```
 
 **Response** (503 Service Unavailable):
+
 ```json
 {
   "status": "unhealthy",
@@ -504,11 +513,7 @@ All list queries support pagination:
 
 ```graphql
 query GetVolunteers {
-  eventVolunteers(
-    eventId: "event_id"
-    first: 20
-    after: "cursor_value"
-  ) {
+  eventVolunteers(eventId: "event_id", first: 20, after: "cursor_value") {
     edges {
       node {
         id
@@ -536,20 +541,20 @@ query GetVolunteers {
 ### Apollo Client (Recommended)
 
 ```typescript
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
+import { ApolloClient, InMemoryCache, createHttpLink } from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
 
 const httpLink = createHttpLink({
-  uri: 'http://localhost:4000/graphql',
+  uri: "http://localhost:4000/graphql",
 });
 
 const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem("accessToken");
   return {
     headers: {
       ...headers,
-      authorization: token ? `Bearer ${token}` : '',
-    }
+      authorization: token ? `Bearer ${token}` : "",
+    },
   };
 });
 

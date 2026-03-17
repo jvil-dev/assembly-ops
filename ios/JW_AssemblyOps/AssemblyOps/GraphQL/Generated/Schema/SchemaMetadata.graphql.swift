@@ -51,6 +51,7 @@ extension AssemblyOpsAPI {
       case "Congregation": return AssemblyOpsAPI.Objects.Congregation
       case "Conversation": return AssemblyOpsAPI.Objects.Conversation
       case "ConversationParticipant": return AssemblyOpsAPI.Objects.ConversationParticipant
+      case "CopySessionAssignmentsResult": return AssemblyOpsAPI.Objects.CopySessionAssignmentsResult
       case "CoverageAssignment": return AssemblyOpsAPI.Objects.CoverageAssignment
       case "CoverageCheckIn": return AssemblyOpsAPI.Objects.CoverageCheckIn
       case "CoveragePost": return AssemblyOpsAPI.Objects.CoveragePost
@@ -91,6 +92,7 @@ extension AssemblyOpsAPI {
       case "SessionAttendanceSummary": return AssemblyOpsAPI.Objects.SessionAttendanceSummary
       case "Shift": return AssemblyOpsAPI.Objects.Shift
       case "ShiftReminderStatus": return AssemblyOpsAPI.Objects.ShiftReminderStatus
+      case "SkippedVolunteerInfo": return AssemblyOpsAPI.Objects.SkippedVolunteerInfo
       case "TokenPayload": return AssemblyOpsAPI.Objects.TokenPayload
       case "User": return AssemblyOpsAPI.Objects.User
       case "UserAuthPayload": return AssemblyOpsAPI.Objects.UserAuthPayload

@@ -85,21 +85,21 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4000
 
 ## Scripts
 
-| Command | Description |
-| ------- | ----------- |
-| `npm run dev` | Start dev server with hot reload |
-| `npm run build` | Compile TypeScript |
-| `npm start` | Start production server |
-| `npm test` | Run tests |
-| `npm run test:watch` | Run tests in watch mode |
-| `npm run test:coverage` | Run tests with coverage report |
-| `npm run lint` | ESLint check |
-| `npm run lint:fix` | Auto-fix lint issues |
-| `npm run format` | Prettier format |
-| `npm run prisma:migrate` | Run database migrations |
-| `npm run prisma:generate` | Regenerate Prisma client |
-| `npm run prisma:seed` | Seed database |
-| `npm run prisma:push` | Push schema changes (dev only) |
+| Command                   | Description                      |
+| ------------------------- | -------------------------------- |
+| `npm run dev`             | Start dev server with hot reload |
+| `npm run build`           | Compile TypeScript               |
+| `npm start`               | Start production server          |
+| `npm test`                | Run tests                        |
+| `npm run test:watch`      | Run tests in watch mode          |
+| `npm run test:coverage`   | Run tests with coverage report   |
+| `npm run lint`            | ESLint check                     |
+| `npm run lint:fix`        | Auto-fix lint issues             |
+| `npm run format`          | Prettier format                  |
+| `npm run prisma:migrate`  | Run database migrations          |
+| `npm run prisma:generate` | Regenerate Prisma client         |
+| `npm run prisma:seed`     | Seed database                    |
+| `npm run prisma:push`     | Push schema changes (dev only)   |
 
 ## Project Structure
 
@@ -126,28 +126,33 @@ src/
 ```graphql
 # Register a new user
 mutation {
-  registerUser(input: {
-    email: "user@example.com"
-    password: "SecurePass123"
-    firstName: "John"
-    lastName: "Doe"
-    isOverseer: true
-  }) {
+  registerUser(
+    input: {
+      email: "user@example.com"
+      password: "SecurePass123"
+      firstName: "John"
+      lastName: "Doe"
+      isOverseer: true
+    }
+  ) {
     accessToken
     refreshToken
-    user { id email }
+    user {
+      id
+      email
+    }
   }
 }
 
 # Login
 mutation {
-  loginUser(input: {
-    email: "user@example.com"
-    password: "SecurePass123"
-  }) {
+  loginUser(input: { email: "user@example.com", password: "SecurePass123" }) {
     accessToken
     refreshToken
-    user { id email }
+    user {
+      id
+      email
+    }
   }
 }
 ```
@@ -157,13 +162,9 @@ mutation {
 ```graphql
 # Create posts (volunteer positions)
 mutation {
-  createPosts(input: {
-    departmentId: "..."
-    posts: [
-      { name: "East Lobby" }
-      { name: "Main Entrance" }
-    ]
-  }) {
+  createPosts(
+    input: { departmentId: "...", posts: [{ name: "East Lobby" }, { name: "Main Entrance" }] }
+  ) {
     id
     name
   }
@@ -171,13 +172,25 @@ mutation {
 
 # Create sessions (time blocks)
 mutation {
-  createSessions(input: {
-    eventId: "..."
-    sessions: [
-      { name: "Saturday Morning", date: "2026-03-07T00:00:00Z", startTime: "09:00", endTime: "12:00" }
-      { name: "Saturday Afternoon", date: "2026-03-07T00:00:00Z", startTime: "13:30", endTime: "16:30" }
-    ]
-  }) {
+  createSessions(
+    input: {
+      eventId: "..."
+      sessions: [
+        {
+          name: "Saturday Morning"
+          date: "2026-03-07T00:00:00Z"
+          startTime: "09:00"
+          endTime: "12:00"
+        }
+        {
+          name: "Saturday Afternoon"
+          date: "2026-03-07T00:00:00Z"
+          startTime: "13:30"
+          endTime: "16:30"
+        }
+      ]
+    }
+  ) {
     id
     name
   }
@@ -188,11 +201,11 @@ mutation {
 
 All requests require `Authorization: Bearer <token>` header.
 
-| Role | Permissions |
-| ---- | ----------- |
-| EVENT_OVERSEER | Full event access, manage sessions |
+| Role                | Permissions                                  |
+| ------------------- | -------------------------------------------- |
+| APP_ADMIN           | Full platform access, manage all events      |
 | DEPARTMENT_OVERSEER | Department-scoped, manage posts & volunteers |
-| VOLUNTEER | View own assignments only |
+| VOLUNTEER           | View own assignments only                    |
 
 ## Database Schema
 
@@ -224,7 +237,7 @@ npm run test:coverage
 
 ## Deployment
 
-The API deploys to AWS ECS Fargate via GitHub Actions:
+The API deploys to Google Cloud Run via GitHub Actions:
 
 - Push to `main` → Deploy to production
 

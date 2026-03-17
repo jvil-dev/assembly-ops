@@ -21,16 +21,16 @@ The application is **ready for beta testing** with appropriate monitoring and op
 
 Production readiness was evaluated across eight key dimensions:
 
-| Dimension | Score | Status | Notes |
-|-----------|-------|--------|-------|
-| **Security** | 9/10 | ✅ Excellent | All critical vulnerabilities fixed, RBAC implemented |
-| **Code Quality** | 9/10 | ✅ Excellent | Type-safe, linted, follows best practices |
-| **Documentation** | 9/10 | ✅ Excellent | Comprehensive docs for API, contributing, security |
-| **Testing** | 5/10 | ⚠️ Needs Work | Only 2 integration tests, low coverage |
-| **Observability** | 6/10 | ⚠️ Needs Work | Structured logging added, but no APM/monitoring |
-| **Scalability** | 7/10 | ✅ Good | Docker + ECS, but needs load testing |
-| **Operational** | 8/10 | ✅ Good | CI/CD, health checks, env templates |
-| **Reliability** | 7/10 | ✅ Good | Error handling, graceful shutdown, needs more tests |
+| Dimension         | Score | Status        | Notes                                                |
+| ----------------- | ----- | ------------- | ---------------------------------------------------- |
+| **Security**      | 9/10  | ✅ Excellent  | All critical vulnerabilities fixed, RBAC implemented |
+| **Code Quality**  | 9/10  | ✅ Excellent  | Type-safe, linted, follows best practices            |
+| **Documentation** | 9/10  | ✅ Excellent  | Comprehensive docs for API, contributing, security   |
+| **Testing**       | 5/10  | ⚠️ Needs Work | Only 2 integration tests, low coverage               |
+| **Observability** | 6/10  | ⚠️ Needs Work | Structured logging added, but no APM/monitoring      |
+| **Scalability**   | 7/10  | ✅ Good       | Docker + ECS, but needs load testing                 |
+| **Operational**   | 8/10  | ✅ Good       | CI/CD, health checks, env templates                  |
+| **Reliability**   | 7/10  | ✅ Good       | Error handling, graceful shutdown, needs more tests  |
 
 ---
 
@@ -39,12 +39,14 @@ Production readiness was evaluated across eight key dimensions:
 ### 1. Security Enhancements ✅
 
 #### High-Priority Fixes
+
 - **Apollo Server Vulnerability (CVE-GHSA-mp6q-xf9x-fwf7)**: Upgraded from 5.2.0 to 5.4.0+
   - Impact: DoS vulnerability in `startStandaloneServer`
   - Severity: High (CVSS 7.5)
   - Status: ✅ Fixed
 
 #### Remaining Vulnerabilities
+
 - **Moderate severity** issues in dev dependencies only (Prisma CLI, not runtime)
   - `hono` (Prisma dev dependency): 5 vulnerabilities
   - `lodash` (Prisma dev dependency): 1 vulnerability
@@ -52,6 +54,7 @@ Production readiness was evaluated across eight key dimensions:
   - Recommendation: Monitor for Prisma updates
 
 #### Security Measures in Place
+
 - ✅ JWT authentication with access + refresh tokens
 - ✅ Role-based access control (RBAC)
 - ✅ Rate limiting (20 auth requests per 15min, 100 general per min)
@@ -62,9 +65,10 @@ Production readiness was evaluated across eight key dimensions:
 - ✅ PII encryption at rest
 - ✅ bcrypt password hashing
 - ✅ Non-root Docker user
-- ✅ HTTPS-only in production (AWS ALB)
+- ✅ HTTPS-only in production (Google Cloud Load Balancer)
 
 #### Security Documentation
+
 - ✅ **SECURITY.md** created with:
   - Vulnerability reporting process
   - Response timelines
@@ -74,18 +78,21 @@ Production readiness was evaluated across eight key dimensions:
 ### 2. Code Quality Improvements ✅
 
 #### Type Safety
+
 - ✅ Removed all `any` type usage (5 instances)
 - ✅ Proper TypeScript typing throughout
 - ✅ Enum types instead of string literals
 - ✅ Null safety with proper validation
 
 #### Code Organization
+
 - ✅ Removed duplicate code (app.ts redundancy)
 - ✅ Consolidated server setup
 - ✅ Better separation of concerns
 - ✅ Consistent error handling
 
 #### Linting & Formatting
+
 - ✅ ESLint passes with zero warnings
 - ✅ Prettier formatting configured
 - ✅ TypeScript strict mode enabled
@@ -96,11 +103,13 @@ Production readiness was evaluated across eight key dimensions:
 Comprehensive documentation added:
 
 #### **CHANGELOG.md**
+
 - Follows Keep a Changelog format
 - Documents all changes and releases
 - Semantic versioning scheme
 
 #### **CONTRIBUTING.md**
+
 - Contributor guidelines
 - Development workflow
 - Coding standards
@@ -109,6 +118,7 @@ Comprehensive documentation added:
 - Commit message conventions
 
 #### **API.md**
+
 - Complete GraphQL API reference
 - Authentication examples
 - Authorization model
@@ -118,12 +128,14 @@ Comprehensive documentation added:
 - Client SDK setup
 
 #### **SECURITY.md**
+
 - Vulnerability reporting
 - Security measures
 - Best practices
 - Disclosure policy
 
 #### **.env.example**
+
 - All environment variables documented
 - Security notes for each variable
 - Generation commands for secrets
@@ -131,6 +143,7 @@ Comprehensive documentation added:
 ### 4. Operational Readiness ✅
 
 #### Logging
+
 - ✅ Structured logging utility implemented
 - ✅ JSON format in production
 - ✅ Human-readable in development
@@ -138,23 +151,26 @@ Comprehensive documentation added:
 - ✅ Replaced all console.log usage
 
 #### Configuration Management
+
 - ✅ Environment-based configuration
 - ✅ `.env.example` template provided
 - ✅ Validation of required secrets at startup
 - ✅ No hardcoded secrets
 
 #### Health Checks
+
 - ✅ `/health` endpoint for load balancer
 - ✅ Database connectivity check
 - ✅ Graceful shutdown handling
 - ⚠️ Migration status not included (recommendation)
 
 #### CI/CD
+
 - ✅ GitHub Actions workflows
 - ✅ Automated testing in CI
 - ✅ Linting in CI
 - ✅ Docker image building
-- ✅ AWS ECS deployment
+- ✅ Google Cloud Run deployment
 - ✅ Separate staging/production
 
 ---
@@ -172,15 +188,15 @@ Comprehensive documentation added:
 
 **Unit Test Coverage:**
 
-| File                        | Tests | Services/Guards Covered                     |
-| --------------------------- | ----- | ------------------------------------------- |
-| tokenService.unit.ts        | 19    | Token rotation, reuse detection, cleanup    |
-| authService.unit.ts         | 28    | Registration, login, OAuth, refresh tokens  |
-| authGuards.unit.ts          | 42    | All 11 authorization guards                 |
-| volunteerService.unit.ts    | 29    | CRUD, join requests, placeholder linking    |
-| assignmentService.unit.ts   | 36    | Shift overlap, acceptance workflow, captains |
-| eventService.unit.ts        | 24    | Department purchase, access codes, hierarchy |
-| messageService.unit.ts      | 22    | Messaging, conversations, broadcasts        |
+| File                      | Tests | Services/Guards Covered                      |
+| ------------------------- | ----- | -------------------------------------------- |
+| tokenService.unit.ts      | 19    | Token rotation, reuse detection, cleanup     |
+| authService.unit.ts       | 28    | Registration, login, OAuth, refresh tokens   |
+| authGuards.unit.ts        | 42    | All 11 authorization guards                  |
+| volunteerService.unit.ts  | 29    | CRUD, join requests, placeholder linking     |
+| assignmentService.unit.ts | 36    | Shift overlap, acceptance workflow, captains |
+| eventService.unit.ts      | 24    | Department purchase, access codes, hierarchy |
+| messageService.unit.ts    | 22    | Messaging, conversations, broadcasts         |
 
 **Remaining Opportunities:**
 
@@ -193,6 +209,7 @@ Comprehensive documentation added:
 ### 2. Observability & Monitoring ⚠️ (Priority: HIGH)
 
 **Current State:**
+
 - Structured logging added
 - No APM (Application Performance Monitoring)
 - No error tracking service
@@ -200,6 +217,7 @@ Comprehensive documentation added:
 - No alerting
 
 **Recommendations:**
+
 1. Integrate Sentry or similar for error tracking
 2. Add DataDog, New Relic, or CloudWatch for APM
 3. Set up alerting for critical errors
@@ -214,11 +232,13 @@ Comprehensive documentation added:
 ### 3. Performance Testing ⚠️ (Priority: MEDIUM)
 
 **Current State:**
+
 - No load testing performed
 - Unknown scalability limits
 - No performance benchmarks
 
 **Recommendations:**
+
 1. Run load tests simulating 1000+ volunteers
 2. Test concurrent check-ins
 3. Test GraphQL query performance with complex queries
@@ -232,28 +252,32 @@ Comprehensive documentation added:
 ### 4. Database Operations Documentation ⚠️ (Priority: MEDIUM)
 
 **Current State:**
+
 - No backup/restore procedures documented
 - No disaster recovery plan
 - Migration process not fully documented
 
 **Recommendations:**
-1. Document backup strategy (Supabase provides automated backups)
+
+1. Document backup strategy (Cloud SQL provides automated backups)
 2. Document point-in-time recovery procedures
 3. Document database migration process
 4. Create runbook for common database issues
 5. Test restore procedures
 
 **Effort:** 3-5 days  
-**Risk if not addressed:** Low - Supabase provides managed backups, but procedures should be documented
+**Risk if not addressed:** Low - Cloud SQL provides managed backups, but procedures should be documented
 
 ### 5. Health Check Enhancement ⚠️ (Priority: LOW)
 
 **Current State:**
+
 - Basic health check (database connectivity)
 - No migration status check
 - No dependency health checks
 
 **Recommendations:**
+
 1. Add migration status to health check
 2. Check external dependencies (if any)
 3. Include version information
@@ -268,17 +292,20 @@ Comprehensive documentation added:
 ## Security Summary
 
 ### ✅ Addressed
+
 - High-severity Apollo Server DoS vulnerability fixed
 - No critical or high-severity vulnerabilities in production dependencies
 - Comprehensive security documentation (SECURITY.md)
 - All authentication and authorization properly secured
 
 ### ℹ️ Acknowledged
+
 - Moderate vulnerabilities in dev dependencies (Prisma CLI)
 - These do not affect production runtime
 - Monitoring for updates
 
 ### 🔐 Security Posture
+
 - **Strong:** Multiple layers of security (auth, RBAC, rate limiting, encryption)
 - **Ready for beta:** Yes, with appropriate access controls
 - **Ready for production:** Yes, with monitoring recommended
@@ -316,9 +343,11 @@ Comprehensive documentation added:
 ## Production Deployment Recommendations
 
 ### Phase 1: Beta Testing (Current - Ready) ✅
+
 **Status:** Ready to proceed
 
 **Requirements Met:**
+
 - Secure authentication and authorization
 - Basic monitoring (logs)
 - Health checks for ALB
@@ -326,6 +355,7 @@ Comprehensive documentation added:
 - Documentation
 
 **Actions:**
+
 1. Deploy to staging environment
 2. Perform smoke tests
 3. Invite beta testers (limited group)
@@ -335,15 +365,18 @@ Comprehensive documentation added:
 **Expected Timeline:** 4-6 weeks
 
 ### Phase 2: Enhanced Monitoring (Recommended Before Production)
+
 **Status:** Not started
 
 **Requirements:**
+
 - Error tracking service (Sentry)
 - APM service (DataDog/New Relic)
 - Alerting for critical errors
 - Metrics dashboards
 
 **Actions:**
+
 1. Integrate Sentry for error tracking
 2. Set up APM service
 3. Configure alerts
@@ -353,15 +386,18 @@ Comprehensive documentation added:
 **Expected Timeline:** 1 week
 
 ### Phase 3: Testing & Validation (Recommended Before Production)
+
 **Status:** Not started
 
 **Requirements:**
+
 - Unit tests for services
 - Integration tests for resolvers
 - Load testing results
 - Code coverage >70%
 
 **Actions:**
+
 1. Write comprehensive test suite
 2. Run load tests
 3. Fix any performance issues
@@ -370,9 +406,11 @@ Comprehensive documentation added:
 **Expected Timeline:** 2-3 weeks
 
 ### Phase 4: Production Release
+
 **Status:** 2-4 months away
 
 **Prerequisites:**
+
 - Phases 1-3 complete
 - Beta testing feedback addressed
 - All P0/P1 bugs fixed
@@ -383,30 +421,34 @@ Comprehensive documentation added:
 
 ## Risk Assessment
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Security vulnerability exploited | Low | High | Security audit passed, monitoring in place |
-| Performance issues at scale | Medium | Medium | Start with limited users, add load testing |
-| Data loss | Low | High | Managed database (Supabase) with automated backups |
-| Critical bug in production | Medium | High | Add comprehensive testing, error tracking |
-| Service downtime | Low | Medium | Health checks, auto-scaling, graceful shutdown |
+| Risk                             | Likelihood | Impact | Mitigation                                          |
+| -------------------------------- | ---------- | ------ | --------------------------------------------------- |
+| Security vulnerability exploited | Low        | High   | Security audit passed, monitoring in place          |
+| Performance issues at scale      | Medium     | Medium | Start with limited users, add load testing          |
+| Data loss                        | Low        | High   | Managed database (Cloud SQL) with automated backups |
+| Critical bug in production       | Medium     | High   | Add comprehensive testing, error tracking           |
+| Service downtime                 | Low        | Medium | Health checks, auto-scaling, graceful shutdown      |
 
 ---
 
 ## Recommendations Summary
 
 ### Immediate (Before Beta)
+
 ✅ All completed!
+
 - Security fixes
 - Documentation
 - Code quality improvements
 
 ### Short-term (During Beta - 4-6 weeks)
+
 1. **Add monitoring** - Integrate Sentry and APM (1 week)
 2. **Improve testing** - Add test suite to 70% coverage (2-3 weeks)
 3. **Document operations** - Backup/restore procedures (3-5 days)
 
 ### Long-term (Before Production - 2-4 months)
+
 1. **Performance testing** - Load tests and optimization (1-2 weeks)
 2. **Incident response** - Playbooks and on-call rotation (1 week)
 3. **Advanced monitoring** - Custom metrics and SLOs (1 week)
@@ -415,9 +457,10 @@ Comprehensive documentation added:
 
 ## Conclusion
 
-**AssemblyOps is production-ready for beta testing** with a rating of **8.5/10**. 
+**AssemblyOps is production-ready for beta testing** with a rating of **8.5/10**.
 
 ### Strengths
+
 - ✅ Excellent security posture
 - ✅ High code quality
 - ✅ Comprehensive documentation
@@ -425,6 +468,7 @@ Comprehensive documentation added:
 - ✅ Proper authentication and authorization
 
 ### Areas for Growth
+
 - ⚠️ Test coverage needs significant improvement
 - ⚠️ Observability infrastructure needed for production scale
 - ⚠️ Performance characteristics need validation
