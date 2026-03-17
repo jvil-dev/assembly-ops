@@ -914,4 +914,378 @@ describe('AssignmentService', () => {
       expect(slot.assignments).toHaveLength(2);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // copySessionAssignments
+  // ---------------------------------------------------------------------------
+
+  describe('copySessionAssignments', () => {
+    const sourceSession = { id: 'session-1', eventId: 'event-1' };
+    const targetSession = { id: 'session-2', eventId: 'event-1' };
+    const dept = { id: 'dept-1', eventId: 'event-1' };
+
+    const sourceAssignments = [
+      {
+        id: 'assign-1',
+        eventVolunteerId: 'vol-1',
+        postId: 'post-1',
+        sessionId: 'session-1',
+        status: 'ACCEPTED',
+        isCaptain: true,
+        canCount: true,
+        forceAssigned: false,
+        eventVolunteer: { id: 'vol-1', user: { firstName: 'John', lastName: 'Doe' } },
+        post: { name: 'Gate A' },
+      },
+      {
+        id: 'assign-2',
+        eventVolunteerId: 'vol-2',
+        postId: 'post-2',
+        sessionId: 'session-1',
+        status: 'PENDING',
+        isCaptain: false,
+        canCount: true,
+        forceAssigned: false,
+        eventVolunteer: { id: 'vol-2', user: { firstName: 'Jane', lastName: 'Smith' } },
+        post: { name: 'Gate B' },
+      },
+    ];
+
+    function setupCopyMocks(overrides?: {
+      existingTarget?: Array<{ eventVolunteerId: string }>;
+      postIds?: Array<{ id: string }>;
+      createCount?: number;
+    }) {
+      (prisma.session.findUnique as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce(sourceSession)
+        .mockResolvedValueOnce(targetSession);
+      (prisma.department.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(dept);
+      (prisma.post.findMany as ReturnType<typeof vi.fn>).mockResolvedValue(
+        overrides?.postIds ?? [{ id: 'post-1' }, { id: 'post-2' }]
+      );
+      (prisma.scheduleAssignment.findMany as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce(sourceAssignments)  // source assignments
+        .mockResolvedValueOnce(overrides?.existingTarget ?? []);  // existing target
+      (prisma.scheduleAssignment.createMany as ReturnType<typeof vi.fn>).mockResolvedValue({
+        count: overrides?.createCount ?? 2,
+      });
+      (prisma.eventVolunteer.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([
+        { user: { id: 'user-1' } },
+        { user: { id: 'user-2' } },
+      ]);
+    }
+
+    it('should copy all assignments to target session', async () => {
+      setupCopyMocks();
+
+      const result = await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+        },
+        'creator-1'
+      );
+
+      expect(result.copiedCount).toBe(2);
+      expect(result.skippedCount).toBe(0);
+      expect(result.skippedVolunteers).toHaveLength(0);
+      expect(prisma.scheduleAssignment.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            eventVolunteerId: 'vol-1',
+            postId: 'post-1',
+            sessionId: 'session-2',
+            status: 'PENDING',
+            forceAssigned: false,
+            createdByUserId: 'creator-1',
+          }),
+          expect.objectContaining({
+            eventVolunteerId: 'vol-2',
+            postId: 'post-2',
+            sessionId: 'session-2',
+          }),
+        ]),
+        skipDuplicates: true,
+      });
+    });
+
+    it('should skip volunteers already assigned in target session', async () => {
+      setupCopyMocks({
+        existingTarget: [{ eventVolunteerId: 'vol-1' }],
+        createCount: 1,
+      });
+
+      const result = await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+        },
+        'creator-1'
+      );
+
+      expect(result.copiedCount).toBe(1);
+      expect(result.skippedCount).toBe(1);
+      expect(result.skippedVolunteers[0]).toEqual({
+        volunteerName: 'John Doe',
+        postName: 'Gate A',
+        reason: 'Already assigned in target session',
+      });
+    });
+
+    it('should bypass conflict skip when forceAssign is true', async () => {
+      setupCopyMocks({
+        existingTarget: [{ eventVolunteerId: 'vol-1' }],
+        createCount: 2,
+      });
+
+      const result = await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+          forceAssign: true,
+        },
+        'creator-1'
+      );
+
+      expect(result.copiedCount).toBe(2);
+      expect(result.skippedCount).toBe(0);
+      expect(prisma.scheduleAssignment.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            status: 'ACCEPTED',
+            forceAssigned: true,
+          }),
+        ]),
+        skipDuplicates: true,
+      });
+    });
+
+    it('should reset isCaptain by default', async () => {
+      setupCopyMocks();
+
+      await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+        },
+        'creator-1'
+      );
+
+      const createCall = (prisma.scheduleAssignment.createMany as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const vol1Data = createCall.data.find((d: { eventVolunteerId: string }) => d.eventVolunteerId === 'vol-1');
+      expect(vol1Data.isCaptain).toBe(false);
+    });
+
+    it('should preserve isCaptain when copyIsCaptain is true', async () => {
+      setupCopyMocks();
+
+      await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+          copyIsCaptain: true,
+        },
+        'creator-1'
+      );
+
+      const createCall = (prisma.scheduleAssignment.createMany as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const vol1Data = createCall.data.find((d: { eventVolunteerId: string }) => d.eventVolunteerId === 'vol-1');
+      expect(vol1Data.isCaptain).toBe(true);
+    });
+
+    it('should copy canCount by default', async () => {
+      setupCopyMocks();
+
+      await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+        },
+        'creator-1'
+      );
+
+      const createCall = (prisma.scheduleAssignment.createMany as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const vol1Data = createCall.data.find((d: { eventVolunteerId: string }) => d.eventVolunteerId === 'vol-1');
+      expect(vol1Data.canCount).toBe(true);
+    });
+
+    it('should reset canCount when copyCanCount is false', async () => {
+      setupCopyMocks();
+
+      await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+          copyCanCount: false,
+        },
+        'creator-1'
+      );
+
+      const createCall = (prisma.scheduleAssignment.createMany as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const vol1Data = createCall.data.find((d: { eventVolunteerId: string }) => d.eventVolunteerId === 'vol-1');
+      expect(vol1Data.canCount).toBe(false);
+    });
+
+    it('should throw when source and target sessions are the same', async () => {
+      await expect(
+        service.copySessionAssignments(
+          {
+            sourceSessionId: 'session-1',
+            targetSessionId: 'session-1',
+            departmentId: 'dept-1',
+          },
+          'creator-1'
+        )
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw when sessions belong to different events', async () => {
+      (prisma.session.findUnique as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({ id: 'session-1', eventId: 'event-1' })
+        .mockResolvedValueOnce({ id: 'session-2', eventId: 'event-2' });
+      (prisma.department.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(dept);
+
+      await expect(
+        service.copySessionAssignments(
+          {
+            sourceSessionId: 'session-1',
+            targetSessionId: 'session-2',
+            departmentId: 'dept-1',
+          },
+          'creator-1'
+        )
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should return zero counts when no source assignments exist', async () => {
+      (prisma.session.findUnique as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce(sourceSession)
+        .mockResolvedValueOnce(targetSession);
+      (prisma.department.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(dept);
+      (prisma.post.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([{ id: 'post-1' }]);
+      (prisma.scheduleAssignment.findMany as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
+
+      const result = await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+        },
+        'creator-1'
+      );
+
+      expect(result.copiedCount).toBe(0);
+      expect(result.skippedCount).toBe(0);
+      expect(prisma.scheduleAssignment.createMany).not.toHaveBeenCalled();
+    });
+
+    it('should filter by areaIds when provided', async () => {
+      setupCopyMocks();
+
+      await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+          areaIds: ['area-1'],
+        },
+        'creator-1'
+      );
+
+      expect(prisma.post.findMany).toHaveBeenCalledWith({
+        where: { areaId: { in: ['area-1'] }, departmentId: 'dept-1' },
+        select: { id: true },
+      });
+    });
+
+    it('should filter by postIds when provided', async () => {
+      setupCopyMocks();
+
+      await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+          postIds: ['post-1'],
+        },
+        'creator-1'
+      );
+
+      expect(prisma.post.findMany).toHaveBeenCalledWith({
+        where: { id: { in: ['post-1'] }, departmentId: 'dept-1' },
+        select: { id: true },
+      });
+    });
+
+    it('should copy area captains when copyAreaCaptains is true', async () => {
+      setupCopyMocks();
+      (prisma.area.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([{ id: 'area-1' }]);
+      (prisma.areaCaptain.findMany as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce([{
+          areaId: 'area-1',
+          sessionId: 'session-1',
+          eventVolunteerId: 'vol-1',
+        }])
+        .mockResolvedValueOnce([]); // no existing captains in target
+      (prisma.areaCaptain.createMany as ReturnType<typeof vi.fn>).mockResolvedValue({ count: 1 });
+
+      const result = await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+          copyAreaCaptains: true,
+        },
+        'creator-1'
+      );
+
+      expect(result.copiedAreaCaptains).toBe(1);
+      expect(prisma.areaCaptain.createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({
+          areaId: 'area-1',
+          sessionId: 'session-2',
+          eventVolunteerId: 'vol-1',
+        })],
+        skipDuplicates: true,
+      });
+    });
+
+    it('should not copy area captains by default', async () => {
+      setupCopyMocks();
+
+      const result = await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+        },
+        'creator-1'
+      );
+
+      expect(result.copiedAreaCaptains).toBe(0);
+      expect(prisma.areaCaptain.createMany).not.toHaveBeenCalled();
+    });
+
+    it('should return copiedVolunteerUserIds for notifications', async () => {
+      setupCopyMocks();
+
+      const result = await service.copySessionAssignments(
+        {
+          sourceSessionId: 'session-1',
+          targetSessionId: 'session-2',
+          departmentId: 'dept-1',
+        },
+        'creator-1'
+      );
+
+      expect(result.copiedVolunteerUserIds).toEqual(['user-1', 'user-2']);
+    });
+  });
 });
