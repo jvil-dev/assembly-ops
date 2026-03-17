@@ -24,7 +24,7 @@
 //
 // Access Control:
 //   - Department Overseers: Edit own department, view all read-only
-//   - Event Overseers: Full access based on selected department
+//   - Department Overseers: Full access based on selected department
 //
 
 import SwiftUI

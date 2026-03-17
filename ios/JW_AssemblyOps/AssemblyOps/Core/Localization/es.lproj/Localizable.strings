@@ -764,7 +764,7 @@
 "eventsHub.empty.title" = "Sin Eventos Aún";
 "eventsHub.empty.subtitle" = "Toca + para descubrir y unirte a una asamblea.";
 "eventsHub.browse" = "Buscar Eventos";
-"eventsHub.role.eventOverseer" = "Superintendente de Evento";
+"eventsHub.role.eventOverseer" = "Superintendente de Departamento";
 "eventsHub.role.deptOverseer" = "Superintendente de %@";
 "eventsHub.role.asstOverseer" = "Asist. Superintendente de %@";
 "eventsHub.role.volunteer" = "Voluntario";

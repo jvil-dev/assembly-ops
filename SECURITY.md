@@ -61,12 +61,12 @@ AssemblyOps implements multiple layers of security:
 - **Parameterized Queries:** Prisma ORM prevents SQL injection
 - **Connection Pooling:** PgBouncer for production database connections
 - **Migrations:** Version-controlled schema changes
-- **Backups:** Automated daily backups (Supabase managed)
+- **Backups:** Automated daily backups (Cloud SQL managed)
 
 ### Infrastructure
-- **HTTPS Only:** All traffic encrypted in transit (AWS ALB)
+- **HTTPS Only:** All traffic encrypted in transit (Google Cloud Load Balancer)
 - **Container Security:** Non-root user in Docker containers
-- **Environment Variables:** Secrets managed through AWS Secrets Manager
+- **Environment Variables:** Secrets managed through environment configuration
 - **Health Checks:** Automated monitoring of service health
 
 ### Dependencies
