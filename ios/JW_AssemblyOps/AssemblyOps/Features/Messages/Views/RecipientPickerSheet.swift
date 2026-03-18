@@ -36,6 +36,13 @@ struct RecipientPickerSheet: View {
     @State private var searchText = ""
     @State private var hasAppeared = false
 
+    private var accentColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
+    }
+
     var filteredVolunteers: [VolunteerListItem] {
         if searchText.isEmpty {
             return viewModel.volunteers
@@ -125,7 +132,8 @@ struct RecipientPickerSheet: View {
                         RecipientPickerRow(
                             volunteer: volunteer,
                             isSelected: selectedVolunteerId == volunteer.id,
-                            colorScheme: colorScheme
+                            colorScheme: colorScheme,
+                            accentColor: accentColor
                         )
                     }
                     .buttonStyle(.plain)
@@ -145,18 +153,19 @@ private struct RecipientPickerRow: View {
     let volunteer: VolunteerListItem
     let isSelected: Bool
     let colorScheme: ColorScheme
+    var accentColor: Color = AppTheme.themeColor
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.m) {
             // Avatar with initials
             ZStack {
                 Circle()
-                    .fill(isSelected ? AppTheme.themeColor.opacity(0.15) : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    .fill(isSelected ? accentColor.opacity(0.15) : AppTheme.cardBackgroundSecondary(for: colorScheme))
                     .frame(width: 44, height: 44)
 
                 Text(volunteer.initials)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(isSelected ? AppTheme.themeColor : AppTheme.textSecondary(for: colorScheme))
+                    .foregroundStyle(isSelected ? accentColor : AppTheme.textSecondary(for: colorScheme))
             }
 
             // Volunteer info
@@ -176,14 +185,14 @@ private struct RecipientPickerRow: View {
             if isSelected {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 22))
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
             }
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
         .overlay(
             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
-                .strokeBorder(isSelected ? AppTheme.themeColor.opacity(0.3) : Color.clear, lineWidth: 2)
+                .strokeBorder(isSelected ? accentColor.opacity(0.3) : Color.clear, lineWidth: 2)
         )
     }
 }

@@ -131,9 +131,15 @@ const messageTypeDefs = `#graphql
     deleteConversation(id: ID!): Boolean!
 
     # Admin only
-    sendDepartmentMessage(input: SendDepartmentMessageInput!): [Message!]!
-    sendBroadcast(input: SendBroadcastInput!): [Message!]!
+    sendDepartmentMessage(input: SendDepartmentMessageInput!): Conversation!
+    sendBroadcast(input: SendBroadcastInput!): Conversation!
     sendMultiMessage(input: SendMultiMessageInput!): [Message!]!
+  }
+
+  extend type Subscription {
+    messageReceived(eventId: ID!): Message!
+    conversationMessageReceived(conversationId: ID!): Message!
+    unreadCountUpdated: Int!
   }
 `;
 

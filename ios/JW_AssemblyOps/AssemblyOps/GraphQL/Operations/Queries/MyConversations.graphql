@@ -2,6 +2,8 @@ query MyConversations($eventId: ID!, $limit: Int, $offset: Int) {
   myConversations(eventId: $eventId, limit: $limit, offset: $offset) {
     id
     subject
+    type
+    departmentName
     unreadCount
     createdAt
     updatedAt
@@ -17,6 +19,8 @@ query MyConversations($eventId: ID!, $limit: Int, $offset: Int) {
       participantType
       participantId
       displayName
+      phone
+      congregation
       lastReadAt
     }
   }

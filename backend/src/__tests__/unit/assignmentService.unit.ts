@@ -194,7 +194,7 @@ describe('AssignmentService', () => {
       ).rejects.toThrow('Shift does not belong to the specified session');
     });
 
-    it('throws ConflictError when an overlapping shift assignment exists for the volunteer', async () => {
+    it('returns warning when an overlapping shift assignment exists at a different post', async () => {
       // New shift: 10:00 – 14:00; existing shift: 08:00 – 12:00 → overlap
       const newShift = {
         id: 'shift-new',
@@ -205,23 +205,30 @@ describe('AssignmentService', () => {
       const existingShiftAssignment = {
         id: 'assign-existing',
         shiftId: 'shift-existing',
+        postId: 'post-2',
         shift: {
           id: 'shift-existing',
           startTime: new Date('2026-03-01T08:00:00Z'),
           endTime: new Date('2026-03-01T12:00:00Z'),
         },
-        post: { ...mockPost },
+        post: { id: 'post-2', name: 'Post 2', department: { eventId: 'event-1', departmentType: 'ATTENDANT' }, area: null },
       };
+      const createdAssignment = makeAssignment({ shiftId: 'shift-new' });
 
       vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(mockVolunteer as never);
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost as never);
       vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
       vi.mocked(prisma.shift.findUnique).mockResolvedValue(newShift as never);
       vi.mocked(prisma.scheduleAssignment.findMany).mockResolvedValue([existingShiftAssignment] as never);
+      vi.mocked(prisma.scheduleAssignment.create).mockResolvedValue(createdAssignment as never);
 
-      await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-new', canCount: false, force: false })
-      ).rejects.toThrow(ConflictError);
+      const result = await service.createAssignment({
+        volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: 'shift-new', canCount: false, force: false,
+      });
+
+      expect(result.assignment).toEqual(createdAssignment);
+      expect(result.warning).toContain('overlapping assignment');
+      expect(prisma.scheduleAssignment.create).toHaveBeenCalledOnce();
     });
 
     it('creates assignment when shift provided with no overlap', async () => {
@@ -264,21 +271,27 @@ describe('AssignmentService', () => {
       expect(prisma.scheduleAssignment.create).toHaveBeenCalledOnce();
     });
 
-    it('throws ConflictError when volunteer already has a null-shift assignment for the same session', async () => {
-      const existingNullShiftAssignment = makeAssignment({ shiftId: null, post: { ...mockPost } });
+    it('returns warning when volunteer already has a null-shift assignment at a different post in the same session', async () => {
+      const existingAtOtherPost = makeAssignment({
+        shiftId: null,
+        postId: 'post-2',
+        post: { id: 'post-2', name: 'Post 2', department: { eventId: 'event-1', departmentType: 'ATTENDANT' }, area: null },
+      });
+      const createdAssignment = makeAssignment({ postId: 'post-1' });
 
       vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(mockVolunteer as never);
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost as never);
       vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
-      vi.mocked(prisma.scheduleAssignment.findMany).mockResolvedValue([existingNullShiftAssignment] as never);
+      vi.mocked(prisma.scheduleAssignment.findMany).mockResolvedValue([existingAtOtherPost] as never);
+      vi.mocked(prisma.scheduleAssignment.create).mockResolvedValue(createdAssignment as never);
 
-      await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
-      ).rejects.toThrow(ConflictError);
+      const result = await service.createAssignment({
+        volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false,
+      });
 
-      await expect(
-        service.createAssignment({ volunteerId: 'vol-1', postId: 'post-1', sessionId: 'session-1', shiftId: null, canCount: false, force: false })
-      ).rejects.toThrow('already assigned');
+      expect(result.assignment).toEqual(createdAssignment);
+      expect(result.warning).toContain('already assigned');
+      expect(prisma.scheduleAssignment.create).toHaveBeenCalledOnce();
     });
 
     it('creates assignment when no null-shift conflict exists (legacy path)', async () => {
@@ -497,7 +510,7 @@ describe('AssignmentService', () => {
       ).rejects.toThrow('Captain designation is only available for the Attendant department');
     });
 
-    it('updates existing assignment to ACCEPTED with forceAssigned=true when one already exists', async () => {
+    it('updates existing assignment to ACCEPTED with forceAssigned=true when exact duplicate exists', async () => {
       const existingAssignment = makeAssignment({ status: 'PENDING' });
       const updatedAssignment = makeAssignment({ status: 'ACCEPTED', forceAssigned: true });
 
@@ -506,6 +519,7 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
       vi.mocked(prisma.scheduleAssignment.findFirst).mockResolvedValue(existingAssignment as never);
       vi.mocked(prisma.scheduleAssignment.update).mockResolvedValue(updatedAssignment as never);
+      vi.mocked(prisma.scheduleAssignment.count).mockResolvedValue(0 as never);
 
       const result = await service.forceAssignment({
         volunteerId: 'vol-1',
@@ -516,8 +530,9 @@ describe('AssignmentService', () => {
         canCount: false,
       });
 
-      expect(result.status).toBe('ACCEPTED');
-      expect(result.forceAssigned).toBe(true);
+      expect(result.assignment.status).toBe('ACCEPTED');
+      expect(result.assignment.forceAssigned).toBe(true);
+      expect(result.warning).toBeNull();
       expect(prisma.scheduleAssignment.update).toHaveBeenCalledOnce();
       expect(prisma.scheduleAssignment.create).not.toHaveBeenCalled();
 
@@ -536,6 +551,7 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
       vi.mocked(prisma.scheduleAssignment.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.scheduleAssignment.create).mockResolvedValue(newAssignment as never);
+      vi.mocked(prisma.scheduleAssignment.count).mockResolvedValue(0 as never);
 
       const result = await service.forceAssignment({
         volunteerId: 'vol-1',
@@ -546,8 +562,9 @@ describe('AssignmentService', () => {
         canCount: false,
       });
 
-      expect(result.status).toBe('ACCEPTED');
-      expect(result.forceAssigned).toBe(true);
+      expect(result.assignment.status).toBe('ACCEPTED');
+      expect(result.assignment.forceAssigned).toBe(true);
+      expect(result.warning).toBeNull();
       expect(prisma.scheduleAssignment.create).toHaveBeenCalledOnce();
       expect(prisma.scheduleAssignment.update).not.toHaveBeenCalled();
 
@@ -566,6 +583,7 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
       vi.mocked(prisma.scheduleAssignment.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.scheduleAssignment.create).mockResolvedValue(newAssignment as never);
+      vi.mocked(prisma.scheduleAssignment.count).mockResolvedValue(0 as never);
 
       const result = await service.forceAssignment({
         volunteerId: 'vol-1',
@@ -576,7 +594,7 @@ describe('AssignmentService', () => {
         canCount: true,
       });
 
-      expect(result.canCount).toBe(true);
+      expect(result.assignment.canCount).toBe(true);
 
       const createArgs = vi.mocked(prisma.scheduleAssignment.create).mock.calls[0][0] as {
         data: { canCount: boolean };
@@ -593,6 +611,7 @@ describe('AssignmentService', () => {
       vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
       vi.mocked(prisma.scheduleAssignment.findFirst).mockResolvedValue(existingAssignment as never);
       vi.mocked(prisma.scheduleAssignment.update).mockResolvedValue(updatedAssignment as never);
+      vi.mocked(prisma.scheduleAssignment.count).mockResolvedValue(0 as never);
 
       const result = await service.forceAssignment({
         volunteerId: 'vol-1',
@@ -603,12 +622,36 @@ describe('AssignmentService', () => {
         canCount: true,
       });
 
-      expect(result.canCount).toBe(true);
+      expect(result.assignment.canCount).toBe(true);
 
       const updateArgs = vi.mocked(prisma.scheduleAssignment.update).mock.calls[0][0] as {
         data: { canCount: boolean };
       };
       expect(updateArgs.data.canCount).toBe(true);
+    });
+
+    it('force-assign to new post in same session creates second assignment with warning', async () => {
+      const newAssignment = makeAssignment({ id: 'assign-2', postId: 'post-2', status: 'ACCEPTED', forceAssigned: true });
+
+      vi.mocked(prisma.eventVolunteer.findUnique).mockResolvedValue(mockVolunteer as never);
+      vi.mocked(prisma.post.findUnique).mockResolvedValue({ ...mockPost, id: 'post-2' } as never);
+      vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession as never);
+      vi.mocked(prisma.scheduleAssignment.findFirst).mockResolvedValue(null); // no exact duplicate
+      vi.mocked(prisma.scheduleAssignment.create).mockResolvedValue(newAssignment as never);
+      vi.mocked(prisma.scheduleAssignment.count).mockResolvedValue(1 as never); // 1 other assignment
+
+      const result = await service.forceAssignment({
+        volunteerId: 'vol-1',
+        postId: 'post-2',
+        sessionId: 'session-1',
+        shiftId: null,
+        isCaptain: false,
+        canCount: false,
+      });
+
+      expect(result.assignment.status).toBe('ACCEPTED');
+      expect(result.warning).toContain('1 other assignment(s)');
+      expect(prisma.scheduleAssignment.create).toHaveBeenCalledOnce();
     });
   });
 

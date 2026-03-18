@@ -98,7 +98,9 @@ struct LandingView: View {
             }
             .scaleEffect(hasAppeared ? 1.0 : 1.02)
             .animation(
-                .easeInOut(duration: 2.2).repeatForever(autoreverses: true),
+                UIAccessibility.isReduceMotionEnabled
+                    ? nil
+                    : .easeInOut(duration: 2.2).repeatForever(autoreverses: true),
                 value: hasAppeared
             )
 
@@ -108,7 +110,7 @@ struct LandingView: View {
                     .foregroundStyle(AppTheme.themeColor)
                     .tracking(0.3)
 
-                Text("Volunteer scheduling\nmade simple.")
+                Text("auth.landing.tagline".localized)
                     .font(.system(size: 17, weight: .regular))
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                     .multilineTextAlignment(.center)

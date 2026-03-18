@@ -92,6 +92,7 @@ struct MessageDetailView: View {
             .padding(.vertical, AppTheme.Spacing.xs)
             .background(recipientColor.opacity(0.12))
             .clipShape(Capsule())
+            .accessibilityLabel("\(message.recipientType.displayName) message")
 
             // Subject
             Text(message.displaySubject)
@@ -184,7 +185,7 @@ struct MessageDetailView: View {
         case .volunteer: return AppTheme.themeColor
         case .department: return .blue
         case .event: return .purple
-        case .admin: return .orange
+        case .user: return .orange
         }
     }
 }

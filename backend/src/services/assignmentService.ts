@@ -9,7 +9,7 @@
  *   - Assignment acceptance workflow (PENDING → ACCEPTED/DECLINED)
  *   - Captain role with group check-in capabilities
  *   - Force-assign for critical posts (bypasses acceptance)
- *   - Conflict detection: One volunteer per session
+ *   - Multi-post assignments per session (with warnings)
  *   - Unlimited assignment per post (no capacity limits)
  *   - Coverage matrix: Posts × Sessions grid (ACCEPTED assignments only)
  *
@@ -34,7 +34,7 @@
  *
  * Business Rules:
  *   - Volunteer, Post, and Session must belong to the same Event
- *   - A volunteer can only have ONE assignment per session (no double-booking)
+ *   - A volunteer can have multiple assignments per session (warnings surfaced)
  *   - No capacity limits — overseers can assign unlimited volunteers per post
  *   - Only ACCEPTED assignments count toward coverage
  *
@@ -159,7 +159,7 @@ export class AssignmentService {
       throw new ValidationError(result.error.issues[0].message);
     }
 
-    const { volunteerId, postId, sessionId, shiftId, canCount, force } = result.data;
+    const { volunteerId, postId, sessionId, shiftId, canCount } = result.data;
 
     const [volunteer, post, session] = await Promise.all([
       this.prisma.eventVolunteer.findUnique({
@@ -224,41 +224,29 @@ export class AssignmentService {
     });
 
     for (const existing of existingAssignments) {
+      // Skip if same post (exact duplicate will be caught by unique constraint)
+      if (existing.postId === postId) continue;
+
       const existingTimeRange = this.getEffectiveTimeRange(
         existing.shift ? { startTime: existing.shift.startTime, endTime: existing.shift.endTime } : null,
         existing.post.area
       );
 
-      // Case 1: Both whole-session → hard conflict (unchanged behavior)
+      // Case 1: Both whole-session → warn about double-booking
       if (!newTimeRange && !existingTimeRange) {
-        throw new ConflictError(
-          `${volunteerName} is already assigned to another post for this session`
-        );
+        warning = `${volunteerName} is already assigned to "${existing.post.name}" for this session`;
+        continue;
       }
 
-      // Case 2: Both timed → standard overlap check → hard conflict
+      // Case 2: Both timed → standard overlap check → warn if overlapping
       if (newTimeRange && existingTimeRange) {
         if (this.timesOverlap(newTimeRange, existingTimeRange)) {
-          throw new ConflictError(
-            `${volunteerName} has an overlapping assignment in this session`
-          );
+          warning = `${volunteerName} has an overlapping assignment at "${existing.post.name}" in this session`;
         }
         continue;
       }
 
-      // Case 3: One timed, one whole-session → soft conflict with warning
-      // The timed range always overlaps a whole-session by definition,
-      // so we issue a warning (not a hard block) suggesting the overseer
-      // create a shift for the whole-session assignment.
-      if (!force) {
-        const wholeSessionPostName = newTimeRange ? existing.post.name : post.name;
-        throw new ConflictError(
-          `${volunteerName} has a whole-session assignment at "${wholeSessionPostName}". ` +
-          `Consider creating a shift for that assignment to avoid overlap. ` +
-          `Use force to proceed anyway.`
-        );
-      }
-      // force=true: set warning and continue
+      // Case 3: One timed, one whole-session → warn about potential overlap
       const wholeSessionPostName = newTimeRange ? existing.post.name : post.name;
       warning = `${volunteerName} also has a whole-session assignment at "${wholeSessionPostName}". Consider creating a shift for that assignment to avoid overlap.`;
     }
@@ -762,7 +750,7 @@ export class AssignmentService {
   /**
    * Force-assign a volunteer (overseer action) - bypasses acceptance workflow
    */
-  async forceAssignment(input: ForceAssignmentInput, createdByUserId?: string): Promise<ScheduleAssignment> {
+  async forceAssignment(input: ForceAssignmentInput, createdByUserId?: string): Promise<{ assignment: ScheduleAssignment; warning: string | null }> {
     const result = forceAssignmentSchema.safeParse(input);
     if (!result.success) {
       throw new ValidationError(result.error.issues[0].message);
@@ -812,20 +800,22 @@ export class AssignmentService {
       }
     }
 
-    // Check if assignment already exists for this volunteer/session/shift combo
+    // Check if exact duplicate exists (same volunteer + same post + same session + same shift)
     const existing = await this.prisma.scheduleAssignment.findFirst({
       where: {
         eventVolunteerId: volunteerId,
+        postId,
         sessionId,
         shiftId: shiftId || null,
       },
     });
 
+    let assignment: ScheduleAssignment;
+
     if (existing) {
-      return this.prisma.scheduleAssignment.update({
+      assignment = await this.prisma.scheduleAssignment.update({
         where: { id: existing.id },
         data: {
-          postId,
           status: 'ACCEPTED',
           forceAssigned: true,
           isCaptain: isCaptain ?? existing.isCaptain,
@@ -839,30 +829,45 @@ export class AssignmentService {
           shift: true,
         },
       });
+    } else {
+      // Create new force-assigned assignment
+      assignment = await this.prisma.scheduleAssignment.create({
+        data: {
+          eventVolunteerId: volunteerId,
+          postId,
+          sessionId,
+          shiftId: shiftId || undefined,
+          status: 'ACCEPTED',
+          forceAssigned: true,
+          isCaptain: isCaptain ?? false,
+          canCount: canCount ?? false,
+          respondedAt: new Date(),
+          ...(createdByUserId ? { createdByUserId } : {}),
+        },
+        include: {
+          eventVolunteer: { include: { user: true } },
+          post: { include: { department: true } },
+          session: true,
+          shift: true,
+          createdBy: true,
+        },
+      });
     }
 
-    // Create new force-assigned assignment
-    return this.prisma.scheduleAssignment.create({
-      data: {
+    // Check if volunteer has OTHER assignments in same session (multi-post warning)
+    const otherAssignments = await this.prisma.scheduleAssignment.count({
+      where: {
         eventVolunteerId: volunteerId,
-        postId,
         sessionId,
-        shiftId: shiftId || undefined,
-        status: 'ACCEPTED',
-        forceAssigned: true,
-        isCaptain: isCaptain ?? false,
-        canCount: canCount ?? false,
-        respondedAt: new Date(),
-        ...(createdByUserId ? { createdByUserId } : {}),
-      },
-      include: {
-        eventVolunteer: { include: { user: true } },
-        post: { include: { department: true } },
-        session: true,
-        shift: true,
-        createdBy: true,
+        id: { not: assignment.id },
       },
     });
+
+    const warning = otherAssignments > 0
+      ? `Volunteer has ${otherAssignments} other assignment(s) in this session`
+      : null;
+
+    return { assignment, warning };
   }
 
   /**

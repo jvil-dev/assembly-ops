@@ -8,13 +8,15 @@
 // MARK: - Captain Scheduling View
 //
 // Captain's scheduling interface for the attendant department.
-// Allows captains to view shifts, manage assignments, and create shifts
-// within their department scope.
+// Shows post cards with coverage info, filtered to the captain's assigned areas.
+// Uses CoverageMatrixViewModel (same data as overseer) with client-side area filtering.
+// Opens the overseer's SlotDetailSheet for managing shifts and assignments.
 //
-// Features:
-//   - Session picker
-//   - Shift list with create/delete
-//   - Volunteer assignment actions (add, swap, remove)
+// Architecture:
+//   CaptainSchedulingView (session picker + post cards)
+//     └─ tap post card → SlotDetailSheet (overseer's, reused as-is)
+//          ├─ VolunteerPickerSheet (assign to whole session or shift)
+//          └─ CreateShiftSheet (create shifts)
 //
 
 import SwiftUI
@@ -23,23 +25,48 @@ struct CaptainSchedulingView: View {
     let eventId: String
     let departmentId: String
     let departmentType: String
+    let captainAreasBySession: [String: [String]]
 
-    @StateObject private var viewModel = CaptainSchedulingViewModel()
+    @StateObject private var coverageVM = CoverageMatrixViewModel()
+    @ObservedObject private var sessionState = EventSessionState.shared
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
-    @State private var showCreateShift = false
+    @State private var selectedSession: CoverageSession?
+    @State private var selectedSlot: CoverageSlot?
     @State private var showError = false
-    @State private var assignmentToRemove: ShiftAssignment?
-    @State private var showRemoveConfirmation = false
-    @State private var shiftToAssign: ShiftItem?
 
     private var accentColor: Color {
         DepartmentColor.color(for: departmentType)
     }
 
+    /// Area IDs the captain is assigned to for the currently selected session
+    private var currentSessionAreaIds: [String] {
+        guard let sessionId = selectedSession?.id else { return [] }
+        return captainAreasBySession[sessionId] ?? []
+    }
+
+    /// Posts filtered to captain's assigned areas for the current session
+    private var captainPosts: [CoveragePost] {
+        let areaIds = currentSessionAreaIds
+        return coverageVM.posts.filter { post in
+            guard let areaId = post.areaId else { return false }
+            return areaIds.contains(areaId)
+        }
+    }
+
+    /// Slots for the selected session, filtered to captain's area posts
+    private func slotsForSession(_ sessionId: String) -> [CoverageSlot] {
+        let areaIds = captainAreasBySession[sessionId] ?? []
+        let postIds = Set(coverageVM.posts.filter { post in
+            guard let areaId = post.areaId else { return false }
+            return areaIds.contains(areaId)
+        }.map { $0.id })
+        return coverageVM.slots.filter { $0.sessionId == sessionId && postIds.contains($0.postId) }
+    }
+
     var body: some View {
         Group {
-            if viewModel.isLoading && viewModel.sessions.isEmpty {
+            if coverageVM.isLoading && coverageVM.slots.isEmpty {
                 LoadingView(message: "captain.scheduling.title".localized)
                     .themedBackground(scheme: colorScheme)
             } else {
@@ -48,9 +75,18 @@ struct CaptainSchedulingView: View {
                         sessionPicker
                             .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                        if let session = viewModel.selectedSession {
-                            shiftsSection(for: session)
-                                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+                        if let session = selectedSession {
+                            let slots = slotsForSession(session.id)
+
+                            summaryCard(slots: slots)
+                                .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
+
+                            if slots.isEmpty {
+                                emptyState
+                                    .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
+                            } else {
+                                postsSection(slots: slots)
+                            }
                         }
                     }
                     .screenPadding()
@@ -59,83 +95,39 @@ struct CaptainSchedulingView: View {
                 }
                 .themedBackground(scheme: colorScheme)
                 .refreshable {
-                    if let session = viewModel.selectedSession {
-                        await viewModel.loadShifts(sessionId: session.id)
-                    }
+                    await coverageVM.loadCoverage()
                 }
             }
         }
         .navigationTitle("captain.scheduling.title".localized)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showCreateShift = true
-                    HapticManager.shared.lightTap()
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(accentColor)
-                }
-                .disabled(viewModel.selectedSession == nil)
-            }
-        }
-        .sheet(isPresented: $showCreateShift) {
-            if let session = viewModel.selectedSession {
-                CaptainCreateShiftSheet(
-                    eventId: eventId,
-                    sessionId: session.id,
-                    sessionName: session.name,
-                    departmentType: departmentType,
-                    viewModel: viewModel
-                )
-            }
-        }
-        .sheet(item: $shiftToAssign) { shift in
-            CaptainVolunteerPickerSheet(
-                eventId: eventId,
-                postId: shift.postId,
-                sessionId: shift.sessionId,
-                shiftId: shift.id,
-                departmentType: departmentType,
-                volunteers: viewModel.volunteers,
-                viewModel: viewModel
-            ) {
-                // Reload shifts after assignment
-                if let session = viewModel.selectedSession {
-                    Task {
-                        await viewModel.loadShifts(sessionId: session.id)
-                    }
-                }
-            }
+        .sheet(item: $selectedSlot) { slot in
+            SlotDetailSheet(initialSlot: slot, viewModel: coverageVM)
         }
         .alert("common.error".localized, isPresented: $showError) {
             Button("common.ok".localized, role: .cancel) {}
         } message: {
-            Text(viewModel.error ?? "")
+            Text(coverageVM.error ?? "")
         }
-        .onChange(of: viewModel.error) { _, newValue in
-            showError = newValue != nil
-        }
-        .alert("Remove Assignment", isPresented: $showRemoveConfirmation) {
-            Button("Cancel", role: .cancel) {
-                assignmentToRemove = nil
-            }
-            Button("Remove", role: .destructive) {
-                if let assignment = assignmentToRemove {
-                    Task {
-                        await viewModel.deleteAssignment(eventId: eventId, assignmentId: assignment.id)
-                    }
-                }
-                assignmentToRemove = nil
-            }
-        } message: {
-            if let assignment = assignmentToRemove {
-                Text("Remove \(assignment.volunteerName) from this shift?")
-            }
+        .onChange(of: coverageVM.error) { _, newValue in
+            if newValue != nil { showError = true }
         }
         .task {
-            await viewModel.loadSessions(eventId: eventId)
-            await viewModel.loadVolunteers(eventId: eventId, departmentId: departmentId)
-            await viewModel.loadPosts(departmentId: departmentId)
+            // Set up session state so SlotDetailSheet and VolunteerPickerSheet work
+            sessionState.selectedDepartment = DepartmentSummary(
+                id: departmentId,
+                name: departmentType.capitalized,
+                departmentType: departmentType,
+                volunteerCount: 0
+            )
+            coverageVM.departmentId = departmentId
+            await coverageVM.loadCoverage()
+
+            // Auto-select first session that has captain areas
+            if selectedSession == nil {
+                selectedSession = coverageVM.sessions.first { session in
+                    captainAreasBySession[session.id] != nil
+                } ?? coverageVM.sessions.first
+            }
         }
         .onAppear {
             withAnimation(AppTheme.entranceAnimation) {
@@ -152,28 +144,25 @@ struct CaptainSchedulingView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: AppTheme.Spacing.s) {
-                    ForEach(viewModel.sessions) { session in
+                    ForEach(coverageVM.sessions) { session in
                         Button {
                             withAnimation(AppTheme.quickAnimation) {
-                                viewModel.selectedSession = session
-                            }
-                            Task {
-                                await viewModel.loadShifts(sessionId: session.id)
+                                selectedSession = session
                             }
                             HapticManager.shared.lightTap()
                         } label: {
                             Text(session.name)
                                 .font(AppTheme.Typography.subheadline)
-                                .fontWeight(viewModel.selectedSession?.id == session.id ? .semibold : .regular)
+                                .fontWeight(selectedSession?.id == session.id ? .semibold : .regular)
                                 .padding(.horizontal, AppTheme.Spacing.m)
                                 .padding(.vertical, AppTheme.Spacing.s)
                                 .background(
-                                    viewModel.selectedSession?.id == session.id
+                                    selectedSession?.id == session.id
                                         ? accentColor
                                         : AppTheme.cardBackgroundSecondary(for: colorScheme)
                                 )
                                 .foregroundStyle(
-                                    viewModel.selectedSession?.id == session.id
+                                    selectedSession?.id == session.id
                                         ? .white
                                         : AppTheme.textSecondary(for: colorScheme)
                                 )
@@ -188,112 +177,107 @@ struct CaptainSchedulingView: View {
         .themedCard(scheme: colorScheme)
     }
 
-    // MARK: - Shifts Section
+    // MARK: - Summary Card
 
-    private func shiftsSection(for session: EventSessionItem) -> some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            HStack {
-                SectionHeaderLabel(icon: "clock", title: "shift.list.title".localized)
-                Spacer()
-                Text("\(viewModel.shifts.count) \("shift.count".localized)")
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-            }
+    private func summaryCard(slots: [CoverageSlot]) -> some View {
+        let totalAssigned = slots.reduce(0) { $0 + $1.filled }
 
-            if viewModel.shifts.isEmpty {
-                VStack(spacing: AppTheme.Spacing.m) {
-                    Image(systemName: "clock.badge.questionmark")
-                        .font(.system(size: 36))
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                    Text("shift.empty".localized)
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                    Text("captain.scheduling.createHint".localized)
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, AppTheme.Spacing.xl)
-            } else {
-                ForEach(viewModel.shifts) { shift in
-                    captainShiftRow(shift)
-                }
-            }
+        return HStack(spacing: AppTheme.Spacing.xl) {
+            statBadge(value: "\(slots.count)", label: "captain.scheduling.posts".localized)
+            statBadge(value: "\(totalAssigned)", label: "captain.scheduling.assigned".localized)
         }
+        .frame(maxWidth: .infinity)
         .cardPadding()
         .themedCard(scheme: colorScheme)
     }
 
-    // MARK: - Captain Shift Row
-
-    private func toggleCanCount(_ assignment: ShiftAssignment) async {
-        let input = AssemblyOpsAPI.SetCanCountInput(
-            assignmentId: assignment.id,
-            canCount: !assignment.canCount
-        )
-        do {
-            let _ = try await NetworkClient.shared.apollo.perform(
-                mutation: AssemblyOpsAPI.SetCanCountMutation(input: input)
-            )
-            HapticManager.shared.success()
-            if let session = viewModel.selectedSession {
-                await viewModel.loadShifts(sessionId: session.id)
-            }
-        } catch {
-            HapticManager.shared.error()
+    private func statBadge(value: String, label: String) -> some View {
+        VStack(spacing: AppTheme.Spacing.xs) {
+            Text(value)
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(accentColor)
+            Text(label)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
         }
     }
 
-    private func captainShiftRow(_ shift: ShiftItem) -> some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-            HStack(spacing: AppTheme.Spacing.m) {
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                    Text(shift.name)
-                        .font(AppTheme.Typography.bodyMedium)
-                        .foregroundStyle(.primary)
-                    HStack(spacing: AppTheme.Spacing.xs) {
-                        Text(shift.timeRangeDisplay)
-                        if let postName = shift.postName {
-                            Text("·")
-                            Text(postName)
-                        }
-                    }
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+    // MARK: - Posts Section
 
-                    if let createdBy = shift.createdByName {
-                        Text("Created by \(createdBy)")
-                            .font(AppTheme.Typography.caption)
-                            .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+    private func postsSection(slots: [CoverageSlot]) -> some View {
+        VStack(spacing: AppTheme.Spacing.m) {
+            ForEach(Array(slots.enumerated()), id: \.element.id) { index, slot in
+                Button {
+                    selectedSlot = slot
+                    HapticManager.shared.lightTap()
+                } label: {
+                    postCard(slot: slot)
+                }
+                .buttonStyle(.plain)
+                .entranceAnimation(hasAppeared: hasAppeared, delay: Double(index) * 0.03 + 0.1)
+            }
+        }
+    }
+
+    // MARK: - Post Card
+
+    private func postCard(slot: CoverageSlot) -> some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
+            // Post header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(slot.postName)
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(.primary)
+
+                    if !slot.shifts.isEmpty {
+                        HStack(spacing: AppTheme.Spacing.xs) {
+                            Image(systemName: "clock")
+                                .font(.system(size: 10))
+                            Text("slot.shifts.count".localized(with: slot.shifts.count))
+                                .font(AppTheme.Typography.caption)
+                        }
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                     }
                 }
 
                 Spacer()
 
-                Button {
-                    Task {
-                        await viewModel.deleteShift(id: shift.id, eventId: eventId)
-                    }
-                } label: {
-                    Image(systemName: "trash.circle")
-                        .font(.title3)
-                        .foregroundStyle(AppTheme.StatusColors.declined)
-                }
-                .buttonStyle(.plain)
+                // Assigned count badge
+                Text("\(slot.filled) \("captain.scheduling.assigned".localized)")
+                    .font(AppTheme.Typography.captionBold)
+                    .foregroundStyle(statusColor(for: slot))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(statusBackground(for: slot))
+                    .clipShape(Capsule())
             }
 
             // Assigned volunteers
-            if !shift.assignments.isEmpty {
-                VStack(spacing: AppTheme.Spacing.xs) {
-                    ForEach(shift.assignments) { assignment in
+            if slot.assignments.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: "person.slash")
+                        .font(.system(size: 12))
+                    Text("captain.scheduling.noAssigned".localized)
+                }
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(slot.assignments) { assignment in
                         HStack(spacing: AppTheme.Spacing.s) {
-                            Image(systemName: assignment.isCheckedIn ? "checkmark.circle.fill" : "person.fill")
-                                .font(.system(size: 12))
-                                .foregroundStyle(assignment.isCheckedIn ? AppTheme.StatusColors.accepted : AppTheme.textTertiary(for: colorScheme))
+                            ZStack {
+                                Circle()
+                                    .fill(volunteerColor(assignment).opacity(0.15))
+                                    .frame(width: 28, height: 28)
 
-                            Text(assignment.volunteerName)
-                                .font(AppTheme.Typography.subheadline)
+                                Text(initials(for: assignment.volunteer))
+                                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(volunteerColor(assignment))
+                            }
+
+                            Text("\(assignment.volunteer.firstName) \(assignment.volunteer.lastName)")
+                                .font(AppTheme.Typography.body)
                                 .foregroundStyle(.primary)
 
                             if assignment.canCount {
@@ -304,224 +288,97 @@ struct CaptainSchedulingView: View {
 
                             Spacer()
 
-                            Button {
-                                assignmentToRemove = assignment
-                                showRemoveConfirmation = true
-                            } label: {
-                                Image(systemName: "xmark.circle")
-                                    .font(.system(size: 16))
-                                    .foregroundStyle(AppTheme.StatusColors.declined.opacity(0.7))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(.horizontal, AppTheme.Spacing.s)
-                        .padding(.vertical, AppTheme.Spacing.xs)
-                        .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
-                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
-                        .contextMenu {
-                            Button {
-                                Task { await toggleCanCount(assignment) }
-                            } label: {
-                                Label(
-                                    assignment.canCount ? "assignment.canCount.unmark".localized : "assignment.canCount.mark".localized,
-                                    systemImage: assignment.canCount ? "number.square" : "number.square.fill"
-                                )
+                            if assignment.checkIn != nil {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(AppTheme.StatusColors.accepted)
+                            } else if assignment.isPending {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(AppTheme.StatusColors.pending)
                             }
                         }
                     }
                 }
-                .padding(.leading, AppTheme.Spacing.xs)
             }
 
-            // Add volunteer button
-            Button {
-                shiftToAssign = shift
-                HapticManager.shared.lightTap()
-            } label: {
+            // Post location
+            if let post = captainPosts.first(where: { $0.id == slot.postId }),
+               let location = post.location, !location.isEmpty {
                 HStack(spacing: AppTheme.Spacing.xs) {
-                    Image(systemName: "person.badge.plus")
-                        .font(.system(size: 14))
-                    Text("captain.scheduling.addVolunteer".localized)
-                        .font(AppTheme.Typography.subheadline)
+                    Image(systemName: "mappin")
+                        .font(.system(size: 10))
+                    Text(location)
+                        .font(AppTheme.Typography.caption)
                 }
-                .foregroundStyle(accentColor)
-                .padding(.horizontal, AppTheme.Spacing.m)
-                .padding(.vertical, AppTheme.Spacing.s)
-                .background(accentColor.opacity(0.1))
-                .clipShape(Capsule())
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
-            .buttonStyle(.plain)
-
-            Divider()
         }
-        .padding(.vertical, AppTheme.Spacing.xs)
-    }
-}
-
-// MARK: - Captain Create Shift Sheet
-
-struct CaptainCreateShiftSheet: View {
-    let eventId: String
-    let sessionId: String
-    let sessionName: String
-    let departmentType: String
-    @ObservedObject var viewModel: CaptainSchedulingViewModel
-
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) var colorScheme
-
-    @State private var selectedPostId: String?
-    @State private var startTime = Date()
-    @State private var endTime = Date()
-    @State private var isSubmitting = false
-
-    private var accentColor: Color {
-        DepartmentColor.color(for: departmentType)
+        .cardPadding()
+        .themedCard(scheme: colorScheme)
     }
 
-    private var isFormValid: Bool {
-        selectedPostId != nil &&
-        endTime > startTime
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        VStack(spacing: AppTheme.Spacing.m) {
+            Image(systemName: "mappin.and.ellipse")
+                .font(.system(size: 36))
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+            Text("captain.scheduling.noPosts".localized)
+                .font(AppTheme.Typography.body)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            Text("captain.scheduling.noPostsHint".localized)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppTheme.Spacing.xl)
     }
 
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: AppTheme.Spacing.xl) {
-                    // Session info
-                    VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-                        SectionHeaderLabel(icon: "calendar", title: "shift.session".localized)
-                        Text(sessionName)
-                            .font(AppTheme.Typography.bodyMedium)
-                            .foregroundStyle(.primary)
-                    }
-                    .cardPadding()
-                    .themedCard(scheme: colorScheme)
+    // MARK: - Helpers
 
-                    // Post picker
-                    VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                        SectionHeaderLabel(icon: "mappin.and.ellipse", title: "shift.post".localized)
-
-                        if viewModel.posts.isEmpty {
-                            Text("shift.noPosts".localized)
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                        } else {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: AppTheme.Spacing.s) {
-                                    ForEach(viewModel.posts) { post in
-                                        Button {
-                                            withAnimation(AppTheme.quickAnimation) {
-                                                selectedPostId = post.id
-                                            }
-                                            HapticManager.shared.lightTap()
-                                        } label: {
-                                            Text(post.name)
-                                                .font(AppTheme.Typography.subheadline)
-                                                .fontWeight(selectedPostId == post.id ? .semibold : .regular)
-                                                .padding(.horizontal, AppTheme.Spacing.m)
-                                                .padding(.vertical, AppTheme.Spacing.s)
-                                                .background(
-                                                    selectedPostId == post.id
-                                                        ? accentColor
-                                                        : AppTheme.cardBackgroundSecondary(for: colorScheme)
-                                                )
-                                                .foregroundStyle(
-                                                    selectedPostId == post.id
-                                                        ? .white
-                                                        : AppTheme.textSecondary(for: colorScheme)
-                                                )
-                                                .clipShape(Capsule())
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .cardPadding()
-                    .themedCard(scheme: colorScheme)
-
-                    // Time pickers
-                    VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-                        SectionHeaderLabel(icon: "clock", title: "shift.times".localized)
-                        DatePicker("shift.startTime".localized, selection: $startTime, displayedComponents: .hourAndMinute)
-                            .font(AppTheme.Typography.body)
-                        DatePicker("shift.endTime".localized, selection: $endTime, displayedComponents: .hourAndMinute)
-                            .font(AppTheme.Typography.body)
-
-                        if endTime <= startTime {
-                            HStack(spacing: AppTheme.Spacing.xs) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(AppTheme.StatusColors.warning)
-                                Text("shift.timeError".localized)
-                                    .font(AppTheme.Typography.caption)
-                                    .foregroundStyle(AppTheme.StatusColors.warning)
-                            }
-                        }
-                    }
-                    .cardPadding()
-                    .themedCard(scheme: colorScheme)
-
-                    // Submit
-                    Button {
-                        Task { await createShift() }
-                    } label: {
-                        Group {
-                            if isSubmitting {
-                                ProgressView().tint(.white)
-                            } else {
-                                Text("shift.create".localized)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: AppTheme.ButtonHeight.large)
-                        .font(AppTheme.Typography.bodyMedium)
-                        .foregroundStyle(.white)
-                        .background(isFormValid ? accentColor : accentColor.opacity(0.4))
-                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
-                    }
-                    .disabled(!isFormValid || isSubmitting)
-                }
-                .screenPadding()
-                .padding(.top, AppTheme.Spacing.l)
-                .padding(.bottom, AppTheme.Spacing.xxl)
-            }
-            .themedBackground(scheme: colorScheme)
-            .navigationTitle("shift.create".localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("common.cancel".localized) { dismiss() }
-                }
-            }
+    private func statusColor(for slot: CoverageSlot) -> Color {
+        if slot.filled > 0 {
+            return AppTheme.StatusColors.accepted
+        } else if slot.pendingCount > 0 {
+            return AppTheme.StatusColors.pending
+        } else {
+            return AppTheme.StatusColors.declined
         }
     }
 
-    private func createShift() async {
-        guard let postId = selectedPostId else { return }
-        isSubmitting = true
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-
-        await viewModel.createShift(
-            eventId: eventId,
-            sessionId: sessionId,
-            postId: postId,
-            startTime: formatter.string(from: startTime),
-            endTime: formatter.string(from: endTime)
-        )
-
-        isSubmitting = false
-
-        if viewModel.error == nil {
-            dismiss()
+    private func statusBackground(for slot: CoverageSlot) -> Color {
+        if slot.filled > 0 {
+            return AppTheme.StatusColors.acceptedBackground
+        } else if slot.pendingCount > 0 {
+            return AppTheme.StatusColors.pendingBackground
+        } else {
+            return AppTheme.StatusColors.declinedBackground
         }
+    }
+
+    private func initials(for volunteer: CoverageVolunteer) -> String {
+        let first = volunteer.firstName.prefix(1)
+        let last = volunteer.lastName.prefix(1)
+        return String(first + last).uppercased()
+    }
+
+    private func volunteerColor(_ assignment: CoverageAssignment) -> Color {
+        if assignment.checkIn != nil { return AppTheme.StatusColors.accepted }
+        if assignment.isPending { return AppTheme.StatusColors.pending }
+        return accentColor
     }
 }
 
 #Preview {
     NavigationStack {
-        CaptainSchedulingView(eventId: "1", departmentId: "d1", departmentType: "ATTENDANT")
+        CaptainSchedulingView(
+            eventId: "1",
+            departmentId: "d1",
+            departmentType: "ATTENDANT",
+            captainAreasBySession: [:]
+        )
     }
 }

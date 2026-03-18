@@ -104,6 +104,25 @@ final class NotificationHistoryService {
         }
     }
 
+    func deleteNotification(notificationId: String) async throws {
+        let _: Bool = try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.DeleteNotificationMutation(notificationId: notificationId)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: NetworkError.graphQL(errors.first?.message ?? "Failed to delete notification"))
+                        return
+                    }
+                    continuation.resume(returning: graphQLResult.data?.deleteNotification ?? false)
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
     func markAllRead(eventId: String) async throws {
         let _: Bool = try await withCheckedThrowingContinuation { continuation in
             NetworkClient.shared.apollo.perform(

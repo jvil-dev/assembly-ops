@@ -25,6 +25,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import Apollo
 
 @MainActor
 final class ConversationListViewModel: ObservableObject {
@@ -35,6 +36,7 @@ final class ConversationListViewModel: ObservableObject {
 
     private let eventId: String
     private let currentUserId: String?
+    private var messageSubscription: Apollo.Cancellable?
 
     init(eventId: String, currentUserId: String?) {
         self.eventId = eventId
@@ -43,6 +45,14 @@ final class ConversationListViewModel: ObservableObject {
 
     var isEmpty: Bool {
         conversations.isEmpty
+    }
+
+    var broadcastConversations: [Conversation] {
+        conversations.filter { $0.isBroadcast }
+    }
+
+    var directConversations: [Conversation] {
+        conversations.filter { !$0.isBroadcast }
     }
 
     func fetchConversations() async {
@@ -71,6 +81,22 @@ final class ConversationListViewModel: ObservableObject {
             errorMessage = error.localizedDescription
             HapticManager.shared.error()
         }
+    }
+
+    /// Start listening — re-fetches conversation list when any message arrives
+    func startListening() {
+        stopListening()
+        messageSubscription = MessagesService.shared.subscribeToMessages(eventId: eventId) { [weak self] _ in
+            Task { @MainActor in
+                await self?.fetchConversations()
+            }
+        }
+    }
+
+    /// Stop listening for real-time updates
+    func stopListening() {
+        messageSubscription?.cancel()
+        messageSubscription = nil
     }
 
     func refresh() async {

@@ -221,26 +221,10 @@ describe('MessageService', () => {
       ).rejects.toThrow(NotFoundError);
     });
 
-    it('returns empty array when department has no volunteers', async () => {
+    it('happy path — creates conversation and single message for department broadcast', async () => {
       vi.mocked(prisma.department.findUnique).mockResolvedValue({
         id: 'dept-1',
-        eventVolunteers: [],
-        event: { id: 'event-1' },
-      } as never);
-
-      const result = await service.sendDepartmentMessage(sender, {
-        departmentId: 'dept-1',
-        subject: null,
-        body: 'Dept broadcast',
-      });
-
-      expect(result).toEqual([]);
-      expect(prisma.$transaction).not.toHaveBeenCalled();
-    });
-
-    it('happy path — creates one message per volunteer inside $transaction (array mode)', async () => {
-      vi.mocked(prisma.department.findUnique).mockResolvedValue({
-        id: 'dept-1',
+        name: 'Attendant',
         eventVolunteers: [
           { id: 'ev-1', userId: 'user-2' },
           { id: 'ev-2', userId: 'user-3' },
@@ -248,35 +232,49 @@ describe('MessageService', () => {
         event: { id: 'event-1' },
       } as never);
 
-      // findMany used to build the evMap
-      vi.mocked(prisma.eventVolunteer.findMany).mockResolvedValue([
-        { id: 'ev-1', userId: 'user-2' },
-        { id: 'ev-2', userId: 'user-3' },
-      ] as never);
+      // No existing broadcast conversation
+      vi.mocked(prisma.conversation.findFirst).mockResolvedValue(null);
 
-      const msg1 = makeMessage({ id: 'msg-1', recipientType: 'DEPARTMENT' });
-      const msg2 = makeMessage({ id: 'msg-2', recipientType: 'DEPARTMENT' });
-      vi.mocked(prisma.message.create)
-        .mockResolvedValueOnce(msg1 as never)
-        .mockResolvedValueOnce(msg2 as never);
+      // Create new conversation
+      vi.mocked(prisma.conversation.create).mockResolvedValue({
+        id: 'conv-broadcast-1',
+        eventId: 'event-1',
+        type: 'DEPARTMENT_BROADCAST',
+        departmentId: 'dept-1',
+        participants: [],
+      } as never);
 
-      const results = await service.sendDepartmentMessage(sender, {
+      // createMany for participants
+      vi.mocked(prisma.conversationParticipant.createMany).mockResolvedValue({ count: 3 } as never);
+
+      // Single message created
+      const msg = makeMessage({ id: 'msg-1', recipientType: 'DEPARTMENT', conversationId: 'conv-broadcast-1' });
+      vi.mocked(prisma.message.create).mockResolvedValue(msg as never);
+
+      // Update conversation updatedAt
+      vi.mocked(prisma.conversation.update).mockResolvedValue({} as never);
+
+      // Update sender lastReadAt
+      vi.mocked(prisma.conversationParticipant.updateMany).mockResolvedValue({ count: 1 } as never);
+
+      // Final findUnique to return conversation
+      vi.mocked(prisma.conversation.findUnique).mockResolvedValue({
+        id: 'conv-broadcast-1',
+        type: 'DEPARTMENT_BROADCAST',
+        participants: [],
+        messages: [msg],
+      } as never);
+
+      const result = await service.sendDepartmentMessage(sender, {
         departmentId: 'dept-1',
         subject: 'Dept Subject',
         body: 'Dept body',
       });
 
-      expect(results).toHaveLength(2);
-      expect(prisma.$transaction).toHaveBeenCalledOnce();
-      expect(prisma.message.create).toHaveBeenCalledTimes(2);
-
-      // Verify each create call sets the correct recipientType
-      const firstData = vi.mocked(prisma.message.create).mock.calls[0][0] as {
-        data: Record<string, unknown>;
-      };
-      expect(firstData.data.recipientType).toBe('DEPARTMENT');
-      expect(firstData.data.recipientId).toBe('dept-1');
-      expect(firstData.data.eventId).toBe('event-1');
+      expect(result).toBeDefined();
+      expect(prisma.conversation.create).toHaveBeenCalledOnce();
+      expect(prisma.conversationParticipant.createMany).toHaveBeenCalledOnce();
+      expect(prisma.message.create).toHaveBeenCalledOnce();
     });
   });
 
@@ -293,23 +291,7 @@ describe('MessageService', () => {
       ).rejects.toThrow(NotFoundError);
     });
 
-    it('returns empty array when event has no volunteers', async () => {
-      vi.mocked(prisma.event.findUnique).mockResolvedValue({
-        id: 'event-1',
-        eventVolunteers: [],
-      } as never);
-
-      const result = await service.sendBroadcast(sender, {
-        eventId: 'event-1',
-        subject: null,
-        body: 'Broadcast',
-      });
-
-      expect(result).toEqual([]);
-      expect(prisma.$transaction).not.toHaveBeenCalled();
-    });
-
-    it('happy path — creates one message per event volunteer inside $transaction', async () => {
+    it('happy path — creates conversation and single message for event broadcast', async () => {
       vi.mocked(prisma.event.findUnique).mockResolvedValue({
         id: 'event-1',
         eventVolunteers: [
@@ -318,32 +300,48 @@ describe('MessageService', () => {
         ],
       } as never);
 
-      vi.mocked(prisma.eventVolunteer.findMany).mockResolvedValue([
-        { id: 'ev-1', userId: 'user-2' },
-        { id: 'ev-2', userId: 'user-3' },
-      ] as never);
+      // No existing broadcast conversation
+      vi.mocked(prisma.conversation.findFirst).mockResolvedValue(null);
 
-      const msg1 = makeMessage({ id: 'msg-1', recipientType: 'EVENT' });
-      const msg2 = makeMessage({ id: 'msg-2', recipientType: 'EVENT' });
-      vi.mocked(prisma.message.create)
-        .mockResolvedValueOnce(msg1 as never)
-        .mockResolvedValueOnce(msg2 as never);
+      // Create new conversation
+      vi.mocked(prisma.conversation.create).mockResolvedValue({
+        id: 'conv-broadcast-2',
+        eventId: 'event-1',
+        type: 'EVENT_BROADCAST',
+        participants: [],
+      } as never);
 
-      const results = await service.sendBroadcast(sender, {
+      // createMany for participants
+      vi.mocked(prisma.conversationParticipant.createMany).mockResolvedValue({ count: 3 } as never);
+
+      // Single message created
+      const msg = makeMessage({ id: 'msg-1', recipientType: 'EVENT', conversationId: 'conv-broadcast-2' });
+      vi.mocked(prisma.message.create).mockResolvedValue(msg as never);
+
+      // Update conversation updatedAt
+      vi.mocked(prisma.conversation.update).mockResolvedValue({} as never);
+
+      // Update sender lastReadAt
+      vi.mocked(prisma.conversationParticipant.updateMany).mockResolvedValue({ count: 1 } as never);
+
+      // Final findUnique to return conversation
+      vi.mocked(prisma.conversation.findUnique).mockResolvedValue({
+        id: 'conv-broadcast-2',
+        type: 'EVENT_BROADCAST',
+        participants: [],
+        messages: [msg],
+      } as never);
+
+      const result = await service.sendBroadcast(sender, {
         eventId: 'event-1',
         subject: 'Event Broadcast',
         body: 'Broadcast body',
       });
 
-      expect(results).toHaveLength(2);
-      expect(prisma.$transaction).toHaveBeenCalledOnce();
-      expect(prisma.message.create).toHaveBeenCalledTimes(2);
-
-      const firstData = vi.mocked(prisma.message.create).mock.calls[0][0] as {
-        data: Record<string, unknown>;
-      };
-      expect(firstData.data.recipientType).toBe('EVENT');
-      expect(firstData.data.recipientId).toBe('event-1');
+      expect(result).toBeDefined();
+      expect(prisma.conversation.create).toHaveBeenCalledOnce();
+      expect(prisma.conversationParticipant.createMany).toHaveBeenCalledOnce();
+      expect(prisma.message.create).toHaveBeenCalledOnce();
     });
   });
 

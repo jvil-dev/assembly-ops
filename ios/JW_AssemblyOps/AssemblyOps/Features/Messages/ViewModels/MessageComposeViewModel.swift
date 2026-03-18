@@ -5,10 +5,11 @@
 //  Created by Jorge Villeda on 2/8/26.
 //
 
-// MARK: - Message Compose View Model
+// MARK: - Message Compose View Model (Announcement)
 //
-// Manages state and business logic for composing and sending messages.
-// Supports individual, department, event, and multi-recipient sends.
+// Manages state and business logic for composing announcements.
+// Supports department and event-wide (broadcast) sends only.
+// Individual messaging uses the conversation flow (ComposeMessageView).
 //
 // Used by: MessageComposeView
 
@@ -18,9 +19,7 @@ import Combine
 
 @MainActor
 final class MessageComposeViewModel: ObservableObject {
-    @Published var recipientType: MessageRecipientType = .volunteer
-    @Published var selectedVolunteerId: String?
-    @Published var selectedVolunteerName: String?
+    @Published var recipientType: MessageRecipientType = .department
     @Published var subject: String = ""
     @Published var body: String = ""
     @Published var isSending = false
@@ -28,22 +27,13 @@ final class MessageComposeViewModel: ObservableObject {
     @Published var didSend = false
     @Published var sentCount: Int = 0
 
-    // Multi-select support
-    @Published var isMultiSelect = false
-    @Published var selectedVolunteerIds: Set<String> = []
-
     var isValid: Bool {
         let hasBody = !body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         switch recipientType {
-        case .volunteer:
-            if isMultiSelect {
-                return hasBody && !selectedVolunteerIds.isEmpty
-            }
-            return hasBody && selectedVolunteerId != nil
-        case .admin:
-            return hasBody && selectedVolunteerId != nil
         case .department, .event:
             return hasBody
+        case .volunteer, .user:
+            return false
         }
     }
 
@@ -62,38 +52,19 @@ final class MessageComposeViewModel: ObservableObject {
 
         do {
             switch recipientType {
-            case .volunteer:
-                if isMultiSelect {
-                    let ids = Array(selectedVolunteerIds)
-                    let messages = try await MessagesService.shared.sendMultiMessage(
-                        volunteerIds: ids, subject: subjectText, body: body, eventId: eventId
-                    )
-                    sentCount = messages.count
-                } else {
-                    guard let volunteerId = selectedVolunteerId else { return }
-                    _ = try await MessagesService.shared.sendMessage(
-                        volunteerId: volunteerId, subject: subjectText, body: body
-                    )
-                    sentCount = 1
-                }
-            case .admin:
-                guard let adminId = selectedVolunteerId else { return }
-                _ = try await MessagesService.shared.sendMessage(
-                    recipientType: .user, recipientId: adminId, eventId: eventId,
-                    subject: subjectText, body: body
-                )
-                sentCount = 1
+            case .volunteer, .user:
+                return
             case .department:
                 guard let deptId = departmentId else { return }
-                let messages = try await MessagesService.shared.sendDepartmentMessage(
+                _ = try await MessagesService.shared.sendDepartmentMessage(
                     departmentId: deptId, subject: subjectText, body: body
                 )
-                sentCount = messages.count
+                sentCount = 1
             case .event:
-                let messages = try await MessagesService.shared.sendBroadcast(
+                _ = try await MessagesService.shared.sendBroadcast(
                     eventId: eventId, subject: subjectText, body: body
                 )
-                sentCount = messages.count
+                sentCount = 1
             }
             HapticManager.shared.success()
             didSend = true

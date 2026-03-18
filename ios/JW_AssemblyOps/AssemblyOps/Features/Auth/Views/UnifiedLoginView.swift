@@ -51,7 +51,7 @@ struct UnifiedLoginView: View {
             .padding(.bottom, AppTheme.Spacing.xxl)
         }
         .themedBackground(scheme: colorScheme)
-        .navigationTitle("Sign In")
+        .navigationTitle("auth.signin".localized)
         .navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.interactively)
         .onAppear {
@@ -60,8 +60,8 @@ struct UnifiedLoginView: View {
         .onChange(of: viewModel.errorMessage) { _, error in
             showError = error != nil
         }
-        .alert("Sign In Failed", isPresented: $showError) {
-            Button("OK") { viewModel.errorMessage = nil }
+        .alert("auth.signInFailed".localized, isPresented: $showError) {
+            Button("common.ok".localized) { viewModel.errorMessage = nil }
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
@@ -96,7 +96,7 @@ struct UnifiedLoginView: View {
                     .shadow(color: AppTheme.themeColor.opacity(0.2), radius: 10, x: 0, y: 3)
             }
 
-            Text("Welcome back")
+            Text("auth.welcomeBack".localized)
                 .font(.system(size: 24, weight: .bold))
                 .foregroundStyle(AppTheme.themeColor)
         }
@@ -108,11 +108,11 @@ struct UnifiedLoginView: View {
 
     private var credentialsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.l) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "lock.fill")
                     .font(.system(size: 11))
                     .foregroundStyle(AppTheme.themeColor)
-                Text("SIGN IN")
+                Text("auth.section.signIn".localized)
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(0.6)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -120,8 +120,8 @@ struct UnifiedLoginView: View {
 
             VStack(spacing: AppTheme.Spacing.l) {
                 UnderlineTextField(
-                    label: "EMAIL",
-                    placeholder: "your@email.com",
+                    label: "auth.field.email".localized,
+                    placeholder: "auth.placeholder.email".localized,
                     text: $viewModel.email,
                     isSecure: false,
                     isFocused: focusedField == .email,
@@ -135,8 +135,8 @@ struct UnifiedLoginView: View {
                 .autocorrectionDisabled()
 
                 UnderlineTextField(
-                    label: "PASSWORD",
-                    placeholder: "Enter password",
+                    label: "auth.field.password".localized,
+                    placeholder: "auth.placeholder.password".localized,
                     text: $viewModel.password,
                     isSecure: true,
                     isFocused: focusedField == .password,
@@ -156,7 +156,7 @@ struct UnifiedLoginView: View {
                     if viewModel.isLoading {
                         ProgressView().tint(.white)
                     } else {
-                        Text(NSLocalizedString("auth.signin", comment: ""))
+                        Text("auth.signin".localized)
                             .font(AppTheme.Typography.bodyMedium)
                     }
                 }
@@ -187,7 +187,7 @@ struct UnifiedLoginView: View {
                 Rectangle()
                     .fill(AppTheme.dividerColor(for: colorScheme))
                     .frame(height: 1)
-                Text("or continue with")
+                Text("auth.orContinueWith".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                     .fixedSize()
@@ -203,7 +203,7 @@ struct UnifiedLoginView: View {
                     HStack(spacing: AppTheme.Spacing.s) {
                         Text("G")
                             .font(.system(size: 17, weight: .bold))
-                            .foregroundStyle(Color(red: 0.26, green: 0.52, blue: 0.96))
+                            .foregroundStyle(AppTheme.googleBlue)
                         Text("Google")
                             .font(AppTheme.Typography.body)
                     }
@@ -215,6 +215,7 @@ struct UnifiedLoginView: View {
                         .stroke(AppTheme.dividerColor(for: colorScheme), lineWidth: 1.5)
                 )
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                .accessibilityLabel("auth.a11y.signInGoogle".localized)
 
                 Button {
                     viewModel.signInWithApple()
@@ -233,6 +234,7 @@ struct UnifiedLoginView: View {
                         .stroke(AppTheme.dividerColor(for: colorScheme), lineWidth: 1.5)
                 )
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                .accessibilityLabel("auth.a11y.signInApple".localized)
             }
         }
     }
@@ -241,13 +243,13 @@ struct UnifiedLoginView: View {
 
     private var createAccountLink: some View {
         HStack(spacing: 4) {
-            Text("Don't have an account?")
+            Text("auth.dontHaveAccount".localized)
                 .font(AppTheme.Typography.caption)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             Button {
                 showRegistration = true
             } label: {
-                Text(NSLocalizedString("auth.createAccount", comment: ""))
+                Text("auth.createAccount".localized)
                     .font(AppTheme.Typography.caption)
                     .fontWeight(.semibold)
                     .foregroundStyle(AppTheme.themeColor)

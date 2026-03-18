@@ -298,6 +298,15 @@
 "captain.scheduling.assign" = "Assign";
 "captain.scheduling.noVolunteers" = "No Volunteers";
 "captain.scheduling.noVolunteersHint" = "No volunteers are available in your department";
+"captain.scheduling.posts" = "Posts";
+"captain.scheduling.assigned" = "assigned";
+"captain.scheduling.noAssigned" = "No volunteers assigned";
+"captain.scheduling.noPosts" = "No posts in your area";
+"captain.scheduling.noPostsHint" = "Posts for your assigned area will appear here";
+"captain.scheduling.removeAssignment" = "Remove Assignment";
+"captain.scheduling.remove" = "Remove";
+"captain.scheduling.removeConfirm" = "Remove %@ from this shift?";
+
 
 // Captain Attendance
 "captain.attendance.title" = "Attendance Counts";
@@ -1594,3 +1603,155 @@
 "copy.result.skipped" = "%d skipped";
 "copy.result.areaCaptains" = "%d area captains copied";
 "copy.result.skippedDetails" = "Skipped Details";
+
+// MARK: - Messaging Real-Time & Notifications
+"message.realtime.connected" = "Connected";
+"message.realtime.reconnecting" = "Reconnecting...";
+"notification.new.message" = "New Message";
+"notification.new.announcement" = "New Announcement";
+"notification.new.broadcast" = "Event Broadcast";
+"message.conversation.new" = "New Conversation";
+"message.search.placeholder" = "Search messages...";
+
+// MARK: - Unified Messaging
+"messages.announcement.title" = "Announcement";
+"messages.conversations.title" = "Conversations";
+"messages.sent.tab" = "Sent";
+"messages.profile.title" = "Profile";
+"messages.profile.congregation" = "Congregation";
+"messages.profile.phone" = "Phone";
+"messages.profile.noPhone" = "No phone number";
+"messages.profile.noCongregation" = "No congregation";
+
+// MARK: - Announcements & Broadcast Threading
+"messages.announcements.title" = "Announcements";
+"messages.section.messages" = "Messages";
+"messages.broadcast.event" = "Event Announcement";
+"messages.broadcast.department" = "Department Message";
+"messages.announcements.empty" = "No announcements";
+"messages.conversations.empty.inline" = "No messages";
+
+// MARK: - Accessibility
+"messages.a11y.send" = "Send message";
+"messages.a11y.viewProfile" = "View conversation profile";
+"messages.a11y.search" = "Search messages";
+"messages.a11y.compose" = "Compose new message";
+"messages.a11y.announce" = "Send announcement";
+"messages.status.read" = "Read";
+"messages.status.unread" = "Unread";
+
+// MARK: - Messages & Assignments Localization
+
+// Messages
+"messages.recipientType.individual" = "Individual";
+"messages.recipientType.department" = "Department";
+"messages.recipientType.eventBroadcast" = "Event Broadcast";
+
+// Assignment Status
+"assignment.status.pending" = "Pending";
+"assignment.status.accepted" = "Accepted";
+"assignment.status.declined" = "Declined";
+"assignment.status.autoDeclined" = "Auto-Declined";
+
+// Assignment Check-in
+"assignment.checkIn.checkedIn" = "Checked In";
+"assignment.checkIn.checkedOut" = "Checked Out";
+"assignment.checkIn.noShow" = "No Show";
+"assignment.checkIn.notCheckedIn" = "Not Checked In";
+
+// Assignment Card
+"assignment.sessionConflict" = "Multiple assignments in this session";
+"assignment.checkedIn" = "Checked in";
+"assignment.readyToCheckIn" = "Ready to check in";
+
+// Assignment Detail
+"assignment.details.title" = "Details";
+"assignment.captain.group" = "Your Group";
+
+// Assignment Deadline
+"assignment.deadline.today" = "Respond today";
+"assignment.deadline.oneDay" = "1 day to respond";
+"assignment.deadline.days" = "%d days to respond";
+
+// Schedule
+"schedule.loading" = "Loading schedule...";
+"schedule.dateHeader.today" = "Today";
+"schedule.dateHeader.tomorrow" = "Tomorrow";
+
+// MARK: - HIG Polish (Sprint 6.12)
+
+// Auth — Landing
+"auth.landing.tagline" = "Volunteer scheduling\nmade simple.";
+
+// Auth — Sign In
+"auth.signInFailed" = "Sign In Failed";
+"auth.welcomeBack" = "Welcome back";
+"auth.section.signIn" = "SIGN IN";
+"auth.orContinueWith" = "or continue with";
+"auth.dontHaveAccount" = "Don't have an account?";
+
+// Auth — Registration
+"auth.registrationFailed" = "Registration Failed";
+"auth.section.yourName" = "YOUR NAME";
+"auth.section.credentials" = "ACCOUNT CREDENTIALS";
+"auth.passwordsMatch" = "Passwords match";
+"auth.passwordsDontMatch" = "Passwords don't match";
+"auth.section.optionalInfo" = "OPTIONAL INFO";
+"auth.section.congregation" = "CONGREGATION";
+"auth.section.appointment" = "APPOINTMENT STATUS";
+"auth.appointment.none" = "None";
+"auth.appointment.publisher" = "Publisher";
+"auth.appointment.ministerialServant" = "Ministerial Servant";
+"auth.appointment.elder" = "Elder";
+
+// Auth — Field Labels
+"auth.field.email" = "EMAIL";
+"auth.field.password" = "PASSWORD";
+"auth.field.firstName" = "FIRST NAME";
+"auth.field.lastName" = "LAST NAME";
+"auth.field.confirmPassword" = "CONFIRM PASSWORD";
+"auth.field.phone" = "PHONE";
+
+// Auth — Placeholders
+"auth.placeholder.email" = "your@email.com";
+"auth.placeholder.firstName" = "First";
+"auth.placeholder.lastName" = "Last";
+"auth.placeholder.password" = "At least 8 characters";
+"auth.placeholder.confirmPassword" = "Re-enter password";
+"auth.placeholder.phone" = "Your phone number";
+
+// Offline Banner
+"offline.title" = "You are offline";
+"offline.subtitle" = "Data may be outdated";
+
+// Settings
+"settings.yourId" = "YOUR ID";
+
+// Event Tab
+"eventTab.department.fallback" = "Department";
+
+// Schedule — Sessions (Overseer)
+"schedule.sessions.loading" = "Loading sessions...";
+"schedule.sessions.empty.title" = "No Sessions Yet";
+"schedule.sessions.empty.subtitle" = "Sessions are created automatically when an event is activated. You can also create custom sessions.";
+
+// Captain Group
+"captain.group.noMembers" = "No group members assigned";
+"captain.group.checkIn" = "Check In";
+
+// Volunteers
+"volunteers.loading" = "Loading volunteers...";
+"volunteers.title" = "Volunteers";
+"volunteers.search.prompt" = "Search by name or congregation";
+
+// Accessibility (Pass 2)
+"auth.a11y.signInGoogle" = "Sign in with Google";
+"auth.a11y.signInApple" = "Sign in with Apple";
+"auth.a11y.signUpGoogle" = "Sign up with Google";
+"auth.a11y.signUpApple" = "Sign up with Apple";
+"eventsHub.a11y.profile" = "Profile and settings";
+"eventsHub.a11y.browse" = "Browse or create events";
+"settings.a11y.editProfile" = "Edit profile";
+"settings.a11y.copyId" = "Copy your ID";
+"eventTab.a11y.settings" = "Settings";
+"offline.a11y.banner" = "You are offline. Data may be outdated";

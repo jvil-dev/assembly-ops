@@ -115,23 +115,23 @@ describe('Captain Operations', () => {
       .post('/graphql')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
-        query: `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { id } }`,
+        query: `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { assignment { id } } }`,
         variables: {
           input: { volunteerId: captainVolunteerId, postId, sessionId, isCaptain: true },
         },
       });
-    captainAssignmentId = captainAssignRes.body.data.forceAssignment.id;
+    captainAssignmentId = captainAssignRes.body.data.forceAssignment.assignment.id;
 
     const memberAssignRes = await request(app)
       .post('/graphql')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
-        query: `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { id } }`,
+        query: `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { assignment { id } } }`,
         variables: {
           input: { volunteerId: memberVolunteerId, postId, sessionId },
         },
       });
-    memberAssignmentId = memberAssignRes.body.data.forceAssignment.id;
+    memberAssignmentId = memberAssignRes.body.data.forceAssignment.assignment.id;
   });
 
   afterAll(async () => {

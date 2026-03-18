@@ -135,6 +135,11 @@ const assignmentTypeDefs = `#graphql
     reason: String
   }
 
+  type ForceAssignmentResult {
+    assignment: ScheduleAssignment!
+    warning: String
+  }
+
   input ForceAssignmentInput {
     volunteerId: ID!
     postId: ID!
@@ -217,7 +222,7 @@ const assignmentTypeDefs = `#graphql
     acceptAssignment(input: AcceptAssignmentInput!): ScheduleAssignment!
     declineAssignment(input: DeclineAssignmentInput!): ScheduleAssignment!
 
-    forceAssignment(input: ForceAssignmentInput!): ScheduleAssignment!
+    forceAssignment(input: ForceAssignmentInput!): ForceAssignmentResult!
     setCaptain(input: SetCaptainInput!): ScheduleAssignment!
     setCanCount(input: SetCanCountInput!): ScheduleAssignment!
     setAcceptDeadline(assignmentId: ID!, deadline: DateTime!): ScheduleAssignment!

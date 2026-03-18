@@ -59,6 +59,10 @@ const baseTypeDefs = `#graphql
     _empty: String
   }
 
+  type Subscription {
+    _empty: String
+  }
+
   type HealthStatus {
     status: String!
     timestamp: DateTime!

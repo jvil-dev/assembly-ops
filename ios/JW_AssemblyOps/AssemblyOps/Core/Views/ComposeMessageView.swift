@@ -18,6 +18,7 @@ import SwiftUI
 struct ComposeMessageView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) var dismiss
+    @ObservedObject private var sessionState: EventSessionState = .shared
     @State private var hasAppeared = false
 
     @State private var recipientName: String = ""
@@ -29,12 +30,21 @@ struct ComposeMessageView: View {
 
     let eventId: String
     let currentUserId: String?
-    let onSent: ((Conversation) -> Void)?
 
     /// Available recipients — passed from the parent view
     let recipients: [RecipientOption]
 
+    /// Called with the new/existing conversation after successful send
+    var onConversationStarted: ((Conversation) -> Void)?
+
     @State private var selectedRecipient: RecipientOption?
+
+    private var accentColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
+    }
 
     var body: some View {
         NavigationStack {
@@ -101,7 +111,7 @@ struct ComposeMessageView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person")
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
                 Text("messages.compose.recipient".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -155,7 +165,7 @@ struct ComposeMessageView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "text.cursor")
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
                 Text("messages.compose.subject".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -177,7 +187,7 @@ struct ComposeMessageView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "text.alignleft")
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
                 Text("messages.compose.body".localized)
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -189,6 +199,10 @@ struct ComposeMessageView: View {
                 .scrollContentBackground(.hidden)
                 .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
                 .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                        .stroke(AppTheme.dividerColor(for: colorScheme), lineWidth: 1)
+                )
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
@@ -220,7 +234,7 @@ struct ComposeMessageView: View {
                 currentUserId: currentUserId
             )
             HapticManager.shared.success()
-            onSent?(conversation)
+            onConversationStarted?(conversation)
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
@@ -241,7 +255,6 @@ struct RecipientOption: Identifiable, Hashable {
     ComposeMessageView(
         eventId: "event-1",
         currentUserId: "user-1",
-        onSent: nil,
         recipients: [
             RecipientOption(id: "r1", displayName: "John Smith", isAdmin: true),
             RecipientOption(id: "r2", displayName: "Jane Doe", isAdmin: false)

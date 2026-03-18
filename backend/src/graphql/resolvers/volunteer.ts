@@ -38,7 +38,8 @@
 import { Context } from '../context.js';
 import { VolunteerService, CreatedVolunteer } from '../../services/volunteerService.js';
 import { NotificationService } from '../../services/notificationService.js';
-import { requireAdmin, requireOverseer, requireUser, requireEventAccess } from '../guards/auth.js';
+import { requireAdmin, requireOverseer, requireUser, requireAuth, requireEventAccess, tryRequireAdmin, tryRequireDeptAccessByEvent } from '../guards/auth.js';
+import { AuthorizationError } from '../../utils/errors.js';
 import {
   CreateVolunteerInput,
   CreateVolunteersInput,
@@ -91,8 +92,42 @@ const volunteerResolvers = {
       { eventId, departmentId }: { eventId: string; departmentId?: string },
       context: Context
     ) => {
-      requireAdmin(context);
-      await requireEventAccess(context, eventId);
+      requireAuth(context);
+      if (tryRequireAdmin(context)) {
+        await requireEventAccess(context, eventId);
+      } else {
+        // Non-overseer: must be dept assistant overseer OR accepted area captain
+        const deptAccess = await tryRequireDeptAccessByEvent(context, eventId);
+        if (!deptAccess) {
+          // Check if user is a captain in the requested department
+          // (via AreaCaptain record OR ScheduleAssignment.isCaptain)
+          const ev = await context.prisma.eventVolunteer.findFirst({
+            where: {
+              userId: context.user!.id,
+              event: { departments: { some: { id: departmentId } } },
+            },
+            select: { id: true },
+          });
+          if (!ev) throw new AuthorizationError('Not authorized');
+          const [areaCaptain, captainAssignment] = await Promise.all([
+            context.prisma.areaCaptain.findFirst({
+              where: {
+                eventVolunteerId: ev.id,
+                area: { departmentId },
+                status: 'ACCEPTED',
+              },
+            }),
+            context.prisma.scheduleAssignment.findFirst({
+              where: {
+                eventVolunteerId: ev.id,
+                isCaptain: true,
+                post: { departmentId },
+              },
+            }),
+          ]);
+          if (!areaCaptain && !captainAssignment) throw new AuthorizationError('Not authorized');
+        }
+      }
       const volunteerService = new VolunteerService(context.prisma);
       return volunteerService.getEventVolunteers(eventId, departmentId);
     },

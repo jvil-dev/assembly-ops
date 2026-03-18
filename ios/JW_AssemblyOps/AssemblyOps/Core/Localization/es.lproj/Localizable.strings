@@ -299,6 +299,15 @@
 "captain.scheduling.assign" = "Asignar";
 "captain.scheduling.noVolunteers" = "Sin Voluntarios";
 "captain.scheduling.noVolunteersHint" = "No hay voluntarios disponibles en tu departamento";
+"captain.scheduling.posts" = "Puestos";
+"captain.scheduling.assigned" = "asignados";
+"captain.scheduling.noAssigned" = "Sin voluntarios asignados";
+"captain.scheduling.noPosts" = "Sin puestos en tu área";
+"captain.scheduling.noPostsHint" = "Los puestos de tu área asignada aparecerán aquí";
+"captain.scheduling.removeAssignment" = "Eliminar Asignación";
+"captain.scheduling.remove" = "Eliminar";
+"captain.scheduling.removeConfirm" = "¿Eliminar a %@ de este turno?";
+
 
 // Asistencia del Capitán
 "captain.attendance.title" = "Conteos de Asistencia";
@@ -1595,3 +1604,155 @@
 "copy.result.skipped" = "%d omitidas";
 "copy.result.areaCaptains" = "%d capitanes de área copiados";
 "copy.result.skippedDetails" = "Detalles Omitidos";
+
+// MARK: - Messaging Real-Time & Notifications
+"message.realtime.connected" = "Conectado";
+"message.realtime.reconnecting" = "Reconectando...";
+"notification.new.message" = "Nuevo Mensaje";
+"notification.new.announcement" = "Nuevo Anuncio";
+"notification.new.broadcast" = "Anuncio del Evento";
+"message.conversation.new" = "Nueva Conversación";
+"message.search.placeholder" = "Buscar mensajes...";
+
+// MARK: - Mensajería Unificada
+"messages.announcement.title" = "Anuncio";
+"messages.conversations.title" = "Conversaciones";
+"messages.sent.tab" = "Enviados";
+"messages.profile.title" = "Perfil";
+"messages.profile.congregation" = "Congregación";
+"messages.profile.phone" = "Teléfono";
+"messages.profile.noPhone" = "Sin número de teléfono";
+"messages.profile.noCongregation" = "Sin congregación";
+
+// MARK: - Announcements & Broadcast Threading
+"messages.announcements.title" = "Anuncios";
+"messages.section.messages" = "Mensajes";
+"messages.broadcast.event" = "Anuncio del evento";
+"messages.broadcast.department" = "Mensaje del departamento";
+"messages.announcements.empty" = "Sin anuncios";
+"messages.conversations.empty.inline" = "Sin mensajes";
+
+// MARK: - Accessibility
+"messages.a11y.send" = "Enviar mensaje";
+"messages.a11y.viewProfile" = "Ver perfil de conversación";
+"messages.a11y.search" = "Buscar mensajes";
+"messages.a11y.compose" = "Redactar nuevo mensaje";
+"messages.a11y.announce" = "Enviar anuncio";
+"messages.status.read" = "Leído";
+"messages.status.unread" = "No leído";
+
+// MARK: - Messages & Assignments Localization
+
+// Messages
+"messages.recipientType.individual" = "Individual";
+"messages.recipientType.department" = "Departamento";
+"messages.recipientType.eventBroadcast" = "Anuncio de evento";
+
+// Assignment Status
+"assignment.status.pending" = "Pendiente";
+"assignment.status.accepted" = "Aceptada";
+"assignment.status.declined" = "Rechazada";
+"assignment.status.autoDeclined" = "Auto-rechazada";
+
+// Assignment Check-in
+"assignment.checkIn.checkedIn" = "Registrado";
+"assignment.checkIn.checkedOut" = "Salida registrada";
+"assignment.checkIn.noShow" = "Ausente";
+"assignment.checkIn.notCheckedIn" = "Sin registrar";
+
+// Assignment Card
+"assignment.sessionConflict" = "Múltiples asignaciones en esta sesión";
+"assignment.checkedIn" = "Registrado";
+"assignment.readyToCheckIn" = "Listo para registrarse";
+
+// Assignment Detail
+"assignment.details.title" = "Detalles";
+"assignment.captain.group" = "Tu grupo";
+
+// Assignment Deadline
+"assignment.deadline.today" = "Responder hoy";
+"assignment.deadline.oneDay" = "1 día para responder";
+"assignment.deadline.days" = "%d días para responder";
+
+// Schedule
+"schedule.loading" = "Cargando horario...";
+"schedule.dateHeader.today" = "Hoy";
+"schedule.dateHeader.tomorrow" = "Mañana";
+
+// MARK: - HIG Polish (Sprint 6.12)
+
+// Auth — Landing
+"auth.landing.tagline" = "Programación de voluntarios\nsimplificada.";
+
+// Auth — Sign In
+"auth.signInFailed" = "Error al iniciar sesión";
+"auth.welcomeBack" = "Bienvenido de nuevo";
+"auth.section.signIn" = "INICIAR SESIÓN";
+"auth.orContinueWith" = "o continuar con";
+"auth.dontHaveAccount" = "¿No tienes una cuenta?";
+
+// Auth — Registration
+"auth.registrationFailed" = "Error en el registro";
+"auth.section.yourName" = "TU NOMBRE";
+"auth.section.credentials" = "CREDENCIALES DE CUENTA";
+"auth.passwordsMatch" = "Las contraseñas coinciden";
+"auth.passwordsDontMatch" = "Las contraseñas no coinciden";
+"auth.section.optionalInfo" = "INFORMACIÓN OPCIONAL";
+"auth.section.congregation" = "CONGREGACIÓN";
+"auth.section.appointment" = "NOMBRAMIENTO";
+"auth.appointment.none" = "Ninguno";
+"auth.appointment.publisher" = "Publicador";
+"auth.appointment.ministerialServant" = "Siervo ministerial";
+"auth.appointment.elder" = "Anciano";
+
+// Auth — Field Labels
+"auth.field.email" = "CORREO ELECTRÓNICO";
+"auth.field.password" = "CONTRASEÑA";
+"auth.field.firstName" = "NOMBRE";
+"auth.field.lastName" = "APELLIDO";
+"auth.field.confirmPassword" = "CONFIRMAR CONTRASEÑA";
+"auth.field.phone" = "TELÉFONO";
+
+// Auth — Placeholders
+"auth.placeholder.email" = "tu@correo.com";
+"auth.placeholder.firstName" = "Nombre";
+"auth.placeholder.lastName" = "Apellido";
+"auth.placeholder.password" = "Al menos 8 caracteres";
+"auth.placeholder.confirmPassword" = "Reingresa tu contraseña";
+"auth.placeholder.phone" = "Tu número de teléfono";
+
+// Offline Banner
+"offline.title" = "Estás sin conexión";
+"offline.subtitle" = "Los datos pueden estar desactualizados";
+
+// Settings
+"settings.yourId" = "TU ID";
+
+// Event Tab
+"eventTab.department.fallback" = "Departamento";
+
+// Schedule — Sessions (Overseer)
+"schedule.sessions.loading" = "Cargando sesiones...";
+"schedule.sessions.empty.title" = "Sin sesiones aún";
+"schedule.sessions.empty.subtitle" = "Las sesiones se crean automáticamente cuando se activa un evento. También puedes crear sesiones personalizadas.";
+
+// Captain Group
+"captain.group.noMembers" = "No hay miembros de grupo asignados";
+"captain.group.checkIn" = "Registrar";
+
+// Volunteers
+"volunteers.loading" = "Cargando voluntarios...";
+"volunteers.title" = "Voluntarios";
+"volunteers.search.prompt" = "Buscar por nombre o congregación";
+
+// Accessibility (Pass 2)
+"auth.a11y.signInGoogle" = "Iniciar sesión con Google";
+"auth.a11y.signInApple" = "Iniciar sesión con Apple";
+"auth.a11y.signUpGoogle" = "Registrarse con Google";
+"auth.a11y.signUpApple" = "Registrarse con Apple";
+"eventsHub.a11y.profile" = "Perfil y ajustes";
+"eventsHub.a11y.browse" = "Explorar o crear eventos";
+"settings.a11y.editProfile" = "Editar perfil";
+"settings.a11y.copyId" = "Copiar tu ID";
+"eventTab.a11y.settings" = "Ajustes";
+"offline.a11y.banner" = "Estás sin conexión. Los datos pueden estar desactualizados";

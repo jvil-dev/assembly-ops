@@ -6,6 +6,7 @@ mutation SendMultiMessage($input: SendMultiMessageInput!) {
     recipientType
     senderType
     senderName
+    recipientName
     createdAt
   }
 }

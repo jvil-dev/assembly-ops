@@ -102,6 +102,18 @@ const notificationResolvers = {
       });
       return true;
     },
+
+    deleteNotification: async (
+      _parent: unknown,
+      { notificationId }: { notificationId: string },
+      context: Context
+    ) => {
+      requireAuth(context);
+      await context.prisma.notification.deleteMany({
+        where: { id: notificationId, userId: context.user!.id },
+      });
+      return true;
+    },
   },
 };
 

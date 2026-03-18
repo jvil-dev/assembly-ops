@@ -1,0 +1,8 @@
+query SessionAssignmentCounts($sessionId: ID!) {
+  sessionAssignments(sessionId: $sessionId) {
+    id
+    volunteer {
+      id
+    }
+  }
+}

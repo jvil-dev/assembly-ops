@@ -10,6 +10,7 @@
  *   requireAuth()        — alias for requireUser()
  *   requireEventAccess() — overseer must belong to the event (with optional role check)
  *   requireAreaOverseer() — volunteer must have AREA_OVERSEER role for the post's area
+ *   requireAreaCaptainAccess() — volunteer must be an accepted area captain for the post's area
  *
  * Helpers:
  *   tryRequireAdmin()           — non-throwing admin check (returns boolean)
@@ -300,4 +301,34 @@ export async function requireAreaOverseer(
   }
 
   return { eventVolunteerId: ev.id, areaId: post.areaId };
+}
+
+/**
+ * Require that the current user is an accepted area captain for the area containing the given post.
+ * Used as a fallback after requireAreaOverseer fails — allows captains to manage assignments/shifts
+ * within their assigned areas.
+ */
+export async function requireAreaCaptainAccess(
+  context: Context,
+  postId: string
+): Promise<void> {
+  const post = await context.prisma.post.findUnique({
+    where: { id: postId },
+    select: { areaId: true, departmentId: true },
+  });
+  if (!post?.areaId) throw new AuthorizationError('Not authorized');
+
+  const ev = await context.prisma.eventVolunteer.findFirst({
+    where: {
+      userId: context.user!.id,
+      event: { departments: { some: { id: post.departmentId } } },
+    },
+    select: { id: true },
+  });
+  if (!ev) throw new AuthorizationError('Not authorized');
+
+  const captainAccess = await context.prisma.areaCaptain.findFirst({
+    where: { eventVolunteerId: ev.id, areaId: post.areaId, status: 'ACCEPTED' },
+  });
+  if (!captainAccess) throw new AuthorizationError('Not authorized');
 }

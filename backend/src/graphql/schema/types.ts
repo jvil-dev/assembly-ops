@@ -249,6 +249,7 @@ const types = `#graphql
     recipientType: RecipientType!
     senderType: MessageSenderType
     senderName: String
+    recipientName: String
     senderId: ID
     isRead: Boolean!
     readAt: DateTime
@@ -257,9 +258,13 @@ const types = `#graphql
     createdAt: DateTime!
   }
 
+  enum ConversationType { DIRECT DEPARTMENT_BROADCAST EVENT_BROADCAST }
+
   type Conversation {
     id: ID!
     subject: String
+    type: ConversationType!
+    departmentName: String
     lastMessage: Message
     participants: [ConversationParticipant!]!
     unreadCount: Int!
@@ -272,6 +277,8 @@ const types = `#graphql
     participantType: MessageSenderType!
     participantId: ID!
     displayName: String!
+    phone: String
+    congregation: String
     lastReadAt: DateTime
   }
 

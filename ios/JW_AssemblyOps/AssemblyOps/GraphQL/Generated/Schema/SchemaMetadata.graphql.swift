@@ -69,6 +69,7 @@ extension AssemblyOpsAPI {
       case "EventJoinRequest": return AssemblyOpsAPI.Objects.EventJoinRequest
       case "EventParticipant": return AssemblyOpsAPI.Objects.EventParticipant
       case "EventVolunteer": return AssemblyOpsAPI.Objects.EventVolunteer
+      case "ForceAssignmentResult": return AssemblyOpsAPI.Objects.ForceAssignmentResult
       case "LanyardCheckout": return AssemblyOpsAPI.Objects.LanyardCheckout
       case "LanyardSummary": return AssemblyOpsAPI.Objects.LanyardSummary
       case "LinkPlaceholderResult": return AssemblyOpsAPI.Objects.LinkPlaceholderResult
@@ -93,6 +94,7 @@ extension AssemblyOpsAPI {
       case "Shift": return AssemblyOpsAPI.Objects.Shift
       case "ShiftReminderStatus": return AssemblyOpsAPI.Objects.ShiftReminderStatus
       case "SkippedVolunteerInfo": return AssemblyOpsAPI.Objects.SkippedVolunteerInfo
+      case "Subscription": return AssemblyOpsAPI.Objects.Subscription
       case "TokenPayload": return AssemblyOpsAPI.Objects.TokenPayload
       case "User": return AssemblyOpsAPI.Objects.User
       case "UserAuthPayload": return AssemblyOpsAPI.Objects.UserAuthPayload

@@ -26,6 +26,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import Apollo
 
 @MainActor
 final class ConversationDetailViewModel: ObservableObject {
@@ -37,6 +38,7 @@ final class ConversationDetailViewModel: ObservableObject {
 
     let conversationId: String
     let currentUserId: String?
+    private var subscription: Apollo.Cancellable?
 
     init(conversationId: String, currentUserId: String?) {
         self.conversationId = conversationId
@@ -82,9 +84,30 @@ final class ConversationDetailViewModel: ObservableObject {
     func markAsRead() async {
         do {
             try await MessagesService.shared.markConversationRead(conversationId: conversationId)
+            // Immediately refresh badge (subscription also pushes update as backup)
+            await UnreadBadgeManager.shared.fetchUnreadCount()
         } catch {
             print("Failed to mark conversation read: \(error)")
         }
+    }
+
+    /// Start listening for real-time conversation messages
+    func startListening() {
+        stopListening()
+        subscription = MessagesService.shared.subscribeToConversation(conversationId: conversationId) { [weak self] message in
+            Task { @MainActor in
+                guard let self else { return }
+                if !self.messages.contains(where: { $0.id == message.id }) {
+                    self.messages.append(message)
+                }
+            }
+        }
+    }
+
+    /// Stop listening for real-time updates
+    func stopListening() {
+        subscription?.cancel()
+        subscription = nil
     }
 
     /// Check if a message was sent by the current user

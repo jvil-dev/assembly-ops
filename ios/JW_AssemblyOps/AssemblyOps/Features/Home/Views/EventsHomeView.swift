@@ -44,56 +44,74 @@ struct EventsHomeView: View {
     @State private var showSettings = false
     @State private var showError = false
     @State private var navigationStackId = UUID()
+    @State private var deepLinkMembership: EventMembershipItem?
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading && viewModel.sections.isEmpty {
-                    loadingView
-                } else if viewModel.isEmpty {
-                    emptyState
-                } else {
-                    eventsList
-                }
-            }
-            .themedBackground(scheme: colorScheme)
-            .navigationTitle("eventsHub.title".localized)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    profileAvatarButton
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    plusButton
-                }
-            }
-            .refreshable {
-                viewModel.refresh()
-            }
-            .onAppear {
-                withAnimation(AppTheme.entranceAnimation) { hasAppeared = true }
-                viewModel.load()
-            }
-            .onChange(of: viewModel.errorMessage) { _, error in
-                showError = error != nil
-            }
-            .alert("Error", isPresented: $showError) {
-                Button("OK") { viewModel.errorMessage = nil }
-            } message: {
-                Text(viewModel.errorMessage ?? "")
-            }
-            .sheet(isPresented: $showSettings) {
-                SettingsView()
-                    .environmentObject(appState)
-            }
-            .onChange(of: pushManager.pendingDeepLink) { _, deepLink in
-                guard deepLink != nil else { return }
-                // Refresh events to show latest state after notification action
-                viewModel.refresh()
-                pushManager.pendingDeepLink = nil
-            }
+            mainContent
         }
         .id(navigationStackId)
+        .onChange(of: pushManager.pendingDeepLink) { _, deepLink in
+            guard let deepLink else { return }
+            if let membership = viewModel.findMembership(eventId: deepLink.eventId) {
+                deepLinkMembership = membership
+            } else {
+                viewModel.refresh()
+            }
+        }
+        .onChange(of: viewModel.sections) { _, _ in
+            guard let deepLink = pushManager.pendingDeepLink,
+                  let membership = viewModel.findMembership(eventId: deepLink.eventId) else { return }
+            deepLinkMembership = membership
+        }
+    }
+
+    // MARK: - Main Content
+
+    private var mainContent: some View {
+        Group {
+            if viewModel.isLoading && viewModel.sections.isEmpty {
+                loadingView
+            } else if viewModel.isEmpty {
+                emptyState
+            } else {
+                eventsList
+            }
+        }
+        .themedBackground(scheme: colorScheme)
+        .navigationDestination(item: $deepLinkMembership) { item in
+            EventTabView(membership: item)
+                .environmentObject(appState)
+        }
+        .navigationTitle("eventsHub.title".localized)
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                profileAvatarButton
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                plusButton
+            }
+        }
+        .refreshable {
+            viewModel.refresh()
+        }
+        .onAppear {
+            withAnimation(AppTheme.entranceAnimation) { hasAppeared = true }
+            viewModel.load()
+        }
+        .onChange(of: viewModel.errorMessage) { _, error in
+            showError = error != nil
+        }
+        .alert("Error", isPresented: $showError) {
+            Button("OK") { viewModel.errorMessage = nil }
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+                .environmentObject(appState)
+        }
     }
 
     // MARK: - Events List
@@ -190,7 +208,7 @@ struct EventsHomeView: View {
             VStack(spacing: AppTheme.Spacing.s) {
                 Text("eventsHub.empty.title".localized)
                     .font(AppTheme.Typography.headline)
-                    .foregroundStyle(colorScheme == .dark ? .white : Color(red: 0.1, green: 0.1, blue: 0.1))
+                    .foregroundStyle(AppTheme.textPrimary(for: colorScheme))
 
                 Text("eventsHub.empty.subtitle".localized)
                     .font(AppTheme.Typography.subheadline)
@@ -242,6 +260,7 @@ struct EventsHomeView: View {
                     .foregroundStyle(AppTheme.themeColor)
             }
         }
+        .accessibilityLabel("eventsHub.a11y.profile".localized)
     }
 
     private var plusButton: some View {
@@ -254,11 +273,13 @@ struct EventsHomeView: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(AppTheme.themeColor)
         }
+        .accessibilityLabel("eventsHub.a11y.browse".localized)
     }
 
     // MARK: - Pop to Root
 
     private func popToRootAndRefresh() {
+        deepLinkMembership = nil
         navigationStackId = UUID()
         viewModel.refresh()
     }

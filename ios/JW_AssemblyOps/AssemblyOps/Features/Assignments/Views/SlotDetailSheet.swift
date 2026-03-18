@@ -52,6 +52,12 @@ struct SlotDetailSheet: View {
     @State private var customSub: String = ""
     @State private var showCustomSub = false
 
+    /// Captains can view but not edit post metadata.
+    /// Overseers set claimedDepartment; captains only set selectedDepartment.
+    private var canEditPost: Bool {
+        sessionState.claimedDepartment != nil
+    }
+
     private var deptColor: Color {
         if let deptType = sessionState.selectedDepartment?.departmentType {
             return DepartmentColor.color(for: deptType)
@@ -120,7 +126,7 @@ struct SlotDetailSheet: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    if hasEdits {
+                    if hasEdits && canEditPost {
                         Button {
                             Task { await savePostEdits() }
                         } label: {
@@ -223,27 +229,36 @@ struct SlotDetailSheet: View {
             }
 
             VStack(spacing: AppTheme.Spacing.m) {
-                // Name: read-only for AV departments, editable for others
-                if isAVDept {
+                // Name: read-only for AV departments or non-editors, editable for others
+                if isAVDept || !canEditPost {
                     infoRow(label: "Name", value: editName)
                 } else {
                     editableField(label: "Name", text: $editName)
                 }
 
                 // Location: hidden for Audio/Video, picker for Stage, editable for others
-                if isStageDept {
-                    stageLocationPicker
+                if canEditPost {
+                    if isStageDept {
+                        stageLocationPicker
+                    } else if !isAudioDept && !isVideoDept {
+                        editableField(label: "Location", text: $editLocation, placeholder: "Optional")
+                    }
                 } else if !isAudioDept && !isVideoDept {
-                    editableField(label: "Location", text: $editLocation, placeholder: "Optional")
+                    let locationValue = editLocation.isEmpty ? "—" : editLocation
+                    infoRow(label: "Location", value: locationValue)
                 }
 
                 // Category: Attendant has its own picker, AV is read-only, others editable
-                if isAttendantDept {
-                    attendantCategoryPicker
-                } else if isAVDept {
-                    infoRow(label: "Category", value: editCategory.isEmpty ? "—" : editCategory)
+                if canEditPost {
+                    if isAttendantDept {
+                        attendantCategoryPicker
+                    } else if isAVDept {
+                        infoRow(label: "Category", value: editCategory.isEmpty ? "—" : editCategory)
+                    } else {
+                        editableField(label: "Category", text: $editCategory, placeholder: "Optional")
+                    }
                 } else {
-                    editableField(label: "Category", text: $editCategory, placeholder: "Optional")
+                    infoRow(label: "Category", value: editCategory.isEmpty ? "—" : editCategory)
                 }
 
                 // Session (read-only)

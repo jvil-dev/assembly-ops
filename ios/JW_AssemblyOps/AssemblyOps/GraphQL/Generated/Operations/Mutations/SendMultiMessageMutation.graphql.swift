@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "SendMultiMessage"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation SendMultiMessage($input: SendMultiMessageInput!) { sendMultiMessage(input: $input) { __typename id subject body recipientType senderType senderName createdAt } }"#
+        #"mutation SendMultiMessage($input: SendMultiMessageInput!) { sendMultiMessage(input: $input) { __typename id subject body recipientType senderType senderName recipientName createdAt } }"#
       ))
 
     public var input: SendMultiMessageInput
@@ -49,6 +49,7 @@ extension AssemblyOpsAPI {
           .field("recipientType", GraphQLEnum<AssemblyOpsAPI.RecipientType>.self),
           .field("senderType", GraphQLEnum<AssemblyOpsAPI.MessageSenderType>?.self),
           .field("senderName", String?.self),
+          .field("recipientName", String?.self),
           .field("createdAt", AssemblyOpsAPI.DateTime.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -61,6 +62,7 @@ extension AssemblyOpsAPI {
         var recipientType: GraphQLEnum<AssemblyOpsAPI.RecipientType> { __data["recipientType"] }
         var senderType: GraphQLEnum<AssemblyOpsAPI.MessageSenderType>? { __data["senderType"] }
         var senderName: String? { __data["senderName"] }
+        var recipientName: String? { __data["recipientName"] }
         var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }
       }
     }
