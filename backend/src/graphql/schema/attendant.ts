@@ -75,6 +75,7 @@ export const attendantTypeDefs = `#graphql
 
   type AttendantMeeting {
     id: ID!
+    name: String
     session: Session!
     event: Event!
     meetingDate: String!
@@ -116,9 +117,18 @@ export const attendantTypeDefs = `#graphql
   input CreateAttendantMeetingInput {
     eventId: ID!
     sessionId: ID!
+    name: String
     meetingDate: String!
     notes: String
     attendeeIds: [ID!]!
+  }
+
+  input UpdateAttendantMeetingInput {
+    id: ID!
+    name: String
+    meetingDate: String
+    notes: String
+    attendeeIds: [ID!]
   }
 
   extend type Query {
@@ -134,6 +144,7 @@ export const attendantTypeDefs = `#graphql
     createLostPersonAlert(input: CreateLostPersonAlertInput!): LostPersonAlert!
     resolveLostPersonAlert(id: ID!, resolutionNotes: String!): LostPersonAlert!
     createAttendantMeeting(input: CreateAttendantMeetingInput!): AttendantMeeting!
+    updateAttendantMeeting(input: UpdateAttendantMeetingInput!): AttendantMeeting!
     updateAttendantMeetingNotes(id: ID!, notes: String!): AttendantMeeting!
     deleteAttendantMeeting(id: ID!): Boolean!
   }
