@@ -254,6 +254,15 @@ const volunteerProfileResolvers = {
         where: { eventVolunteerId: ev.id },
       });
     },
+
+    sessionAssignmentCount: async (ev: EventVolunteer, { sessionId }: { sessionId: string }, context: Context) => {
+      return context.prisma.scheduleAssignment.count({
+        where: {
+          eventVolunteerId: ev.id,
+          sessionId,
+        },
+      });
+    },
   },
 };
 

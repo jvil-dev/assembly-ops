@@ -19,6 +19,7 @@ export const volunteerProfileTypeDefs = `#graphql
     department: Department
     role: Role
     assignments: [ScheduleAssignment!]!
+    sessionAssignmentCount(sessionId: ID!): Int!
     createdAt: DateTime!
     updatedAt: DateTime!
   }

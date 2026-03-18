@@ -573,7 +573,7 @@ const assignmentResolvers = {
       }
 
       const assignmentService = new AssignmentService(context.prisma);
-      const forced = await assignmentService.forceAssignment(input);
+      const { assignment, warning } = await assignmentService.forceAssignment(input);
 
       // Notify the assigned volunteer
       const forcedVol = await context.prisma.eventVolunteer.findUnique({
@@ -586,11 +586,11 @@ const assignmentResolvers = {
         notificationService.sendToUser(forcedVol.user.id, forcedVol.event.id, {
           title: 'New Assignment',
           body: `You've been assigned to ${post?.name || 'a post'}`,
-          data: { type: 'ASSIGNMENT_CREATED', eventId: forcedVol.event.id, assignmentId: forced.id },
+          data: { type: 'ASSIGNMENT_CREATED', eventId: forcedVol.event.id, assignmentId: assignment.id },
         }).catch(() => {});
       }
 
-      return forced;
+      return { assignment, warning };
     },
 
     setCaptain: async (
