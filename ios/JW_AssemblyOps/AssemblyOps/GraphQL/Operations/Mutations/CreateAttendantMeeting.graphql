@@ -1,6 +1,7 @@
 mutation CreateAttendantMeeting($input: CreateAttendantMeetingInput!) {
   createAttendantMeeting(input: $input) {
     id
+    name
     session {
       id
       name

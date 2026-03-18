@@ -20,8 +20,16 @@ struct AttendantMeetingsView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var hasAppeared = false
     @State private var showCreateMeeting = false
+    @State private var editingMeeting: AttendantMeetingItem?
     @State private var expandedMeetingId: String?
     @State private var showError = false
+
+    private var accentColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return DepartmentColor.color(for: "ATTENDANT")
+    }
 
     var body: some View {
         ScrollView {
@@ -57,8 +65,16 @@ struct AttendantMeetingsView: View {
         .sheet(isPresented: $showCreateMeeting) {
             CreateMeetingSheet()
         }
+        .sheet(item: $editingMeeting) { meeting in
+            EditMeetingSheet(meeting: meeting)
+        }
         .onChange(of: showCreateMeeting) { _, isShowing in
             if !isShowing, let eventId = sessionState.selectedEvent?.id {
+                Task { await viewModel.loadMeetings(eventId: eventId) }
+            }
+        }
+        .onChange(of: editingMeeting) { _, newValue in
+            if newValue == nil, let eventId = sessionState.selectedEvent?.id {
                 Task { await viewModel.loadMeetings(eventId: eventId) }
             }
         }
@@ -91,19 +107,33 @@ struct AttendantMeetingsView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                    Text(meeting.sessionName)
+                    Text(meeting.name ?? meeting.sessionName)
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)
+
+                    if meeting.name != nil {
+                        Text(meeting.sessionName)
+                            .font(AppTheme.Typography.subheadline)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                    }
 
                     Text(formatDate(meeting.meetingDate))
                         .font(AppTheme.Typography.subheadline)
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 }
                 Spacer()
+                Button {
+                    editingMeeting = meeting
+                } label: {
+                    Image(systemName: "pencil.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(accentColor)
+                }
+                .buttonStyle(.plain)
                 VStack(alignment: .trailing, spacing: AppTheme.Spacing.xs) {
                     Text("\(meeting.attendees.count)")
                         .font(AppTheme.Typography.headline)
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(accentColor)
                     Text("attendant.meetings.attendees".localized)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -126,10 +156,10 @@ struct AttendantMeetingsView: View {
                 HStack {
                     Image(systemName: "person.3")
                         .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(accentColor)
                     Text(expandedMeetingId == meeting.id ? "attendant.meetings.hideAttendees".localized : "attendant.meetings.showAttendees".localized)
                         .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(accentColor)
                     Spacer()
                     Image(systemName: expandedMeetingId == meeting.id ? "chevron.up" : "chevron.down")
                         .font(AppTheme.Typography.captionSmall)
@@ -144,7 +174,7 @@ struct AttendantMeetingsView: View {
                         HStack(spacing: AppTheme.Spacing.s) {
                             Image(systemName: "person.fill")
                                 .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.themeColor)
+                                .foregroundStyle(accentColor)
                             Text(attendee.volunteerName)
                                 .font(AppTheme.Typography.subheadline)
                                 .foregroundStyle(.primary)
@@ -185,7 +215,7 @@ struct AttendantMeetingsView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, AppTheme.Spacing.xl)
                     .padding(.vertical, AppTheme.Spacing.m)
-                    .background(AppTheme.themeColor)
+                    .background(accentColor)
                     .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button))
             }
         }

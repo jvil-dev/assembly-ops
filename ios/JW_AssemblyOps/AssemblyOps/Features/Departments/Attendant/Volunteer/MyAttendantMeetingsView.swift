@@ -69,21 +69,32 @@ struct MyAttendantMeetingsView: View {
 
     private func meetingCard(_ meeting: AttendantMeetingItem) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            // Session & date header
+            // Meeting name & session header
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "calendar")
-                    .foregroundStyle(AppTheme.themeColor)
-                Text(meeting.sessionName)
+                    .foregroundStyle(accentColor)
+                Text(meeting.name ?? meeting.sessionName)
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)
             }
 
-            // Meeting date
+            if meeting.name != nil {
+                HStack(spacing: AppTheme.Spacing.s) {
+                    Image(systemName: "tag")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                    Text(meeting.sessionName)
+                        .font(AppTheme.Typography.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                }
+            }
+
+            // Meeting date & time
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "clock")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-                Text(meeting.meetingDate, style: .date)
+                Text(formatDate(meeting.meetingDate))
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             }
@@ -104,7 +115,7 @@ struct MyAttendantMeetingsView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "note.text")
                             .font(AppTheme.Typography.caption)
-                            .foregroundStyle(AppTheme.themeColor)
+                            .foregroundStyle(accentColor)
                         Text("attendant.meetings.notes".localized.uppercased())
                             .font(AppTheme.Typography.caption)
                             .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -125,7 +136,7 @@ struct MyAttendantMeetingsView: View {
             HStack(spacing: 6) {
                 Image(systemName: "person.3")
                     .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
                 Text("\(meeting.attendees.count) \("attendant.meetings.attendees".localized)")
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
@@ -133,6 +144,23 @@ struct MyAttendantMeetingsView: View {
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Helpers
+
+    private var accentColor: Color {
+        DepartmentColor.color(for: "ATTENDANT")
+    }
+
+    private static let meetingDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    private func formatDate(_ date: Date) -> String {
+        Self.meetingDateFormatter.string(from: date)
     }
 
     // MARK: - Empty State

@@ -1,19 +1,13 @@
-query AttendantMeetings($eventId: ID!) {
-  attendantMeetings(eventId: $eventId) {
+mutation UpdateAttendantMeeting($input: UpdateAttendantMeetingInput!) {
+  updateAttendantMeeting(input: $input) {
     id
     name
     session {
       id
       name
-      date
     }
     meetingDate
     notes
-    createdBy {
-      id
-      firstName
-      lastName
-    }
     attendees {
       id
       eventVolunteer {

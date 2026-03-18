@@ -19,6 +19,7 @@
 //   - resolveLostPersonAlert(id:resolutionNotes:): Mark alert resolved
 //   - fetchMeetings(eventId:): Get all attendant meetings
 //   - createMeeting(eventId:sessionId:meetingDate:notes:attendeeIds:): Create meeting
+//   - updateMeeting(id:meetingDate:notes:attendeeIds:): Update meeting
 //   - fetchMyMeetings(eventId:): Get volunteer's meetings
 //
 // Dependencies:
@@ -247,10 +248,11 @@ final class AttendantService {
     }
 
     /// Create a new attendant meeting
-    func createMeeting(eventId: String, sessionId: String, meetingDate: String, notes: String?, attendeeIds: [String]) async throws -> AttendantMeetingItem {
+    func createMeeting(eventId: String, sessionId: String, name: String?, meetingDate: String, notes: String?, attendeeIds: [String]) async throws -> AttendantMeetingItem {
         let input = AssemblyOpsAPI.CreateAttendantMeetingInput(
             eventId: eventId,
             sessionId: sessionId,
+            name: name.map { .some($0) } ?? .none,
             meetingDate: meetingDate,
             notes: notes.map { .some($0) } ?? .none,
             attendeeIds: attendeeIds
@@ -268,6 +270,36 @@ final class AttendantService {
                         continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
                     } else {
                         continuation.resume(throwing: AttendantError.serverError("Failed to create meeting"))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
+    /// Update an attendant meeting (date, notes, and/or attendees)
+    func updateMeeting(id: String, name: String?, meetingDate: String?, notes: String?, attendeeIds: [String]?) async throws -> AttendantMeetingItem {
+        let input = AssemblyOpsAPI.UpdateAttendantMeetingInput(
+            id: id,
+            name: name.map { .some($0) } ?? .none,
+            meetingDate: meetingDate.map { .some($0) } ?? .none,
+            notes: notes.map { .some($0) } ?? .none,
+            attendeeIds: attendeeIds.map { .some($0) } ?? .none
+        )
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.UpdateAttendantMeetingMutation(input: input)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let data = graphQLResult.data?.updateAttendantMeeting,
+                       let item = AttendantMeetingItem(fromUpdate: data) {
+                        continuation.resume(returning: item)
+                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume(throwing: AttendantError.serverError("Failed to update meeting"))
                     }
                 case .failure(let error):
                     continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))

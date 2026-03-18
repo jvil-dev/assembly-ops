@@ -25,11 +25,23 @@ enum DateUtils {
         return formatter
     }()
     
-    /// Parse an ISO8601 date string into a Date object
+    /// Fallback formatter for ISO8601 strings without fractional seconds
+    /// Format: 2026-01-13T10:15:30Z
+    private static let isoFormatterNoFractional: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
+    /// Parse an ISO8601 date string into a Date object.
+    /// Tries with fractional seconds first, then without.
     /// - Parameter dateString: ISO8601 formatted date string
     /// - Returns: Date object if parsing succeeds, nil otherwise
     static func parseISO8601(_ dateString: String) -> Date? {
-        return isoFormatter.date(from: dateString)
+        if let date = isoFormatter.date(from: dateString) {
+            return date
+        }
+        return isoFormatterNoFractional.date(from: dateString)
     }
 
     // MARK: - UTC Time Field Display
