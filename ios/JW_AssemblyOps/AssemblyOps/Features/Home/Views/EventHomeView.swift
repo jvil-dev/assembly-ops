@@ -35,7 +35,6 @@ struct EventHomeView: View {
     @StateObject private var coverageVM = CoverageMatrixViewModel()
     @StateObject private var homeVM = HomeViewModel()
     @StateObject private var notificationVM = NotificationHistoryViewModel()
-    @ObservedObject private var messageBadgeManager = UnreadBadgeManager.shared
     @ObservedObject private var pendingBadgeManager = PendingBadgeManager.shared
     @State private var hasAppeared = false
     @State private var isCheckingIn = false
@@ -83,7 +82,7 @@ struct EventHomeView: View {
                                 .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
                         }
 
-                        if pendingBadgeManager.pendingCount > 0 || messageBadgeManager.unreadCount > 0 {
+                        if pendingBadgeManager.pendingCount > 0 {
                             volunteerActionItemsCard
                                 .entranceAnimation(hasAppeared: hasAppeared, delay: 0.20)
                         }
@@ -661,73 +660,34 @@ struct EventHomeView: View {
     // MARK: - Volunteer Action Items Card
 
     private var volunteerActionItemsCard: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
-            if pendingBadgeManager.pendingCount > 0 {
-                Button {
-                    HapticManager.shared.lightTap()
-                    switchToTab?(.assignments)
-                } label: {
-                    HStack(spacing: AppTheme.Spacing.s) {
-                        Image(systemName: "exclamationmark.circle.fill")
-                            .foregroundStyle(AppTheme.StatusColors.warning)
-                            .font(.system(size: 18))
+        Button {
+            HapticManager.shared.lightTap()
+            switchToTab?(.assignments)
+        } label: {
+            HStack(spacing: AppTheme.Spacing.s) {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .foregroundStyle(AppTheme.StatusColors.warning)
+                    .font(.system(size: 18))
 
-                        let count = pendingBadgeManager.pendingCount
-                        Text(count == 1
-                             ? "home.actions.pendingOne".localized
-                             : String(format: "home.actions.pending".localized, count))
-                            .font(AppTheme.Typography.subheadline)
-                            .foregroundStyle(.primary)
+                let count = pendingBadgeManager.pendingCount
+                Text(count == 1
+                     ? "home.actions.pendingOne".localized
+                     : String(format: "home.actions.pending".localized, count))
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(.primary)
 
-                        Spacer()
+                Spacer()
 
-                        HStack(spacing: AppTheme.Spacing.xs) {
-                            Text("home.actions.respond".localized)
-                                .font(AppTheme.Typography.caption)
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 10, weight: .semibold))
-                        }
-                        .foregroundStyle(AppTheme.themeColor)
-                    }
+                HStack(spacing: AppTheme.Spacing.xs) {
+                    Text("home.actions.respond".localized)
+                        .font(AppTheme.Typography.caption)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .semibold))
                 }
-                .buttonStyle(.plain)
-            }
-
-            if pendingBadgeManager.pendingCount > 0 && messageBadgeManager.unreadCount > 0 {
-                Divider()
-            }
-
-            if messageBadgeManager.unreadCount > 0 {
-                Button {
-                    HapticManager.shared.lightTap()
-                    switchToTab?(.messages)
-                } label: {
-                    HStack(spacing: AppTheme.Spacing.s) {
-                        Image(systemName: "envelope.badge.fill")
-                            .foregroundStyle(AppTheme.StatusColors.info)
-                            .font(.system(size: 18))
-
-                        let count = messageBadgeManager.unreadCount
-                        Text(count == 1
-                             ? "home.actions.unreadOne".localized
-                             : String(format: "home.actions.unread".localized, count))
-                            .font(AppTheme.Typography.subheadline)
-                            .foregroundStyle(.primary)
-
-                        Spacer()
-
-                        HStack(spacing: AppTheme.Spacing.xs) {
-                            Text("home.actions.read".localized)
-                                .font(AppTheme.Typography.caption)
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 10, weight: .semibold))
-                        }
-                        .foregroundStyle(AppTheme.themeColor)
-                    }
-                }
-                .buttonStyle(.plain)
+                .foregroundStyle(AppTheme.themeColor)
             }
         }
+        .buttonStyle(.plain)
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardPadding()
         .themedCard(scheme: colorScheme)

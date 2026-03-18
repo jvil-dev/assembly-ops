@@ -89,6 +89,21 @@ final class NotificationHistoryViewModel: ObservableObject {
         }
     }
 
+    func deleteNotification(_ notification: NotificationItem) async {
+        let previousNotifications = notifications
+        let previousCount = unreadCount
+        notifications.removeAll { $0.id == notification.id }
+        if !notification.isRead {
+            unreadCount = max(0, unreadCount - 1)
+        }
+        do {
+            try await service.deleteNotification(notificationId: notification.id)
+        } catch {
+            notifications = previousNotifications
+            unreadCount = previousCount
+        }
+    }
+
     func markAllRead(eventId: String) async {
         let previousNotifications = notifications
         let previousCount = unreadCount
