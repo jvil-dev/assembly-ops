@@ -79,6 +79,7 @@ xcuserdata/
 *.xcscmblueprint
 Package.resolved
 AssemblyOps.xcscheme
+AssemblyOps.xcodeproj/
 
 # Firebase
 GoogleService-Info.plist

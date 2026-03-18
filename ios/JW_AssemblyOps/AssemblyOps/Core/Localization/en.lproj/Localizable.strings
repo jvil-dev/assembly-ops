@@ -443,6 +443,9 @@
 "attendant.meetings.myTitle" = "My Meetings";
 "attendant.meetings.noNotes" = "No notes for this meeting";
 "attendant.meetings.noMeetings" = "No meetings assigned";
+"attendant.meetings.editTitle" = "Edit Meeting";
+"attendant.meetings.updated" = "Meeting updated successfully";
+"attendant.meetings.name" = "Meeting Name";
 
 // MARK: - Attendant Info (CO-23 Quick Reference)
 "attendant.info.title" = "Attendant Reminders";

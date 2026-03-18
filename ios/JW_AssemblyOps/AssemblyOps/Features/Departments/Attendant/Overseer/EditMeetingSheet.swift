@@ -1,35 +1,34 @@
 //
-//  CreateMeetingSheet.swift
+//  EditMeetingSheet.swift
 //  AssemblyOps
 //
-//  Created by Jorge Villeda on 2/16/26.
+//  Created by Jorge Villeda on 3/17/26.
 //
 
-// MARK: - Create Meeting Sheet
+// MARK: - Edit Meeting Sheet
 //
-// Modal form for creating a new attendant meeting.
-// Fields: session picker, meeting date/time, notes, multi-select attendee picker.
+// Modal form for editing an existing attendant meeting.
+// Fields: session (read-only), meeting date/time, notes, multi-select attendee picker.
 //
 
 import SwiftUI
 
-struct CreateMeetingSheet: View {
+struct EditMeetingSheet: View {
+    let meeting: AttendantMeetingItem
+
     @StateObject private var viewModel = AttendantMeetingViewModel()
     @ObservedObject private var sessionState = EventSessionState.shared
-    @StateObject private var attendanceVM = AttendanceViewModel()
     @StateObject private var volunteersVM = VolunteersViewModel()
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) var dismiss
     @State private var hasAppeared = false
     @State private var showError = false
-    @State private var didCreate = false
 
-    // Form state
-    @State private var name = ""
-    @State private var selectedSessionId: String?
-    @State private var meetingDate = Date()
-    @State private var notes = ""
-    @State private var selectedAttendeeIds: Set<String> = []
+    // Form state — pre-filled from meeting
+    @State private var name: String
+    @State private var meetingDate: Date
+    @State private var notes: String
+    @State private var selectedAttendeeIds: Set<String>
     @State private var attendeeSearchText = ""
 
     private var accentColor: Color {
@@ -39,17 +38,16 @@ struct CreateMeetingSheet: View {
         return DepartmentColor.color(for: "ATTENDANT")
     }
 
-    /// Default meeting date: event start date at 7:00 AM
-    private static func defaultMeetingDate(for event: EventSummary?) -> Date {
-        guard let event = event else { return Date() }
-        var components = Calendar.current.dateComponents([.year, .month, .day], from: event.startDate)
-        components.hour = 7
-        components.minute = 0
-        return Calendar.current.date(from: components) ?? event.startDate
+    init(meeting: AttendantMeetingItem) {
+        self.meeting = meeting
+        _name = State(initialValue: meeting.name ?? "")
+        _meetingDate = State(initialValue: meeting.meetingDate)
+        _notes = State(initialValue: meeting.notes ?? "")
+        _selectedAttendeeIds = State(initialValue: Set(meeting.attendees.map { $0.volunteerId }))
     }
 
     var isFormValid: Bool {
-        selectedSessionId != nil && !selectedAttendeeIds.isEmpty
+        !selectedAttendeeIds.isEmpty
     }
 
     private var filteredVolunteers: [VolunteerListItem] {
@@ -63,7 +61,7 @@ struct CreateMeetingSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppTheme.Spacing.xl) {
-                    sessionPickerCard
+                    sessionCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
                     nameCard
@@ -83,13 +81,13 @@ struct CreateMeetingSheet: View {
                 .padding(.bottom, AppTheme.Spacing.xxl)
             }
             .themedBackground(scheme: colorScheme)
-            .navigationTitle("attendant.meetings.create".localized)
+            .navigationTitle("attendant.meetings.editTitle".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { sheetToolbar }
-            .alert("attendant.meetings.create".localized, isPresented: $didCreate) {
+            .alert("attendant.meetings.editTitle".localized, isPresented: $viewModel.didUpdate) {
                 Button("common.ok".localized) { dismiss() }
             } message: {
-                Text("common.success".localized)
+                Text("attendant.meetings.updated".localized)
             }
             .alert("common.error".localized, isPresented: $showError) {
                 Button("common.ok".localized) { viewModel.error = nil }
@@ -98,10 +96,6 @@ struct CreateMeetingSheet: View {
             }
             .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
             .task {
-                meetingDate = Self.defaultMeetingDate(for: sessionState.selectedEvent)
-                if let eventId = sessionState.selectedEvent?.id {
-                    await attendanceVM.loadEventSummary(eventId: eventId)
-                }
                 if let deptId = sessionState.selectedDepartment?.id ?? sessionState.claimedDepartment?.id {
                     volunteersVM.departmentId = deptId
                     await volunteersVM.loadVolunteers()
@@ -128,55 +122,25 @@ struct CreateMeetingSheet: View {
         }
     }
 
-    // MARK: - Session Picker
+    // MARK: - Session (Read-Only)
 
-    private var sessionPickerCard: some View {
+    private var sessionCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
             SectionHeaderLabel(icon: "calendar", title: "attendant.meetings.session".localized, accentColor: accentColor)
-            sessionPickerContent
-        }
-    }
 
-    @ViewBuilder
-    private var sessionPickerContent: some View {
-        if attendanceVM.sessionSummaries.isEmpty {
             HStack {
-                ProgressView()
-                Text("common.loading".localized)
-                    .font(AppTheme.Typography.subheadline)
-                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
-            }
-        } else {
-            ForEach(attendanceVM.sessionSummaries, id: \.sessionId) { session in
-                sessionButton(session)
-            }
-        }
-    }
-
-    private func sessionButton(_ session: SessionAttendanceSummaryItem) -> some View {
-        Button {
-            selectedSessionId = session.sessionId
-            HapticManager.shared.lightTap()
-        } label: {
-            HStack {
-                Text(session.sessionName)
+                Text(meeting.sessionName)
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(.primary)
                 Spacer()
-                if selectedSessionId == session.sessionId {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(accentColor)
-                }
+                Image(systemName: "lock.fill")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
             .padding(AppTheme.Spacing.m)
-            .background(
-                selectedSessionId == session.sessionId
-                    ? accentColor.opacity(0.1)
-                    : AppTheme.cardBackgroundSecondary(for: colorScheme)
-            )
+            .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
             .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
         }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Date Picker
@@ -343,19 +307,15 @@ struct CreateMeetingSheet: View {
         ToolbarItem(placement: .confirmationAction) {
             Button("common.save".localized) {
                 Task {
-                    guard let eventId = sessionState.selectedEvent?.id,
-                          let sessionId = selectedSessionId else { return }
+                    guard let eventId = sessionState.selectedEvent?.id else { return }
                     let nameText = name.isEmpty ? nil : name
-                    let noteText = notes.isEmpty ? nil : notes
                     let dateString = DateUtils.isoFormatter.string(from: meetingDate)
-                    await viewModel.createMeeting(
-                        eventId: eventId, sessionId: sessionId,
+                    let noteText = notes.isEmpty ? nil : notes
+                    await viewModel.updateMeeting(
+                        id: meeting.id, eventId: eventId,
                         name: nameText, meetingDate: dateString,
                         notes: noteText, attendeeIds: Array(selectedAttendeeIds)
                     )
-                    if viewModel.error == nil {
-                        didCreate = true
-                    }
                 }
             }
             .disabled(!isFormValid || viewModel.isSaving)
@@ -364,5 +324,9 @@ struct CreateMeetingSheet: View {
 }
 
 #Preview {
-    CreateMeetingSheet()
+    EditMeetingSheet(meeting: AttendantMeetingItem(
+        id: "preview", name: "Parking Lot Briefing", sessionName: "Saturday AM",
+        sessionId: "s1", meetingDate: Date(), notes: "Test notes",
+        createdByName: "John", attendees: [], createdAt: Date()
+    ))
 }

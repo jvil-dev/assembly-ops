@@ -444,6 +444,9 @@
 "attendant.meetings.myTitle" = "Mis Reuniones";
 "attendant.meetings.noNotes" = "Sin notas para esta reunión";
 "attendant.meetings.noMeetings" = "No hay reuniones asignadas";
+"attendant.meetings.editTitle" = "Editar Reunión";
+"attendant.meetings.updated" = "Reunión actualizada exitosamente";
+"attendant.meetings.name" = "Nombre de la Reunión";
 
 // MARK: - Información para Acomodadores (CO-23 Referencia Rápida)
 "attendant.info.title" = "Recordatorios para Acomodadores";

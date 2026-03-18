@@ -4,7 +4,7 @@
 import ApolloAPI
 
 extension AssemblyOpsAPI {
-  struct CreateAttendantMeetingInput: InputObject {
+  struct UpdateAttendantMeetingInput: InputObject {
     private(set) var __data: InputDict
 
     init(_ data: InputDict) {
@@ -12,16 +12,14 @@ extension AssemblyOpsAPI {
     }
 
     init(
-      eventId: ID,
-      sessionId: ID,
+      id: ID,
       name: GraphQLNullable<String> = nil,
-      meetingDate: String,
+      meetingDate: GraphQLNullable<String> = nil,
       notes: GraphQLNullable<String> = nil,
-      attendeeIds: [ID]
+      attendeeIds: GraphQLNullable<[ID]> = nil
     ) {
       __data = InputDict([
-        "eventId": eventId,
-        "sessionId": sessionId,
+        "id": id,
         "name": name,
         "meetingDate": meetingDate,
         "notes": notes,
@@ -29,14 +27,9 @@ extension AssemblyOpsAPI {
       ])
     }
 
-    var eventId: ID {
-      get { __data["eventId"] }
-      set { __data["eventId"] = newValue }
-    }
-
-    var sessionId: ID {
-      get { __data["sessionId"] }
-      set { __data["sessionId"] = newValue }
+    var id: ID {
+      get { __data["id"] }
+      set { __data["id"] = newValue }
     }
 
     var name: GraphQLNullable<String> {
@@ -44,7 +37,7 @@ extension AssemblyOpsAPI {
       set { __data["name"] = newValue }
     }
 
-    var meetingDate: String {
+    var meetingDate: GraphQLNullable<String> {
       get { __data["meetingDate"] }
       set { __data["meetingDate"] = newValue }
     }
@@ -54,7 +47,7 @@ extension AssemblyOpsAPI {
       set { __data["notes"] = newValue }
     }
 
-    var attendeeIds: [ID] {
+    var attendeeIds: GraphQLNullable<[ID]> {
       get { __data["attendeeIds"] }
       set { __data["attendeeIds"] = newValue }
     }

@@ -20,6 +20,54 @@ export async function createTestApp() {
   app.use(cors());
   app.use(express.json());
 
+  // Cron endpoint: meeting reminders (mirrors server.ts)
+  app.post('/api/cron/meeting-reminders', async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret || req.headers['x-cron-secret'] !== cronSecret) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    try {
+      const prisma = (await import('../config/database.js')).default;
+      const { NotificationService } = await import('../services/notificationService.js');
+
+      const now = new Date();
+      const tomorrowStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+      const tomorrowEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 2));
+
+      const meetings = await prisma.attendantMeeting.findMany({
+        where: { meetingDate: { gte: tomorrowStart, lt: tomorrowEnd } },
+        include: {
+          attendees: {
+            include: { eventVolunteer: { select: { userId: true } } },
+          },
+        },
+      });
+
+      let notificationsSent = 0;
+      const notificationService = new NotificationService(prisma);
+
+      for (const meeting of meetings) {
+        const userIds = meeting.attendees.map((a) => a.eventVolunteer.userId);
+        if (userIds.length === 0) continue;
+
+        await notificationService.sendToUsers(userIds, meeting.eventId, {
+          title: 'Meeting Reminder',
+          body: meeting.name
+            ? `Reminder: "${meeting.name}" is scheduled for tomorrow`
+            : 'You have an attendant meeting scheduled for tomorrow',
+          data: { type: 'MEETING_REMINDER', eventId: meeting.eventId, meetingId: meeting.id },
+        });
+        notificationsSent += userIds.length;
+      }
+
+      res.status(200).json({ meetingsProcessed: meetings.length, notificationsSent });
+    } catch {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // Health check endpoint for tests
   app.get('/health', async (_req, res) => {
     try {

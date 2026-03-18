@@ -149,6 +149,7 @@ model AttendantMeeting {
   sessionId   String
   event       Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId     String
+  name        String?
   meetingDate DateTime
   notes       String?
   createdBy   User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
