@@ -125,7 +125,7 @@ describe('Check-In Operations', () => {
 
     // Create assignment with ACCEPTED status (forceAssignment)
     const assignmentRes = await authRequest(
-      `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { id } }`,
+      `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { assignment { id } } }`,
       { input: { volunteerId, postId, sessionId } },
       adminToken
     );
@@ -133,7 +133,7 @@ describe('Check-In Operations', () => {
       console.error('Assignment failed:', assignmentRes.body.errors);
       return;
     }
-    assignmentId = assignmentRes.body.data.forceAssignment.id;
+    assignmentId = assignmentRes.body.data.forceAssignment.assignment.id;
 
     // Create second volunteer + assignment for no-show test
     const volunteer2Res = await authRequest(
@@ -149,12 +149,12 @@ describe('Check-In Operations', () => {
     if (!volunteer2Res.body.errors) {
       const volunteer2Id = volunteer2Res.body.data.createVolunteer.id;
       const assignment2Res = await authRequest(
-        `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { id } }`,
+        `mutation($input: ForceAssignmentInput!) { forceAssignment(input: $input) { assignment { id } } }`,
         { input: { volunteerId: volunteer2Id, postId, sessionId } },
         adminToken
       );
       if (!assignment2Res.body.errors) {
-        secondAssignmentId = assignment2Res.body.data.forceAssignment.id;
+        secondAssignmentId = assignment2Res.body.data.forceAssignment.assignment.id;
       }
     }
 

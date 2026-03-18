@@ -264,9 +264,12 @@ describe('Assignment Acceptance Operations', () => {
           query: `
             mutation Force($input: ForceAssignmentInput!) {
               forceAssignment(input: $input) {
-                id
-                status
-                forceAssigned
+                assignment {
+                  id
+                  status
+                  forceAssigned
+                }
+                warning
               }
             }
           `,
@@ -277,8 +280,8 @@ describe('Assignment Acceptance Operations', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.forceAssignment.status).toBe('ACCEPTED');
-      expect(response.body.data.forceAssignment.forceAssigned).toBe(true);
+      expect(response.body.data.forceAssignment.assignment.status).toBe('ACCEPTED');
+      expect(response.body.data.forceAssignment.assignment.forceAssigned).toBe(true);
     });
   });
 
