@@ -36,7 +36,8 @@ import { GraphQLError } from 'graphql';
 import { Context } from '../context.js';
 import { AssignmentService } from '../../services/assignmentService.js';
 import { NotificationService } from '../../services/notificationService.js';
-import { requireAuth, requireEventAccess, resolveUserEventVolunteer, tryRequireAdmin, requireAreaOverseer, tryRequireDeptAccessByEvent, requireDeptAccess } from '../guards/auth.js';
+import { requireAuth, requireEventAccess, resolveUserEventVolunteer, tryRequireAdmin, requireAreaOverseer, requireAreaCaptainAccess, tryRequireDeptAccessByEvent, requireDeptAccess } from '../guards/auth.js';
+import { AuthorizationError } from '../../utils/errors.js';
 import {
   CreateAssignmentInput,
   UpdateAssignmentInput,
@@ -246,7 +247,28 @@ const assignmentResolvers = {
           await requireEventAccess(context, dept.eventId);
         }
       } else {
-        await requireDeptAccess(context, departmentId);
+        try {
+          await requireDeptAccess(context, departmentId);
+        } catch (err) {
+          if (!(err instanceof AuthorizationError)) throw err;
+          // Fallback: check if user is an accepted area captain in this department
+          const ev = await context.prisma.eventVolunteer.findFirst({
+            where: {
+              userId: context.user!.id,
+              event: { departments: { some: { id: departmentId } } },
+            },
+            select: { id: true },
+          });
+          if (!ev) throw new AuthorizationError('Not authorized');
+          const captainAccess = await context.prisma.areaCaptain.findFirst({
+            where: {
+              eventVolunteerId: ev.id,
+              area: { departmentId },
+              status: 'ACCEPTED',
+            },
+          });
+          if (!captainAccess) throw new AuthorizationError('Not authorized');
+        }
       }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.getDepartmentCoverage(departmentId);
@@ -267,7 +289,28 @@ const assignmentResolvers = {
           await requireEventAccess(context, dept.eventId);
         }
       } else {
-        await requireDeptAccess(context, departmentId);
+        try {
+          await requireDeptAccess(context, departmentId);
+        } catch (err) {
+          if (!(err instanceof AuthorizationError)) throw err;
+          // Fallback: check if user is an accepted area captain in this department
+          const ev = await context.prisma.eventVolunteer.findFirst({
+            where: {
+              userId: context.user!.id,
+              event: { departments: { some: { id: departmentId } } },
+            },
+            select: { id: true },
+          });
+          if (!ev) throw new AuthorizationError('Not authorized');
+          const captainAccess = await context.prisma.areaCaptain.findFirst({
+            where: {
+              eventVolunteerId: ev.id,
+              area: { departmentId },
+              status: 'ACCEPTED',
+            },
+          });
+          if (!captainAccess) throw new AuthorizationError('Not authorized');
+        }
       }
       const assignmentService = new AssignmentService(context.prisma);
       return assignmentService.getDepartmentCoverageGaps(departmentId);
@@ -299,7 +342,12 @@ const assignmentResolvers = {
         });
         const deptAccess = session ? await tryRequireDeptAccessByEvent(context, session.eventId) : null;
         if (!deptAccess) {
-          await requireAreaOverseer(context, input.postId);
+          try {
+            await requireAreaOverseer(context, input.postId);
+          } catch (err) {
+            if (!(err instanceof AuthorizationError)) throw err;
+            await requireAreaCaptainAccess(context, input.postId);
+          }
         }
       }
 
@@ -380,7 +428,12 @@ const assignmentResolvers = {
         if (!deptAccess) {
           const assignment = await context.prisma.scheduleAssignment.findUnique({ where: { id }, select: { postId: true } });
           if (!assignment) throw new GraphQLError('Assignment not found', { extensions: { code: 'NOT_FOUND' } });
-          await requireAreaOverseer(context, assignment.postId);
+          try {
+            await requireAreaOverseer(context, assignment.postId);
+          } catch (err) {
+            if (!(err instanceof AuthorizationError)) throw err;
+            await requireAreaCaptainAccess(context, assignment.postId);
+          }
         }
       }
       // Fetch assignment info before deletion for notification
@@ -449,7 +502,12 @@ const assignmentResolvers = {
         });
         const deptAccess = session ? await tryRequireDeptAccessByEvent(context, session.eventId) : null;
         if (!deptAccess) {
-          await requireAreaOverseer(context, inputs[0].postId);
+          try {
+            await requireAreaOverseer(context, inputs[0].postId);
+          } catch (err) {
+            if (!(err instanceof AuthorizationError)) throw err;
+            await requireAreaCaptainAccess(context, inputs[0].postId);
+          }
         }
       }
 
@@ -568,7 +626,12 @@ const assignmentResolvers = {
         });
         const deptAccess = session ? await tryRequireDeptAccessByEvent(context, session.eventId) : null;
         if (!deptAccess) {
-          await requireAreaOverseer(context, input.postId);
+          try {
+            await requireAreaOverseer(context, input.postId);
+          } catch (err) {
+            if (!(err instanceof AuthorizationError)) throw err;
+            await requireAreaCaptainAccess(context, input.postId);
+          }
         }
       }
 
@@ -636,7 +699,12 @@ const assignmentResolvers = {
         if (!deptAccess) {
           const assignment = await context.prisma.scheduleAssignment.findUnique({ where: { id: input.assignmentId }, select: { postId: true } });
           if (!assignment) throw new GraphQLError('Assignment not found', { extensions: { code: 'NOT_FOUND' } });
-          await requireAreaOverseer(context, assignment.postId);
+          try {
+            await requireAreaOverseer(context, assignment.postId);
+          } catch (err) {
+            if (!(err instanceof AuthorizationError)) throw err;
+            await requireAreaCaptainAccess(context, assignment.postId);
+          }
         }
       }
       const assignmentService = new AssignmentService(context.prisma);

@@ -26,7 +26,7 @@
 import { Context } from '../context.js';
 import { ShiftService } from '../../services/shiftService.js';
 import { SessionService } from '../../services/sessionService.js';
-import { requireAuth, requireEventAccess, tryRequireAdmin, tryRequireDeptAccessByEvent } from '../guards/auth.js';
+import { requireAuth, requireEventAccess, tryRequireAdmin, tryRequireDeptAccessByEvent, requireAreaCaptainAccess } from '../guards/auth.js';
 import { Shift } from '@prisma/client';
 import { CreateShiftInput, UpdateShiftInput } from '../validators/shift.js';
 
@@ -74,7 +74,12 @@ const shiftResolvers = {
       // Verify event access via session
       const sessionService = new SessionService(context.prisma);
       const eventId = await sessionService.getSessionEventId(input.sessionId);
-      await requireShiftMgmtAccess(context, eventId);
+      try {
+        await requireShiftMgmtAccess(context, eventId);
+      } catch (err) {
+        if (!(err instanceof Error)) throw err;
+        await requireAreaCaptainAccess(context, input.postId);
+      }
 
       const shiftService = new ShiftService(context.prisma);
       return shiftService.createShift(input, context.user!.id);
@@ -109,7 +114,20 @@ const shiftResolvers = {
       const sessionId = await shiftService.getShiftSessionId(id);
       const sessionService = new SessionService(context.prisma);
       const eventId = await sessionService.getSessionEventId(sessionId);
-      await requireShiftMgmtAccess(context, eventId);
+
+      // Look up the shift's postId for captain fallback
+      const shift = await context.prisma.shift.findUnique({
+        where: { id },
+        select: { postId: true },
+      });
+      if (!shift) throw new Error('Shift not found');
+
+      try {
+        await requireShiftMgmtAccess(context, eventId);
+      } catch (err) {
+        if (!(err instanceof Error)) throw err;
+        await requireAreaCaptainAccess(context, shift.postId);
+      }
 
       return shiftService.deleteShift(id);
     },
