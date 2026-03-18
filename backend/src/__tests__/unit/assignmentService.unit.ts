@@ -12,7 +12,6 @@ import { AssignmentService } from '../../services/assignmentService.js';
 import {
   NotFoundError,
   ValidationError,
-  ConflictError,
   AuthorizationError,
 } from '../../utils/errors.js';
 

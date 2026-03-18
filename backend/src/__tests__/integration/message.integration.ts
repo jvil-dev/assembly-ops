@@ -33,7 +33,6 @@ describe('Message Operations', () => {
   let adminToken: string;
   let adminUserId: string;
   let volunteerToken: string;
-  let volunteerToken2: string;
   let eventId: string;
   let departmentId: string;
   let volunteerId: string;
@@ -100,8 +99,7 @@ describe('Message Operations', () => {
     volunteerId = eventVolunteerId;
 
     // Create a second volunteer for multi-message tests
-    const { accessToken: volToken2, eventVolunteerId: evId2 } = await createTestVolunteerUser(app, eventId, departmentId);
-    volunteerToken2 = volToken2;
+    const { eventVolunteerId: evId2 } = await createTestVolunteerUser(app, eventId, departmentId);
     volunteerId2 = evId2;
   });
 
