@@ -69,6 +69,7 @@ extension AssemblyOpsAPI {
       case "EventJoinRequest": return AssemblyOpsAPI.Objects.EventJoinRequest
       case "EventParticipant": return AssemblyOpsAPI.Objects.EventParticipant
       case "EventVolunteer": return AssemblyOpsAPI.Objects.EventVolunteer
+      case "ForceAssignmentResult": return AssemblyOpsAPI.Objects.ForceAssignmentResult
       case "LanyardCheckout": return AssemblyOpsAPI.Objects.LanyardCheckout
       case "LanyardSummary": return AssemblyOpsAPI.Objects.LanyardSummary
       case "LinkPlaceholderResult": return AssemblyOpsAPI.Objects.LinkPlaceholderResult
