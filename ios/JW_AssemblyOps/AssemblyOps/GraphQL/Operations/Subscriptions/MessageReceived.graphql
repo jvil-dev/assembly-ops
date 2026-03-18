@@ -1,5 +1,5 @@
-query SentMessages($limit: Int, $offset: Int) {
-  sentMessages(limit: $limit, offset: $offset) {
+subscription MessageReceived($eventId: ID!) {
+  messageReceived(eventId: $eventId) {
     id
     subject
     body
@@ -10,6 +10,9 @@ query SentMessages($limit: Int, $offset: Int) {
     senderId
     isRead
     readAt
+    conversation {
+      id
+    }
     createdAt
   }
 }

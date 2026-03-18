@@ -477,11 +477,11 @@ struct AttendantDashboardView: View {
             HStack(spacing: AppTheme.Spacing.m) {
                 ZStack {
                     RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
-                        .fill(Color.gray.opacity(0.12))
+                        .fill(accentColor.opacity(0.12))
                         .frame(width: 44, height: 44)
                     Image(systemName: "gearshape")
                         .font(.system(size: 20))
-                        .foregroundStyle(.gray)
+                        .foregroundStyle(accentColor)
                 }
 
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {

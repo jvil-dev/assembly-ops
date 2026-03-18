@@ -4,39 +4,39 @@
 @_exported import ApolloAPI
 
 extension AssemblyOpsAPI {
-  class SendMultiMessageMutation: GraphQLMutation {
-    static let operationName: String = "SendMultiMessage"
+  class ConversationMessageReceivedSubscription: GraphQLSubscription {
+    static let operationName: String = "ConversationMessageReceived"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation SendMultiMessage($input: SendMultiMessageInput!) { sendMultiMessage(input: $input) { __typename id subject body recipientType senderType senderName recipientName createdAt } }"#
+        #"subscription ConversationMessageReceived($conversationId: ID!) { conversationMessageReceived(conversationId: $conversationId) { __typename id subject body recipientType senderType senderName senderId isRead readAt createdAt } }"#
       ))
 
-    public var input: SendMultiMessageInput
+    public var conversationId: ID
 
-    public init(input: SendMultiMessageInput) {
-      self.input = input
+    public init(conversationId: ID) {
+      self.conversationId = conversationId
     }
 
-    public var __variables: Variables? { ["input": input] }
+    public var __variables: Variables? { ["conversationId": conversationId] }
 
     struct Data: AssemblyOpsAPI.SelectionSet {
       let __data: DataDict
       init(_dataDict: DataDict) { __data = _dataDict }
 
-      static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Mutation }
+      static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Subscription }
       static var __selections: [ApolloAPI.Selection] { [
-        .field("sendMultiMessage", [SendMultiMessage].self, arguments: ["input": .variable("input")]),
+        .field("conversationMessageReceived", ConversationMessageReceived.self, arguments: ["conversationId": .variable("conversationId")]),
       ] }
       static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-        SendMultiMessageMutation.Data.self
+        ConversationMessageReceivedSubscription.Data.self
       ] }
 
-      var sendMultiMessage: [SendMultiMessage] { __data["sendMultiMessage"] }
+      var conversationMessageReceived: ConversationMessageReceived { __data["conversationMessageReceived"] }
 
-      /// SendMultiMessage
+      /// ConversationMessageReceived
       ///
       /// Parent Type: `Message`
-      struct SendMultiMessage: AssemblyOpsAPI.SelectionSet {
+      struct ConversationMessageReceived: AssemblyOpsAPI.SelectionSet {
         let __data: DataDict
         init(_dataDict: DataDict) { __data = _dataDict }
 
@@ -49,11 +49,13 @@ extension AssemblyOpsAPI {
           .field("recipientType", GraphQLEnum<AssemblyOpsAPI.RecipientType>.self),
           .field("senderType", GraphQLEnum<AssemblyOpsAPI.MessageSenderType>?.self),
           .field("senderName", String?.self),
-          .field("recipientName", String?.self),
+          .field("senderId", AssemblyOpsAPI.ID?.self),
+          .field("isRead", Bool.self),
+          .field("readAt", AssemblyOpsAPI.DateTime?.self),
           .field("createdAt", AssemblyOpsAPI.DateTime.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-          SendMultiMessageMutation.Data.SendMultiMessage.self
+          ConversationMessageReceivedSubscription.Data.ConversationMessageReceived.self
         ] }
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
@@ -62,7 +64,9 @@ extension AssemblyOpsAPI {
         var recipientType: GraphQLEnum<AssemblyOpsAPI.RecipientType> { __data["recipientType"] }
         var senderType: GraphQLEnum<AssemblyOpsAPI.MessageSenderType>? { __data["senderType"] }
         var senderName: String? { __data["senderName"] }
-        var recipientName: String? { __data["recipientName"] }
+        var senderId: AssemblyOpsAPI.ID? { __data["senderId"] }
+        var isRead: Bool { __data["isRead"] }
+        var readAt: AssemblyOpsAPI.DateTime? { __data["readAt"] }
         var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }
       }
     }

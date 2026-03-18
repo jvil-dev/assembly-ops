@@ -93,6 +93,33 @@ struct AssignmentCardView: View {
             x: AppTheme.Shadow.cardSecondary.x,
             y: AppTheme.Shadow.cardSecondary.y
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
+    }
+
+    private var accessibilityDescription: String {
+        var parts: [String] = []
+        parts.append(assignment.postName)
+        parts.append(assignment.departmentName)
+        parts.append("Status: \(assignment.status.displayName)")
+        if assignment.isCaptain {
+            parts.append("Captain")
+        }
+        if let location = assignment.postLocation {
+            parts.append(location)
+        }
+        if !assignment.timeRangeFormatted.isEmpty {
+            parts.append(assignment.timeRangeFormatted)
+        }
+        if assignment.isCheckedIn {
+            parts.append("Checked in")
+        } else if assignment.canCheckIn {
+            parts.append("Ready to check in")
+        }
+        if let deadlineText = assignment.deadlineText {
+            parts.append(deadlineText)
+        }
+        return parts.joined(separator: ", ")
     }
 
     // MARK: - Accent Stripe
@@ -124,7 +151,7 @@ struct AssignmentCardView: View {
     // MARK: - Department Row
 
     private var departmentRow: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Circle()
                 .fill(assignment.departmentColor)
                 .frame(width: 8, height: 8)
@@ -138,7 +165,7 @@ struct AssignmentCardView: View {
     // MARK: - Detail Row
 
     private func detailRow(icon: String, text: String) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: icon)
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -153,7 +180,7 @@ struct AssignmentCardView: View {
     // MARK: - Deadline Row
 
     private func deadlineRow(text: String) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: "exclamationmark.circle.fill")
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.StatusColors.warning)
@@ -171,12 +198,12 @@ struct AssignmentCardView: View {
     // MARK: - Session Conflict Row
 
     private var sessionConflictRow: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.StatusColors.warning)
 
-            Text("Multiple assignments in this session")
+            Text(NSLocalizedString("assignment.sessionConflict", comment: ""))
                 .font(AppTheme.Typography.caption)
                 .foregroundStyle(AppTheme.StatusColors.warning)
         }
@@ -191,22 +218,22 @@ struct AssignmentCardView: View {
     @ViewBuilder
     private var checkInStatusRow: some View {
         if assignment.isCheckedIn {
-            HStack(spacing: 6) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(AppTheme.StatusColors.accepted)
 
-                Text("Checked in")
+                Text(NSLocalizedString("assignment.checkedIn", comment: ""))
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.StatusColors.accepted)
             }
         } else if assignment.canCheckIn {
-            HStack(spacing: 6) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "circle")
                     .font(.system(size: 12))
                     .foregroundStyle(AppTheme.StatusColors.info)
 
-                Text("Ready to check in")
+                Text(NSLocalizedString("assignment.readyToCheckIn", comment: ""))
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.StatusColors.info)
             }

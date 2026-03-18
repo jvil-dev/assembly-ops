@@ -74,7 +74,7 @@ struct VolunteerListView: View {
             // Content
             Group {
                 if viewModel.isLoading {
-                    LoadingView(message: "Loading volunteers...")
+                    LoadingView(message: "volunteers.loading".localized)
                 } else if displayedVolunteers.isEmpty {
                     emptyState
                 } else {
@@ -83,8 +83,8 @@ struct VolunteerListView: View {
             }
         }
         .themedBackground(scheme: colorScheme)
-        .navigationTitle("Volunteers")
-        .searchable(text: $searchText, prompt: "Search by name or congregation")
+        .navigationTitle("volunteers.title".localized)
+        .searchable(text: $searchText, prompt: "volunteers.search.prompt".localized)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 if isEditable {
@@ -175,7 +175,7 @@ struct VolunteerListView: View {
                             showRemoveConfirmation = true
                             HapticManager.shared.lightTap()
                         } label: {
-                            Label("Remove", systemImage: "person.badge.minus")
+                            Label("common.remove".localized, systemImage: "person.badge.minus")
                         }
                         .tint(AppTheme.StatusColors.declined)
                     }

@@ -14,10 +14,8 @@
 //   - fetchUnreadCount(): Get count of unread messages
 //   - markAsRead(messageId:): Mark single message as read
 //   - markAllAsRead(eventId:): Mark all messages as read, returns count
-//   - sendMessage(...): Send to individual (volunteer or admin)
 //   - sendDepartmentMessage(...): Broadcast to department (admin only)
 //   - sendBroadcast(...): Broadcast to event (admin only)
-//   - sendMultiMessage(...): Send to multiple volunteers (admin only)
 //   - fetchConversations(eventId:limit:offset:): Fetch conversation threads
 //   - fetchConversationMessages(conversationId:limit:offset:): Fetch thread messages
 //   - startConversation(...): Create DM thread + first message
@@ -26,11 +24,10 @@
 //   - deleteMessage(messageId:): Soft delete a message
 //   - deleteConversation(conversationId:): Soft delete a conversation
 //   - searchMessages(eventId:query:limit:offset:): Full-text search
-//   - fetchSentMessages(limit:offset:): Fetch sent messages (admin only)
 //
 // Dependencies:
 //   - NetworkClient: Apollo client for GraphQL
-//   - Message, Conversation, SentMessageItem: Local models
+//   - Message, Conversation: Local models
 //
 // Used by: MessagesViewModel, ConversationListViewModel, ConversationDetailViewModel, UnreadBadgeManager
 
@@ -146,46 +143,8 @@ final class MessagesService {
 
     // MARK: - Send Messages
 
-    /// Send message to individual (volunteer or admin)
-    func sendMessage(
-        volunteerId: String? = nil,
-        recipientType: AssemblyOpsAPI.MessageSenderType? = nil,
-        recipientId: String? = nil,
-        eventId: String? = nil,
-        subject: String?,
-        body: String
-    ) async throws -> SentMessageItem {
-        let input = AssemblyOpsAPI.SendMessageInput(
-            volunteerId: volunteerId.map { .some($0) } ?? .none,
-            recipientType: recipientType.map { .some(.case($0)) } ?? .none,
-            recipientId: recipientId.map { .some($0) } ?? .none,
-            eventId: eventId.map { .some($0) } ?? .none,
-            subject: subject.map { .some($0) } ?? .none,
-            body: body
-        )
-        return try await withCheckedThrowingContinuation { continuation in
-            NetworkClient.shared.apollo.perform(
-                mutation: AssemblyOpsAPI.SendMessageMutation(input: input)
-            ) { result in
-                switch result {
-                case .success(let graphQLResult):
-                    if let data = graphQLResult.data?.sendMessage,
-                       let item = SentMessageItem(from: data) {
-                        continuation.resume(returning: item)
-                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
-                        continuation.resume(throwing: MessagesError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
-                    } else {
-                        continuation.resume(throwing: MessagesError.serverError("Failed to send message"))
-                    }
-                case .failure(let error):
-                    continuation.resume(throwing: MessagesError.networkError(error.localizedDescription))
-                }
-            }
-        }
-    }
-
-    /// Broadcast to all volunteers in a department
-    func sendDepartmentMessage(departmentId: String, subject: String?, body: String) async throws -> [SentMessageItem] {
+    /// Broadcast to all volunteers in a department — returns conversation ID
+    func sendDepartmentMessage(departmentId: String, subject: String?, body: String) async throws -> String {
         let input = AssemblyOpsAPI.SendDepartmentMessageInput(
             departmentId: departmentId,
             subject: subject.map { .some($0) } ?? .none,
@@ -198,12 +157,11 @@ final class MessagesService {
                 switch result {
                 case .success(let graphQLResult):
                     if let data = graphQLResult.data?.sendDepartmentMessage {
-                        let items = data.compactMap { SentMessageItem(from: $0) }
-                        continuation.resume(returning: items)
+                        continuation.resume(returning: data.id)
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
                         continuation.resume(throwing: MessagesError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
                     } else {
-                        continuation.resume(returning: [])
+                        continuation.resume(throwing: MessagesError.serverError("No data returned"))
                     }
                 case .failure(let error):
                     continuation.resume(throwing: MessagesError.networkError(error.localizedDescription))
@@ -212,8 +170,8 @@ final class MessagesService {
         }
     }
 
-    /// Broadcast to entire event (requires APP_ADMIN role)
-    func sendBroadcast(eventId: String, subject: String?, body: String) async throws -> [SentMessageItem] {
+    /// Broadcast to entire event — returns conversation ID
+    func sendBroadcast(eventId: String, subject: String?, body: String) async throws -> String {
         let input = AssemblyOpsAPI.SendBroadcastInput(
             eventId: eventId,
             subject: subject.map { .some($0) } ?? .none,
@@ -226,68 +184,11 @@ final class MessagesService {
                 switch result {
                 case .success(let graphQLResult):
                     if let data = graphQLResult.data?.sendBroadcast {
-                        let items = data.compactMap { SentMessageItem(from: $0) }
-                        continuation.resume(returning: items)
+                        continuation.resume(returning: data.id)
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
                         continuation.resume(throwing: MessagesError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
                     } else {
-                        continuation.resume(returning: [])
-                    }
-                case .failure(let error):
-                    continuation.resume(throwing: MessagesError.networkError(error.localizedDescription))
-                }
-            }
-        }
-    }
-
-    /// Send to multiple volunteers at once
-    func sendMultiMessage(volunteerIds: [String], subject: String?, body: String, eventId: String) async throws -> [SentMessageItem] {
-        let input = AssemblyOpsAPI.SendMultiMessageInput(
-            volunteerIds: volunteerIds,
-            subject: subject.map { .some($0) } ?? .none,
-            body: body,
-            eventId: eventId
-        )
-        return try await withCheckedThrowingContinuation { continuation in
-            NetworkClient.shared.apollo.perform(
-                mutation: AssemblyOpsAPI.SendMultiMessageMutation(input: input)
-            ) { result in
-                switch result {
-                case .success(let graphQLResult):
-                    if let data = graphQLResult.data?.sendMultiMessage {
-                        let items = data.compactMap { SentMessageItem(from: $0) }
-                        continuation.resume(returning: items)
-                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
-                        continuation.resume(throwing: MessagesError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
-                    } else {
-                        continuation.resume(returning: [])
-                    }
-                case .failure(let error):
-                    continuation.resume(throwing: MessagesError.networkError(error.localizedDescription))
-                }
-            }
-        }
-    }
-
-    /// Fetch messages sent by the current admin
-    func fetchSentMessages(limit: Int = 50, offset: Int = 0) async throws -> [SentMessageItem] {
-        return try await withCheckedThrowingContinuation { continuation in
-            NetworkClient.shared.apollo.fetch(
-                query: AssemblyOpsAPI.SentMessagesQuery(
-                    limit: .some(limit),
-                    offset: .some(offset)
-                ),
-                cachePolicy: .fetchIgnoringCacheData
-            ) { result in
-                switch result {
-                case .success(let graphQLResult):
-                    if let data = graphQLResult.data?.sentMessages {
-                        let items = data.compactMap { SentMessageItem(from: $0) }
-                        continuation.resume(returning: items)
-                    } else if let errors = graphQLResult.errors, !errors.isEmpty {
-                        continuation.resume(throwing: MessagesError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
-                    } else {
-                        continuation.resume(returning: [])
+                        continuation.resume(throwing: MessagesError.serverError("No data returned"))
                     }
                 case .failure(let error):
                     continuation.resume(throwing: MessagesError.networkError(error.localizedDescription))
@@ -541,6 +442,63 @@ final class MessagesService {
                 case .failure(let error):
                     continuation.resume(throwing: MessagesError.networkError(error.localizedDescription))
                 }
+            }
+        }
+    }
+    // MARK: - Subscriptions
+
+    /// Subscribe to new messages for an event. Returns a Cancellable to stop listening.
+    func subscribeToMessages(eventId: String, handler: @escaping (Message) -> Void) -> Apollo.Cancellable {
+        NetworkClient.shared.apollo.subscribe(
+            subscription: AssemblyOpsAPI.MessageReceivedSubscription(eventId: eventId)
+        ) { result in
+            switch result {
+            case .success(let graphQLResult):
+                if let data = graphQLResult.data?.messageReceived,
+                   let message = Message(from: data) {
+                    handler(message)
+                }
+            case .failure:
+                break
+            }
+        }
+    }
+
+    /// Subscribe to messages in a conversation thread.
+    func subscribeToConversation(conversationId: String, handler: @escaping (Message) -> Void) -> Apollo.Cancellable {
+        NetworkClient.shared.apollo.subscribe(
+            subscription: AssemblyOpsAPI.ConversationMessageReceivedSubscription(conversationId: conversationId)
+        ) { result in
+            switch result {
+            case .success(let graphQLResult):
+                if let data = graphQLResult.data?.conversationMessageReceived,
+                   let message = Message(from: data) {
+                    handler(message)
+                }
+            case .failure:
+                break
+            }
+        }
+    }
+
+    /// Subscribe to unread count updates.
+    func subscribeToUnreadCount(handler: @escaping (Int) -> Void) -> Apollo.Cancellable {
+        NetworkClient.shared.apollo.subscribe(
+            subscription: AssemblyOpsAPI.UnreadCountUpdatedSubscription()
+        ) { result in
+            switch result {
+            case .success(let graphQLResult):
+                if let count = graphQLResult.data?.unreadCountUpdated {
+                    #if DEBUG
+                    print("[UnreadBadge] Subscription received count: \(count)")
+                    #endif
+                    handler(count)
+                }
+            case .failure(let error):
+                #if DEBUG
+                print("[UnreadBadge] Subscription error: \(error)")
+                #endif
+                break
             }
         }
     }

@@ -11,7 +11,7 @@
 // Configures endpoint URL based on build environment (DEBUG vs Release).
 //
 // Properties:
-//   - apollo: The ApolloClient instance for executing queries/mutations
+//   - apollo: The ApolloClient instance for executing queries/mutations/subscriptions
 //   - baseURL: API endpoint (local dev server in DEBUG, production in Release)
 //
 // Methods:
@@ -25,45 +25,78 @@
 //   - AuthTokenInterceptor dynamically adds Bearer token to every request
 //   - Automatically refreshes expired access tokens before sending requests
 //   - Posts Notification.Name.authSessionExpired when refresh token is also expired
+//   - WebSocket auth: sends authToken in connectionParams on connect
 //
 // Dependencies:
 //   - KeychainManager: Retrieves stored access token
 //   - Apollo: GraphQL client library
+//   - ApolloWebSocket: WebSocket transport for subscriptions
 //
 // Used by: LoginViewModel, AssignmentsViewModel, AppState (all API calls)
 
 import Foundation
 import Apollo
+import ApolloWebSocket
 
 /// Main GraphQL client for API communication
 final class NetworkClient {
     static let shared = NetworkClient()
 
     private(set) var apollo: ApolloClient
+    private var webSocketTransport: WebSocketTransport?
 
     #if DEBUG
     static let graphQLURL = URL(string: "http://192.168.1.5:4000/graphql")!
+    static let webSocketURL = URL(string: "ws://192.168.1.5:4000/graphql")!
     #else
     static let graphQLURL = URL(string: "https://api.assemblyops.org/graphql")!
+    static let webSocketURL = URL(string: "wss://api.assemblyops.org/graphql")!
     #endif
 
     private init() {
-        apollo = NetworkClient.createClient()
+        let (client, wsTransport) = NetworkClient.createClient()
+        apollo = client
+        webSocketTransport = wsTransport
     }
 
     /// Recreate client (useful after login/logout to clear Apollo cache)
     func resetClient() {
-        apollo = NetworkClient.createClient()
+        webSocketTransport?.closeConnection()
+        let (client, wsTransport) = NetworkClient.createClient()
+        apollo = client
+        webSocketTransport = wsTransport
     }
 
-    private static func createClient() -> ApolloClient {
+    private static func createClient() -> (ApolloClient, WebSocketTransport) {
         let store = ApolloStore()
+
+        // HTTP transport for queries and mutations
         let provider = AuthInterceptorProvider(store: store)
-        let transport = RequestChainNetworkTransport(
+        let httpTransport = RequestChainNetworkTransport(
             interceptorProvider: provider,
             endpointURL: graphQLURL
         )
-        return ApolloClient(networkTransport: transport, store: store)
+
+        // WebSocket transport for subscriptions
+        let authPayload: JSONEncodableDictionary = {
+            if let token = KeychainManager.shared.accessToken {
+                return ["authToken": token]
+            }
+            return [:]
+        }()
+
+        let wsTransport = WebSocketTransport(
+            websocket: WebSocket(url: webSocketURL, protocol: .graphql_transport_ws),
+            config: WebSocketTransport.Configuration(connectingPayload: authPayload)
+        )
+
+        // Split transport: WS for subscriptions, HTTP for everything else
+        let splitTransport = SplitNetworkTransport(
+            uploadingNetworkTransport: httpTransport,
+            webSocketNetworkTransport: wsTransport
+        )
+
+        return (ApolloClient(networkTransport: splitTransport, store: store), wsTransport)
     }
 }
 

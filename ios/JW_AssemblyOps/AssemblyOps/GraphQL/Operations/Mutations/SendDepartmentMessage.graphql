@@ -1,9 +1,8 @@
 mutation SendDepartmentMessage($input: SendDepartmentMessageInput!) {
   sendDepartmentMessage(input: $input) {
     id
+    type
     subject
-    body
-    recipientType
-    createdAt
+    updatedAt
   }
 }

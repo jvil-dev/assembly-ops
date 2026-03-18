@@ -33,18 +33,20 @@ struct OfflineBanner: View {
     
     var body: some View {
         if !networkMonitor.isConnected {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "wifi.slash")
-                Text("You are offline")
+                Text("offline.title".localized)
                 Spacer()
-                Text("Data may be outdated")
-                    .font(.caption)
+                Text("offline.subtitle".localized)
+                    .font(AppTheme.Typography.caption)
             }
-            .font(.subheadline)
+            .font(AppTheme.Typography.subheadline)
             .foregroundStyle(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(Color.orange)
+            .padding(.horizontal, AppTheme.Spacing.l)
+            .padding(.vertical, AppTheme.Spacing.m)
+            .background(AppTheme.StatusColors.warning)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("offline.a11y.banner".localized)
             .transition(.move(edge: .top).combined(with: .opacity))
         }
     }

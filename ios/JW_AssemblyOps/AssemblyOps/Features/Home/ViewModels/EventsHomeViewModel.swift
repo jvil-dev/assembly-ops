@@ -112,7 +112,7 @@ struct EventMembershipItem: Identifiable, Hashable {
     }
 }
 
-struct EventSection: Identifiable {
+struct EventSection: Identifiable, Equatable {
     let id: String
     let title: String
     let items: [EventMembershipItem]
@@ -154,6 +154,11 @@ final class EventsHomeViewModel: ObservableObject {
 
     var isEmpty: Bool {
         sections.allSatisfy { $0.items.isEmpty } && !isLoading
+    }
+
+    /// Find a membership item by eventId for deep linking
+    func findMembership(eventId: String) -> EventMembershipItem? {
+        sections.flatMap(\.items).first { $0.eventId == eventId }
     }
 
     // MARK: - Private

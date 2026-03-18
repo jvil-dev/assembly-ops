@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "StartConversation"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation StartConversation($input: StartConversationInput!) { startConversation(input: $input) { __typename id subject unreadCount createdAt updatedAt lastMessage { __typename id body senderName senderType createdAt } participants { __typename id participantType participantId displayName lastReadAt } } }"#
+        #"mutation StartConversation($input: StartConversationInput!) { startConversation(input: $input) { __typename id subject unreadCount createdAt updatedAt lastMessage { __typename id body senderName senderType createdAt } participants { __typename id participantType participantId displayName phone congregation lastReadAt } } }"#
       ))
 
     public var input: StartConversationInput
@@ -104,6 +104,8 @@ extension AssemblyOpsAPI {
             .field("participantType", GraphQLEnum<AssemblyOpsAPI.MessageSenderType>.self),
             .field("participantId", AssemblyOpsAPI.ID.self),
             .field("displayName", String.self),
+            .field("phone", String?.self),
+            .field("congregation", String?.self),
             .field("lastReadAt", AssemblyOpsAPI.DateTime?.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -114,6 +116,8 @@ extension AssemblyOpsAPI {
           var participantType: GraphQLEnum<AssemblyOpsAPI.MessageSenderType> { __data["participantType"] }
           var participantId: AssemblyOpsAPI.ID { __data["participantId"] }
           var displayName: String { __data["displayName"] }
+          var phone: String? { __data["phone"] }
+          var congregation: String? { __data["congregation"] }
           var lastReadAt: AssemblyOpsAPI.DateTime? { __data["lastReadAt"] }
         }
       }

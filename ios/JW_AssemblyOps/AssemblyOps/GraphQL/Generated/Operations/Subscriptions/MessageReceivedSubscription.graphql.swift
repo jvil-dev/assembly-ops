@@ -4,39 +4,39 @@
 @_exported import ApolloAPI
 
 extension AssemblyOpsAPI {
-  class SendMessageMutation: GraphQLMutation {
-    static let operationName: String = "SendMessage"
+  class MessageReceivedSubscription: GraphQLSubscription {
+    static let operationName: String = "MessageReceived"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation SendMessage($input: SendMessageInput!) { sendMessage(input: $input) { __typename id subject body recipientType senderType senderName recipientName senderId conversation { __typename id } createdAt } }"#
+        #"subscription MessageReceived($eventId: ID!) { messageReceived(eventId: $eventId) { __typename id subject body recipientType senderType senderName recipientName senderId isRead readAt conversation { __typename id } createdAt } }"#
       ))
 
-    public var input: SendMessageInput
+    public var eventId: ID
 
-    public init(input: SendMessageInput) {
-      self.input = input
+    public init(eventId: ID) {
+      self.eventId = eventId
     }
 
-    public var __variables: Variables? { ["input": input] }
+    public var __variables: Variables? { ["eventId": eventId] }
 
     struct Data: AssemblyOpsAPI.SelectionSet {
       let __data: DataDict
       init(_dataDict: DataDict) { __data = _dataDict }
 
-      static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Mutation }
+      static var __parentType: any ApolloAPI.ParentType { AssemblyOpsAPI.Objects.Subscription }
       static var __selections: [ApolloAPI.Selection] { [
-        .field("sendMessage", SendMessage.self, arguments: ["input": .variable("input")]),
+        .field("messageReceived", MessageReceived.self, arguments: ["eventId": .variable("eventId")]),
       ] }
       static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-        SendMessageMutation.Data.self
+        MessageReceivedSubscription.Data.self
       ] }
 
-      var sendMessage: SendMessage { __data["sendMessage"] }
+      var messageReceived: MessageReceived { __data["messageReceived"] }
 
-      /// SendMessage
+      /// MessageReceived
       ///
       /// Parent Type: `Message`
-      struct SendMessage: AssemblyOpsAPI.SelectionSet {
+      struct MessageReceived: AssemblyOpsAPI.SelectionSet {
         let __data: DataDict
         init(_dataDict: DataDict) { __data = _dataDict }
 
@@ -51,11 +51,13 @@ extension AssemblyOpsAPI {
           .field("senderName", String?.self),
           .field("recipientName", String?.self),
           .field("senderId", AssemblyOpsAPI.ID?.self),
+          .field("isRead", Bool.self),
+          .field("readAt", AssemblyOpsAPI.DateTime?.self),
           .field("conversation", Conversation?.self),
           .field("createdAt", AssemblyOpsAPI.DateTime.self),
         ] }
         static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-          SendMessageMutation.Data.SendMessage.self
+          MessageReceivedSubscription.Data.MessageReceived.self
         ] }
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
@@ -66,10 +68,12 @@ extension AssemblyOpsAPI {
         var senderName: String? { __data["senderName"] }
         var recipientName: String? { __data["recipientName"] }
         var senderId: AssemblyOpsAPI.ID? { __data["senderId"] }
+        var isRead: Bool { __data["isRead"] }
+        var readAt: AssemblyOpsAPI.DateTime? { __data["readAt"] }
         var conversation: Conversation? { __data["conversation"] }
         var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }
 
-        /// SendMessage.Conversation
+        /// MessageReceived.Conversation
         ///
         /// Parent Type: `Conversation`
         struct Conversation: AssemblyOpsAPI.SelectionSet {
@@ -82,7 +86,7 @@ extension AssemblyOpsAPI {
             .field("id", AssemblyOpsAPI.ID.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
-            SendMessageMutation.Data.SendMessage.Conversation.self
+            MessageReceivedSubscription.Data.MessageReceived.Conversation.self
           ] }
 
           var id: AssemblyOpsAPI.ID { __data["id"] }

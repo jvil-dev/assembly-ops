@@ -145,8 +145,8 @@ struct AssignmentDetailView: View {
                 }
             }
         }
-        .alert("Error", isPresented: $viewModel.showError) {
-            Button("OK", role: .cancel) { }
+        .alert(NSLocalizedString("common.error", comment: ""), isPresented: $viewModel.showError) {
+            Button(NSLocalizedString("common.ok", comment: ""), role: .cancel) { }
         } message: {
             Text(viewModel.errorMessage)
         }
@@ -164,7 +164,7 @@ struct AssignmentDetailView: View {
                         .foregroundStyle(.primary)
 
                     // Department with color
-                    HStack(spacing: 6) {
+                    HStack(spacing: AppTheme.Spacing.s) {
                         Circle()
                             .fill(assignment.departmentColor)
                             .frame(width: 10, height: 10)
@@ -192,7 +192,7 @@ struct AssignmentDetailView: View {
 
     private var detailsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.l) {
-            Text("Details")
+            Text(NSLocalizedString("assignment.details.title", comment: ""))
                 .font(AppTheme.Typography.headline)
                 .foregroundStyle(assignment.departmentColor)
 
@@ -402,7 +402,7 @@ struct AssignmentDetailView: View {
                 HStack(spacing: AppTheme.Spacing.m) {
                     Text("\(entry.count)")
                         .font(AppTheme.Typography.title)
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(assignment.departmentColor)
                         .frame(width: 50, alignment: .leading)
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -553,8 +553,8 @@ struct AssignmentDetailView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.m) {
             HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "star.fill")
-                    .foregroundStyle(.yellow)
-                Text("Your Group")
+                    .foregroundStyle(assignment.departmentColor)
+                Text(NSLocalizedString("assignment.captain.group", comment: ""))
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(assignment.departmentColor)
             }

@@ -20,6 +20,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 // MARK: - App Theme
 
@@ -94,6 +95,11 @@ struct AppTheme {
     static func themeColor(opacity: Double) -> Color {
         Color("ThemeColor").opacity(opacity)
     }
+
+    // MARK: - Brand Colors
+
+    /// Google brand blue for OAuth buttons
+    static let googleBlue = Color(red: 0.26, green: 0.52, blue: 0.96)
 
     // MARK: - Status Colors
 
@@ -305,10 +311,16 @@ extension View {
 
     /// Entrance animation helper - fade + slide up
     func entranceAnimation(hasAppeared: Bool, delay: Double = 0) -> some View {
-        self
+        let reduceMotion = UIAccessibility.isReduceMotionEnabled
+        return self
             .opacity(hasAppeared ? 1 : 0)
-            .offset(y: hasAppeared ? 0 : 20)
-            .animation(AppTheme.entranceAnimation(delay: delay), value: hasAppeared)
+            .offset(y: hasAppeared ? 0 : (reduceMotion ? 0 : 20))
+            .animation(
+                reduceMotion
+                    ? .easeOut(duration: 0.2)
+                    : AppTheme.entranceAnimation(delay: delay),
+                value: hasAppeared
+            )
     }
 
     /// Standard card padding

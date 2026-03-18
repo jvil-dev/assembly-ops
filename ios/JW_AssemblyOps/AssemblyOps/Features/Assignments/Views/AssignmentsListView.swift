@@ -45,7 +45,7 @@ struct AssignmentsListView: View {
     var body: some View {
         Group {
             if viewModel.isLoading && !viewModel.hasLoaded {
-                LoadingView(message: "Loading schedule...")
+                LoadingView(message: NSLocalizedString("schedule.loading", comment: ""))
             } else if let error = viewModel.errorMessage, viewModel.isEmpty {
                 ErrorView(message: error) {
                     viewModel.refresh()
@@ -287,7 +287,7 @@ struct AssignmentsListView: View {
                     Circle()
                         .fill(AppTheme.StatusColors.pending)
                         .frame(width: 8, height: 8)
-                    Text("Today")
+                    Text(NSLocalizedString("schedule.dateHeader.today", comment: ""))
                         .font(AppTheme.Typography.headline)
                         .foregroundStyle(.primary)
                 }
@@ -295,7 +295,7 @@ struct AssignmentsListView: View {
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             } else if DateUtils.isSessionDateTomorrow(date) {
-                Text("Tomorrow")
+                Text(NSLocalizedString("schedule.dateHeader.tomorrow", comment: ""))
                     .font(AppTheme.Typography.headline)
                     .foregroundStyle(.primary)
                 Text("• \(DateUtils.formatSessionDateAbbreviated(date))")

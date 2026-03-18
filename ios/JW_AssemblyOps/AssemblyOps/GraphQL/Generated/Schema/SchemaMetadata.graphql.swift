@@ -94,6 +94,7 @@ extension AssemblyOpsAPI {
       case "Shift": return AssemblyOpsAPI.Objects.Shift
       case "ShiftReminderStatus": return AssemblyOpsAPI.Objects.ShiftReminderStatus
       case "SkippedVolunteerInfo": return AssemblyOpsAPI.Objects.SkippedVolunteerInfo
+      case "Subscription": return AssemblyOpsAPI.Objects.Subscription
       case "TokenPayload": return AssemblyOpsAPI.Objects.TokenPayload
       case "User": return AssemblyOpsAPI.Objects.User
       case "UserAuthPayload": return AssemblyOpsAPI.Objects.UserAuthPayload

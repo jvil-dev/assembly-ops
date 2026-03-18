@@ -40,6 +40,7 @@ struct EventTabView: View {
     @ObservedObject private var sessionState = EventSessionState.shared
     @ObservedObject private var messageBadgeManager = UnreadBadgeManager.shared
     @ObservedObject private var pendingBadgeManager = PendingBadgeManager.shared
+    @ObservedObject private var pushManager = PushNotificationManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
@@ -53,7 +54,7 @@ struct EventTabView: View {
     }
 
     private var departmentTabLabel: String {
-        membership.departmentName ?? "Department"
+        membership.departmentName ?? "eventTab.department.fallback".localized
     }
 
     private var departmentTabIcon: String {
@@ -115,11 +116,7 @@ struct EventTabView: View {
 
                             // Tab 4: Messages
                             Group {
-                                if isOverseer {
-                                    OverseerMessagesView()
-                                } else {
-                                    MessagesView()
-                                }
+                                MessagesView(isOverseer: isOverseer)
                             }
                             .environmentObject(appState)
                             .tabItem {
@@ -157,6 +154,9 @@ struct EventTabView: View {
             if scenePhase == .active {
                 messageBadgeManager.startRefreshing()
                 pendingBadgeManager.startRefreshing(eventId: membership.eventId)
+            }
+            if pushManager.pendingDeepLink?.isMessageType == true {
+                selectedTab = .messages
             }
         }
     }
@@ -196,6 +196,7 @@ struct EventTabView: View {
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 }
+                .accessibilityLabel("eventTab.a11y.settings".localized)
             }
             .padding(.horizontal, AppTheme.Spacing.l)
             .frame(height: 44)

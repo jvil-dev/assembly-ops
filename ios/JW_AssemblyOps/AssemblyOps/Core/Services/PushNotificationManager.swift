@@ -104,12 +104,16 @@ final class PushNotificationManager: ObservableObject {
 
         let assignmentId = userInfo["assignmentId"] as? String
         let requestId = userInfo["requestId"] as? String
+        let messageId = userInfo["messageId"] as? String
+        let conversationId = userInfo["conversationId"] as? String
 
         pendingDeepLink = NotificationDeepLink(
             type: type,
             eventId: eventId,
             assignmentId: assignmentId,
-            requestId: requestId
+            requestId: requestId,
+            messageId: messageId,
+            conversationId: conversationId
         )
     }
 
@@ -143,4 +147,11 @@ struct NotificationDeepLink: Equatable {
     let eventId: String
     let assignmentId: String?
     let requestId: String?
+    let messageId: String?
+    let conversationId: String?
+
+    /// Whether this deep link targets a messaging flow
+    var isMessageType: Bool {
+        ["NEW_MESSAGE", "DEPARTMENT_MESSAGE", "BROADCAST", "CONVERSATION_MESSAGE"].contains(type)
+    }
 }

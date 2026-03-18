@@ -51,10 +51,10 @@ enum AssignmentStatus: String, Codable, CaseIterable {
     
     var displayName: String {
         switch self {
-        case .pending: return "Pending"
-        case .accepted: return "Accepted"
-        case .declined: return "Declined"
-        case .autoDeclined: return "Auto-Declined"
+        case .pending: return NSLocalizedString("assignment.status.pending", comment: "")
+        case .accepted: return NSLocalizedString("assignment.status.accepted", comment: "")
+        case .declined: return NSLocalizedString("assignment.status.declined", comment: "")
+        case .autoDeclined: return NSLocalizedString("assignment.status.autoDeclined", comment: "")
         }
     }
     
@@ -143,11 +143,11 @@ struct Assignment: Identifiable, Equatable {
         guard let deadline = acceptDeadline, status == .pending else { return nil }
         let days = Calendar.current.dateComponents([.day], from: Date(), to: deadline).day ?? 0
         if days <= 0 {
-            return "Respond today"
+            return NSLocalizedString("assignment.deadline.today", comment: "")
         } else if days == 1 {
-            return "1 day to respond"
+            return NSLocalizedString("assignment.deadline.oneDay", comment: "")
         } else {
-            return "\(days) days to respond"
+            return String(format: NSLocalizedString("assignment.deadline.days", comment: ""), days)
         }
     }
 
@@ -178,13 +178,13 @@ struct Assignment: Identifiable, Equatable {
     var statusText: String {
         switch checkInStatus {
         case .checkedIn:
-            return "Checked In"
+            return NSLocalizedString("assignment.checkIn.checkedIn", comment: "")
         case .checkedOut:
-            return "Checked Out"
+            return NSLocalizedString("assignment.checkIn.checkedOut", comment: "")
         case .noShow:
-            return "No Show"
+            return NSLocalizedString("assignment.checkIn.noShow", comment: "")
         case .pending:
-            return isToday ? "Not Checked In" : ""
+            return isToday ? NSLocalizedString("assignment.checkIn.notCheckedIn", comment: "") : ""
         }
     }
     

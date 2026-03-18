@@ -181,7 +181,7 @@ struct SettingsView: View {
                             Task { try? await Task.sleep(for: .seconds(2)); copiedId = false }
                         } label: {
                             HStack(spacing: AppTheme.Spacing.xs) {
-                                Text("YOUR ID")
+                                Text("settings.yourId".localized)
                                     .font(AppTheme.Typography.captionSmall)
                                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
                                 Text(user.userId)
@@ -197,6 +197,7 @@ struct SettingsView: View {
                             .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("settings.a11y.copyId".localized)
                     }
                 }
             }
@@ -206,6 +207,7 @@ struct SettingsView: View {
             .themedCard(scheme: colorScheme)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("settings.a11y.editProfile".localized)
     }
 
     // MARK: - Language Row
@@ -224,7 +226,7 @@ struct SettingsView: View {
                         .foregroundStyle(AppTheme.themeColor)
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text("settings.language".localized)
                         .font(AppTheme.Typography.bodyMedium)
                         .foregroundStyle(.primary)
@@ -261,7 +263,7 @@ struct SettingsView: View {
                         .foregroundStyle(.orange)
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text("settings.archivedEvents".localized)
                         .font(AppTheme.Typography.bodyMedium)
                         .foregroundStyle(.primary)
@@ -295,7 +297,7 @@ struct SettingsView: View {
                     .foregroundStyle(.purple)
             }
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text("profile.overseerMode".localized)
                     .font(AppTheme.Typography.bodyMedium)
                     .foregroundStyle(.primary)
