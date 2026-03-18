@@ -214,9 +214,11 @@ struct EventTabView: View {
     // MARK: - Context Setup
 
     private func setupContext() async {
-        if membership.membershipType == .overseer || membership.hierarchyRole == "ASSISTANT_OVERSEER" {
-            EventSessionState.shared.loadForEvent(membership)
-        } else {
+        // Set event session state for all users so shared views
+        // (e.g. VolunteerPickerSheet) can access selectedEvent and selectedDepartment
+        EventSessionState.shared.loadForEvent(membership)
+
+        if !isOverseer {
             appState.currentEventId = membership.eventId
             appState.hasVolunteerEventMembership = true
         }

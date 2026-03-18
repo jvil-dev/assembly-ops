@@ -298,6 +298,15 @@
 "captain.scheduling.assign" = "Assign";
 "captain.scheduling.noVolunteers" = "No Volunteers";
 "captain.scheduling.noVolunteersHint" = "No volunteers are available in your department";
+"captain.scheduling.posts" = "Posts";
+"captain.scheduling.assigned" = "assigned";
+"captain.scheduling.noAssigned" = "No volunteers assigned";
+"captain.scheduling.noPosts" = "No posts in your area";
+"captain.scheduling.noPostsHint" = "Posts for your assigned area will appear here";
+"captain.scheduling.removeAssignment" = "Remove Assignment";
+"captain.scheduling.remove" = "Remove";
+"captain.scheduling.removeConfirm" = "Remove %@ from this shift?";
+
 
 // Captain Attendance
 "captain.attendance.title" = "Attendance Counts";

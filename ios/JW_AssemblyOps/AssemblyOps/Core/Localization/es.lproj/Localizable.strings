@@ -299,6 +299,15 @@
 "captain.scheduling.assign" = "Asignar";
 "captain.scheduling.noVolunteers" = "Sin Voluntarios";
 "captain.scheduling.noVolunteersHint" = "No hay voluntarios disponibles en tu departamento";
+"captain.scheduling.posts" = "Puestos";
+"captain.scheduling.assigned" = "asignados";
+"captain.scheduling.noAssigned" = "Sin voluntarios asignados";
+"captain.scheduling.noPosts" = "Sin puestos en tu área";
+"captain.scheduling.noPostsHint" = "Los puestos de tu área asignada aparecerán aquí";
+"captain.scheduling.removeAssignment" = "Eliminar Asignación";
+"captain.scheduling.remove" = "Eliminar";
+"captain.scheduling.removeConfirm" = "¿Eliminar a %@ de este turno?";
+
 
 // Asistencia del Capitán
 "captain.attendance.title" = "Conteos de Asistencia";
