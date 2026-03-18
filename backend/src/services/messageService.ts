@@ -26,8 +26,10 @@
  *   - sendMultiMessage: Send to multiple volunteers at once
  *   - searchMessages: Full-text search on subject + body
  */
-import { Prisma, PrismaClient, Message, MessageSenderType, RecipientType } from '@prisma/client';
+import { Prisma, PrismaClient, Message, MessageSenderType, RecipientType, ConversationType } from '@prisma/client';
 import { NotFoundError, ValidationError, AuthorizationError } from '../utils/errors.js';
+import { pubsub, MESSAGE_RECEIVED, CONVERSATION_MESSAGE_RECEIVED, UNREAD_COUNT_UPDATED } from '../graphql/pubsub.js';
+import { NotificationService } from './notificationService.js';
 import {
   sendMessageSchema,
   sendDepartmentMessageSchema,
@@ -53,7 +55,11 @@ export interface SenderIdentity {
 }
 
 export class MessageService {
-  constructor(private prisma: PrismaClient) {}
+  private notificationService: NotificationService;
+
+  constructor(private prisma: PrismaClient) {
+    this.notificationService = new NotificationService(prisma);
+  }
 
   // ─── Existing Methods (Updated for Dual-Auth) ───────────────────────
 
@@ -95,7 +101,7 @@ export class MessageService {
       });
       if (!user) throw new NotFoundError('User');
 
-      return this.prisma.message.create({
+      const msg = await this.prisma.message.create({
         data: {
           subject,
           body,
@@ -105,10 +111,12 @@ export class MessageService {
           senderType: sender.senderType,
           senderUserId: sender.senderType === 'USER' ? sender.senderId : null,
           senderVolId: sender.senderType === 'VOLUNTEER' ? sender.senderId : null,
-          // Legacy fields for backward compat
         },
         include: { senderUser: true, event: true },
       });
+
+      this.publishMessageEvents(msg, recipientId, eventId);
+      return msg;
     }
 
     // Sending to a volunteer — use volunteerId (legacy) or recipientId (new)
@@ -118,12 +126,12 @@ export class MessageService {
     // Verify eventVolunteer exists
     const eventVolunteer = await this.prisma.eventVolunteer.findUnique({
       where: { id: volId },
-      select: { id: true, eventId: true },
+      select: { id: true, eventId: true, userId: true },
     });
 
     if (!eventVolunteer) throw new NotFoundError('EventVolunteer');
 
-    return this.prisma.message.create({
+    const msg = await this.prisma.message.create({
       data: {
         subject,
         body,
@@ -137,15 +145,19 @@ export class MessageService {
       },
       include: { senderUser: true, event: true },
     });
+
+    this.publishMessageEvents(msg, eventVolunteer.userId, eventVolunteer.eventId);
+    return msg;
   }
 
   /**
-   * Send message to all volunteers in a department (admin only)
+   * Send message to all volunteers in a department (admin only).
+   * Uses a per-scope conversation thread so subsequent broadcasts land in the same thread.
    */
   async sendDepartmentMessage(
     sender: SenderIdentity,
     input: SendDepartmentMessageInput
-  ): Promise<Message[]> {
+  ) {
     const result = sendDepartmentMessageSchema.safeParse(input);
     if (!result.success) {
       throw new ValidationError(result.error.issues[0].message);
@@ -162,40 +174,60 @@ export class MessageService {
     });
 
     if (!department) throw new NotFoundError('Department');
-    if (department.eventVolunteers.length === 0) return [];
+    const eventId = department.event.id;
 
-    const eventVolunteers = await this.prisma.eventVolunteer.findMany({
-      where: { departmentId },
-      select: { id: true, userId: true },
+    // Find or create broadcast conversation for this department
+    let conversation = await this.prisma.conversation.findFirst({
+      where: { type: ConversationType.DEPARTMENT_BROADCAST, eventId, departmentId },
+      include: { participants: true },
     });
-    const evMap = new Map(eventVolunteers.map((ev) => [ev.userId, ev.id]));
 
-    const messages = await this.prisma.$transaction(
-      department.eventVolunteers.map((volunteer) =>
-        this.prisma.message.create({
-          data: {
-            subject,
-            body,
-            recipientType: RecipientType.DEPARTMENT,
-            recipientId: departmentId,
-            eventId: department.event.id,
-            senderType: sender.senderType,
-            senderUserId: sender.senderType === 'USER' ? sender.senderId : null,
-            senderVolId: sender.senderType === 'VOLUNTEER' ? sender.senderId : null,
-            eventVolunteerId: evMap.get(volunteer.userId) ?? null,
-          },
-          include: { senderUser: true, event: true },
-        })
-      )
-    );
+    if (!conversation) {
+      conversation = await this.prisma.conversation.create({
+        data: {
+          eventId,
+          departmentId,
+          subject: subject ?? department.name,
+          type: ConversationType.DEPARTMENT_BROADCAST,
+        },
+        include: { participants: true },
+      });
+    }
 
-    return messages;
+    // Upsert sender + all volunteers as USER-type participants (matching identity resolution)
+    const participantData = [
+      { conversationId: conversation.id, participantType: sender.senderType, participantId: sender.senderId, lastReadAt: new Date() },
+      ...department.eventVolunteers.map((ev) => ({
+        conversationId: conversation!.id,
+        participantType: 'USER' as MessageSenderType,
+        participantId: ev.userId,
+      })),
+    ];
+    await this.prisma.conversationParticipant.createMany({
+      data: participantData,
+      skipDuplicates: true,
+    });
+
+    // Create the broadcast message
+    const message = await this.createBroadcastMessageInternal(sender, conversation.id, eventId, body, RecipientType.DEPARTMENT, departmentId);
+
+    // Publish events to all volunteer participants
+    this.publishBroadcastMessageEvents(message, department.eventVolunteers, eventId, conversation.id);
+
+    return this.prisma.conversation.findUnique({
+      where: { id: conversation.id },
+      include: {
+        participants: true,
+        messages: { take: 1, orderBy: { createdAt: 'desc' }, include: { senderUser: true, senderVol: { include: { user: true } } } },
+      },
+    });
   }
 
   /**
-   * Send broadcast to all volunteers in an event (admin only)
+   * Send broadcast to all volunteers in an event (admin only).
+   * Uses a per-scope conversation thread so subsequent broadcasts land in the same thread.
    */
-  async sendBroadcast(sender: SenderIdentity, input: SendBroadcastInput): Promise<Message[]> {
+  async sendBroadcast(sender: SenderIdentity, input: SendBroadcastInput) {
     const result = sendBroadcastSchema.safeParse(input);
     if (!result.success) {
       throw new ValidationError(result.error.issues[0].message);
@@ -211,34 +243,51 @@ export class MessageService {
     });
 
     if (!event) throw new NotFoundError('Event');
-    if (event.eventVolunteers.length === 0) return [];
 
-    const eventVolunteers = await this.prisma.eventVolunteer.findMany({
-      where: { eventId },
-      select: { id: true, userId: true },
+    // Find or create broadcast conversation for this event
+    let conversation = await this.prisma.conversation.findFirst({
+      where: { type: ConversationType.EVENT_BROADCAST, eventId, departmentId: null },
+      include: { participants: true },
     });
-    const evMap = new Map(eventVolunteers.map((ev) => [ev.userId, ev.id]));
 
-    const messages = await this.prisma.$transaction(
-      event.eventVolunteers.map((volunteer) =>
-        this.prisma.message.create({
-          data: {
-            subject,
-            body,
-            recipientType: RecipientType.EVENT,
-            recipientId: eventId,
-            eventId,
-            senderType: sender.senderType,
-            senderUserId: sender.senderType === 'USER' ? sender.senderId : null,
-            senderVolId: sender.senderType === 'VOLUNTEER' ? sender.senderId : null,
-            eventVolunteerId: evMap.get(volunteer.userId) ?? null,
-          },
-          include: { senderUser: true, event: true },
-        })
-      )
-    );
+    if (!conversation) {
+      conversation = await this.prisma.conversation.create({
+        data: {
+          eventId,
+          subject: subject ?? 'Event Announcements',
+          type: ConversationType.EVENT_BROADCAST,
+        },
+        include: { participants: true },
+      });
+    }
 
-    return messages;
+    // Upsert sender + all volunteers as USER-type participants (matching identity resolution)
+    const participantData = [
+      { conversationId: conversation.id, participantType: sender.senderType, participantId: sender.senderId, lastReadAt: new Date() },
+      ...event.eventVolunteers.map((ev) => ({
+        conversationId: conversation!.id,
+        participantType: 'USER' as MessageSenderType,
+        participantId: ev.userId,
+      })),
+    ];
+    await this.prisma.conversationParticipant.createMany({
+      data: participantData,
+      skipDuplicates: true,
+    });
+
+    // Create the broadcast message
+    const message = await this.createBroadcastMessageInternal(sender, conversation.id, eventId, body, RecipientType.EVENT, eventId);
+
+    // Publish events to all volunteer participants
+    this.publishBroadcastMessageEvents(message, event.eventVolunteers, eventId, conversation.id);
+
+    return this.prisma.conversation.findUnique({
+      where: { id: conversation.id },
+      include: {
+        participants: true,
+        messages: { take: 1, orderBy: { createdAt: 'desc' }, include: { senderUser: true, senderVol: { include: { user: true } } } },
+      },
+    });
   }
 
   /**
@@ -485,10 +534,11 @@ export class MessageService {
       throw new ValidationError('You cannot start a conversation with yourself');
     }
 
-    // Check if a conversation already exists between these two participants
+    // Check if a DIRECT conversation already exists between these two participants
     const existing = await this.prisma.conversation.findFirst({
       where: {
         eventId,
+        type: ConversationType.DIRECT,
         AND: [
           {
             participants: {
@@ -688,6 +738,41 @@ export class MessageService {
       data: { lastReadAt: new Date() },
     });
 
+    // Mark individual messages in this conversation as read for the user
+    const recipientConditions: Prisma.MessageWhereInput[] = [
+      { recipientType: RecipientType.USER, recipientId: identity.senderId },
+    ];
+    const evIds = await this.prisma.eventVolunteer.findMany({
+      where: { userId: identity.senderId },
+      select: { id: true },
+    });
+    if (evIds.length > 0) {
+      recipientConditions.push({ eventVolunteerId: { in: evIds.map((e) => e.id) } });
+    }
+
+    await this.prisma.message.updateMany({
+      where: {
+        conversationId,
+        isRead: false,
+        OR: recipientConditions,
+      },
+      data: { isRead: true, readAt: new Date() },
+    });
+
+    // Delete message notifications for this conversation
+    await this.prisma.notification.deleteMany({
+      where: {
+        userId: identity.senderId,
+        data: { path: ['conversationId'], equals: conversationId },
+      },
+    });
+
+    // Publish updated unread count so badge updates in real-time
+    const freshCount = await this.getUnreadCount(identity);
+    pubsub.publish(UNREAD_COUNT_UPDATED, {
+      unreadCountUpdated: { userId: identity.senderId, count: freshCount },
+    });
+
     return this.prisma.conversation.findUnique({
       where: { id: conversationId },
       include: { participants: true },
@@ -732,7 +817,7 @@ export class MessageService {
     // Verify all eventVolunteers exist
     const eventVolunteers2 = await this.prisma.eventVolunteer.findMany({
       where: { id: { in: volunteerIds }, eventId },
-      select: { id: true },
+      select: { id: true, userId: true },
     });
 
     if (eventVolunteers2.length === 0) throw new ValidationError('No valid volunteers found');
@@ -755,6 +840,12 @@ export class MessageService {
         })
       )
     );
+
+    // Publish subscription events per recipient
+    for (const ev of eventVolunteers2) {
+      const msg = messages.find((m) => m.eventVolunteerId === ev.id);
+      if (msg) this.publishMessageEvents(msg, ev.userId, eventId);
+    }
 
     return messages;
   }
@@ -878,7 +969,196 @@ export class MessageService {
       data: { lastReadAt: new Date() },
     });
 
+    // Publish subscription events for conversation message
+    if (otherParticipant) {
+      let recipientUserId = otherParticipant.participantId;
+      if (otherParticipant.participantType === 'VOLUNTEER') {
+        const resolved = await this.resolveEventVolunteerUserId(otherParticipant.participantId);
+        if (resolved) recipientUserId = resolved;
+      }
+      this.publishMessageEvents(message, recipientUserId, eventId, conversationId);
+    }
+
     return message;
+  }
+
+  /**
+   * Internal: Create a single message inside a broadcast conversation.
+   * Unlike createConversationMessageInternal, this has no single recipient —
+   * all participants receive via subscription events.
+   */
+  private async createBroadcastMessageInternal(
+    sender: SenderIdentity,
+    conversationId: string,
+    eventId: string,
+    body: string,
+    recipientType: RecipientType,
+    recipientId: string
+  ): Promise<Message> {
+    const message = await this.prisma.message.create({
+      data: {
+        body,
+        recipientType,
+        recipientId,
+        eventId,
+        conversationId,
+        senderType: sender.senderType,
+        senderUserId: sender.senderType === 'USER' ? sender.senderId : null,
+        senderVolId: sender.senderType === 'VOLUNTEER' ? sender.senderId : null,
+      },
+      include: {
+        senderUser: true,
+        senderVol: { include: { user: true } },
+      },
+    });
+
+    // Update conversation's updatedAt
+    await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { updatedAt: new Date() },
+    });
+
+    // Update sender's lastReadAt
+    await this.prisma.conversationParticipant.updateMany({
+      where: {
+        conversationId,
+        participantType: sender.senderType,
+        participantId: sender.senderId,
+      },
+      data: { lastReadAt: new Date() },
+    });
+
+    return message;
+  }
+
+  /**
+   * Publish subscription + push notification events for a broadcast message.
+   * Loops over all volunteer participants (excluding sender).
+   * Fire-and-forget — never throws.
+   */
+  private async publishBroadcastMessageEvents(
+    message: Message,
+    volunteers: Array<{ id: string; userId: string }>,
+    eventId: string,
+    conversationId: string
+  ): Promise<void> {
+    try {
+      for (const volunteer of volunteers) {
+        this.publishMessageEvents(message, volunteer.userId, eventId, conversationId);
+      }
+    } catch {
+      // Subscription/push failures should never break message sending
+    }
+  }
+
+  /**
+   * Publish subscription events for a newly created message.
+   * Fire-and-forget — never throws.
+   */
+  private async publishMessageEvents(
+    message: Message,
+    recipientUserId: string,
+    eventId: string,
+    conversationId?: string | null
+  ): Promise<void> {
+    try {
+      const payload = { ...message, recipientUserId, eventId };
+
+      pubsub.publish(MESSAGE_RECEIVED, { messageReceived: payload });
+
+      if (conversationId) {
+        pubsub.publish(CONVERSATION_MESSAGE_RECEIVED, {
+          conversationMessageReceived: { ...payload, conversationId },
+        });
+      }
+
+      // Compute fresh unread count for recipient
+      const evIds = await this.prisma.eventVolunteer.findMany({
+        where: { userId: recipientUserId },
+        select: { id: true },
+      });
+      const eventVolunteerIds = evIds.map((e) => e.id);
+
+      const recipientConditions: Prisma.MessageWhereInput[] = [
+        { recipientType: RecipientType.USER, recipientId: recipientUserId },
+      ];
+      if (eventVolunteerIds.length > 0) {
+        recipientConditions.push({ eventVolunteerId: { in: eventVolunteerIds } });
+      }
+
+      const count = await this.prisma.message.count({
+        where: {
+          isRead: false,
+          deletedByRecipient: false,
+          OR: recipientConditions,
+        },
+      });
+
+      pubsub.publish(UNREAD_COUNT_UPDATED, {
+        unreadCountUpdated: { userId: recipientUserId, count },
+      });
+
+      // Send push notification
+      const notifType = conversationId ? 'CONVERSATION_MESSAGE' : this.getNotificationType(message);
+      const preview = message.body.length > 100 ? message.body.slice(0, 100) + '…' : message.body;
+
+      // Resolve sender name for push title
+      let senderName = 'New Message';
+      if (message.senderUserId) {
+        const sender = await this.prisma.user.findUnique({
+          where: { id: message.senderUserId },
+          select: { firstName: true, lastName: true },
+        });
+        if (sender) senderName = `${sender.firstName} ${sender.lastName}`;
+      } else if (message.senderVolId) {
+        const sender = await this.prisma.eventVolunteer.findUnique({
+          where: { id: message.senderVolId },
+          include: { user: { select: { firstName: true, lastName: true } } },
+        });
+        if (sender) senderName = `${sender.user.firstName} ${sender.user.lastName}`;
+      }
+
+      const pushTitle = notifType === 'DEPARTMENT_MESSAGE'
+        ? 'Department Message'
+        : notifType === 'BROADCAST'
+          ? 'Event Announcement'
+          : senderName;
+
+      this.notificationService.sendToUser(recipientUserId, eventId, {
+        title: pushTitle,
+        body: preview,
+        data: {
+          type: notifType,
+          messageId: message.id,
+          eventId,
+          ...(conversationId && { conversationId }),
+        },
+      });
+    } catch {
+      // Subscription/push failures should never break message sending
+    }
+  }
+
+  /**
+   * Map message recipientType to push notification type string.
+   */
+  private getNotificationType(message: Message): string {
+    switch (message.recipientType) {
+      case 'DEPARTMENT': return 'DEPARTMENT_MESSAGE';
+      case 'EVENT': return 'BROADCAST';
+      default: return 'NEW_MESSAGE';
+    }
+  }
+
+  /**
+   * Resolve the userId for an EventVolunteer.
+   */
+  private async resolveEventVolunteerUserId(eventVolunteerId: string): Promise<string | null> {
+    const ev = await this.prisma.eventVolunteer.findUnique({
+      where: { id: eventVolunteerId },
+      select: { userId: true },
+    });
+    return ev?.userId ?? null;
   }
 
   /**

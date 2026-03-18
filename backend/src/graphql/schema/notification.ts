@@ -36,6 +36,7 @@ const notificationTypeDefs = `#graphql
     unregisterDeviceToken(token: String!): Boolean!
     markNotificationRead(notificationId: ID!): Boolean!
     markAllNotificationsRead(eventId: ID!): Boolean!
+    deleteNotification(notificationId: ID!): Boolean!
   }
 `;
 
