@@ -19,6 +19,7 @@
 //
 
 import SwiftUI
+import Apollo
 
 struct CaptainVolunteerPickerSheet: View {
     let eventId: String
@@ -38,6 +39,7 @@ struct CaptainVolunteerPickerSheet: View {
     @State private var isAssigning = false
     @State private var canCount = false
     @State private var showError = false
+    @State private var assignedVolunteerIds: Set<String> = []
 
     private var accentColor: Color {
         DepartmentColor.color(for: departmentType)
@@ -90,6 +92,9 @@ struct CaptainVolunteerPickerSheet: View {
             .onChange(of: viewModel.error) { _, newValue in
                 showError = newValue != nil
             }
+            .task {
+                await loadSessionAssignmentCounts()
+            }
         }
     }
 
@@ -138,9 +143,17 @@ struct CaptainVolunteerPickerSheet: View {
                                     .foregroundStyle(isSelected ? accentColor : AppTheme.textSecondary(for: colorScheme))
                             }
 
-                            Text(volunteer.name)
-                                .font(AppTheme.Typography.headline)
-                                .foregroundStyle(.primary)
+                            HStack(spacing: 4) {
+                                Text(volunteer.name)
+                                    .font(AppTheme.Typography.headline)
+                                    .foregroundStyle(.primary)
+
+                                if assignedVolunteerIds.contains(volunteer.id) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(AppTheme.StatusColors.warning)
+                                }
+                            }
 
                             Spacer()
 
@@ -183,6 +196,28 @@ struct CaptainVolunteerPickerSheet: View {
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
+    }
+
+    // MARK: - Load Session Assignment Counts
+
+    private func loadSessionAssignmentCounts() async {
+        do {
+            let result = try await NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.SessionAssignmentCountsQuery(sessionId: sessionId),
+                cachePolicy: .fetchIgnoringCacheData
+            )
+            if let data = result.data?.sessionAssignments {
+                var ids = Set<String>()
+                for assignment in data {
+                    if let volId = assignment.volunteer?.id {
+                        ids.insert(volId)
+                    }
+                }
+                assignedVolunteerIds = ids
+            }
+        } catch {
+            // Non-critical
+        }
     }
 
     // MARK: - Assign Volunteer

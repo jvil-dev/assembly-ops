@@ -96,13 +96,26 @@ struct AssignmentsListView: View {
 
     // MARK: - Filtered Data
 
-    private var filteredGroupedAssignments: [(date: Date, assignments: [Assignment])] {
+    private var filteredGroupedAssignments: [(date: Date, sessions: [SessionGroup])] {
         if showTodayOnly {
             return viewModel.groupedAssignments.filter { group in
                 DateUtils.isSessionDateToday(group.date)
             }
         }
         return viewModel.groupedAssignments
+    }
+
+    /// Session IDs that have more than one assignment (multi-post conflict)
+    private var conflictSessionIds: Set<String> {
+        var counts: [String: Int] = [:]
+        for group in viewModel.groupedAssignments {
+            for session in group.sessions {
+                for assignment in session.assignments {
+                    counts[assignment.sessionId, default: 0] += 1
+                }
+            }
+        }
+        return Set(counts.filter { $0.value > 1 }.keys)
     }
 
     // MARK: - Assignments List
@@ -140,21 +153,7 @@ struct AssignmentsListView: View {
                     } else {
                         ForEach(Array(filteredGroupedAssignments.enumerated()), id: \.element.date) { groupIndex, group in
                             Section {
-                                ForEach(Array(group.assignments.enumerated()), id: \.element.id) { index, assignment in
-                                    NavigationLink {
-                                        AssignmentDetailView(assignment: assignment)
-                                            .onDisappear {
-                                                viewModel.refresh()
-                                            }
-                                    } label: {
-                                        AssignmentCardView(assignment: assignment)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .entranceAnimation(
-                                        hasAppeared: hasAppeared,
-                                        delay: Double(groupIndex) * 0.05 + Double(index) * 0.03
-                                    )
-                                }
+                                dateGroupContent(group: group, groupIndex: groupIndex)
                             } header: {
                                 dateHeader(for: group.date)
                             }
@@ -169,6 +168,40 @@ struct AssignmentsListView: View {
                 viewModel.refresh()
             }
             .themedBackground(scheme: colorScheme)
+        }
+    }
+
+    // MARK: - Date Group Content
+
+    @ViewBuilder
+    private func dateGroupContent(group: (date: Date, sessions: [SessionGroup]), groupIndex: Int) -> some View {
+        ForEach(Array(group.sessions.enumerated()), id: \.element.id) { sessionIndex, session in
+            if group.sessions.count > 1 {
+                sessionSubHeader(session.sessionName)
+            }
+            sessionAssignments(session: session, groupIndex: groupIndex, sessionIndex: sessionIndex)
+        }
+    }
+
+    @ViewBuilder
+    private func sessionAssignments(session: SessionGroup, groupIndex: Int, sessionIndex: Int) -> some View {
+        ForEach(Array(session.assignments.enumerated()), id: \.element.id) { index, assignment in
+            NavigationLink {
+                AssignmentDetailView(assignment: assignment)
+                    .onDisappear {
+                        viewModel.refresh()
+                    }
+            } label: {
+                AssignmentCardView(
+                    assignment: assignment,
+                    hasSessionConflict: conflictSessionIds.contains(assignment.sessionId)
+                )
+            }
+            .buttonStyle(.plain)
+            .entranceAnimation(
+                hasAppeared: hasAppeared,
+                delay: Double(groupIndex) * 0.05 + Double(sessionIndex) * 0.03 + Double(index) * 0.02
+            )
         }
     }
 
@@ -230,7 +263,19 @@ struct AssignmentsListView: View {
         }
         .padding(.vertical, AppTheme.Spacing.s)
         .padding(.horizontal, AppTheme.Spacing.xs)
-        .background(.ultraThinMaterial)
+        .background(AppTheme.backgroundTop(for: colorScheme))
+    }
+
+    // MARK: - Session Sub-Header
+
+    private func sessionSubHeader(_ name: String) -> some View {
+        HStack {
+            Text(name)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+            Spacer()
+        }
+        .padding(.top, AppTheme.Spacing.xs)
     }
 
     // MARK: - Date Headers
@@ -265,7 +310,7 @@ struct AssignmentsListView: View {
         }
         .padding(.vertical, AppTheme.Spacing.s)
         .padding(.horizontal, AppTheme.Spacing.xs)
-        .background(.ultraThinMaterial)
+        .background(AppTheme.backgroundTop(for: colorScheme))
     }
 }
 

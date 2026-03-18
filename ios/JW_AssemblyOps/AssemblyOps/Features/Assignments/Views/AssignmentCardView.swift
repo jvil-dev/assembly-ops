@@ -25,6 +25,7 @@ struct AssignmentCardView: View {
     @Environment(\.colorScheme) var colorScheme
 
     let assignment: Assignment
+    var hasSessionConflict: Bool = false
 
     var body: some View {
         cardContent
@@ -43,6 +44,11 @@ struct AssignmentCardView: View {
                 // Department with color dot
                 departmentRow
 
+                // Category (if available)
+                if let category = assignment.postCategory {
+                    detailRow(icon: "tag.fill", text: category)
+                }
+
                 // Location (if available)
                 if let location = assignment.postLocation {
                     detailRow(icon: "mappin.circle.fill", text: location)
@@ -59,6 +65,11 @@ struct AssignmentCardView: View {
                 // Deadline warning for pending
                 if let deadlineText = assignment.deadlineText {
                     deadlineRow(text: deadlineText)
+                }
+
+                // Multi-assignment session warning
+                if hasSessionConflict {
+                    sessionConflictRow
                 }
 
                 // Check-in status for accepted
@@ -148,6 +159,24 @@ struct AssignmentCardView: View {
                 .foregroundStyle(AppTheme.StatusColors.warning)
 
             Text(text)
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.StatusColors.warning)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(AppTheme.StatusColors.warningBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    // MARK: - Session Conflict Row
+
+    private var sessionConflictRow: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 12))
+                .foregroundStyle(AppTheme.StatusColors.warning)
+
+            Text("Multiple assignments in this session")
                 .font(AppTheme.Typography.caption)
                 .foregroundStyle(AppTheme.StatusColors.warning)
         }
