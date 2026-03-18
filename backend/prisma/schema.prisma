@@ -650,7 +650,7 @@ model ScheduleAssignment {
   eventVolunteer   EventVolunteer   @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
   createdBy        User?            @relation("AssignmentCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
-  @@unique([eventVolunteerId, sessionId, shiftId])
+  @@unique([eventVolunteerId, postId, sessionId, shiftId])
   @@index([postId])
   @@index([sessionId])
   @@index([shiftId])
