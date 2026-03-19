@@ -6,6 +6,7 @@ query SentMessages($limit: Int, $offset: Int) {
     recipientType
     senderType
     senderName
+    recipientName
     senderId
     isRead
     readAt

@@ -74,6 +74,21 @@ struct MessageRowView: View {
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
+    }
+
+    private var accessibilityDescription: String {
+        var parts: [String] = []
+        parts.append(message.recipientType.displayName)
+        parts.append(message.displaySubject)
+        if let sender = message.senderName {
+            parts.append(sender)
+        }
+        parts.append(message.body)
+        parts.append(message.isRead ? "Read" : "Unread")
+        parts.append(message.formattedDate)
+        return parts.joined(separator: ", ")
     }
 
     private var recipientColor: Color {
@@ -81,7 +96,7 @@ struct MessageRowView: View {
         case .volunteer: return AppTheme.themeColor
         case .department: return .blue
         case .event: return .purple
-        case .admin: return .orange
+        case .user: return .orange
         }
     }
 }

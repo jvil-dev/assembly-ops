@@ -56,6 +56,8 @@ struct VolunteerPickerSheet: View {
     @State private var showError = false
     @State private var showWarning = false
     @State private var warningMessage = ""
+    /// Volunteer IDs that already have assignments in the target session
+    @State private var assignedVolunteerIds: Set<String> = []
 
     var filteredVolunteers: [VolunteerListItem] {
         if searchText.isEmpty {
@@ -122,6 +124,8 @@ struct VolunteerPickerSheet: View {
                 viewModel.departmentId = departmentId
                 await viewModel.loadVolunteers()
             }
+            // Fetch which volunteers already have assignments in this session
+            await loadSessionAssignmentCounts()
         }
     }
 
@@ -177,7 +181,8 @@ struct VolunteerPickerSheet: View {
                             volunteer: volunteer,
                             isSelected: isSelected,
                             colorScheme: colorScheme,
-                            accentColor: deptColor
+                            accentColor: deptColor,
+                            hasExistingAssignment: assignedVolunteerIds.contains(volunteer.id)
                         )
                     }
                     .buttonStyle(.plain)
@@ -236,6 +241,28 @@ struct VolunteerPickerSheet: View {
         .themedCard(scheme: colorScheme)
     }
 
+    // MARK: - Load Session Assignment Counts
+
+    private func loadSessionAssignmentCounts() async {
+        do {
+            let result = try await NetworkClient.shared.apollo.fetch(
+                query: AssemblyOpsAPI.SessionAssignmentCountsQuery(sessionId: sessionId),
+                cachePolicy: .fetchIgnoringCacheData
+            )
+            if let data = result.data?.sessionAssignments {
+                var ids = Set<String>()
+                for assignment in data {
+                    if let volId = assignment.volunteer?.id {
+                        ids.insert(volId)
+                    }
+                }
+                assignedVolunteerIds = ids
+            }
+        } catch {
+            // Non-critical — just won't show warning badges
+        }
+    }
+
     // MARK: - Assign Volunteers
 
     private func assignVolunteers() async {
@@ -253,6 +280,7 @@ struct VolunteerPickerSheet: View {
             if forceAssign {
                 // Force assign requires sequential calls (no bulk endpoint)
                 var allSucceeded = true
+                var lastWarning: String?
                 for volunteerId in selectedIds {
                     let input = AssemblyOpsAPI.ForceAssignmentInput(
                         volunteerId: volunteerId,
@@ -264,7 +292,11 @@ struct VolunteerPickerSheet: View {
                     let result = try await NetworkClient.shared.apollo.perform(
                         mutation: AssemblyOpsAPI.ForceAssignmentMutation(input: input)
                     )
-                    if result.data?.forceAssignment == nil {
+                    if let data = result.data?.forceAssignment {
+                        if let warning = data.warning {
+                            lastWarning = warning
+                        }
+                    } else {
                         if let errors = result.errors, !errors.isEmpty {
                             errorMessage = errors.first?.message ?? "Failed to create assignment"
                             allSucceeded = false
@@ -273,6 +305,9 @@ struct VolunteerPickerSheet: View {
                     }
                 }
                 success = allSucceeded
+                if let warning = lastWarning {
+                    warningMessage = warning
+                }
             } else if selectedIds.count == 1 {
                 // Single selection uses the original mutation
                 let volunteerId = selectedIds.first!
@@ -343,6 +378,7 @@ private struct VolunteerPickerRow: View {
     let isSelected: Bool
     let colorScheme: ColorScheme
     var accentColor: Color = AppTheme.themeColor
+    var hasExistingAssignment: Bool = false
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.m) {
@@ -359,9 +395,17 @@ private struct VolunteerPickerRow: View {
 
             // Volunteer info
             VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                Text(volunteer.fullName)
-                    .font(AppTheme.Typography.headline)
-                    .foregroundStyle(.primary)
+                HStack(spacing: 4) {
+                    Text(volunteer.fullName)
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(.primary)
+
+                    if hasExistingAssignment {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(AppTheme.StatusColors.warning)
+                    }
+                }
 
                 Text(volunteer.congregation)
                     .font(AppTheme.Typography.caption)

@@ -1,9 +1,8 @@
 mutation SendBroadcast($input: SendBroadcastInput!) {
   sendBroadcast(input: $input) {
     id
+    type
     subject
-    body
-    recipientType
-    createdAt
+    updatedAt
   }
 }

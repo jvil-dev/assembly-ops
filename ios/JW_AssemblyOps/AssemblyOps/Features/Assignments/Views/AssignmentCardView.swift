@@ -25,6 +25,7 @@ struct AssignmentCardView: View {
     @Environment(\.colorScheme) var colorScheme
 
     let assignment: Assignment
+    var hasSessionConflict: Bool = false
 
     var body: some View {
         cardContent
@@ -43,6 +44,11 @@ struct AssignmentCardView: View {
                 // Department with color dot
                 departmentRow
 
+                // Category (if available)
+                if let category = assignment.postCategory {
+                    detailRow(icon: "tag.fill", text: category)
+                }
+
                 // Location (if available)
                 if let location = assignment.postLocation {
                     detailRow(icon: "mappin.circle.fill", text: location)
@@ -59,6 +65,11 @@ struct AssignmentCardView: View {
                 // Deadline warning for pending
                 if let deadlineText = assignment.deadlineText {
                     deadlineRow(text: deadlineText)
+                }
+
+                // Multi-assignment session warning
+                if hasSessionConflict {
+                    sessionConflictRow
                 }
 
                 // Check-in status for accepted
@@ -82,6 +93,33 @@ struct AssignmentCardView: View {
             x: AppTheme.Shadow.cardSecondary.x,
             y: AppTheme.Shadow.cardSecondary.y
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
+    }
+
+    private var accessibilityDescription: String {
+        var parts: [String] = []
+        parts.append(assignment.postName)
+        parts.append(assignment.departmentName)
+        parts.append("Status: \(assignment.status.displayName)")
+        if assignment.isCaptain {
+            parts.append("Captain")
+        }
+        if let location = assignment.postLocation {
+            parts.append(location)
+        }
+        if !assignment.timeRangeFormatted.isEmpty {
+            parts.append(assignment.timeRangeFormatted)
+        }
+        if assignment.isCheckedIn {
+            parts.append("Checked in")
+        } else if assignment.canCheckIn {
+            parts.append("Ready to check in")
+        }
+        if let deadlineText = assignment.deadlineText {
+            parts.append(deadlineText)
+        }
+        return parts.joined(separator: ", ")
     }
 
     // MARK: - Accent Stripe
@@ -113,7 +151,7 @@ struct AssignmentCardView: View {
     // MARK: - Department Row
 
     private var departmentRow: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Circle()
                 .fill(assignment.departmentColor)
                 .frame(width: 8, height: 8)
@@ -127,7 +165,7 @@ struct AssignmentCardView: View {
     // MARK: - Detail Row
 
     private func detailRow(icon: String, text: String) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: icon)
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -142,7 +180,7 @@ struct AssignmentCardView: View {
     // MARK: - Deadline Row
 
     private func deadlineRow(text: String) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppTheme.Spacing.s) {
             Image(systemName: "exclamationmark.circle.fill")
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.StatusColors.warning)
@@ -157,27 +195,45 @@ struct AssignmentCardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 
+    // MARK: - Session Conflict Row
+
+    private var sessionConflictRow: some View {
+        HStack(spacing: AppTheme.Spacing.s) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 12))
+                .foregroundStyle(AppTheme.StatusColors.warning)
+
+            Text(NSLocalizedString("assignment.sessionConflict", comment: ""))
+                .font(AppTheme.Typography.caption)
+                .foregroundStyle(AppTheme.StatusColors.warning)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(AppTheme.StatusColors.warningBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
     // MARK: - Check-in Status Row
 
     @ViewBuilder
     private var checkInStatusRow: some View {
         if assignment.isCheckedIn {
-            HStack(spacing: 6) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(AppTheme.StatusColors.accepted)
 
-                Text("Checked in")
+                Text(NSLocalizedString("assignment.checkedIn", comment: ""))
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.StatusColors.accepted)
             }
         } else if assignment.canCheckIn {
-            HStack(spacing: 6) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "circle")
                     .font(.system(size: 12))
                     .foregroundStyle(AppTheme.StatusColors.info)
 
-                Text("Ready to check in")
+                Text(NSLocalizedString("assignment.readyToCheckIn", comment: ""))
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.StatusColors.info)
             }

@@ -21,8 +21,8 @@ export interface UserContext {
 
 export interface Context {
   prisma: PrismaClient;
-  req: Request;
-  res: Response;
+  req?: Request;
+  res?: Response;
   user?: UserContext;
   // Legacy alias kept so existing guards/resolvers compile during migration
   admin?: UserContext;
@@ -52,6 +52,39 @@ export async function createContext({
       if (user) {
         context.user = user;
         context.admin = user; // backward-compat alias
+      }
+    }
+  } catch {
+    // Invalid token — continue without auth context
+  }
+
+  return context;
+}
+
+/**
+ * Create context for WebSocket subscription connections.
+ * Extracts JWT from connectionParams.authToken instead of HTTP headers.
+ */
+export async function createSubscriptionContext(
+  connectionParams: Record<string, unknown>
+): Promise<Context> {
+  const context: Context = { prisma };
+
+  const token = connectionParams?.authToken as string | undefined;
+  if (!token) return context;
+
+  try {
+    const payload = verifyAccessToken(token);
+
+    if (payload.type === 'user') {
+      const user = await prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: { id: true, userId: true, email: true, isOverseer: true, isAppAdmin: true },
+      });
+
+      if (user) {
+        context.user = user;
+        context.admin = user;
       }
     }
   } catch {

@@ -1,0 +1,23 @@
+mutation UpdateAttendantMeeting($input: UpdateAttendantMeetingInput!) {
+  updateAttendantMeeting(input: $input) {
+    id
+    name
+    session {
+      id
+      name
+    }
+    meetingDate
+    notes
+    attendees {
+      id
+      eventVolunteer {
+        id
+        user {
+          firstName
+          lastName
+        }
+      }
+    }
+    createdAt
+  }
+}

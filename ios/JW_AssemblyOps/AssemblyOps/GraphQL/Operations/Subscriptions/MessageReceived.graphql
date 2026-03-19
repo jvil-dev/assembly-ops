@@ -1,0 +1,18 @@
+subscription MessageReceived($eventId: ID!) {
+  messageReceived(eventId: $eventId) {
+    id
+    subject
+    body
+    recipientType
+    senderType
+    senderName
+    recipientName
+    senderId
+    isRead
+    readAt
+    conversation {
+      id
+    }
+    createdAt
+  }
+}

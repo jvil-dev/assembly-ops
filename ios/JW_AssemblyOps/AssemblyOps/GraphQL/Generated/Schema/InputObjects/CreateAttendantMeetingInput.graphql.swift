@@ -14,6 +14,7 @@ extension AssemblyOpsAPI {
     init(
       eventId: ID,
       sessionId: ID,
+      name: GraphQLNullable<String> = nil,
       meetingDate: String,
       notes: GraphQLNullable<String> = nil,
       attendeeIds: [ID]
@@ -21,6 +22,7 @@ extension AssemblyOpsAPI {
       __data = InputDict([
         "eventId": eventId,
         "sessionId": sessionId,
+        "name": name,
         "meetingDate": meetingDate,
         "notes": notes,
         "attendeeIds": attendeeIds
@@ -35,6 +37,11 @@ extension AssemblyOpsAPI {
     var sessionId: ID {
       get { __data["sessionId"] }
       set { __data["sessionId"] = newValue }
+    }
+
+    var name: GraphQLNullable<String> {
+      get { __data["name"] }
+      set { __data["name"] = newValue }
     }
 
     var meetingDate: String {

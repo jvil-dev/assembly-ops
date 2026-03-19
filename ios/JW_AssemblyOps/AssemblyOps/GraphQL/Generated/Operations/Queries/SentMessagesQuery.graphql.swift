@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "SentMessages"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query SentMessages($limit: Int, $offset: Int) { sentMessages(limit: $limit, offset: $offset) { __typename id subject body recipientType senderType senderName senderId isRead readAt createdAt } }"#
+        #"query SentMessages($limit: Int, $offset: Int) { sentMessages(limit: $limit, offset: $offset) { __typename id subject body recipientType senderType senderName recipientName senderId isRead readAt createdAt } }"#
       ))
 
     public var limit: GraphQLNullable<Int>
@@ -60,6 +60,7 @@ extension AssemblyOpsAPI {
           .field("recipientType", GraphQLEnum<AssemblyOpsAPI.RecipientType>.self),
           .field("senderType", GraphQLEnum<AssemblyOpsAPI.MessageSenderType>?.self),
           .field("senderName", String?.self),
+          .field("recipientName", String?.self),
           .field("senderId", AssemblyOpsAPI.ID?.self),
           .field("isRead", Bool.self),
           .field("readAt", AssemblyOpsAPI.DateTime?.self),
@@ -75,6 +76,7 @@ extension AssemblyOpsAPI {
         var recipientType: GraphQLEnum<AssemblyOpsAPI.RecipientType> { __data["recipientType"] }
         var senderType: GraphQLEnum<AssemblyOpsAPI.MessageSenderType>? { __data["senderType"] }
         var senderName: String? { __data["senderName"] }
+        var recipientName: String? { __data["recipientName"] }
         var senderId: AssemblyOpsAPI.ID? { __data["senderId"] }
         var isRead: Bool { __data["isRead"] }
         var readAt: AssemblyOpsAPI.DateTime? { __data["readAt"] }

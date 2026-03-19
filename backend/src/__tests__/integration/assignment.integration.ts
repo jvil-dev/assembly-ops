@@ -231,7 +231,7 @@ describe('Assignment Operations', () => {
         .send({
           query: `
             mutation CreateAssignment($input: CreateAssignmentInput!) {
-              createAssignment(input: $input) { assignment { id } }
+              createAssignment(input: $input) { assignment { id } warning }
             }
           `,
           variables: {
@@ -239,8 +239,9 @@ describe('Assignment Operations', () => {
           },
         });
 
-      expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('already assigned');
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.createAssignment.assignment).toBeDefined();
+      expect(response.body.data.createAssignment.warning).toContain('already assigned');
     });
   });
 

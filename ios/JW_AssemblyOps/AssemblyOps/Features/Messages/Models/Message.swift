@@ -28,12 +28,12 @@
 import Foundation
 
 enum MessageSenderType: String, CaseIterable {
-    case admin = "ADMIN"
+    case user = "USER"
     case volunteer = "VOLUNTEER"
 
     var displayName: String {
         switch self {
-        case .admin: return "Overseer"
+        case .user: return "Overseer"
         case .volunteer: return "Volunteer"
         }
     }
@@ -43,14 +43,14 @@ enum MessageRecipientType: String, CaseIterable {
     case volunteer = "VOLUNTEER"
     case department = "DEPARTMENT"
     case event = "EVENT"
-    case admin = "ADMIN"
+    case user = "USER"
 
     var displayName: String {
         switch self {
         case .volunteer: return "Direct"
         case .department: return "Department"
         case .event: return "Announcement"
-        case .admin: return "Overseer"
+        case .user: return "Overseer"
         }
     }
 
@@ -59,7 +59,7 @@ enum MessageRecipientType: String, CaseIterable {
         case .volunteer: return "person"
         case .department: return "person.2"
         case .event: return "megaphone"
-        case .admin: return "person.badge.shield.checkmark"
+        case .user: return "person.badge.shield.checkmark"
         }
     }
 }
@@ -72,7 +72,7 @@ extension MessageRecipientType {
         case .volunteer: return "Individual Volunteer"
         case .department: return "Department"
         case .event: return "Event Broadcast"
-        case .admin: return "Overseer"
+        case .user: return "Overseer"
         }
     }
 
@@ -82,7 +82,7 @@ extension MessageRecipientType {
         case .volunteer: return "person"
         case .department: return "person.3"
         case .event: return "megaphone"
-        case .admin: return "person.badge.shield.checkmark"
+        case .user: return "person.badge.shield.checkmark"
         }
     }
 }
@@ -210,21 +210,67 @@ extension Message {
     }
 }
 
+// MARK: - GraphQL Mapping (MessageReceived Subscription)
+extension Message {
+    init?(from graphQL: AssemblyOpsAPI.MessageReceivedSubscription.Data.MessageReceived) {
+        self.id = graphQL.id
+        self.subject = graphQL.subject
+        self.body = graphQL.body
+        self.recipientType = MessageRecipientType(rawValue: graphQL.recipientType.rawValue) ?? .volunteer
+        self.senderType = graphQL.senderType.flatMap { MessageSenderType(rawValue: $0.rawValue) }
+        self.senderName = graphQL.senderName
+        self.senderId = graphQL.senderId
+        self.conversationId = graphQL.conversation?.id
+        self.isRead = graphQL.isRead
+
+        let isoFormatter = DateUtils.isoFormatter
+        self.readAt = graphQL.readAt.flatMap { isoFormatter.date(from: $0) }
+
+        guard let createdAt = isoFormatter.date(from: graphQL.createdAt) else {
+            return nil
+        }
+        self.createdAt = createdAt
+    }
+}
+
+// MARK: - GraphQL Mapping (ConversationMessageReceived Subscription)
+extension Message {
+    init?(from graphQL: AssemblyOpsAPI.ConversationMessageReceivedSubscription.Data.ConversationMessageReceived) {
+        self.id = graphQL.id
+        self.subject = graphQL.subject
+        self.body = graphQL.body
+        self.recipientType = MessageRecipientType(rawValue: graphQL.recipientType.rawValue) ?? .volunteer
+        self.senderType = graphQL.senderType.flatMap { MessageSenderType(rawValue: $0.rawValue) }
+        self.senderName = graphQL.senderName
+        self.senderId = graphQL.senderId
+        self.conversationId = nil
+        self.isRead = graphQL.isRead
+
+        let isoFormatter = DateUtils.isoFormatter
+        self.readAt = graphQL.readAt.flatMap { isoFormatter.date(from: $0) }
+
+        guard let createdAt = isoFormatter.date(from: graphQL.createdAt) else {
+            return nil
+        }
+        self.createdAt = createdAt
+    }
+}
+
 // MARK: - Preview Data
 extension Message {
     static var preview: Message {
-        Message(id: "1", subject: "Schedule Change", body: "Hello, you've been reassigned to the afternoon shift.", recipientType: .volunteer, senderType: .admin, senderName: "Manuel Guzman", senderId: "admin-1", conversationId: nil, isRead: false, readAt: nil, createdAt: Date().addingTimeInterval(-3600))
+        Message(id: "1", subject: "Schedule Change", body: "Hello, you've been reassigned to the afternoon shift.", recipientType: .volunteer, senderType: .user, senderName: "Manuel Guzman", senderId: "admin-1", conversationId: nil, isRead: false, readAt: nil, createdAt: Date().addingTimeInterval(-3600))
     }
 
     static var previewRead: Message {
-        Message(id: "2", subject: "Schedule Change", body: "Hello, you've been reassigned to the afternoon shift.", recipientType: .volunteer, senderType: .admin, senderName: "Manuel Guzman", senderId: "admin-1", conversationId: nil, isRead: true, readAt: Date().addingTimeInterval(-3600), createdAt: Date().addingTimeInterval(-7200))
+        Message(id: "2", subject: "Schedule Change", body: "Hello, you've been reassigned to the afternoon shift.", recipientType: .volunteer, senderType: .user, senderName: "Manuel Guzman", senderId: "admin-1", conversationId: nil, isRead: true, readAt: Date().addingTimeInterval(-3600), createdAt: Date().addingTimeInterval(-7200))
     }
 
     static var previewDepartment: Message {
-        Message(id: "3", subject: "Schedule Change", body: "Hello, you've been reassigned to the afternoon shift.", recipientType: .department, senderType: .admin, senderName: "Department Overseer", senderId: "admin-2", conversationId: nil, isRead: false, readAt: nil, createdAt: Date().addingTimeInterval(-3600))
+        Message(id: "3", subject: "Schedule Change", body: "Hello, you've been reassigned to the afternoon shift.", recipientType: .department, senderType: .user, senderName: "Department Overseer", senderId: "admin-2", conversationId: nil, isRead: false, readAt: nil, createdAt: Date().addingTimeInterval(-3600))
     }
 
     static var previewVolunteerSent: Message {
-        Message(id: "4", subject: "Question", body: "I have a question about my post assignment for tomorrow.", recipientType: .admin, senderType: .volunteer, senderName: "Carlos Martinez", senderId: "vol-1", conversationId: "conv-1", isRead: false, readAt: nil, createdAt: Date().addingTimeInterval(-1800))
+        Message(id: "4", subject: "Question", body: "I have a question about my post assignment for tomorrow.", recipientType: .user, senderType: .volunteer, senderName: "Carlos Martinez", senderId: "vol-1", conversationId: "conv-1", isRead: false, readAt: nil, createdAt: Date().addingTimeInterval(-1800))
     }
 }

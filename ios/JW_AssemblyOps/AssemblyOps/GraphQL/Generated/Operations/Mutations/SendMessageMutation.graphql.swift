@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "SendMessage"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"mutation SendMessage($input: SendMessageInput!) { sendMessage(input: $input) { __typename id subject body recipientType senderType senderName senderId conversation { __typename id } createdAt } }"#
+        #"mutation SendMessage($input: SendMessageInput!) { sendMessage(input: $input) { __typename id subject body recipientType senderType senderName recipientName senderId conversation { __typename id } createdAt } }"#
       ))
 
     public var input: SendMessageInput
@@ -49,6 +49,7 @@ extension AssemblyOpsAPI {
           .field("recipientType", GraphQLEnum<AssemblyOpsAPI.RecipientType>.self),
           .field("senderType", GraphQLEnum<AssemblyOpsAPI.MessageSenderType>?.self),
           .field("senderName", String?.self),
+          .field("recipientName", String?.self),
           .field("senderId", AssemblyOpsAPI.ID?.self),
           .field("conversation", Conversation?.self),
           .field("createdAt", AssemblyOpsAPI.DateTime.self),
@@ -63,6 +64,7 @@ extension AssemblyOpsAPI {
         var recipientType: GraphQLEnum<AssemblyOpsAPI.RecipientType> { __data["recipientType"] }
         var senderType: GraphQLEnum<AssemblyOpsAPI.MessageSenderType>? { __data["senderType"] }
         var senderName: String? { __data["senderName"] }
+        var recipientName: String? { __data["recipientName"] }
         var senderId: AssemblyOpsAPI.ID? { __data["senderId"] }
         var conversation: Conversation? { __data["conversation"] }
         var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }

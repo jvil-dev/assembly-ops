@@ -17,6 +17,8 @@ mutation StartConversation($input: StartConversationInput!) {
       participantType
       participantId
       displayName
+      phone
+      congregation
       lastReadAt
     }
   }

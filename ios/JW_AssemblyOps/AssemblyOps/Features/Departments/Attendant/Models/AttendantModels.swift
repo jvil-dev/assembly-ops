@@ -189,8 +189,9 @@ extension LostPersonAlertItem {
 
 // MARK: - Attendant Meeting
 
-struct AttendantMeetingItem: Identifiable {
+struct AttendantMeetingItem: Identifiable, Hashable {
     let id: String
+    let name: String?
     let sessionName: String
     let sessionId: String
     let meetingDate: Date
@@ -198,11 +199,32 @@ struct AttendantMeetingItem: Identifiable {
     let createdByName: String
     let attendees: [MeetingAttendeeItem]
     let createdAt: Date
+
+    init(id: String, name: String? = nil, sessionName: String, sessionId: String, meetingDate: Date, notes: String?, createdByName: String, attendees: [MeetingAttendeeItem], createdAt: Date) {
+        self.id = id
+        self.name = name
+        self.sessionName = sessionName
+        self.sessionId = sessionId
+        self.meetingDate = meetingDate
+        self.notes = notes
+        self.createdByName = createdByName
+        self.attendees = attendees
+        self.createdAt = createdAt
+    }
+
+    static func == (lhs: AttendantMeetingItem, rhs: AttendantMeetingItem) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 
 extension AttendantMeetingItem {
     init?(from data: AssemblyOpsAPI.AttendantMeetingsQuery.Data.AttendantMeeting) {
         self.id = data.id
+        self.name = data.name
         self.sessionName = data.session.name
         self.sessionId = data.session.id
         self.meetingDate = DateUtils.parseISO8601(data.meetingDate) ?? Date()
@@ -214,6 +236,7 @@ extension AttendantMeetingItem {
 
     init?(fromCreate data: AssemblyOpsAPI.CreateAttendantMeetingMutation.Data.CreateAttendantMeeting) {
         self.id = data.id
+        self.name = data.name
         self.sessionName = data.session.name
         self.sessionId = data.session.id
         self.meetingDate = DateUtils.parseISO8601(data.meetingDate) ?? Date()
@@ -225,12 +248,25 @@ extension AttendantMeetingItem {
 
     init?(fromMyMeeting data: AssemblyOpsAPI.MyAttendantMeetingsQuery.Data.MyAttendantMeeting) {
         self.id = data.id
+        self.name = data.name
         self.sessionName = data.session.name
         self.sessionId = data.session.id
         self.meetingDate = DateUtils.parseISO8601(data.meetingDate) ?? Date()
         self.notes = data.notes
         self.createdByName = "\(data.createdBy.firstName) \(data.createdBy.lastName)"
         self.attendees = data.attendees.compactMap { MeetingAttendeeItem(fromMyMeeting: $0) }
+        self.createdAt = DateUtils.parseISO8601(data.createdAt) ?? Date()
+    }
+
+    init?(fromUpdate data: AssemblyOpsAPI.UpdateAttendantMeetingMutation.Data.UpdateAttendantMeeting) {
+        self.id = data.id
+        self.name = data.name
+        self.sessionName = data.session.name
+        self.sessionId = data.session.id
+        self.meetingDate = DateUtils.parseISO8601(data.meetingDate) ?? Date()
+        self.notes = data.notes
+        self.createdByName = ""
+        self.attendees = data.attendees.compactMap { MeetingAttendeeItem(fromUpdate: $0) }
         self.createdAt = DateUtils.parseISO8601(data.createdAt) ?? Date()
     }
 }
@@ -259,6 +295,13 @@ extension MeetingAttendeeItem {
     }
 
     init?(fromMyMeeting data: AssemblyOpsAPI.MyAttendantMeetingsQuery.Data.MyAttendantMeeting.Attendee) {
+        self.id = data.id
+        self.volunteerId = data.eventVolunteer.id
+        let user = data.eventVolunteer.user
+        self.volunteerName = "\(user.firstName) \(user.lastName)"
+    }
+
+    init?(fromUpdate data: AssemblyOpsAPI.UpdateAttendantMeetingMutation.Data.UpdateAttendantMeeting.Attendee) {
         self.id = data.id
         self.volunteerId = data.eventVolunteer.id
         let user = data.eventVolunteer.user

@@ -12,6 +12,7 @@
 		B06C18F52F257FE500E52330 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B06C18F42F257FE500E52330 /* GoogleSignIn */; };
 		B06C18F72F257FE500E52330 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B06C18F62F257FE500E52330 /* GoogleSignInSwift */; };
 		B08216A72F5CCDCC00AE06C5 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = B08216A62F5CCDCC00AE06C5 /* FirebaseMessaging */; };
+		B082F52F2F6B252200E2EBF0 /* ApolloWebSocket in Frameworks */ = {isa = PBXBuildFile; productRef = B082F52E2F6B252200E2EBF0 /* ApolloWebSocket */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -92,6 +93,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B025A5E12F002AD300862900 /* ApolloAPI in Frameworks */,
+				B082F52F2F6B252200E2EBF0 /* ApolloWebSocket in Frameworks */,
 				B025A5DF2F002AD300862900 /* Apollo in Frameworks */,
 				B08216A72F5CCDCC00AE06C5 /* FirebaseMessaging in Frameworks */,
 				B06C18F52F257FE500E52330 /* GoogleSignIn in Frameworks */,
@@ -170,6 +172,7 @@
 				B06C18F42F257FE500E52330 /* GoogleSignIn */,
 				B06C18F62F257FE500E52330 /* GoogleSignInSwift */,
 				B08216A62F5CCDCC00AE06C5 /* FirebaseMessaging */,
+				B082F52E2F6B252200E2EBF0 /* ApolloWebSocket */,
 			);
 			productName = JW_AssemblyOps;
 			productReference = B0469BDB2EFF2852005E523D /* AssemblyOps.app */;
@@ -465,7 +468,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = AssemblyOps/AssemblyOps.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.3;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 72KK7R8JUS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -502,7 +505,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = AssemblyOps/AssemblyOps.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.3;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 72KK7R8JUS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -709,6 +712,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = B08216A52F5CCDCC00AE06C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
+		};
+		B082F52E2F6B252200E2EBF0 /* ApolloWebSocket */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B025A5DD2F002AD300862900 /* XCRemoteSwiftPackageReference "apollo-ios" */;
+			productName = ApolloWebSocket;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

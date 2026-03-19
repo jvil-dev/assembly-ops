@@ -60,7 +60,7 @@ struct RegistrationView: View {
             .padding(.bottom, AppTheme.Spacing.xxl)
         }
         .themedBackground(scheme: colorScheme)
-        .navigationTitle("Create Account")
+        .navigationTitle("auth.createAccount".localized)
         .navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.interactively)
         .onAppear {
@@ -69,8 +69,8 @@ struct RegistrationView: View {
         .onChange(of: viewModel.errorMessage) { _, error in
             showError = error != nil
         }
-        .alert("Registration Failed", isPresented: $showError) {
-            Button("OK") { viewModel.errorMessage = nil }
+        .alert("auth.registrationFailed".localized, isPresented: $showError) {
+            Button("common.ok".localized) { viewModel.errorMessage = nil }
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
@@ -90,11 +90,11 @@ struct RegistrationView: View {
 
     private var nameCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.l) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "person.fill")
                     .font(.system(size: 11))
                     .foregroundStyle(AppTheme.themeColor)
-                Text("YOUR NAME")
+                Text("auth.section.yourName".localized)
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(0.6)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -102,8 +102,8 @@ struct RegistrationView: View {
 
             HStack(spacing: AppTheme.Spacing.l) {
                 UnderlineTextField(
-                    label: "FIRST NAME",
-                    placeholder: "First",
+                    label: "auth.field.firstName".localized,
+                    placeholder: "auth.placeholder.firstName".localized,
                     text: $viewModel.firstName,
                     isSecure: false,
                     isFocused: focusedField == .firstName,
@@ -115,8 +115,8 @@ struct RegistrationView: View {
                 .focused($focusedField, equals: .firstName)
 
                 UnderlineTextField(
-                    label: "LAST NAME",
-                    placeholder: "Last",
+                    label: "auth.field.lastName".localized,
+                    placeholder: "auth.placeholder.lastName".localized,
                     text: $viewModel.lastName,
                     isSecure: false,
                     isFocused: focusedField == .lastName,
@@ -136,19 +136,19 @@ struct RegistrationView: View {
 
     private var credentialsCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.l) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "lock.fill")
                     .font(.system(size: 11))
                     .foregroundStyle(AppTheme.themeColor)
-                Text("ACCOUNT CREDENTIALS")
+                Text("auth.section.credentials".localized)
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(0.6)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
 
             UnderlineTextField(
-                label: "EMAIL",
-                placeholder: "your@email.com",
+                label: "auth.field.email".localized,
+                placeholder: "auth.placeholder.email".localized,
                 text: $viewModel.email,
                 isSecure: false,
                 isFocused: focusedField == .email,
@@ -162,8 +162,8 @@ struct RegistrationView: View {
             .autocorrectionDisabled()
 
             UnderlineTextField(
-                label: "PASSWORD",
-                placeholder: "At least 8 characters",
+                label: "auth.field.password".localized,
+                placeholder: "auth.placeholder.password".localized,
                 text: $viewModel.password,
                 isSecure: true,
                 isFocused: focusedField == .password,
@@ -176,8 +176,8 @@ struct RegistrationView: View {
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 UnderlineTextField(
-                    label: "CONFIRM PASSWORD",
-                    placeholder: "Re-enter password",
+                    label: "auth.field.confirmPassword".localized,
+                    placeholder: "auth.placeholder.confirmPassword".localized,
                     text: $viewModel.confirmPassword,
                     isSecure: true,
                     isFocused: focusedField == .confirmPassword,
@@ -192,7 +192,7 @@ struct RegistrationView: View {
                     HStack(spacing: 4) {
                         Image(systemName: viewModel.passwordsMatch ? "checkmark.circle.fill" : "xmark.circle.fill")
                             .font(.caption)
-                        Text(viewModel.passwordsMatch ? "Passwords match" : "Passwords don't match")
+                        Text(viewModel.passwordsMatch ? "auth.passwordsMatch".localized : "auth.passwordsDontMatch".localized)
                             .font(.caption)
                     }
                     .foregroundStyle(viewModel.passwordsMatch
@@ -210,19 +210,19 @@ struct RegistrationView: View {
 
     private var optionalCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.l) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.s) {
                 Image(systemName: "info.circle")
                     .font(.system(size: 11))
                     .foregroundStyle(AppTheme.themeColor)
-                Text("OPTIONAL INFO")
+                Text("auth.section.optionalInfo".localized)
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(0.6)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
             }
 
             UnderlineTextField(
-                label: "PHONE",
-                placeholder: "Your phone number",
+                label: "auth.field.phone".localized,
+                placeholder: "auth.placeholder.phone".localized,
                 text: $viewModel.phone,
                 isSecure: false,
                 isFocused: focusedField == .phone,
@@ -234,7 +234,7 @@ struct RegistrationView: View {
             .focused($focusedField, equals: .phone)
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                Text("CONGREGATION")
+                Text("auth.section.congregation".localized)
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(0.6)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
@@ -246,16 +246,16 @@ struct RegistrationView: View {
             }
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-                Text("APPOINTMENT STATUS")
+                Text("auth.section.appointment".localized)
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(0.6)
                     .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
 
-                Picker("Appointment Status", selection: $viewModel.appointmentStatus) {
-                    Text("None").tag(String?.none)
-                    Text("Publisher").tag(String?.some("PUBLISHER"))
-                    Text("Ministerial Servant").tag(String?.some("MINISTERIAL_SERVANT"))
-                    Text("Elder").tag(String?.some("ELDER"))
+                Picker("auth.section.appointment".localized, selection: $viewModel.appointmentStatus) {
+                    Text("auth.appointment.none".localized).tag(String?.none)
+                    Text("auth.appointment.publisher".localized).tag(String?.some("PUBLISHER"))
+                    Text("auth.appointment.ministerialServant".localized).tag(String?.some("MINISTERIAL_SERVANT"))
+                    Text("auth.appointment.elder".localized).tag(String?.some("ELDER"))
                 }
                 .pickerStyle(.menu)
                 .tint(AppTheme.themeColor)
@@ -289,7 +289,7 @@ struct RegistrationView: View {
                     HStack(spacing: AppTheme.Spacing.s) {
                         Text("G")
                             .font(.system(size: 17, weight: .bold))
-                            .foregroundStyle(Color(red: 0.26, green: 0.52, blue: 0.96))
+                            .foregroundStyle(AppTheme.googleBlue)
                         Text("Google").font(AppTheme.Typography.body)
                     }
                     .frame(maxWidth: .infinity)
@@ -300,6 +300,7 @@ struct RegistrationView: View {
                         .stroke(AppTheme.dividerColor(for: colorScheme), lineWidth: 1.5)
                 )
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                .accessibilityLabel("auth.a11y.signUpGoogle".localized)
 
                 Button {
                     viewModel.signInWithApple()
@@ -316,6 +317,7 @@ struct RegistrationView: View {
                         .stroke(AppTheme.dividerColor(for: colorScheme), lineWidth: 1.5)
                 )
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                .accessibilityLabel("auth.a11y.signUpApple".localized)
             }
         }
     }
@@ -331,7 +333,7 @@ struct RegistrationView: View {
                 if viewModel.isLoading {
                     ProgressView().tint(.white)
                 } else {
-                    Text("Create Account")
+                    Text("auth.createAccount".localized)
                         .font(AppTheme.Typography.bodyMedium)
                 }
             }

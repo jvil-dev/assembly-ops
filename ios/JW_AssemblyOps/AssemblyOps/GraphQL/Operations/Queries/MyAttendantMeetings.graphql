@@ -1,6 +1,7 @@
 query MyAttendantMeetings($eventId: ID!) {
   myAttendantMeetings(eventId: $eventId) {
     id
+    name
     session {
       id
       name

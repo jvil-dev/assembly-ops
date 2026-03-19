@@ -46,7 +46,7 @@ struct CaptainGroupView: View {
                 ProgressView()
                     .frame(maxWidth: .infinity)
             } else if viewModel.members.isEmpty {
-                Text("No group members assigned")
+                Text("captain.group.noMembers".localized)
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
             } else {
@@ -66,8 +66,8 @@ struct CaptainGroupView: View {
         .task {
             await viewModel.loadGroup(postId: postId, sessionId: sessionId)
         }
-        .alert("Error", isPresented: $viewModel.showError) {
-            Button("OK", role: .cancel) { }
+        .alert("common.error".localized, isPresented: $viewModel.showError) {
+            Button("common.ok".localized, role: .cancel) { }
         } message: {
             Text(viewModel.errorMessage)
         }
@@ -100,7 +100,7 @@ private struct GroupMemberRow: View {
             if member.isCheckedIn {
                 HStack(spacing: AppTheme.Spacing.xs) {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundStyle(AppTheme.StatusColors.accepted)
                     if let time = member.checkInTime {
                         Text(time, style: .time)
                             .font(AppTheme.Typography.caption)
@@ -116,7 +116,7 @@ private struct GroupMemberRow: View {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle())
                     } else {
-                        Text("Check In")
+                        Text("captain.group.checkIn".localized)
                             .font(AppTheme.Typography.captionBold)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)

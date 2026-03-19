@@ -8,7 +8,7 @@ extension AssemblyOpsAPI {
     static let operationName: String = "MyConversations"
     static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query MyConversations($eventId: ID!, $limit: Int, $offset: Int) { myConversations(eventId: $eventId, limit: $limit, offset: $offset) { __typename id subject unreadCount createdAt updatedAt lastMessage { __typename id body senderName senderType createdAt } participants { __typename id participantType participantId displayName lastReadAt } } }"#
+        #"query MyConversations($eventId: ID!, $limit: Int, $offset: Int) { myConversations(eventId: $eventId, limit: $limit, offset: $offset) { __typename id subject type departmentName unreadCount createdAt updatedAt lastMessage { __typename id body senderName senderType createdAt } participants { __typename id participantType participantId displayName phone congregation lastReadAt } } }"#
       ))
 
     public var eventId: ID
@@ -61,6 +61,8 @@ extension AssemblyOpsAPI {
           .field("__typename", String.self),
           .field("id", AssemblyOpsAPI.ID.self),
           .field("subject", String?.self),
+          .field("type", GraphQLEnum<AssemblyOpsAPI.ConversationType>.self),
+          .field("departmentName", String?.self),
           .field("unreadCount", Int.self),
           .field("createdAt", AssemblyOpsAPI.DateTime.self),
           .field("updatedAt", AssemblyOpsAPI.DateTime.self),
@@ -73,6 +75,8 @@ extension AssemblyOpsAPI {
 
         var id: AssemblyOpsAPI.ID { __data["id"] }
         var subject: String? { __data["subject"] }
+        var type: GraphQLEnum<AssemblyOpsAPI.ConversationType> { __data["type"] }
+        var departmentName: String? { __data["departmentName"] }
         var unreadCount: Int { __data["unreadCount"] }
         var createdAt: AssemblyOpsAPI.DateTime { __data["createdAt"] }
         var updatedAt: AssemblyOpsAPI.DateTime { __data["updatedAt"] }
@@ -120,6 +124,8 @@ extension AssemblyOpsAPI {
             .field("participantType", GraphQLEnum<AssemblyOpsAPI.MessageSenderType>.self),
             .field("participantId", AssemblyOpsAPI.ID.self),
             .field("displayName", String.self),
+            .field("phone", String?.self),
+            .field("congregation", String?.self),
             .field("lastReadAt", AssemblyOpsAPI.DateTime?.self),
           ] }
           static var __fulfilledFragments: [any ApolloAPI.SelectionSet.Type] { [
@@ -130,6 +136,8 @@ extension AssemblyOpsAPI {
           var participantType: GraphQLEnum<AssemblyOpsAPI.MessageSenderType> { __data["participantType"] }
           var participantId: AssemblyOpsAPI.ID { __data["participantId"] }
           var displayName: String { __data["displayName"] }
+          var phone: String? { __data["phone"] }
+          var congregation: String? { __data["congregation"] }
           var lastReadAt: AssemblyOpsAPI.DateTime? { __data["lastReadAt"] }
         }
       }

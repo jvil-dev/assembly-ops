@@ -30,6 +30,13 @@ struct MultiRecipientPickerSheet: View {
     @State private var searchText = ""
     @State private var hasAppeared = false
 
+    private var accentColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return AppTheme.themeColor
+    }
+
     var filteredVolunteers: [VolunteerListItem] {
         if searchText.isEmpty {
             return viewModel.volunteers
@@ -134,7 +141,8 @@ struct MultiRecipientPickerSheet: View {
                         MultiRecipientRow(
                             volunteer: volunteer,
                             isSelected: selectedIds.contains(volunteer.id),
-                            colorScheme: colorScheme
+                            colorScheme: colorScheme,
+                            accentColor: accentColor
                         )
                     }
                     .buttonStyle(.plain)
@@ -161,7 +169,7 @@ struct MultiRecipientPickerSheet: View {
             HStack(spacing: AppTheme.Spacing.m) {
                 Image(systemName: selectedIds.count == viewModel.volunteers.count ? "checkmark.square.fill" : "square")
                     .font(.system(size: 22))
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
 
                 Text(selectedIds.count == viewModel.volunteers.count
                     ? "messages.compose.deselectAll".localized
@@ -177,7 +185,7 @@ struct MultiRecipientPickerSheet: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
-                        .background(AppTheme.themeColor)
+                        .background(accentColor)
                         .clipShape(Capsule())
                 }
             }
@@ -202,23 +210,24 @@ private struct MultiRecipientRow: View {
     let volunteer: VolunteerListItem
     let isSelected: Bool
     let colorScheme: ColorScheme
+    var accentColor: Color = AppTheme.themeColor
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.m) {
             // Checkbox
             Image(systemName: isSelected ? "checkmark.square.fill" : "square")
                 .font(.system(size: 22))
-                .foregroundStyle(isSelected ? AppTheme.themeColor : AppTheme.textTertiary(for: colorScheme))
+                .foregroundStyle(isSelected ? accentColor : AppTheme.textTertiary(for: colorScheme))
 
             // Avatar
             ZStack {
                 Circle()
-                    .fill(isSelected ? AppTheme.themeColor.opacity(0.15) : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    .fill(isSelected ? accentColor.opacity(0.15) : AppTheme.cardBackgroundSecondary(for: colorScheme))
                     .frame(width: 40, height: 40)
 
                 Text(volunteer.initials)
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(isSelected ? AppTheme.themeColor : AppTheme.textSecondary(for: colorScheme))
+                    .foregroundStyle(isSelected ? accentColor : AppTheme.textSecondary(for: colorScheme))
             }
 
             // Info
@@ -238,7 +247,7 @@ private struct MultiRecipientRow: View {
         .themedCard(scheme: colorScheme)
         .overlay(
             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
-                .strokeBorder(isSelected ? AppTheme.themeColor.opacity(0.3) : Color.clear, lineWidth: 2)
+                .strokeBorder(isSelected ? accentColor.opacity(0.3) : Color.clear, lineWidth: 2)
         )
     }
 }

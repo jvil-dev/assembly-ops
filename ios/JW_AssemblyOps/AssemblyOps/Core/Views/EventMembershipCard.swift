@@ -58,7 +58,7 @@ struct EventMembershipCard: View {
                 Spacer()
 
                 // Status indicator
-                HStack(spacing: 6) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Circle()
                         .fill(statusColor)
                         .frame(width: 8, height: 8)
@@ -82,7 +82,7 @@ struct EventMembershipCard: View {
                 // Event name
                 Text(item.eventName)
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(colorScheme == .dark ? .white : Color(red: 0.1, green: 0.1, blue: 0.1))
+                    .foregroundStyle(AppTheme.textPrimary(for: colorScheme))
                     .fixedSize(horizontal: false, vertical: true)
 
                 // Meta rows
@@ -105,7 +105,7 @@ struct EventMembershipCard: View {
             // Footer — role badge + chevron
             HStack {
                 // Role badge
-                HStack(spacing: 6) {
+                HStack(spacing: AppTheme.Spacing.s) {
                     Image(systemName: item.membershipType == .overseer ? "shield.fill" : "person.fill")
                         .font(.system(size: 12))
                         .foregroundStyle(item.membershipType == .overseer ? accentColor : AppTheme.textTertiary(for: colorScheme))
@@ -125,6 +125,7 @@ struct EventMembershipCard: View {
             .padding(.vertical, AppTheme.Spacing.m)
         }
         .themedCard(scheme: colorScheme)
+        .accessibilityElement(children: .combine)
     }
 
     private func metaRow(icon: String, text: String) -> some View {

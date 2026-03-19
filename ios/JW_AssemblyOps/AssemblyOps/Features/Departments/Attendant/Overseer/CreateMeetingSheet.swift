@@ -25,11 +25,28 @@ struct CreateMeetingSheet: View {
     @State private var didCreate = false
 
     // Form state
+    @State private var name = ""
     @State private var selectedSessionId: String?
     @State private var meetingDate = Date()
     @State private var notes = ""
     @State private var selectedAttendeeIds: Set<String> = []
     @State private var attendeeSearchText = ""
+
+    private var accentColor: Color {
+        if let deptType = sessionState.selectedDepartment?.departmentType {
+            return DepartmentColor.color(for: deptType)
+        }
+        return DepartmentColor.color(for: "ATTENDANT")
+    }
+
+    /// Default meeting date: event start date at 7:00 AM
+    private static func defaultMeetingDate(for event: EventSummary?) -> Date {
+        guard let event = event else { return Date() }
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: event.startDate)
+        components.hour = 7
+        components.minute = 0
+        return Calendar.current.date(from: components) ?? event.startDate
+    }
 
     var isFormValid: Bool {
         selectedSessionId != nil && !selectedAttendeeIds.isEmpty
@@ -49,14 +66,17 @@ struct CreateMeetingSheet: View {
                     sessionPickerCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0)
 
-                    datePickerCard
+                    nameCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.05)
 
-                    notesCard
+                    datePickerCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.1)
 
-                    attendeePickerCard
+                    notesCard
                         .entranceAnimation(hasAppeared: hasAppeared, delay: 0.15)
+
+                    attendeePickerCard
+                        .entranceAnimation(hasAppeared: hasAppeared, delay: 0.2)
                 }
                 .screenPadding()
                 .padding(.top, AppTheme.Spacing.l)
@@ -78,6 +98,7 @@ struct CreateMeetingSheet: View {
             }
             .onChange(of: viewModel.error) { _, newValue in showError = newValue != nil }
             .task {
+                meetingDate = Self.defaultMeetingDate(for: sessionState.selectedEvent)
                 if let eventId = sessionState.selectedEvent?.id {
                     await attendanceVM.loadEventSummary(eventId: eventId)
                 }
@@ -94,11 +115,24 @@ struct CreateMeetingSheet: View {
         }
     }
 
+    // MARK: - Meeting Name
+
+    private var nameCard: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
+            SectionHeaderLabel(icon: "tag", title: "attendant.meetings.name".localized, accentColor: accentColor)
+
+            TextField("", text: $name)
+                .padding(AppTheme.Spacing.s)
+                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+        }
+    }
+
     // MARK: - Session Picker
 
     private var sessionPickerCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-            SectionHeaderLabel(icon: "calendar", title: "attendant.meetings.session".localized)
+            SectionHeaderLabel(icon: "calendar", title: "attendant.meetings.session".localized, accentColor: accentColor)
             sessionPickerContent
         }
     }
@@ -131,13 +165,13 @@ struct CreateMeetingSheet: View {
                 Spacer()
                 if selectedSessionId == session.sessionId {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(AppTheme.themeColor)
+                        .foregroundStyle(accentColor)
                 }
             }
             .padding(AppTheme.Spacing.m)
             .background(
                 selectedSessionId == session.sessionId
-                    ? AppTheme.themeColor.opacity(0.1)
+                    ? accentColor.opacity(0.1)
                     : AppTheme.cardBackgroundSecondary(for: colorScheme)
             )
             .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
@@ -149,7 +183,7 @@ struct CreateMeetingSheet: View {
 
     private var datePickerCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-            SectionHeaderLabel(icon: "clock", title: "attendant.meetings.date".localized)
+            SectionHeaderLabel(icon: "clock", title: "attendant.meetings.date".localized, accentColor: accentColor)
 
             DatePicker("", selection: $meetingDate, displayedComponents: [.date, .hourAndMinute])
                 .datePickerStyle(.compact)
@@ -161,7 +195,7 @@ struct CreateMeetingSheet: View {
 
     private var notesCard: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
-            SectionHeaderLabel(icon: "note.text", title: "attendant.meetings.notes".localized)
+            SectionHeaderLabel(icon: "note.text", title: "attendant.meetings.notes".localized, accentColor: accentColor)
 
             TextField("", text: $notes, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
@@ -180,12 +214,12 @@ struct CreateMeetingSheet: View {
 
     private var attendeeHeader: some View {
         HStack {
-            SectionHeaderLabel(icon: "person.3", title: "attendant.meetings.attendees".localized)
+            SectionHeaderLabel(icon: "person.3", title: "attendant.meetings.attendees".localized, accentColor: accentColor)
             Spacer()
             if !selectedAttendeeIds.isEmpty {
                 Text("\(selectedAttendeeIds.count) \("attendant.meetings.selected".localized)")
                     .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
             }
         }
     }
@@ -240,7 +274,7 @@ struct CreateMeetingSheet: View {
             } label: {
                 Text("attendant.meetings.selectAll".localized)
                     .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.themeColor)
+                    .foregroundStyle(accentColor)
             }
             Button {
                 HapticManager.shared.lightTap()
@@ -272,15 +306,15 @@ struct CreateMeetingSheet: View {
     private func volunteerRowContent(_ volunteer: VolunteerListItem, isSelected: Bool) -> some View {
         HStack(spacing: AppTheme.Spacing.m) {
             Image(systemName: isSelected ? "checkmark.square.fill" : "square")
-                .foregroundStyle(isSelected ? AppTheme.themeColor : AppTheme.textTertiary(for: colorScheme))
+                .foregroundStyle(isSelected ? accentColor : AppTheme.textTertiary(for: colorScheme))
 
             ZStack {
                 Circle()
-                    .fill(isSelected ? AppTheme.themeColor.opacity(0.15) : AppTheme.cardBackgroundSecondary(for: colorScheme))
+                    .fill(isSelected ? accentColor.opacity(0.15) : AppTheme.cardBackgroundSecondary(for: colorScheme))
                     .frame(width: 32, height: 32)
                 Text(volunteer.initials)
                     .font(AppTheme.Typography.caption).fontWeight(.semibold).fontDesign(.rounded)
-                    .foregroundStyle(isSelected ? AppTheme.themeColor : AppTheme.textSecondary(for: colorScheme))
+                    .foregroundStyle(isSelected ? accentColor : AppTheme.textSecondary(for: colorScheme))
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -295,7 +329,7 @@ struct CreateMeetingSheet: View {
             Spacer()
         }
         .padding(AppTheme.Spacing.s)
-        .background(isSelected ? AppTheme.themeColor.opacity(0.06) : Color.clear)
+        .background(isSelected ? accentColor.opacity(0.06) : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
     }
 
@@ -311,12 +345,13 @@ struct CreateMeetingSheet: View {
                 Task {
                     guard let eventId = sessionState.selectedEvent?.id,
                           let sessionId = selectedSessionId else { return }
+                    let nameText = name.isEmpty ? nil : name
                     let noteText = notes.isEmpty ? nil : notes
                     let dateString = DateUtils.isoFormatter.string(from: meetingDate)
                     await viewModel.createMeeting(
                         eventId: eventId, sessionId: sessionId,
-                        meetingDate: dateString, notes: noteText,
-                        attendeeIds: Array(selectedAttendeeIds)
+                        name: nameText, meetingDate: dateString,
+                        notes: noteText, attendeeIds: Array(selectedAttendeeIds)
                     )
                     if viewModel.error == nil {
                         didCreate = true

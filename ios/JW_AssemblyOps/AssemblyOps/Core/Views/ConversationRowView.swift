@@ -28,20 +28,32 @@ struct ConversationRowView: View {
     var body: some View {
         HStack(spacing: AppTheme.Spacing.m) {
             // Avatar
-            ZStack {
-                Circle()
-                    .fill(AppTheme.themeColor.opacity(0.15))
-                    .frame(width: 44, height: 44)
+            if conversation.isBroadcast {
+                ZStack {
+                    Circle()
+                        .fill(broadcastColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
 
-                Text(initials)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(AppTheme.themeColor)
+                    Image(systemName: broadcastIcon)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(broadcastColor)
+                }
+            } else {
+                ZStack {
+                    Circle()
+                        .fill(AppTheme.themeColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+
+                    Text(initials)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(AppTheme.themeColor)
+                }
             }
 
             // Content
             VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 HStack {
-                    Text(conversation.otherParticipantName)
+                    Text(conversation.displayName)
                         .font(conversation.unreadCount > 0 ? AppTheme.Typography.headline : AppTheme.Typography.subheadline)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
@@ -83,6 +95,34 @@ struct ConversationRowView: View {
         }
         .cardPadding()
         .themedCard(scheme: colorScheme)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
+    }
+
+    private var broadcastColor: Color {
+        conversation.type == .departmentBroadcast ? .blue : .purple
+    }
+
+    private var broadcastIcon: String {
+        conversation.type == .departmentBroadcast ? "person.3" : "megaphone"
+    }
+
+    private var accessibilityDescription: String {
+        var parts: [String] = []
+        parts.append(conversation.displayName)
+        if let subject = conversation.subject, !subject.isEmpty {
+            parts.append(subject)
+        }
+        if let body = conversation.lastMessageBody {
+            parts.append(body)
+        }
+        if conversation.unreadCount > 0 {
+            parts.append("\(conversation.unreadCount) unread")
+        }
+        if let date = conversation.lastMessageDate {
+            parts.append(formattedDate(date))
+        }
+        return parts.joined(separator: ", ")
     }
 
     private var initials: String {

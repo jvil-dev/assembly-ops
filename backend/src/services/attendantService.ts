@@ -12,6 +12,7 @@
  *   - resolveLostPersonAlert(id, adminId, resolutionNotes): Mark alert as resolved
  *   - getLostPersonAlerts(eventId, resolved?): Get lost person alerts for an event
  *   - createMeeting(createdById, input): Create an attendant meeting
+ *   - updateMeeting(input): Update meeting date, notes, and/or attendees
  *   - updateMeetingNotes(id, notes): Update meeting notes
  *   - deleteMeeting(id): Remove a meeting
  *   - getMeetings(eventId): Get all meetings for an event
@@ -34,9 +35,11 @@ import {
   reportSafetyIncidentSchema,
   createLostPersonAlertSchema,
   createAttendantMeetingSchema,
+  updateAttendantMeetingSchema,
   ReportSafetyIncidentInput,
   CreateLostPersonAlertInput,
   CreateAttendantMeetingInput,
+  UpdateAttendantMeetingInput,
 } from '../graphql/validators/attendant.js';
 
 export class AttendantService {
@@ -185,12 +188,13 @@ export class AttendantService {
       throw new ValidationError(result.error.issues[0].message);
     }
 
-    const { eventId, sessionId, meetingDate, notes, attendeeIds } = result.data;
+    const { eventId, sessionId, name, meetingDate, notes, attendeeIds } = result.data;
 
     return this.prisma.attendantMeeting.create({
       data: {
         eventId,
         sessionId,
+        name,
         meetingDate: new Date(meetingDate),
         notes,
         createdById,
@@ -198,6 +202,65 @@ export class AttendantService {
           create: attendeeIds.map((id) => ({ eventVolunteerId: id })),
         },
       },
+      include: {
+        session: true,
+        createdBy: true,
+        attendees: { include: { eventVolunteer: true } },
+      },
+    });
+  }
+
+  /**
+   * Update a meeting (date, notes, and/or attendees)
+   */
+  async updateMeeting(input: UpdateAttendantMeetingInput): Promise<AttendantMeeting> {
+    const result = updateAttendantMeetingSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+
+    const { id, name, meetingDate, notes, attendeeIds } = result.data;
+
+    const existing = await this.prisma.attendantMeeting.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundError('Attendant meeting');
+    }
+
+    const data: Record<string, unknown> = {};
+    if (name !== undefined) {
+      data.name = name;
+    }
+    if (meetingDate !== undefined) {
+      data.meetingDate = new Date(meetingDate);
+    }
+    if (notes !== undefined) {
+      data.notes = notes;
+    }
+
+    if (attendeeIds) {
+      // Replace attendees atomically
+      return this.prisma.$transaction(async (tx) => {
+        await tx.meetingAttendance.deleteMany({ where: { meetingId: id } });
+        return tx.attendantMeeting.update({
+          where: { id },
+          data: {
+            ...data,
+            attendees: {
+              create: attendeeIds.map((evId) => ({ eventVolunteerId: evId })),
+            },
+          },
+          include: {
+            session: true,
+            createdBy: true,
+            attendees: { include: { eventVolunteer: true } },
+          },
+        });
+      });
+    }
+
+    return this.prisma.attendantMeeting.update({
+      where: { id },
+      data,
       include: {
         session: true,
         createdBy: true,

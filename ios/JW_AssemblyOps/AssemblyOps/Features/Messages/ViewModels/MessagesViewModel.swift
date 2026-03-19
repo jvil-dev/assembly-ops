@@ -35,6 +35,7 @@
 import Foundation
 import Combine
 import SwiftUI
+import Apollo
 
 @MainActor
 final class MessagesViewModel: ObservableObject {
@@ -45,6 +46,9 @@ final class MessagesViewModel: ObservableObject {
     @Published var hasLoaded = false
     @Published var showUnreadOnly = false
     @Published var recipients: [RecipientOption] = []
+
+    private var messageSubscription: Apollo.Cancellable?
+    private var unreadSubscription: Apollo.Cancellable?
     
     var filteredMessages: [Message] {
         if showUnreadOnly {
@@ -171,6 +175,35 @@ final class MessagesViewModel: ObservableObject {
         } catch {
             print("Failed to fetch recipients: \(error)")
         }
+    }
+
+    /// Start listening for real-time message updates
+    func startListening(eventId: String) {
+        stopListening()
+
+        messageSubscription = MessagesService.shared.subscribeToMessages(eventId: eventId) { [weak self] message in
+            Task { @MainActor in
+                guard let self else { return }
+                // Prepend new message if not already present
+                if !self.messages.contains(where: { $0.id == message.id }) {
+                    self.messages.insert(message, at: 0)
+                }
+            }
+        }
+
+        unreadSubscription = MessagesService.shared.subscribeToUnreadCount { [weak self] count in
+            Task { @MainActor in
+                self?.unreadCount = count
+            }
+        }
+    }
+
+    /// Stop listening for real-time updates
+    func stopListening() {
+        messageSubscription?.cancel()
+        messageSubscription = nil
+        unreadSubscription?.cancel()
+        unreadSubscription = nil
     }
 
     /// Refresh messages

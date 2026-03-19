@@ -1,0 +1,14 @@
+subscription ConversationMessageReceived($conversationId: ID!) {
+  conversationMessageReceived(conversationId: $conversationId) {
+    id
+    subject
+    body
+    recipientType
+    senderType
+    senderName
+    senderId
+    isRead
+    readAt
+    createdAt
+  }
+}

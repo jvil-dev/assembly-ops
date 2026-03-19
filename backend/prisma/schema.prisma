@@ -149,6 +149,7 @@ model AttendantMeeting {
   sessionId   String
   event       Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId     String
+  name        String?
   meetingDate DateTime
   notes       String?
   createdBy   User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
@@ -238,6 +239,7 @@ model Department {
   eventVolunteers EventVolunteer[]
   hierarchyRoles     DepartmentHierarchy[]
   departmentSessions DepartmentSession[]
+  conversations      Conversation[]
 
   @@unique([eventId, departmentType])
   @@index([eventId])
@@ -489,13 +491,17 @@ model Conversation {
   id           String                    @id @default(cuid())
   eventId      String
   subject      String?
+  type         ConversationType          @default(DIRECT)
+  departmentId String?
   createdAt    DateTime                  @default(now())
   updatedAt    DateTime                  @updatedAt
   event        Event                     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  department   Department?               @relation(fields: [departmentId], references: [id])
   messages     Message[]
   participants ConversationParticipant[]
 
   @@index([eventId])
+  @@index([type, eventId, departmentId])
 }
 
 model ConversationParticipant {
@@ -649,7 +655,7 @@ model ScheduleAssignment {
   eventVolunteer   EventVolunteer   @relation(fields: [eventVolunteerId], references: [id], onDelete: Cascade)
   createdBy        User?            @relation("AssignmentCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
-  @@unique([eventVolunteerId, sessionId, shiftId])
+  @@unique([eventVolunteerId, postId, sessionId, shiftId])
   @@index([postId])
   @@index([sessionId])
   @@index([shiftId])
@@ -901,6 +907,12 @@ enum RecipientType {
   DEPARTMENT
   EVENT
   USER
+}
+
+enum ConversationType {
+  DIRECT
+  DEPARTMENT_BROADCAST
+  EVENT_BROADCAST
 }
 
 enum SeatingSectionStatus {

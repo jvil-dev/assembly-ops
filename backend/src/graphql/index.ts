@@ -11,6 +11,11 @@
  *   4. Apollo Server matches the query/mutation to a resolver (see ./resolvers/)
  *   5. Resolver executes and returns data
  *
+ * WebSocket subscriptions:
+ *   - graphql-ws protocol over ws:// (or wss:// in production)
+ *   - Auth via connectionParams.authToken (JWT)
+ *   - Shares the same executable schema as HTTP
+ *
  * Key integrations:
  *   - typeDefs (./schema/): Defines the GraphQL schema (what queries/mutations exist)
  *   - resolvers (./resolvers/): Implements the logic for each query/mutation
@@ -21,21 +26,56 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { WebSocketServer } from 'ws';
+import { useServer } from 'graphql-ws/use/ws';
 import depthLimit from 'graphql-depth-limit';
 import express from 'express';
 import http from 'http';
 import typeDefs from './schema/index.js';
 import resolvers from './resolvers/index.js';
-import { createContext, Context } from './context.js';
+import { createContext, createSubscriptionContext, Context } from './context.js';
 
 export async function createApolloServer(app: express.Application) {
   const httpServer = http.createServer(app);
 
+  // Build executable schema shared by both HTTP and WebSocket transports
+  const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+  // WebSocket server for subscriptions
+  const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: '/graphql',
+  });
+
+  const serverCleanup = useServer(
+    {
+      schema,
+      context: async (ctx) => {
+        return createSubscriptionContext(
+          (ctx.connectionParams as Record<string, unknown>) ?? {}
+        );
+      },
+    },
+    wsServer
+  );
+
   const server = new ApolloServer<Context>({
-    typeDefs,
-    resolvers,
+    schema,
     validationRules: [depthLimit(10)],
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    plugins: [
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+      // Graceful shutdown for WebSocket server
+      {
+        async serverWillStart() {
+          return {
+            async drainServer() {
+              await serverCleanup.dispose();
+            },
+          };
+        },
+      },
+    ],
     introspection: process.env.NODE_ENV !== 'production',
   });
 

@@ -153,6 +153,7 @@ struct AttendantVolunteerDeptView: View {
     @State private var showAttendantInfo = false
     @State private var showWalkThrough = false
     @State private var isCaptain = false
+    @State private var captainAreasBySession: [String: [String]] = [:]
     @State private var showReminderModal = false
     @State private var pendingReminderShift: (id: String, name: String)?
     @State private var isLanyardUrgent = false
@@ -258,11 +259,18 @@ struct AttendantVolunteerDeptView: View {
                 }
 
                 // Also check for ACCEPTED area captain assignments
+                let acceptedCaptainAssignments = captainResults.filter { $0.status == .accepted }
                 if !hasCaptainRole {
-                    hasCaptainRole = captainResults.contains { $0.status == .accepted }
+                    hasCaptainRole = !acceptedCaptainAssignments.isEmpty
                 }
 
                 isCaptain = hasCaptainRole
+                // Build session → areaIds mapping for session-scoped filtering
+                var areasBySession: [String: [String]] = [:]
+                for assignment in acceptedCaptainAssignments {
+                    areasBySession[assignment.sessionId, default: []].append(assignment.areaId)
+                }
+                captainAreasBySession = areasBySession
             } catch {
                 print("[AttendantDept] Failed to check captain status: \(error)")
             }
@@ -368,7 +376,8 @@ struct AttendantVolunteerDeptView: View {
         NavigationLink(destination: CaptainSchedulingView(
             eventId: eventId,
             departmentId: departmentId ?? "",
-            departmentType: departmentType ?? "ATTENDANT"
+            departmentType: departmentType ?? "ATTENDANT",
+            captainAreasBySession: captainAreasBySession
         )) {
             HStack(spacing: AppTheme.Spacing.m) {
                 ZStack {

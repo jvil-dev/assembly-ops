@@ -33,7 +33,7 @@ struct AssignmentStatusBadge: View {
             if showCaptainStar {
                 Image(systemName: "star.fill")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(departmentType.map { DepartmentColor.color(for: $0) } ?? .yellow)
             }
 
             Text(status.displayName)
@@ -44,6 +44,7 @@ struct AssignmentStatusBadge: View {
         .background(backgroundColor)
         .foregroundStyle(foregroundColor)
         .clipShape(Capsule())
+        .accessibilityLabel("Status: \(status.displayName)")
     }
 
     private var backgroundColor: Color {
@@ -83,6 +84,7 @@ struct AssignmentStatusBadgeCompact: View {
             .background(backgroundColor)
             .foregroundStyle(foregroundColor)
             .clipShape(Capsule())
+            .accessibilityLabel("Status: \(status.displayName)")
     }
 
     private var backgroundColor: Color {

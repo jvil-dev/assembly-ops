@@ -141,6 +141,10 @@ const resolvers = {
     ...notificationResolvers.Mutation,
   },
 
+  Subscription: {
+    ...messageResolvers.Subscription,
+  },
+
   User: authResolvers.User,
   Event: eventResolvers.Event,
   Department: eventResolvers.Department,

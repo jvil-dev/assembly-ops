@@ -18,7 +18,7 @@
 //   - isUsingCache: True when displaying cached data instead of live
 //
 // Computed Properties:
-//   - groupedAssignments: Assignments grouped by date, sorted chronologically
+//   - groupedAssignments: Assignments grouped by date then session, sorted chronologically
 //   - todayAssignments: Only assignments scheduled for today
 //   - upcomingAssignments: Today and future assignments
 //   - isEmpty: True if no assignments exist
@@ -49,6 +49,13 @@ import SwiftUI
 import Combine
 import Apollo
 
+struct SessionGroup: Identifiable {
+    let sessionId: String
+    let sessionName: String
+    let assignments: [Assignment]
+    var id: String { sessionId }
+}
+
 @MainActor
 final class AssignmentsViewModel: ObservableObject {
     @Published var assignments: [Assignment] = []
@@ -61,15 +68,27 @@ final class AssignmentsViewModel: ObservableObject {
     private let cache = AssignmentCache.shared
     private let networkMonitor = NetworkMonitor.shared
     
-    /// Assignments grouped by date, sorted chronologically.
-    /// Attendant assignments with a shift use the shift start time for ordering;
-    /// all other assignments use the session start time.
-    var groupedAssignments: [(date: Date, assignments: [Assignment])] {
-        let grouped = Dictionary(grouping: assignments) { assignment in
+    /// Assignments grouped by date then by session, sorted chronologically.
+    var groupedAssignments: [(date: Date, sessions: [SessionGroup])] {
+        let byDate = Dictionary(grouping: assignments) { assignment in
             DateUtils.sessionStartOfDay(for: assignment.date)
         }
-        return grouped
-            .map { (date: $0.key, assignments: $0.value.sorted { ($0.displayStartTime ?? .distantFuture) < ($1.displayStartTime ?? .distantFuture) }) }
+        return byDate
+            .map { dateEntry in
+                let bySession = Dictionary(grouping: dateEntry.value) { $0.sessionId }
+                let sessionGroups = bySession.map { sessionEntry in
+                    SessionGroup(
+                        sessionId: sessionEntry.key,
+                        sessionName: sessionEntry.value.first?.sessionName ?? "",
+                        assignments: sessionEntry.value.sorted {
+                            ($0.displayStartTime ?? .distantFuture) < ($1.displayStartTime ?? .distantFuture)
+                        }
+                    )
+                }
+                .sorted { ($0.assignments.first?.startTime ?? .distantFuture) < ($1.assignments.first?.startTime ?? .distantFuture) }
+
+                return (date: dateEntry.key, sessions: sessionGroups)
+            }
             .sorted { $0.date < $1.date }
     }
     

@@ -7,6 +7,7 @@
  *   - reportSafetyIncidentSchema: Validate incident type, description (1-2000), location
  *   - createLostPersonAlertSchema: Validate person name, age, contact info, location
  *   - createAttendantMeetingSchema: Validate session, date, attendee IDs (min 1)
+ *   - updateAttendantMeetingSchema: Validate partial meeting updates (date, notes, attendees)
  *
  * Business Rules Enforced:
  *   - Description max 2000 chars
@@ -54,11 +55,21 @@ export const createLostPersonAlertSchema = z.object({
 export const createAttendantMeetingSchema = z.object({
   eventId: z.string().min(1),
   sessionId: z.string().min(1),
+  name: z.string().max(100).optional(),
   meetingDate: z.string().min(1),
   notes: z.string().max(2000).optional(),
   attendeeIds: z.array(z.string().min(1)).min(1),
 });
 
+export const updateAttendantMeetingSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().max(100).optional().nullable(),
+  meetingDate: z.string().min(1).optional(),
+  notes: z.string().max(2000).optional().nullable(),
+  attendeeIds: z.array(z.string().min(1)).min(1).optional(),
+});
+
 export type ReportSafetyIncidentInput = z.infer<typeof reportSafetyIncidentSchema>;
 export type CreateLostPersonAlertInput = z.infer<typeof createLostPersonAlertSchema>;
 export type CreateAttendantMeetingInput = z.infer<typeof createAttendantMeetingSchema>;
+export type UpdateAttendantMeetingInput = z.infer<typeof updateAttendantMeetingSchema>;

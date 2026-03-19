@@ -45,7 +45,7 @@ struct AssignmentsView: View {
         NavigationStack {
             Group {
                 if isLoading && sessions.isEmpty {
-                    LoadingView(message: "Loading sessions...")
+                    LoadingView(message: "schedule.sessions.loading".localized)
                 } else if sessions.isEmpty {
                     emptyState
                 } else {
@@ -449,11 +449,11 @@ struct AssignmentsView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
 
-            Text("No Sessions Yet")
+            Text("schedule.sessions.empty.title".localized)
                 .font(AppTheme.Typography.headline)
                 .foregroundStyle(.primary)
 
-            Text("Sessions are created automatically when an event is activated. You can also create custom sessions.")
+            Text("schedule.sessions.empty.subtitle".localized)
                 .font(AppTheme.Typography.subheadline)
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 .multilineTextAlignment(.center)
