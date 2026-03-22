@@ -52,7 +52,9 @@ final class CheckInService {
                                 if let parsed = isoFormatter.date(from: data.checkInTime) {
                                     return parsed
                                 } else {
+                                    #if DEBUG
                                     print("Failed to parse checkInTime: \(data.checkInTime)")
+                                    #endif
                                     return Date()
                                 }
                             }(),

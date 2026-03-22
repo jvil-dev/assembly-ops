@@ -1025,6 +1025,12 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
+          postIds: null,
+          copyIsCaptain: false,
+          copyCanCount: false,
+          copyAreaCaptains: false,
+          forceAssign: false,
         },
         'creator-1'
       );
@@ -1063,6 +1069,12 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
+          postIds: null,
+          copyIsCaptain: false,
+          copyCanCount: false,
+          copyAreaCaptains: false,
+          forceAssign: false,
         },
         'creator-1'
       );
@@ -1087,6 +1099,11 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
+          postIds: null,
+          copyIsCaptain: false,
+          copyCanCount: false,
+          copyAreaCaptains: false,
           forceAssign: true,
         },
         'creator-1'
@@ -1113,6 +1130,12 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
+          postIds: null,
+          copyIsCaptain: false,
+          copyCanCount: false,
+          copyAreaCaptains: false,
+          forceAssign: false,
         },
         'creator-1'
       );
@@ -1130,7 +1153,12 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
+          postIds: null,
           copyIsCaptain: true,
+          copyCanCount: false,
+          copyAreaCaptains: false,
+          forceAssign: false,
         },
         'creator-1'
       );
@@ -1148,6 +1176,12 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
+          postIds: null,
+          copyIsCaptain: false,
+          copyCanCount: true,
+          copyAreaCaptains: false,
+          forceAssign: false,
         },
         'creator-1'
       );
@@ -1165,7 +1199,12 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
+          postIds: null,
+          copyIsCaptain: false,
           copyCanCount: false,
+          copyAreaCaptains: false,
+          forceAssign: false,
         },
         'creator-1'
       );
@@ -1182,6 +1221,12 @@ describe('AssignmentService', () => {
             sourceSessionId: 'session-1',
             targetSessionId: 'session-1',
             departmentId: 'dept-1',
+            areaIds: null,
+            postIds: null,
+            copyIsCaptain: false,
+            copyCanCount: false,
+            copyAreaCaptains: false,
+            forceAssign: false,
           },
           'creator-1'
         )
@@ -1200,6 +1245,12 @@ describe('AssignmentService', () => {
             sourceSessionId: 'session-1',
             targetSessionId: 'session-2',
             departmentId: 'dept-1',
+            areaIds: null,
+            postIds: null,
+            copyIsCaptain: false,
+            copyCanCount: false,
+            copyAreaCaptains: false,
+            forceAssign: false,
           },
           'creator-1'
         )
@@ -1219,6 +1270,12 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
+          postIds: null,
+          copyIsCaptain: false,
+          copyCanCount: false,
+          copyAreaCaptains: false,
+          forceAssign: false,
         },
         'creator-1'
       );
@@ -1237,6 +1294,11 @@ describe('AssignmentService', () => {
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
           areaIds: ['area-1'],
+          postIds: null,
+          copyIsCaptain: false,
+          copyCanCount: false,
+          copyAreaCaptains: false,
+          forceAssign: false,
         },
         'creator-1'
       );
@@ -1255,7 +1317,12 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
           postIds: ['post-1'],
+          copyIsCaptain: false,
+          copyCanCount: false,
+          copyAreaCaptains: false,
+          forceAssign: false,
         },
         'creator-1'
       );
@@ -1283,7 +1350,12 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
+          postIds: null,
+          copyIsCaptain: false,
+          copyCanCount: false,
           copyAreaCaptains: true,
+          forceAssign: false,
         },
         'creator-1'
       );
@@ -1307,6 +1379,12 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
+          postIds: null,
+          copyIsCaptain: false,
+          copyCanCount: false,
+          copyAreaCaptains: false,
+          forceAssign: false,
         },
         'creator-1'
       );
@@ -1323,6 +1401,12 @@ describe('AssignmentService', () => {
           sourceSessionId: 'session-1',
           targetSessionId: 'session-2',
           departmentId: 'dept-1',
+          areaIds: null,
+          postIds: null,
+          copyIsCaptain: false,
+          copyCanCount: false,
+          copyAreaCaptains: false,
+          forceAssign: false,
         },
         'creator-1'
       );

@@ -85,7 +85,9 @@ final class MessagesViewModel: ObservableObject {
         do {
             unreadCount = try await MessagesService.shared.fetchUnreadCount()
         } catch {
+            #if DEBUG
             print("Failed to fetch unread count: \(error)")
+            #endif
         }
     }
     
@@ -114,7 +116,9 @@ final class MessagesViewModel: ObservableObject {
             }
             unreadCount = max(0, unreadCount - 1)
         } catch {
+            #if DEBUG
             print("Failed to mark as read: \(error)")
+            #endif
         }
     }
     
@@ -173,7 +177,9 @@ final class MessagesViewModel: ObservableObject {
             }
             recipients = allRecipients
         } catch {
+            #if DEBUG
             print("Failed to fetch recipients: \(error)")
+            #endif
         }
     }
 

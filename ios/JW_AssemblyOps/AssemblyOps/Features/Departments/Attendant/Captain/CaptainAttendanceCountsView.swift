@@ -2,7 +2,7 @@
 //  CaptainAttendanceCountsView.swift
 //  AssemblyOps
 //
-//  Created by Claude on 3/1/26.
+//  Created by Jorge Villeda on 3/1/26.
 //
 
 // MARK: - Captain Attendance Counts View

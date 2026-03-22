@@ -226,8 +226,9 @@ struct ConversationDetailView: View {
                             .padding(.leading, AppTheme.Spacing.cardPadding + 28 + AppTheme.Spacing.m)
 
                         // Phone row
-                        if let phone = otherParticipantPhone {
-                            Link(destination: URL(string: "tel:\(phone)")!) {
+                        if let phone = otherParticipantPhone,
+                           let phoneURL = URL(string: "tel:\(phone)") {
+                            Link(destination: phoneURL) {
                                 HStack(spacing: AppTheme.Spacing.m) {
                                     Image(systemName: "phone")
                                         .font(.system(size: 18))

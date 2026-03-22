@@ -11,6 +11,7 @@
  *   4. Start HTTP server on PORT (default 4000)
  *
  * Endpoints:
+ *   - GET /.well-known/apple-app-site-association: AASA for Password AutoFill
  *   - GET /health: REST health check (for load balancer)
  *   - POST /graphql: GraphQL API endpoint
  *
@@ -64,6 +65,30 @@ app.use(
 );
 app.use(express.json());
 
+// Password reset: 1 request per 60 seconds
+app.use(
+  '/graphql',
+  createRateLimiter({
+    windowMs: 60 * 1000,
+    max: 1,
+    keyPrefix: 'reset-cooldown',
+    operations: ['requestPasswordReset'],
+    message: 'Please wait 60 seconds before requesting another code',
+  })
+);
+
+// Password reset: 5 requests per 12 hours
+app.use(
+  '/graphql',
+  createRateLimiter({
+    windowMs: 12 * 60 * 60 * 1000,
+    max: 5,
+    keyPrefix: 'reset-daily',
+    operations: ['requestPasswordReset'],
+    message: 'Too many reset attempts. Please try again later.',
+  })
+);
+
 // Rate limiting: sliding window counter with per-user keying
 app.use(
   '/graphql',
@@ -78,6 +103,9 @@ app.use(
       'loginWithGoogle',
       'loginWithApple',
       'completeOAuthRegistration',
+      'requestPasswordReset',
+      'verifyResetCode',
+      'resetPassword',
     ],
     message: 'Too many authentication attempts, please try again later',
   })
@@ -146,6 +174,16 @@ app.post('/api/cron/meeting-reminders', async (req, res) => {
     });
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+// Apple App Site Association — enables Password AutoFill & Keychain integration
+app.get('/.well-known/apple-app-site-association', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.json({
+    webcredentials: {
+      apps: ['72KK7R8JUS.com.jvilapps.assemblyOps'],
+    },
+  });
 });
 
 app.get('/health', async (_req, res) => {

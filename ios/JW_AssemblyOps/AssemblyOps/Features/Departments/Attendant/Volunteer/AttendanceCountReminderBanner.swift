@@ -2,7 +2,7 @@
 //  AttendanceCountReminderBanner.swift
 //  AssemblyOps
 //
-//  Created by Claude on 3/1/26.
+//  Created by Jorge Villeda on 3/1/26.
 //
 
 // MARK: - Attendance Count Reminder Banner

@@ -29,6 +29,7 @@ model User {
 
   oauthConnections       OAuthConnection[]
   refreshTokens          RefreshToken[]
+  passwordResetTokens    PasswordResetToken[]
   eventAdmins            EventAdmin[] // When acting as overseer on an event
   eventVolunteers        EventVolunteer[] // When acting as volunteer on an event
   joinRequests           EventJoinRequest[] // Join requests submitted by this user
@@ -579,6 +580,23 @@ model RefreshToken {
   @@index([userId])
   @@index([expiresAt])
   @@index([token])
+}
+
+// ─────────────────────────────────────────────
+// PASSWORD RESET TOKEN
+// ─────────────────────────────────────────────
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique // SHA-256 hash of the 6-digit code
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 // ─────────────────────────────────────────────

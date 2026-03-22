@@ -25,6 +25,7 @@ struct UnifiedLoginView: View {
     @FocusState private var focusedField: Field?
     @State private var hasAppeared = false
     @State private var showRegistration = false
+    @State private var showForgotPassword = false
     @State private var showError = false
 
     private enum Field: Hashable {
@@ -77,6 +78,9 @@ struct UnifiedLoginView: View {
         }
         .navigationDestination(isPresented: $showRegistration) {
             RegistrationView()
+        }
+        .navigationDestination(isPresented: $showForgotPassword) {
+            ForgotPasswordView()
         }
     }
 
@@ -146,6 +150,18 @@ struct UnifiedLoginView: View {
                     isMonospaced: false
                 )
                 .focused($focusedField, equals: .password)
+            }
+
+            HStack {
+                Spacer()
+                Button {
+                    showForgotPassword = true
+                } label: {
+                    Text("auth.forgotPassword".localized)
+                        .font(AppTheme.Typography.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(AppTheme.themeColor)
+                }
             }
 
             Button {

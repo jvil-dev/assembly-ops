@@ -31,6 +31,9 @@ import { User, EventAdmin } from '@prisma/client';
 import {
   RegisterUserInput,
   LoginUserInput,
+  RequestPasswordResetInput,
+  VerifyResetCodeInput,
+  ResetPasswordInput,
 } from '../validators/auth.js';
 
 export interface UpdateUserProfileInput {
@@ -200,6 +203,46 @@ const authResolvers = {
       });
 
       return true;
+    },
+
+    requestPasswordReset: async (
+      _parent: unknown,
+      { input }: { input: RequestPasswordResetInput },
+      context: Context
+    ) => {
+      const authService = new AuthService(context.prisma);
+      await authService.requestPasswordReset(input);
+      return { success: true };
+    },
+
+    verifyResetCode: async (
+      _parent: unknown,
+      { input }: { input: VerifyResetCodeInput },
+      context: Context
+    ) => {
+      const authService = new AuthService(context.prisma);
+      const resetToken = await authService.verifyResetCode(input);
+      return { resetToken };
+    },
+
+    resetPassword: async (
+      _parent: unknown,
+      { input }: { input: ResetPasswordInput },
+      context: Context
+    ) => {
+      const authService = new AuthService(context.prisma);
+      const result = await authService.resetPassword(input);
+
+      if (!result.tokens || !result.user) {
+        throw new Error('Password reset failed to generate tokens');
+      }
+
+      return {
+        user: result.user,
+        accessToken: result.tokens.accessToken,
+        refreshToken: result.tokens.refreshToken,
+        expiresIn: result.tokens.expiresIn,
+      };
     },
   },
 

@@ -162,8 +162,10 @@ struct EditMeetingSheet: View {
             SectionHeaderLabel(icon: "note.text", title: "attendant.meetings.notes".localized, accentColor: accentColor)
 
             TextField("", text: $notes, axis: .vertical)
-                .textFieldStyle(.roundedBorder)
                 .lineLimit(3...6)
+                .padding(AppTheme.Spacing.s)
+                .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
         }
     }
 
