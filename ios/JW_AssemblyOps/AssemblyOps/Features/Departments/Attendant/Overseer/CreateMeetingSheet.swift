@@ -42,10 +42,10 @@ struct CreateMeetingSheet: View {
     /// Default meeting date: event start date at 7:00 AM
     private static func defaultMeetingDate(for event: EventSummary?) -> Date {
         guard let event = event else { return Date() }
-        var components = Calendar.current.dateComponents([.year, .month, .day], from: event.startDate)
+        var components = DateUtils.utcCalendar.dateComponents([.year, .month, .day], from: event.startDate)
         components.hour = 7
         components.minute = 0
-        return Calendar.current.date(from: components) ?? event.startDate
+        return DateUtils.utcCalendar.date(from: components) ?? event.startDate
     }
 
     var isFormValid: Bool {

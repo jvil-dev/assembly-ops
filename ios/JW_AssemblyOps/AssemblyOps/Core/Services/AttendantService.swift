@@ -308,6 +308,25 @@ final class AttendantService {
         }
     }
 
+    func deleteMeeting(id: String) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            NetworkClient.shared.apollo.perform(
+                mutation: AssemblyOpsAPI.DeleteAttendantMeetingMutation(id: id)
+            ) { result in
+                switch result {
+                case .success(let graphQLResult):
+                    if let errors = graphQLResult.errors, !errors.isEmpty {
+                        continuation.resume(throwing: AttendantError.serverError(errors.first?.localizedDescription ?? "Unknown error"))
+                    } else {
+                        continuation.resume()
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: AttendantError.networkError(error.localizedDescription))
+                }
+            }
+        }
+    }
+
     // MARK: - Walk-Through Completions
 
     func submitWalkThroughCompletion(eventId: String, sessionId: String, itemCount: Int, notes: String?) async throws -> WalkThroughCompletionItem {

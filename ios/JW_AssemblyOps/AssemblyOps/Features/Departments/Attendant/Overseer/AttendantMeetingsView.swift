@@ -23,6 +23,7 @@ struct AttendantMeetingsView: View {
     @State private var editingMeeting: AttendantMeetingItem?
     @State private var expandedMeetingId: String?
     @State private var showError = false
+    @State private var deletingMeeting: AttendantMeetingItem?
 
     private var accentColor: Color {
         if let deptType = sessionState.selectedDepartment?.departmentType {
@@ -99,6 +100,20 @@ struct AttendantMeetingsView: View {
         } message: {
             Text(viewModel.error ?? "")
         }
+        .alert("attendant.meetings.deleteTitle".localized, isPresented: Binding(
+            get: { deletingMeeting != nil },
+            set: { if !$0 { deletingMeeting = nil } }
+        )) {
+            Button("common.cancel".localized, role: .cancel) { deletingMeeting = nil }
+            Button("common.delete".localized, role: .destructive) {
+                guard let meeting = deletingMeeting,
+                      let eventId = sessionState.selectedEvent?.id else { return }
+                Task { await viewModel.deleteMeeting(id: meeting.id, eventId: eventId) }
+                deletingMeeting = nil
+            }
+        } message: {
+            Text("attendant.meetings.deleteConfirm".localized)
+        }
     }
 
     // MARK: - Meeting Row
@@ -128,6 +143,14 @@ struct AttendantMeetingsView: View {
                     Image(systemName: "pencil.circle.fill")
                         .font(.system(size: 22))
                         .foregroundStyle(accentColor)
+                }
+                .buttonStyle(.plain)
+                Button {
+                    deletingMeeting = meeting
+                } label: {
+                    Image(systemName: "trash.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(AppTheme.StatusColors.declined)
                 }
                 .buttonStyle(.plain)
                 VStack(alignment: .trailing, spacing: AppTheme.Spacing.xs) {
@@ -227,6 +250,7 @@ struct AttendantMeetingsView: View {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
+        formatter.timeZone = TimeZone(identifier: "UTC")
         return formatter
     }()
 

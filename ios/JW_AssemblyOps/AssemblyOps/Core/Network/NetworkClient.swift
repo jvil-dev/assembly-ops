@@ -46,8 +46,8 @@ final class NetworkClient {
     private var webSocketTransport: WebSocketTransport?
 
     #if DEBUG
-    static let graphQLURL = URL(string: "http://192.168.1.5:4000/graphql")!
-    static let webSocketURL = URL(string: "ws://192.168.1.5:4000/graphql")!
+    static let graphQLURL = URL(string: "http://192.168.1.11:4000/graphql")!
+    static let webSocketURL = URL(string: "ws://192.168.1.11:4000/graphql")!
     #else
     static let graphQLURL = URL(string: "https://api.assemblyops.org/graphql")!
     static let webSocketURL = URL(string: "wss://api.assemblyops.org/graphql")!

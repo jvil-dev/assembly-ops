@@ -34,6 +34,7 @@ struct UnderlineTextField: View {
     var autocapitalization: TextInputAutocapitalization = .sentences
     var keyboardType: UIKeyboardType = .default
     var isMonospaced: Bool = false
+    var textContentType: UITextContentType?
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -46,13 +47,15 @@ struct UnderlineTextField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             // Floating label
-            Text(label)
-                .font(.system(size: 11, weight: .semibold))
-                .tracking(0.6)
-                .foregroundStyle(isFocused
-                                 ? AppTheme.themeColor
-                                 : AppTheme.textTertiary(for: colorScheme))
-                .animation(AppTheme.quickAnimation, value: isFocused)
+            if !label.isEmpty {
+                Text(label)
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(0.6)
+                    .foregroundStyle(isFocused
+                                     ? AppTheme.themeColor
+                                     : AppTheme.textTertiary(for: colorScheme))
+                    .animation(AppTheme.quickAnimation, value: isFocused)
+            }
 
             // Input field
             Group {
@@ -73,6 +76,7 @@ struct UnderlineTextField: View {
             }
             .font(inputFont)
             .foregroundStyle(AppTheme.textPrimary(for: colorScheme))
+            .textContentType(textContentType)
             .onSubmit { onSubmit() }
             .padding(.bottom, 8)
             .overlay(alignment: .bottom) {

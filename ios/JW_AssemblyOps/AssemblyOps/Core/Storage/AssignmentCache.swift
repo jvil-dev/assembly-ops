@@ -46,7 +46,9 @@ final class AssignmentCache {
             UserDefaults.standard.set(data, forKey: cacheKey)
             UserDefaults.standard.set(Date(), forKey: cacheTimestampKey)
         } catch {
+            #if DEBUG
             print("Failed to cache assignments: \(error)")
+            #endif
         }
     }
     
@@ -60,7 +62,9 @@ final class AssignmentCache {
             let cached = try JSONDecoder().decode([CachedAssignment].self, from: data)
             return cached.map { $0.toAssignment() }
         } catch {
+            #if DEBUG
             print("Failed to load cached assignments: \(error)")
+            #endif
             return nil
         }
     }

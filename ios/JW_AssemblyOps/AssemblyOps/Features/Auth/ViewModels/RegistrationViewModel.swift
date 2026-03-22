@@ -136,7 +136,14 @@ final class RegistrationViewModel: ObservableObject {
                             expiresIn: data.expiresIn
                         )
                     } else if let errors = graphQLResult.errors, !errors.isEmpty {
-                        self?.errorMessage = errors.first?.message ?? "Registration failed"
+                        let firstError = errors.first
+                        let code = (firstError?.extensions?["code"] as? String)
+                        if code == "CONFLICT" {
+                            self?.errorMessage = NSLocalizedString("auth.duplicate.email", comment: "")
+                                + " " + NSLocalizedString("auth.duplicate.trySignIn", comment: "")
+                        } else {
+                            self?.errorMessage = firstError?.message ?? NSLocalizedString("auth.registrationFailed", comment: "")
+                        }
                         HapticManager.shared.error()
                     }
                 case .failure:

@@ -69,7 +69,9 @@ final class PendingBadgeManager: ObservableObject {
             pendingCount = posts.filter { $0.status == .pending }.count +
                            captains.filter { $0.status == .pending }.count
         } catch {
+            #if DEBUG
             print("Failed to fetch pending count: \(error)")
+            #endif
         }
     }
 

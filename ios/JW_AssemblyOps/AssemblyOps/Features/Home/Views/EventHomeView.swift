@@ -39,6 +39,7 @@ struct EventHomeView: View {
     @State private var hasAppeared = false
     @State private var isCheckingIn = false
     @State private var now = Date()
+    @State private var collapsedCategories: Set<String> = []
 
     private var isOverseer: Bool {
         membership.membershipType == .overseer ||
@@ -235,6 +236,8 @@ struct EventHomeView: View {
 
     private func sessionAssignmentsCard(session: CoverageSession) -> some View {
         let sessionSlots = coverageVM.slots(for: session.id)
+        let postLookup = Dictionary(uniqueKeysWithValues: coverageVM.posts.map { ($0.id, $0) })
+        let grouped = groupSlotsByCategoryAndArea(sessionSlots, postLookup: postLookup)
 
         return VStack(alignment: .leading, spacing: AppTheme.Spacing.s) {
             // Session header
@@ -263,14 +266,105 @@ struct EventHomeView: View {
             }
             .padding(.bottom, 2)
 
-            // Post rows
-            ForEach(sessionSlots, id: \.id) { slot in
-                postRow(slot: slot)
+            // Posts grouped by category > area
+            ForEach(grouped, id: \.category) { group in
+                categorySection(session: session, group: group)
             }
         }
         .padding(AppTheme.Spacing.m)
         .background(AppTheme.cardBackgroundSecondary(for: colorScheme))
         .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
+    }
+
+    private struct CategoryGroup {
+        let category: String
+        let areas: [AreaGroup]
+    }
+
+    private struct AreaGroup: Identifiable {
+        var id: String { area }
+        let area: String
+        let slots: [CoverageSlot]
+    }
+
+    private func groupSlotsByCategoryAndArea(
+        _ slots: [CoverageSlot],
+        postLookup: [String: CoveragePost]
+    ) -> [CategoryGroup] {
+        var categoryMap: [String: [String: [CoverageSlot]]] = [:]
+
+        for slot in slots {
+            let post = postLookup[slot.postId]
+            let category = post?.category ?? "Uncategorized"
+            let area = post?.areaName ?? "General"
+            categoryMap[category, default: [:]][area, default: []].append(slot)
+        }
+
+        return categoryMap.keys.sorted().map { category in
+            let areaMap = categoryMap[category]!
+            let areas = areaMap.keys.sorted().map { area in
+                AreaGroup(area: area, slots: areaMap[area]!)
+            }
+            return CategoryGroup(category: category, areas: areas)
+        }
+    }
+
+    @ViewBuilder
+    private func categorySection(session: CoverageSession, group: CategoryGroup) -> some View {
+        let key = "\(session.id)-\(group.category)"
+        let isExpanded = !collapsedCategories.contains(key)
+
+        VStack(alignment: .leading, spacing: 0) {
+            // Category header (tap to toggle)
+            Button {
+                withAnimation(AppTheme.quickAnimation) {
+                    if isExpanded {
+                        collapsedCategories.insert(key)
+                    } else {
+                        collapsedCategories.remove(key)
+                    }
+                }
+            } label: {
+                HStack(spacing: AppTheme.Spacing.s) {
+                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+                        .frame(width: 12)
+
+                    Text(group.category.uppercased())
+                        .font(AppTheme.Typography.captionBold)
+                        .foregroundStyle(departmentColor)
+
+                    let categoryTotal = group.areas.flatMap { $0.slots }.reduce(0) { $0 + $1.filled }
+                    Text("(\(categoryTotal))")
+                        .font(AppTheme.Typography.captionSmall)
+                        .foregroundStyle(AppTheme.textTertiary(for: colorScheme))
+
+                    Spacer()
+                }
+                .padding(.vertical, AppTheme.Spacing.xs)
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded {
+                ForEach(group.areas) { areaGroup in
+                    // Area sub-header
+                    if group.areas.count > 1 || areaGroup.area != "General" {
+                        Text(areaGroup.area)
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
+                            .padding(.leading, 20)
+                            .padding(.top, AppTheme.Spacing.xs)
+                            .padding(.bottom, 2)
+                    }
+
+                    ForEach(areaGroup.slots, id: \.id) { slot in
+                        postRow(slot: slot)
+                            .padding(.leading, 20)
+                    }
+                }
+            }
+        }
     }
 
     private func postRow(slot: CoverageSlot) -> some View {
@@ -752,9 +846,9 @@ struct EventHomeView: View {
     }
 
     private func sessionTimeString(_ session: CoverageSession) -> String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: session.startTime)
+        let start = DateUtils.utcTimeFormatter.string(from: session.startTime)
+        let end = DateUtils.utcTimeFormatter.string(from: session.endTime)
+        return "\(start) – \(end)"
     }
 
     private var departmentIcon: String {

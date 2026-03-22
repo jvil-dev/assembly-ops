@@ -54,6 +54,28 @@ const authTypeDefs = `#graphql
     congregationId: ID
   }
 
+  input RequestPasswordResetInput {
+    email: String!
+  }
+
+  input VerifyResetCodeInput {
+    email: String!
+    code: String!
+  }
+
+  input ResetPasswordInput {
+    resetToken: String!
+    newPassword: String!
+  }
+
+  type RequestPasswordResetPayload {
+    success: Boolean!
+  }
+
+  type VerifyResetCodePayload {
+    resetToken: String!
+  }
+
   extend type Query {
     me: User
   }
@@ -67,6 +89,9 @@ const authTypeDefs = `#graphql
     updateUserProfile(input: UpdateUserProfileInput!): User!
     setOverseerMode(isOverseer: Boolean!): User!
     deleteAccount(password: String): Boolean!
+    requestPasswordReset(input: RequestPasswordResetInput!): RequestPasswordResetPayload!
+    verifyResetCode(input: VerifyResetCodeInput!): VerifyResetCodePayload!
+    resetPassword(input: ResetPasswordInput!): UserAuthPayload!
   }
 `;
 

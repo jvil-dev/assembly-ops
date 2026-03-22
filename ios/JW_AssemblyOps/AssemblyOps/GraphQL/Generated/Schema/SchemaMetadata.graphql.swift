@@ -86,6 +86,7 @@ extension AssemblyOpsAPI {
       case "Query": return AssemblyOpsAPI.Objects.Query
       case "ReminderConfirmation": return AssemblyOpsAPI.Objects.ReminderConfirmation
       case "ReminderVolunteerStatus": return AssemblyOpsAPI.Objects.ReminderVolunteerStatus
+      case "RequestPasswordResetPayload": return AssemblyOpsAPI.Objects.RequestPasswordResetPayload
       case "Role": return AssemblyOpsAPI.Objects.Role
       case "SafetyIncident": return AssemblyOpsAPI.Objects.SafetyIncident
       case "ScheduleAssignment": return AssemblyOpsAPI.Objects.ScheduleAssignment
@@ -99,6 +100,7 @@ extension AssemblyOpsAPI {
       case "User": return AssemblyOpsAPI.Objects.User
       case "UserAuthPayload": return AssemblyOpsAPI.Objects.UserAuthPayload
       case "UserEventMembership": return AssemblyOpsAPI.Objects.UserEventMembership
+      case "VerifyResetCodePayload": return AssemblyOpsAPI.Objects.VerifyResetCodePayload
       case "Volunteer": return AssemblyOpsAPI.Objects.Volunteer
       case "VolunteerProfile": return AssemblyOpsAPI.Objects.VolunteerProfile
       case "WalkThroughCompletion": return AssemblyOpsAPI.Objects.WalkThroughCompletion
