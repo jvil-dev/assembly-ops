@@ -1756,3 +1756,20 @@
 "settings.a11y.copyId" = "Copiar tu ID";
 "eventTab.a11y.settings" = "Ajustes";
 "offline.a11y.banner" = "Estás sin conexión. Los datos pueden estar desactualizados";
+
+// Forgot Password (Sprint 6.11 Part B)
+"auth.forgotPassword" = "¿Olvidaste tu contraseña?";
+"auth.forgotPassword.title" = "Restablecer Contraseña";
+"auth.forgotPassword.enterEmail" = "Ingresa tu correo electrónico y te enviaremos un código para restablecer tu contraseña.";
+"auth.forgotPassword.codeSent" = "Se ha enviado un código de verificación a tu correo.";
+"auth.forgotPassword.enterCode" = "Ingresa el código de 6 dígitos enviado a tu correo.";
+"auth.forgotPassword.newPassword" = "Crea una nueva contraseña para tu cuenta.";
+"auth.forgotPassword.sendCode" = "Enviar Código";
+"auth.forgotPassword.verify" = "Verificar Código";
+"auth.forgotPassword.reset" = "Restablecer Contraseña";
+"auth.forgotPassword.resend" = "Reenviar Código";
+"auth.forgotPassword.resendCountdown" = "Reenviar Código (%ds)";
+"auth.forgotPassword.success" = "¡Contraseña restablecida exitosamente!";
+"auth.forgotPassword.codeExpiry" = "El código expira en 15 minutos";
+"common.connectionError" = "No se pudo conectar. Por favor intenta de nuevo.";
+"auth.passwordsDoNotMatch" = "Las contraseñas no coinciden";

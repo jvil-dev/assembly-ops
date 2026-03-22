@@ -1755,3 +1755,20 @@
 "settings.a11y.copyId" = "Copy your ID";
 "eventTab.a11y.settings" = "Settings";
 "offline.a11y.banner" = "You are offline. Data may be outdated";
+
+// Forgot Password (Sprint 6.11 Part B)
+"auth.forgotPassword" = "Forgot Password?";
+"auth.forgotPassword.title" = "Reset Password";
+"auth.forgotPassword.enterEmail" = "Enter your email address and we'll send you a code to reset your password.";
+"auth.forgotPassword.codeSent" = "A verification code has been sent to your email.";
+"auth.forgotPassword.enterCode" = "Enter the 6-digit code sent to your email.";
+"auth.forgotPassword.newPassword" = "Create a new password for your account.";
+"auth.forgotPassword.sendCode" = "Send Code";
+"auth.forgotPassword.verify" = "Verify Code";
+"auth.forgotPassword.reset" = "Reset Password";
+"auth.forgotPassword.resend" = "Resend Code";
+"auth.forgotPassword.resendCountdown" = "Resend Code (%ds)";
+"auth.forgotPassword.success" = "Password reset successfully!";
+"auth.forgotPassword.codeExpiry" = "Code expires in 15 minutes";
+"common.connectionError" = "Unable to connect. Please try again.";
+"auth.passwordsDoNotMatch" = "Passwords do not match";
