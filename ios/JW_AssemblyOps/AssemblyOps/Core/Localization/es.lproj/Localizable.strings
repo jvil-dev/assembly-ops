@@ -455,6 +455,8 @@
 "attendant.meetings.noMeetings" = "No hay reuniones asignadas";
 "attendant.meetings.editTitle" = "Editar Reunión";
 "attendant.meetings.updated" = "Reunión actualizada exitosamente";
+"attendant.meetings.deleteTitle" = "Eliminar Reunión";
+"attendant.meetings.deleteConfirm" = "¿Estás seguro de que deseas eliminar esta reunión? Esta acción no se puede deshacer.";
 "attendant.meetings.name" = "Nombre de la Reunión";
 
 // MARK: - Información para Acomodadores (CO-23 Referencia Rápida)

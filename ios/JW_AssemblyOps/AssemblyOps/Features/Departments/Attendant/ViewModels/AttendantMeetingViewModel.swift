@@ -20,6 +20,7 @@
 //   - loadMeetings(eventId:): Fetch all meetings
 //   - createMeeting(...): Create meeting with attendees
 //   - updateMeeting(...): Update meeting date, notes, and/or attendees
+//   - deleteMeeting(id:eventId:): Delete a meeting
 //
 
 import Foundation
@@ -75,6 +76,20 @@ final class AttendantMeetingViewModel: ObservableObject {
             HapticManager.shared.success()
             didUpdate = true
             await loadMeetings(eventId: eventId)
+        } catch {
+            self.error = error.localizedDescription
+            HapticManager.shared.error()
+        }
+    }
+
+    func deleteMeeting(id: String, eventId: String) async {
+        isSaving = true
+        error = nil
+        defer { isSaving = false }
+        do {
+            try await AttendantService.shared.deleteMeeting(id: id)
+            HapticManager.shared.success()
+            meetings.removeAll { $0.id == id }
         } catch {
             self.error = error.localizedDescription
             HapticManager.shared.error()
