@@ -78,19 +78,19 @@ export const attendantTypeDefs = `#graphql
     name: String
     session: Session!
     event: Event!
-    meetingDate: String!
+    meetingDate: DateTime!
     notes: String
     createdBy: User!
     attendees: [MeetingAttendance!]!
-    createdAt: String!
-    updatedAt: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
   }
 
   type MeetingAttendance {
     id: ID!
     meeting: AttendantMeeting!
     eventVolunteer: EventVolunteer!
-    createdAt: String!
+    createdAt: DateTime!
   }
 
   input ReportSafetyIncidentInput {
