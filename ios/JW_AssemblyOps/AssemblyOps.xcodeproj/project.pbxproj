@@ -34,9 +34,9 @@
 
 /* Begin PBXFileReference section */
 		B025A5B32F00268000862900 /* AssemblyOps-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "AssemblyOps-Info.plist"; sourceTree = "<group>"; };
-		B0469BDB2EFF2852005E523D /* AssemblyOps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AssemblyOps.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B0469BE82EFF2853005E523D /* AssemblyOpsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AssemblyOpsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B0469BF22EFF2853005E523D /* AssemblyOpsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AssemblyOpsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B0469BDB2EFF2852005E523D /* AssemblyOps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = AssemblyOps.app; path = "/Users/jvil723/Documents/Coding Projects/AssemblyOps/ios/JW_AssemblyOps/build/Debug-iphoneos/AssemblyOps.app"; sourceTree = "<absolute>"; };
+		B0469BE82EFF2853005E523D /* AssemblyOpsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = AssemblyOpsTests.xctest; path = "/Users/jvil723/Documents/Coding Projects/AssemblyOps/ios/JW_AssemblyOps/build/Debug-iphoneos/AssemblyOps.app/PlugIns/AssemblyOpsTests.xctest"; sourceTree = "<absolute>"; };
+		B0469BF22EFF2853005E523D /* AssemblyOpsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = AssemblyOpsUITests.xctest; path = "/Users/jvil723/Documents/Coding Projects/AssemblyOps/ios/JW_AssemblyOps/build/Debug-iphoneos/AssemblyOpsUITests-Runner.app/PlugIns/AssemblyOpsUITests.xctest"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -73,16 +73,6 @@
 				B0469C102F3B8A0000000001 /* Exceptions for "AssemblyOps" folder in "AssemblyOps" target */,
 			);
 			path = AssemblyOps;
-			sourceTree = "<group>";
-		};
-		B0469BEB2EFF2853005E523D /* AssemblyOpsTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = AssemblyOpsTests;
-			sourceTree = "<group>";
-		};
-		B0469BF52EFF2853005E523D /* AssemblyOpsUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = AssemblyOpsUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -122,29 +112,8 @@
 			isa = PBXGroup;
 			children = (
 				B0469BDD2EFF2852005E523D /* AssemblyOps */,
-				B0469BEB2EFF2853005E523D /* AssemblyOpsTests */,
-				B0469BF52EFF2853005E523D /* AssemblyOpsUITests */,
-				B0469C7C2EFF485D005E523D /* Frameworks */,
-				B0469BDC2EFF2852005E523D /* Products */,
 				B025A5B32F00268000862900 /* AssemblyOps-Info.plist */,
 			);
-			sourceTree = "<group>";
-		};
-		B0469BDC2EFF2852005E523D /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				B0469BDB2EFF2852005E523D /* AssemblyOps.app */,
-				B0469BE82EFF2853005E523D /* AssemblyOpsTests.xctest */,
-				B0469BF22EFF2853005E523D /* AssemblyOpsUITests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		B0469C7C2EFF485D005E523D /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -191,9 +160,6 @@
 			dependencies = (
 				B0469BEA2EFF2853005E523D /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				B0469BEB2EFF2853005E523D /* AssemblyOpsTests */,
-			);
 			name = AssemblyOpsTests;
 			packageProductDependencies = (
 			);
@@ -213,9 +179,6 @@
 			);
 			dependencies = (
 				B0469BF42EFF2853005E523D /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				B0469BF52EFF2853005E523D /* AssemblyOpsUITests */,
 			);
 			name = AssemblyOpsUITests;
 			packageProductDependencies = (
@@ -263,7 +226,7 @@
 				B08216A52F5CCDCC00AE06C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = B0469BDC2EFF2852005E523D /* Products */;
+			productRefGroup = B0469BD22EFF2852005E523D;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
