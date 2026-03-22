@@ -32,9 +32,18 @@ import { encryptField } from '../utils/encryption.js';
 import {
   registerUserSchema,
   loginUserSchema,
+  requestPasswordResetSchema,
+  verifyResetCodeSchema,
+  resetPasswordSchema,
   RegisterUserInput,
   LoginUserInput,
+  RequestPasswordResetInput,
+  VerifyResetCodeInput,
+  ResetPasswordInput,
 } from '../graphql/validators/auth.js';
+import { generateResetCode, hashResetCode } from '../utils/resetToken.js';
+import { sendPasswordResetCode } from './emailService.js';
+import jwt from 'jsonwebtoken';
 
 // Shape returned for all user auth operations
 export interface UserAuthResult {
@@ -330,6 +339,131 @@ export class AuthService {
 
   async setOverseerMode(userId: string, isOverseer: boolean) {
     return this.prisma.user.update({ where: { id: userId }, data: { isOverseer } });
+  }
+
+  // ─────────────────────────────────────────────
+  // PASSWORD RESET
+  // ─────────────────────────────────────────────
+
+  async requestPasswordReset(input: RequestPasswordResetInput): Promise<void> {
+    const result = requestPasswordResetSchema.safeParse(input);
+    if (!result.success) return; // Silent — don't leak validation details
+    const { email } = result.data;
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, firstName: true, passwordHash: true },
+    });
+
+    // Silent return if user not found or OAuth-only (no password to reset)
+    if (!user || !user.passwordHash) return;
+
+    // Delete any existing unused reset tokens for this user
+    await this.prisma.passwordResetToken.deleteMany({
+      where: { userId: user.id, usedAt: null },
+    });
+
+    // Generate 6-digit code, hash for storage
+    const code = generateResetCode();
+    const hashedCode = hashResetCode(code);
+
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+    await this.prisma.passwordResetToken.create({
+      data: {
+        token: hashedCode,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    await sendPasswordResetCode(email, code, user.firstName);
+  }
+
+  async verifyResetCode(input: VerifyResetCodeInput): Promise<string> {
+    const result = verifyResetCodeSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+    const { email, code } = result.data;
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+    if (!user) throw new AuthenticationError('Invalid or expired code');
+
+    const hashedCode = hashResetCode(code);
+    const resetToken = await this.prisma.passwordResetToken.findFirst({
+      where: {
+        userId: user.id,
+        token: hashedCode,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!resetToken) throw new AuthenticationError('Invalid or expired code');
+
+    // Issue a short-lived JWT for the reset step (follows pendingOAuth pattern)
+    const resetJwt = jwt.sign(
+      { sub: user.id, purpose: 'password_reset' },
+      process.env.JWT_REFRESH_SECRET!,
+      { algorithm: 'HS256', expiresIn: '10m' }
+    );
+
+    return resetJwt;
+  }
+
+  async resetPassword(input: ResetPasswordInput): Promise<UserAuthResult> {
+    const result = resetPasswordSchema.safeParse(input);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues[0].message);
+    }
+    const { resetToken, newPassword } = result.data;
+
+    // Verify the reset JWT
+    let payload: jwt.JwtPayload;
+    try {
+      payload = jwt.verify(resetToken, process.env.JWT_REFRESH_SECRET!, {
+        algorithms: ['HS256'],
+      }) as jwt.JwtPayload;
+    } catch {
+      throw new AuthenticationError('Invalid or expired reset token');
+    }
+    if (payload.purpose !== 'password_reset' || !payload.sub) {
+      throw new AuthenticationError('Invalid or expired reset token');
+    }
+
+    const userId = payload.sub;
+    const passwordHash = await hashPassword(newPassword);
+
+    // Update password + mark token used + revoke all refresh tokens in transaction
+    const user = await this.prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: { passwordHash },
+      });
+
+      // Mark all unused reset tokens as used
+      await tx.passwordResetToken.updateMany({
+        where: { userId, usedAt: null },
+        data: { usedAt: new Date() },
+      });
+
+      // Revoke all refresh tokens (force re-login everywhere)
+      await tx.refreshToken.updateMany({
+        where: { userId, revoked: false },
+        data: { revoked: true },
+      });
+
+      return updatedUser;
+    });
+
+    // Issue new tokens (auto-login)
+    const tokens = await this.issueTokens(user);
+    return { user, tokens };
   }
 
   // ─────────────────────────────────────────────
