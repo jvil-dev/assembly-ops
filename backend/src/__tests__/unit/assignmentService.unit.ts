@@ -1179,7 +1179,7 @@ describe('AssignmentService', () => {
           areaIds: null,
           postIds: null,
           copyIsCaptain: false,
-          copyCanCount: false,
+          copyCanCount: true,
           copyAreaCaptains: false,
           forceAssign: false,
         },
