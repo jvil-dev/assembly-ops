@@ -102,7 +102,9 @@ final class EventSessionState: ObservableObject {
 
             events = mappedEvents
 
+            #if DEBUG
             print("[SessionState] loadEvents: \(events.count) events, claimedDepartment=\(claimedDepartment?.name ?? "nil")")
+            #endif
 
             // Auto-select first event
             if let first = events.first {
@@ -169,7 +171,9 @@ final class EventSessionState: ObservableObject {
 
         loadDepartment()
 
+        #if DEBUG
         print("[SessionState] loadForEvent: \(summary.name), claimedDepartment=\(claimedDepartment?.name ?? "nil")")
+        #endif
     }
 
     // MARK: - Helpers

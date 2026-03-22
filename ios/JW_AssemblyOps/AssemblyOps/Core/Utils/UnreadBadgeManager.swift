@@ -79,7 +79,9 @@ final class UnreadBadgeManager: ObservableObject {
         do {
             unreadCount = try await MessagesService.shared.fetchUnreadCount()
         } catch {
+            #if DEBUG
             print("Failed to fetch unread count: \(error)")
+            #endif
         }
     }
 

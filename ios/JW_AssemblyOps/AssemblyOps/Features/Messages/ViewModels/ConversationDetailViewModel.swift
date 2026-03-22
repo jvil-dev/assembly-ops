@@ -87,7 +87,9 @@ final class ConversationDetailViewModel: ObservableObject {
             // Immediately refresh badge (subscription also pushes update as backup)
             await UnreadBadgeManager.shared.fetchUnreadCount()
         } catch {
+            #if DEBUG
             print("Failed to mark conversation read: \(error)")
+            #endif
         }
     }
 
