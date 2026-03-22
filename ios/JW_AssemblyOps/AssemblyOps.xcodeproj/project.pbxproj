@@ -34,9 +34,9 @@
 
 /* Begin PBXFileReference section */
 		B025A5B32F00268000862900 /* AssemblyOps-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "AssemblyOps-Info.plist"; sourceTree = "<group>"; };
-		B0469BDB2EFF2852005E523D /* AssemblyOps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = AssemblyOps.app; path = "/Users/jvil723/Documents/Coding Projects/AssemblyOps/ios/JW_AssemblyOps/build/Debug-iphoneos/AssemblyOps.app"; sourceTree = "<absolute>"; };
-		B0469BE82EFF2853005E523D /* AssemblyOpsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = AssemblyOpsTests.xctest; path = "/Users/jvil723/Documents/Coding Projects/AssemblyOps/ios/JW_AssemblyOps/build/Debug-iphoneos/AssemblyOps.app/PlugIns/AssemblyOpsTests.xctest"; sourceTree = "<absolute>"; };
-		B0469BF22EFF2853005E523D /* AssemblyOpsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = AssemblyOpsUITests.xctest; path = "/Users/jvil723/Documents/Coding Projects/AssemblyOps/ios/JW_AssemblyOps/build/Debug-iphoneos/AssemblyOpsUITests-Runner.app/PlugIns/AssemblyOpsUITests.xctest"; sourceTree = "<absolute>"; };
+		B09BD8C82F6F966000DDBF96 /* AssemblyOps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AssemblyOps.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B09BD8C92F6F966000DDBF96 /* AssemblyOpsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AssemblyOpsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B09BD8CA2F6F966000DDBF96 /* AssemblyOpsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AssemblyOpsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -113,6 +113,9 @@
 			children = (
 				B0469BDD2EFF2852005E523D /* AssemblyOps */,
 				B025A5B32F00268000862900 /* AssemblyOps-Info.plist */,
+				B09BD8C82F6F966000DDBF96 /* AssemblyOps.app */,
+				B09BD8C92F6F966000DDBF96 /* AssemblyOpsTests.xctest */,
+				B09BD8CA2F6F966000DDBF96 /* AssemblyOpsUITests.xctest */,
 			);
 			sourceTree = "<group>";
 		};
@@ -144,7 +147,7 @@
 				B082F52E2F6B252200E2EBF0 /* ApolloWebSocket */,
 			);
 			productName = JW_AssemblyOps;
-			productReference = B0469BDB2EFF2852005E523D /* AssemblyOps.app */;
+			productReference = B09BD8C82F6F966000DDBF96 /* AssemblyOps.app */;
 			productType = "com.apple.product-type.application";
 		};
 		B0469BE72EFF2853005E523D /* AssemblyOpsTests */ = {
@@ -164,7 +167,7 @@
 			packageProductDependencies = (
 			);
 			productName = JW_AssemblyOpsTests;
-			productReference = B0469BE82EFF2853005E523D /* AssemblyOpsTests.xctest */;
+			productReference = B09BD8C92F6F966000DDBF96 /* AssemblyOpsTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		B0469BF12EFF2853005E523D /* AssemblyOpsUITests */ = {
@@ -184,7 +187,7 @@
 			packageProductDependencies = (
 			);
 			productName = JW_AssemblyOpsUITests;
-			productReference = B0469BF22EFF2853005E523D /* AssemblyOpsUITests.xctest */;
+			productReference = B09BD8CA2F6F966000DDBF96 /* AssemblyOpsUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
