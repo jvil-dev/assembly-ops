@@ -1,8 +1,0 @@
-mutation ConfirmShiftReminder($shiftId: ID!) {
-  confirmShiftReminder(shiftId: $shiftId) {
-    id
-    eventVolunteerId
-    shiftId
-    confirmedAt
-  }
-}

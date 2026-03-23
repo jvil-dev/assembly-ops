@@ -1,3 +1,0 @@
-mutation DeleteAccount($password: String) {
-    deleteAccount(password: $password)
-}

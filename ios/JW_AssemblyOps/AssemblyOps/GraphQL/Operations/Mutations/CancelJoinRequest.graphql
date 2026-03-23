@@ -1,3 +1,0 @@
-mutation CancelJoinRequest($requestId: ID!) {
-  cancelJoinRequest(requestId: $requestId)
-}

@@ -1,5 +1,0 @@
-mutation VerifyResetCode($input: VerifyResetCodeInput!) {
-  verifyResetCode(input: $input) {
-    resetToken
-  }
-}

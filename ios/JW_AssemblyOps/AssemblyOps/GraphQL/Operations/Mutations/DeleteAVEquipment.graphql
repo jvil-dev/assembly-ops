@@ -1,3 +1,0 @@
-mutation DeleteAVEquipment($id: ID!) {
-  deleteAVEquipment(id: $id)
-}

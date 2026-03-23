@@ -1,6 +1,0 @@
-mutation SetDepartmentPrivacy($departmentId: ID!, $isPublic: Boolean!) {
-  setDepartmentPrivacy(departmentId: $departmentId, isPublic: $isPublic) {
-    id
-    isPublic
-  }
-}

@@ -1,9 +1,0 @@
-query AttendantPosts($departmentId: ID!) {
-  posts(departmentId: $departmentId) {
-    id
-    name
-    location
-    category
-    sortOrder
-  }
-}

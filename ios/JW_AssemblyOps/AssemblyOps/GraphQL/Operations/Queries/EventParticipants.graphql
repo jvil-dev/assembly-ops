@@ -1,7 +1,0 @@
-query EventParticipants($eventId: ID!) {
-  eventParticipants(eventId: $eventId) {
-    id
-    displayName
-    isAdmin
-  }
-}

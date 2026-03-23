@@ -1,3 +1,0 @@
-query UnreadNotificationCount($eventId: ID!) {
-  unreadNotificationCount(eventId: $eventId)
-}

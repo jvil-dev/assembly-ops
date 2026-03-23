@@ -1,3 +1,0 @@
-mutation DeleteShift($id: ID!) {
-  deleteShift(id: $id)
-}

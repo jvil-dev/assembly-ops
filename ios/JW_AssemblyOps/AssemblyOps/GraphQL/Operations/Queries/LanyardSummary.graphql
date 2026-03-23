@@ -1,8 +1,0 @@
-query LanyardSummary($eventId: ID!, $date: String) {
-  lanyardSummary(eventId: $eventId, date: $date) {
-    total
-    pickedUp
-    returned
-    notPickedUp
-  }
-}

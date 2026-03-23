@@ -1,8 +1,0 @@
-mutation ConfirmSessionReminder($sessionId: ID!) {
-  confirmSessionReminder(sessionId: $sessionId) {
-    id
-    eventVolunteerId
-    sessionId
-    confirmedAt
-  }
-}

@@ -1,5 +1,0 @@
-mutation MarkAllMessagesRead($eventId: ID) {
-  markAllMessagesRead(eventId: $eventId) {
-    markedCount
-  }
-}

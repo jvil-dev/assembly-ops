@@ -1,3 +1,0 @@
-mutation DeleteAVHazardAssessment($id: ID!) {
-  deleteAVHazardAssessment(id: $id)
-}

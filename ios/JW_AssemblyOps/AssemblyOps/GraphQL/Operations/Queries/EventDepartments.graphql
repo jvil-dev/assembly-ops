@@ -1,8 +1,0 @@
-query EventDepartments($eventId: ID!) {
-    eventDepartments(eventId: $eventId) {
-        id
-        name
-        departmentType
-        volunteerCount
-    }
-}

@@ -1,3 +1,0 @@
-mutation DeleteFloorPlan($eventId: ID!) {
-  deleteFloorPlan(eventId: $eventId)
-}

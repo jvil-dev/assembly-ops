@@ -1,3 +1,0 @@
-mutation GetFloorPlanUploadUrl($eventId: ID!) {
-  getFloorPlanUploadUrl(eventId: $eventId)
-}
