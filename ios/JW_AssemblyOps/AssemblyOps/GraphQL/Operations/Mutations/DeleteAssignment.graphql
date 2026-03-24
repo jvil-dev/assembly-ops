@@ -1,3 +1,0 @@
-mutation DeleteAssignment($id: ID!) {
-  deleteAssignment(id: $id)
-}

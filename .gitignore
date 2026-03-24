@@ -73,13 +73,8 @@ temp/
 # Worktrees
 .worktrees/
 
-# Xcode
-*.xcuserstate
-xcuserdata/
-*.xcscmblueprint
-Package.resolved
-AssemblyOps.xcscheme
-AssemblyOps.xcodeproj/
+# iOS (Swift beta preserved in tag beta-2026-03-23)
+ios/
 
 # Firebase
 GoogleService-Info.plist

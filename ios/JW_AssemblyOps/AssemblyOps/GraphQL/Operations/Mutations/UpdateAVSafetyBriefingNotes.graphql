@@ -1,7 +1,0 @@
-mutation UpdateAVSafetyBriefingNotes($id: ID!, $notes: String!) {
-  updateAVSafetyBriefingNotes(id: $id, notes: $notes) {
-    id
-    topic
-    notes
-  }
-}

@@ -1,3 +1,0 @@
-query FloorPlanUrl($eventId: ID!) {
-  floorPlanUrl(eventId: $eventId)
-}

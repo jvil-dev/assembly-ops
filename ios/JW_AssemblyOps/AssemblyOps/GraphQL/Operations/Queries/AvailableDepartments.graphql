@@ -1,3 +1,0 @@
-query AvailableDepartments($eventId: ID!) {
-    availableDepartments(eventId: $eventId)
-}

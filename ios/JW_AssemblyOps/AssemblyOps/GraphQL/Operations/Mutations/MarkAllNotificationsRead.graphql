@@ -1,3 +1,0 @@
-mutation MarkAllNotificationsRead($eventId: ID!) {
-  markAllNotificationsRead(eventId: $eventId)
-}

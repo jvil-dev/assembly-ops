@@ -1,8 +1,0 @@
-mutation RemoveVolunteerFromDepartment($id: ID!) {
-    updateVolunteer(id: $id, input: { departmentId: null }) {
-        id
-        department {
-            id
-        }
-    }
-}
