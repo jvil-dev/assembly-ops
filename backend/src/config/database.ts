@@ -37,7 +37,7 @@ const pool = new pg.Pool({
   connectionTimeoutMillis: 5000,
 });
 
-const adapter = new PrismaPg(pool);
+const adapter = new PrismaPg(pool as any);
 
 const prisma = new PrismaClient({
   adapter,
