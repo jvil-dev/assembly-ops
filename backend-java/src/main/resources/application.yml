@@ -8,6 +8,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+      naming:
+        physical-strategy: com.assemblyops.api.config.PrismaNamingStrategy
     open-in-view: false
 
 server:

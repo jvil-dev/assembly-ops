@@ -1,0 +1,14 @@
+package com.assemblyops.api.entity.enums;
+
+public enum AVHazardType {
+    WORKING_AT_HEIGHT,
+    ELECTRICAL_EXPOSURE,
+    ELEVATED_PLATFORM,
+    POWER_TOOLS,
+    MOVING_EQUIPMENT,
+    NEAR_STAIRS,
+    UNEVEN_SURFACE,
+    HEAVY_LIFTING,
+    PINCH_CRUSH_CUT,
+    EXTREME_CONDITIONS
+}
