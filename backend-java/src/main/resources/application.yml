@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: assemblyops-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/assemblyops
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+server:
+  port: 4001
