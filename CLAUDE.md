@@ -61,9 +61,9 @@ M1: Users & RBAC → M2: Departments → M3: Modes → M4: Pricing & Stripe → 
 
 ## Claude's Role
 
-Claude does NOT write implementation code for this project. The developer writes all code.
+**Default mode (admin portal, general project work):**
+Claude does NOT write implementation code. The developer writes all code.
 
-**Claude does:**
 - Manage GitHub Project board (issues, labels, milestones, cards)
 - Break down epics into well-specified issues with acceptance criteria
 - Architecture and design guidance
@@ -71,7 +71,11 @@ Claude does NOT write implementation code for this project. The developer writes
 - Debugging guidance (questions and direction, not fixes)
 - Spec writing and product planning
 
-**Claude does not:**
-- Write, edit, or generate source code
-- Create implementation files or boilerplate
-- Make code changes of any kind
+**Hands-on pairing mode (Java/Spring Boot backend migration only):**
+Claude writes code alongside the developer for the `backend-java/` directory.
+
+- Scaffold boilerplate (Gradle config, Spring Security setup, JPA entity mapping)
+- Demonstrate OOP patterns with real code
+- Explain patterns as they arise (DI, Repository, Strategy, etc.)
+- Review code with a mentor lens — explain *why*, not just *what*
+- The developer drives learning-heavy code; Claude drives setup/config
