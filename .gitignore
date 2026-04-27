@@ -78,3 +78,4 @@ ios/
 
 # Firebase
 GoogleService-Info.plist
+.firebase/

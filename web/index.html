@@ -1,0 +1,121 @@
+<!-- web/index.html
+ Landing page for assemblyops.org. Static HTML scaffold - loads DM Sans via Google Fonts,
+ links styles.css -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>AssemblyOps</title>
+    <meta
+      name="description"
+      content="Event management platform for JW assemblies and conventions." />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="AssemblyOps" />
+    <meta
+      property="og:description"
+      content="Event management platform for JW assemblies and conventions." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="logo.png" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet" />
+
+    <!-- Styles-->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <div class="navbar-brand">
+          <img src="icon.svg" alt="AssemblyOps logo" class="navbar-logo" />
+          <span class="navbar-wordmark">AssemblyOps</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <span class="hero-badge">Launching Fall 2026</span>
+        <h1 class="hero-headline">Assembly management, simplified</h1>
+        <p class="hero-subheadline">
+          The all-in-one platform for organizing departments, assigning
+          volunteers, and tracking attendance at assemblies and conventions.
+        </p>
+        <a
+          href="https://forms.gle/9NSgriXSmg2cHNnF9"
+          target="_blank"
+          rel="noopener"
+          class="btn btn-primary"
+          >Join the waitlist</a
+        >
+      </div>
+    </section>
+
+    <!-- Problem -->
+    <section class="section problem">
+      <div class="container">
+        <h2 class="section-title">One app, five departments</h2>
+        <p class="section-body">
+          Whether you're filling attendant posts across multiple sessions,
+          assigning audio operators to mixers, figuring out who's running
+          cameras, coordinating stage assignments, or organizing parking
+          coverage — the work behind an assembly doesn't stop when the program
+          starts. AssemblyOps gives every department the tools to schedule
+          volunteers, track attendance, and stay coordinated — all from one app.
+        </p>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section features">
+      <div class="container">
+        <h2 class="section-title">Made for the work behind the program</h2>
+        <div class="card-grid">
+          <div class="card">
+            <h3 class="card-title">Organized from the first session</h3>
+            <p class="card-text">
+              Give every volunteer their assignment, location, and time in one
+              place. Volunteers confirm from their phone before the doors open -
+              so you know who's assigned where, and where you still need
+              coverage.
+            </p>
+          </div>
+          <div class="card">
+            <h3 class="card-title">Reach your whole department instantly</h3>
+            <p class="card-text">
+              Send updates to individual volunteers, your keymen, or the whole
+              department with a tap. Push notifications make sure last-minute
+              changes reach everyone.
+            </p>
+          </div>
+          <div class="card">
+            <h3 class="card-title">Delegate to your assistants and keymen</h3>
+            <p class="card-text">
+              Give assistant overseers and keymen the access they need in the
+              app. They handle their part of the department while you keep the
+              full picture.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-inner">
+        <img src="icon.svg" alt="AssemblyOps logo" class="footer-logo" />
+        <p class="footer-tagline">Built for the work behind the program.</p>
+        <p class="footer-copyright">© 2026 AssemblyOps</p>
+      </div>
+    </footer>
+  </body>
+</html>
