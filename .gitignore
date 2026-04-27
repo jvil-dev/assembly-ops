@@ -83,3 +83,4 @@ AssemblyOps.xcodeproj/
 
 # Firebase
 GoogleService-Info.plist
+.firebase/
